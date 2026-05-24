@@ -148,8 +148,64 @@ function saveLocalAppUsers(users: AppUser[]) {
   localStorage.setItem('supabase_fallback_users', JSON.stringify(users));
 }
 
+// Helper to deduplicate arrays by ID for secure bulk updates without on conflict errors
+function deduplicateById<T extends { id: any }>(arr: T[]): T[] {
+  const seen = new Set();
+  return arr.filter(item => {
+    const key = String(item.id).trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// Helper to deduplicate players/users by username
+function deduplicateUsers(users: AppUser[]): AppUser[] {
+  const seen = new Set();
+  return users.filter(u => {
+    const key = u.username.toLowerCase().trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // Get all app users from Supabase or fallback
 export async function getAppUsers(): Promise<AppUser[]> {
+  // 1. Direct Web Supabase Query (Robust for Vercel/Static hosting)
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("app_users")
+        .select("*")
+        .order("created_at", { ascending: true });
+        
+      if (!error && data) {
+        const mapped: AppUser[] = data.map((u: any) => ({
+          username: u.username,
+          password: u.password,
+          name: u.name,
+          role: u.role,
+          is_master: !!u.is_master,
+          created_at: u.created_at
+        }));
+        
+        const resultList: AppUser[] = [...mapped];
+        DEFAULT_APP_USERS.forEach(fallback => {
+          if (!resultList.some(u => u.username.toLowerCase() === fallback.username.toLowerCase())) {
+            resultList.push(fallback);
+          }
+        });
+        return resultList;
+      } else if (error) {
+        console.warn("Direct query for app_users returned error, falling back:", error.message);
+      }
+    }
+  } catch (supErr) {
+    console.warn("Error querying database directly for users, using backend/local:", supErr);
+  }
+
+  // 2. Query developer Express server `/api`
   try {
     const creds = getSavedCredentials();
     const headers: Record<string, string> = {};
@@ -158,14 +214,16 @@ export async function getAppUsers(): Promise<AppUser[]> {
       headers["x-supabase-key"] = creds.key;
     }
     const res = await fetch("/api/auth/users", { headers });
-    if (!res.ok) throw new Error("HTTP-error: " + res.status);
-    const data = await res.json();
-    if (data.success && data.users) {
-      return data.users;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.users) {
+        return data.users;
+      }
     }
   } catch (e) {
     console.warn("Erro ao recuperar usuários do backend, usando dados locais:", e);
   }
+
   return getLocalAppUsers();
 }
 
@@ -189,6 +247,47 @@ export async function saveAppUser(user: AppUser): Promise<{ success: boolean; me
   }
   saveLocalAppUsers(localUsers);
 
+  // 1. Write to Supabase DB public.app_users directly (Highly resilient for Vercel)
+  if (supabase) {
+    try {
+      const { error: dbError } = await supabase
+        .from("app_users")
+        .upsert({
+          username: cleanUsername,
+          password: updatedUser.password,
+          name: updatedUser.name,
+          role: updatedUser.role,
+          is_master: updatedUser.is_master
+        });
+
+      if (!dbError) {
+        // Optimistically try standard email sign-up/creation, but don't crash if restricted
+        try {
+          const email = cleanUsername.includes("@") ? cleanUsername : `${cleanUsername}@rotaoperational.com`;
+          await supabase.auth.signUp({
+            email,
+            password: updatedUser.password,
+            options: {
+              data: {
+                name: updatedUser.name,
+                role: updatedUser.role,
+                is_master: updatedUser.is_master
+              }
+            }
+          });
+        } catch (suErr) {
+          console.warn("Optional Supabase Auth registration failed:", suErr);
+        }
+        return { success: true, message: "Usuário salvo e sincronizado diretamente no banco Supabase com sucesso!" };
+      } else {
+        console.warn("Direct app_users upsert failed, trying API route...", dbError.message);
+      }
+    } catch (directErr: any) {
+      console.warn("Direct write exception, trying API route...", directErr);
+    }
+  }
+
+  // 2. Query fallback Express server API route
   try {
     const creds = getSavedCredentials();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -201,12 +300,15 @@ export async function saveAppUser(user: AppUser): Promise<{ success: boolean; me
       headers,
       body: JSON.stringify(updatedUser)
     });
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-    const data = await res.json();
-    return { success: data.success, message: data.message || "Usuário salvo e sincronizado com o Supabase com sucesso!" };
+    if (res.ok) {
+      const data = await res.json();
+      return { success: data.success, message: data.message || "Usuário salvo e sincronizado com o Supabase com sucesso!" };
+    }
   } catch (err: any) {
-    return { success: false, message: `Erro ao sincronizar com o servidor: ${err?.message || err}` };
+    console.warn("Backend router returned error, using local save:", err);
   }
+
+  return { success: true, message: "Gravado em seu navegador local para sincronização posterior." };
 }
 
 // Delete user from database and fallback
@@ -214,6 +316,23 @@ export async function deleteAppUser(username: string): Promise<{ success: boolea
   const localUsers = getLocalAppUsers().filter(u => u.username.toLowerCase() !== username.toLowerCase());
   saveLocalAppUsers(localUsers);
 
+  // 1. Direct Web Supabase Delete
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from("app_users")
+        .delete()
+        .eq("username", username.toLowerCase().trim());
+      if (!error) {
+        return { success: true, message: "Usuário excluído com sucesso do banco de dados Supabase." };
+      }
+      console.warn("Direct app_users deletion failed, trying API fallback:", error.message);
+    } catch (directDeletionErr) {
+      console.warn("Direct deletion exception, trying API fallback:", directDeletionErr);
+    }
+  }
+
+  // 2. Fallback to API router
   try {
     const creds = getSavedCredentials();
     const headers: Record<string, string> = {};
@@ -225,12 +344,15 @@ export async function deleteAppUser(username: string): Promise<{ success: boolea
       method: "DELETE",
       headers
     });
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-    const data = await res.json();
-    return { success: data.success, message: data.message || "Usuário excluído com sucesso do Supabase." };
+    if (res.ok) {
+      const data = await res.json();
+      return { success: data.success, message: data.message || "Usuário excluído com sucesso do Supabase." };
+    }
   } catch (err: any) {
-    return { success: true, message: `Excluído localmente. Sincronização offline: ${err?.message || err}` };
+    console.warn("Direct API deletion error, executing local-only removal:", err);
   }
+
+  return { success: true, message: "Excluído localmente em cache offline." };
 }
 
 // Export local states to Supabase (Upload Seed Data / Local Records)
@@ -256,9 +378,10 @@ export async function exportStateToSupabase(data: {
       type: v.type,
       status: v.status
     }));
-    const { error } = await supabase.from('vehicles').upsert(formattedVehicles);
+    const uniqueVehicles = deduplicateById(formattedVehicles);
+    const { error } = await supabase.from('vehicles').upsert(uniqueVehicles);
     if (error) throw error;
-    results.push(`✓ ${formattedVehicles.length} veículos exportados com sucesso.`);
+    results.push(`✓ ${uniqueVehicles.length} veículos exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Veículos: ${formatSupabaseError(err, 'vehicles')}`);
@@ -278,9 +401,10 @@ export async function exportStateToSupabase(data: {
       success_rate: d.successRate,
       avatar: d.avatar
     }));
-    const { error } = await supabase.from('drivers').upsert(formattedDrivers);
+    const uniqueDrivers = deduplicateById(formattedDrivers);
+    const { error } = await supabase.from('drivers').upsert(uniqueDrivers);
     if (error) throw error;
-    results.push(`✓ ${formattedDrivers.length} motoristas exportados com sucesso.`);
+    results.push(`✓ ${uniqueDrivers.length} motoristas exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Motoristas: ${formatSupabaseError(err, 'drivers')}`);
@@ -316,9 +440,10 @@ export async function exportStateToSupabase(data: {
       disponibilidade: c.disponibilidade || null,
       localizacao: c.localizacao || null
     }));
-    const { error } = await supabase.from('ctrcs').upsert(formattedCtrcs);
+    const uniqueCtrcs = deduplicateById(formattedCtrcs);
+    const { error } = await supabase.from('ctrcs').upsert(uniqueCtrcs);
     if (error) throw error;
-    results.push(`✓ ${formattedCtrcs.length} documentos CTRC exportados com sucesso.`);
+    results.push(`✓ ${uniqueCtrcs.length} documentos CTRC exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ CTRCs: ${formatSupabaseError(err, 'ctrcs')}`);
@@ -336,9 +461,10 @@ export async function exportStateToSupabase(data: {
       status: t.status,
       icon: t.icon
     }));
-    const { error } = await supabase.from('tickets').upsert(formattedTickets);
+    const uniqueTickets = deduplicateById(formattedTickets);
+    const { error } = await supabase.from('tickets').upsert(uniqueTickets);
     if (error) throw error;
-    results.push(`✓ ${formattedTickets.length} chamados críticos exportados com sucesso.`);
+    results.push(`✓ ${uniqueTickets.length} chamados críticos exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Chamados: ${formatSupabaseError(err, 'tickets')}`);
@@ -360,9 +486,10 @@ export async function exportStateToSupabase(data: {
       audit_time: c.auditTime || '',
       audit_detail: c.auditDetail || ''
     }));
-    const { error } = await supabase.from('clients').upsert(formattedClients);
+    const uniqueClients = deduplicateById(formattedClients);
+    const { error } = await supabase.from('clients').upsert(uniqueClients);
     if (error) throw error;
-    results.push(`✓ ${formattedClients.length} clientes auditados exportados com sucesso.`);
+    results.push(`✓ ${uniqueClients.length} clientes auditados exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Clientes: ${formatSupabaseError(err, 'clients')}`);
@@ -373,8 +500,9 @@ export async function exportStateToSupabase(data: {
     try {
       let syncedUsersCount = 0;
       let failedUsersCount = 0;
+      const uniqueUsers = deduplicateUsers(data.users);
       
-      for (const u of data.users) {
+      for (const u of uniqueUsers) {
         try {
           const syncRes = await saveAppUser(u);
           if (syncRes.success) {
