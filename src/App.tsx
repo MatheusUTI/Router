@@ -55,6 +55,54 @@ export default function App() {
   const [drivers, setDrivers] = useState<DriverScore[]>(initialDrivers);
   const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(initialAvailableCtrcs);
   const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(initialLinkedCtrcs);
+  const [savedRomaneios, setSavedRomaneios] = useState<any[]>(() => {
+    const saved = localStorage.getItem('saved_romaneios');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    // Static initial romaneio representing a realistic preloaded historical routing check
+    return [
+      {
+        id: '2981',
+        date: '24/05/2026',
+        vehicleId: 'RUE3B11',
+        vehiclePlate: 'RUE3B11',
+        driverName: 'HIAN THAYRON SOARES DE OLIVEIRA',
+        helperName: 'VALDECI CARDOSO',
+        ctrcs: [
+          {
+            id: 'SPO684122-2',
+            destinatario: 'A.P. AUTO PECAS E ACESSORIOS LTD',
+            cidade: 'ALFENAS',
+            cidade_ent: 'ALFENAS, SP',
+            weight: 350,
+            volume: 4,
+            type: 'NORMAL',
+            status: 'Pendente',
+            remetente: 'RODOBENS DISTRIBUIDORA',
+            setor: 'SUL-1'
+          },
+          {
+            id: 'BHS040163-3',
+            destinatario: 'VARGINHA COMERCIAL LTDA',
+            cidade: 'VARGINHA',
+            cidade_ent: 'VARGINHA, MG',
+            weight: 710,
+            volume: 12,
+            type: 'NORMAL',
+            status: 'Pendente',
+            remetente: 'SAMS CLUB SPO',
+            setor: 'SUL-2'
+          }
+        ],
+        observations: 'Roteirizado sob encomenda prioritária. Checar cubagem traseira.'
+      }
+    ];
+  });
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   const [clients, setClients] = useState<CriticClient[]>(initialCriticalClients);
@@ -260,6 +308,22 @@ export default function App() {
     setActiveRomaneioVehicleId(null);
   };
 
+  const handleSaveRomaneio = (newRom: any) => {
+    setSavedRomaneios((prev) => {
+      const updated = [newRom, ...prev];
+      localStorage.setItem('saved_romaneios', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleDeleteRomaneio = (id: string) => {
+    setSavedRomaneios((prev) => {
+      const updated = prev.filter((r) => r.id !== id);
+      localStorage.setItem('saved_romaneios', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // ---------------------------------------------------------
   // SOLUTIONS TICKETS DE DESERVIÇO
   // ---------------------------------------------------------
@@ -370,6 +434,9 @@ export default function App() {
             onRemoveExpense={handleRemoveExpense}
             onCloseRomaneio={handleCloseRomaneio}
             activeVehicle={vehicles.find((v) => v.id === activeRomaneioVehicleId)}
+            savedRomaneios={savedRomaneios}
+            onSaveRomaneio={handleSaveRomaneio}
+            onDeleteRomaneio={handleDeleteRomaneio}
           />
         );
       case 'desempenho':

@@ -1,351 +1,197 @@
-# 🚚 RotaOperational — Plataforma de Inteligência e Governança Logística
+# 🚚 RotaOperational
 
-Plataforma corporativa de controle logístico de alta performance concebida para unificar a gestão de frotas, orquestrar a roteirização de cargas a partir de arquivos brutos de faturamento (ERP Camilo dos Santos), apoiar a tomada de decisões de clientes críticos (Curva A) e auditar ocorrências de trânsito em tempo real.
+Plataforma operacional web para logística rodoviária de alto rendimento, dedicada à triagem física, importação de documentos operacionais (CTRCs) e roteirização rápida de cargas. O sistema é concebido sob o modelo **Local-First com Sincronização em Nuvem (Supabase)**, garantindo resiliência operacional contínua mesmo em galpões industriais com conectividade intermitente ou ausência de sinal de internet.
 
-O projeto opera sob uma arquitetura de vanguarda **Local-First com Sincronização em Nuvem (Cloud Sync)**, garantindo que as operações de carregamento não parem mesmo sem conexão estável de internet no pátio, permitindo exportações/importações sob demanda e conexões resilientes via Supabase PostgreSQL.
-
----
-
-## 🎯 Objetivo do Software
-Resolver a fragmentação do despacho de mercadorias entre múltiplas filiais de logística (ex: São Paulo - **SPO**, Pouso Alegre - **PPY**, Alfenas - **ALF**, Varginha - **VGA**). Ele possibilita que:
-1. **Operadores de Despacho** carreguem arquivos brutos de faturamento (CSV/TXT do ERP corporativo) por arrastar-e-soltar e modelem-os através de um assistente de de-para inteligente e reusável.
-2. **Superintendentes (Master)** visualizem fluxos de entrega em formato consolidados, controlem permissões e analisem dashboards de conformidade física em tempo real.
-3. **Auditores de Contrato** gerenciem ocorrências críticas e resoluções de tickets de deserviço baseados nos códigos oficiais de divergência logística.
+O RotaOperational não é um ERP genérico ou uma plataforma analítica de BI; ele atua estritamente como um **terminal operacional pragmático** focado na agilidade diária de pátio e conformidade de despacho físico.
 
 ---
 
-## 🏗️ Arquitetura Técnica Detalhada
+## 🌎 1. Visão Geral
 
-O **RotaOperational** foi concebido em uma estrutura full-stack moderna:
+O sistema integra o controle logístico de filiais descentralizadas, resolvendo a fragmentação na conversão de planilhas de faturamento de ERPs corporativos em cargas físicas consolidadas. O operador local manipula e valida informações em um ambiente de alta velocidade livre de oscilações de rede.
 
+A governança do fluxo é baseada na filial de origem do operador logístico (`unid`), bloqueando visualizações ou edições não autorizadas entre diferentes bases regionais (ex: São Paulo - **SPO**, Varginha - **VGA**).
+
+---
+
+## ⚙️ 2. Princípios Operacionais
+
+A engenharia e desenvolvimento da plataforma seguem premissas reais de operação industrial:
+
+*   **Operação antes de Analytics:** Prioridade máxima na fluidez da triagem física e faturamento por placa. Telas de indicadores e relatórios analíticos são tratados como satélites.
+*   **Offline antes de Realtime:** A tolerância a falhas locais é mandatória. O sistema processa importações e monta cargas em memória/cache local, exigindo internet ativa apenas para sincronizações planejadas.
+*   **Fluxo Operacional antes de Complexidade Visual:** Foco em tabelas densas, buscas rápidas por teclado e inputs numéricos diretos (*Cosmic Slate Theme* de baixa fadiga para ambientes logísticos).
+*   **Evolução Incremental sem Ruptura:** Rejeição à reescrita completa. Novos recursos e refatorações são aplicados progressivamente, resguardando módulos funcionais estáveis.
+*   **Governança por Unidade Operacional:** Trancas físicas de dados impostas na raiz do login com base na filial fiduciária.
+
+---
+
+## 🔄 3. Fluxo Operacional Principal
+
+O fluxo de decolagem de mercadorias no RotaOperational simula a sequência de triagem de um pátio real:
+
+```txt id="u20r6k"
+Login
+→ Importação CSV/TXT
+→ Mapeamento
+→ Validação
+→ Roteirização
+→ Alocação em veículos
+→ Expedição
+→ Finalização da viagem
+→ Ocorrências
+→ Encerramento operacional
 ```
-                      ┌───────────────────────────────────────────────────┐
-                      │                 Navegador/IFrame                  │
-                      │  ┌───────────────────────┐ ┌───────────────────┐  │
-                      │  │   Direct Web Client   │ │   React Router/   │  │
-                      │  │  (SupaWeb Direct DB)  │ │   Motion State    │  │
-                      │  └───────────┬───────────┘ └───────────────────┘  │
-                      └──────────────┼────────────────────────────────────┘
-                                     │ (Consultas SQL Web)
-                                     ▼
-┌───────────────────┐        ┌────────────────────────────────────────────┐
-│  Express Server   │ ◄──────┤      Proxy Corporativo / API (Port 3000)   │
-│  (Auth Provision) │        │ (Intermedeia login e provisiona usuários)  │
-└─────────┬─────────┘        └────────────────────┬───────────────────────┘
-          │                                       │
-          └──────────────────┬────────────────────┘
-                             ▼
-              ┌───────────────────────────────┐
-              │     Supabase Cloud Service    │
-              │  ┌───────────────┐┌─────────┐ │
-              │  │ PostgreSQL DB ││ Go Auth │ │
-              │  └───────────────┘└─────────┘ │
-              └───────────────────────────────┘
+
+1.  **Login Regional:** Validação de login com leitura das permissões (`is_master`) e correspondente unidade de retenção fixa (`unid`).
+2.  **Importação de Faturamento:** Upload por drag-and-drop de arquivos de frete tabulados provenientes do ERP de faturamento.
+3.  **Mapeamento de Cabeçalho:** Ajuste flutuante opcional para associar cabeçalhos de novos layouts do ERP sem quebrar o banco.
+4.  **Validação de Registro:** Identificação local de erros matemáticos de volume ou CTRCs já despachados.
+5.  **Roteirização e Alocação:** Operadores examinam apenas os fretes destinados à sua filial ativa e alocam-nos às placas correspondentes.
+6.  **Expedição e Finalização:** Consolidação financeira das movimentações (lançamento de custos de viagem) e emissão de romaneio PDF.
+7.  **Encerramento:** Feedback de conclusão e liberação das placas para reuso, fechando-se o loop do pátio.
+
+---
+
+## 📦 4. Módulos Principais
+
+### A. Núcleo Operacional (Alta Prioridade)
+*   **Módulo de Importação:** Interface e parser de planilhas CSV com salvamento reusável de mapeamento de colunas em cookies/gabaritos locais.
+*   **Módulo de Roteirização:** Grid elástico estilo planilha Excel com redimensionamento responsivo de células para listagem, ordenação e atribuição em lote de fretes.
+*   **Módulo de Expedição e Finalização:** Emissor de relatórios logísticos em PDF com input flutuante de despesas operacionais da rota.
+*   **Módulo de Ativos Terrestres (Frota):** CRUD ativo de caminhões e cadastro qualitativo de scores econômicos de motoristas.
+*   **Módulo de Sincronização Cloud:** Gateway central de backups que unifica as alterações locais e as consolida de forma segura no Supabase.
+
+### B. Recursos Secundários (Acessos de Auditoria - Gaveta Adicional)
+*   **Painel Central (Dashboard):** KPIs consolidados e totalizações simplificadas baseadas no cache de terminal.
+*   **Clientes Críticos e Curva A:** Classificador conceitual de compradores prioritários para apoio a auditorias financeiras.
+*   **Ocorrências de Rota:** Catálogo passivo de divergências padrão (CBR) para orientação técnica de anomalias logísticas.
+
+---
+
+## 🛠️ 5. Arquitetura Atual
+
+O sistema adota uma estrutura homogênea full-stack de baixo atrito:
+
+*   **Frontend SPA:** Construído em **React + TypeScript + Vite**, estilizado horizontalmente através do **Tailwind CSS** e animado via **Motion**.
+*   **Retaguarda Proxy Express:** Servidor back-end em Node.js configurado para executar na porta única ingressadora **3000** garantindo provisionamento transparente de usuários e seeds na inicialização inicial do container.
+*   **Banco PostgreSQL Supabase:** Repositório estável das tabelas operacionais em nuvem (`ctrcs`, `vehicles`, `drivers`, `tickets`, `app_users`).
+*   **Mecanismo Local-First:** Os fluxos utilizam o `localStorage` do navegador para staging, prevenindo perda de triagem corrente em quedas de sinal de roteadores industriais.
+
+---
+
+## 📂 6. Estrutura do Projeto
+
+Organização madura baseada na direção evolutiva de componentes puros para modularização modular por capacidades lógicas:
+
+```txt id="ihb6l3"
+src/
+ ├── components/       # Componentes de UI e views operacionais acopladas
+ │    ├── LoginView.tsx        # Controle de decolagem de sessão corporativa
+ │    ├── ImportacaoView.tsx   # Parser local de CSV e templates de-para
+ │    ├── RoteirizacaoView.tsx # Grid de arranjo físico Excel elástico
+ │    ├── FinalizacaoView.tsx  # Manifesto e custos adicionais
+ │    ├── FrotaView.tsx        # CRUD de caminhões e perfis de controle
+ │    ├── Sidebar.tsx          # Menu reativo separando core de áreas de roadmap
+ │    └── ... (outras views de auditoria secundárias)
+ ├── types/            # Modelagem de interfaces e enums do domínio logístico
+ ├── utils/            # Ferramentas auxiliares de processamento matemático e formatters
+ └── supabase.ts       # Hub de API remota REST direta contra tabelas Cloud
 ```
 
-1. **Frontend (SPA)**:
-   - **React 19** & **Vite**: Bootstrap ultrarrápido com Hot Module Replacement controlado.
-   - **TypeScript 5.8**: Garantia rígida de tipos de dados durante manipulações de matrizes de fretes.
-   - **Tailwind CSS V4**: Renderização visual customizada com o tema escuro de alta densidade *Cosmic Slate*.
-   - **Motion**: Animações fluidas entre telas corporativas.
-   - **Lucide React**: Biblioteca unificada para consistência iconográfica de ativos faturados.
+---
 
-2. **Backend (Node.js)**:
-   - **Express**: Gateway de API seguro para isolamento de dados de configuração e intermediação de chamadas críticas.
-   - **TSX**: Executor nativo de TypeScript de desenvolvimento que dispensa transpiladores pesados e intermediários.
-   - **Esbuild**: Empacotador integrado de produção que converte o servidor monolítico em um único arquivo compacto `dist/server.cjs` CJS com suporte nativo a sourcemaps.
+## 🧭 7. Domínio Operacional (Visão Semântica)
 
-3. **Banco de Dados & Autenticação (Supabase)**:
-   - **PostgreSQL**: Sólido armazenamento relacional com tabelas estruturadas para operações e auditoria corporativa.
-   - **Supabase Auth**: Sistema de controle de acessos que isola credenciais, acoplado a um provisionador inteligente do Express que cria automaticamente contas operacionais padrão via API de administração.
+A semântica de código do RotaOperational abstrai termos de telas para focar em regras de negócio fiduciárias:
+
+*   **Importação & Staging:** Controle isolado em memória RAM do processamento de faturamento bruto sem expor dados inconsistentes às tabelas ativas.
+*   **Viagem & Manifesto:** O agregado logístico (placa + rota + custos + lista de CTRCs) que valida se a cubagem e o peso nominal estequiométrico limite do caminhão não foram ultrapassados no carregamento.
+*   **Sessão Operacional:** Amarração restritiva baseada no token `user.unid` que delimita o escopo físico visível de leitura e gravação no pátio.
 
 ---
 
-## 📊 Mapeamento Técnico de Funcionalidades (Grid de Sincronização e Gaps)
+## 🚦 8. Estado Atual do Projeto
 
-O software fornece uma interface rica de **12 views operacionais** integradas a estados offline autônomos persistidos em `localStorage`. A tabela a seguir especifica detalhadamente quais propriedades estão sincronizadas nas tabelas em nuvem do Supabase e quais residem puramente em memória/cache de visualização para futura expansão:
+Identificação clara de integridade e usabilidade atual das engrenagens do sistema:
 
-| View do Frontend | Nome do Componente | Entidade de Dados (`/src/types.ts`) | Status no Banco Supabase | Tabela Associada (`public.*`) | Descrição dos Gaps Tecnológicos para Futura Implementação no Backend |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Login** | `LoginView` | `AppUser` | **Totalmente Sincronizado** | `app_users` & `auth.users` | Permite login tanto local (fallback offline) quanto remoto em nuvem. Possui provisionamento de sementes automático se o banco iniciar do zero. |
-| **Dashboard** | `DashboardView` | Métricas Agregadas de CTRC / Veículos | **Cálculo em Tempo Real** | Leitura das tabelas `ctrcs` e `vehicles` | As métricas de kpis e gráficos de barra são gerados por agregações locais na memória do client. **No futuro:** Criar views de banco de dados (`CREATE VIEW`) ou triggers de agregação em tabelas de sumário para ganho de performance com milhões de CTRCs. |
-| **Importação** | `ImportacaoView` | `Ctrc` | **Parcialmente Sincronizado** | Carga em tela salva em mem-state; exportada em lote para `ctrcs` | Processa layouts CSV/TXT do ERP corporativo de forma agnóstica na tela. **No futuro:** Salvar o mapeamento de cabeçalhos de-para no banco de dados por usuário (atualmente salvo no `localStorage` sob a chave `rota_operational_saved_layout_mapping`). |
-| **Frota** | `FrotaView` | `Vehicle` & `DriverScore` | **Totalmente Sincronizado** | `vehicles` & `drivers` | Operações imediatas de cadastro, alteração e deleção de veículos e motoristas são propagadas no ato para os esquemas de produção. |
-| **Roteirização** | `RoteirizacaoView` | Listas de `Ctrc` filtradas por `unid` | **Totalmente Sincronizado** | `ctrcs` (Atributos: `setor`, `status`, `vehicles`) | O grid permite o redimensionamento elástico de colunas (estilo Excel) e atribuição de carga para placas da frota. **No futuro:** Criar uma tabela de histórico relacional para registrar o momento exato e quem ordenou o carregamento da gaiola física do depto. |
-| **Finalização** | `FinalizacaoView` | Romaneios de Carga Formados | **Apenas Frontend (Memória Local)** | Nenhuma (atualiza registros em `ctrcs` individualmente) | Exibe o manifesto de saída completo configurado para assinatura e entrega. **No futuro:** Criar a tabela `public.romaneios` para persistir o cabeçalho consolidado (Placa, Peso Total, Valor Total, Motorista, Data de Saída e Status do Manifesto) em vez de persistir apenas chaves individuais no CTRC. |
-| **Desempenho** | `DesempenhoView` | Métricas de KPI de Motoristas | **Totalmente Sincronizado** | `drivers` | O painel lê as métricas de tempo médio, notas de score de eficiência e taxas de rejeição diretamente das tabelas remotas. |
-| **Solução** | `SolucaoView` | `Ticket` (Chamados críticos de motoristas) | **Totalmente Sincronizado** | `tickets` | Gerenciamento centralizado de incidentes operacionais de rua (Ex: "Destinatário Ausente", "Troca de Motorista urgente", etc.). |
-| **Clientes** | `ClientesView` | `CriticClient` | **Totalmente Sincronizado** | `clients` | Alertas de recorrência sobre faturamentos de compradores prioritários auditados. **No futuro:** Converter o campo `recurrentIssues` que armazena um array de objetos JSON em uma tabela relacional independente de históricos de reclamações `public.client_issues`. |
-| **Ocorrências** | `OcorrenciasView` | `DeliveryOccurrence` | **Totalmente Sincronizado** | `occurrences` (Dicionário Técnico) | Tela de cadastro de soluções normatizadas e tabelas corporativas de ocorrência com tratativas de retornos pré-definidas. |
-| **Curva A** | `CurvaAView` | `CurvaAClient` | **Totalmente Sincronizado** | `curva_a_clients` | Dashboard estratégico para acompanhar a base estatística dos clientes classificados como prioritários em volume físico. |
-| **Configurações**| `ConfiguracoesView` | `AppUser` & Setup de Migrações | **Totalmente Sincronizado** | `app_users` | Gerencia chaves personalizadas e opera as cargas de semente (Exportar/Importar do Supabase) que alimentam as tabelas e unificam estados locais e na nuvem. |
+*   **Funcionalidades Estáveis:** Autenticação regional fiduciária, CRUD de frotas e motoristas, grid elástico e alocação de cargas no pátio, emissão e exportação de relatórios romaneios em PDF.
+*   **Áreas Parciais:** O mapeador flexível de arquivos CSV funciona e salva o layout, mas necessita de persistência no banco Supabase para eliminar dependência estrita do cache do navegador.
+*   **Áreas em Evolução:** Os custos de viagem adicionais introduzidos na Finalização não se convertem em histórico relacional permanente nas tabelas, sendo descartados pós-fechamento do veículo.
 
 ---
 
-## 🛠️ Guia de Instalação, Réplica e Execução (Passo a Passo)
+## ⚠️ 9. Dívidas Técnicas Conhecidas
 
-Siga os passos técnicos abaixo para clonar, implantar e rodar localmente ou replicar este software em outro container/provedor:
+*   **Persistência Volátil de Romaneios:** Ausência de uma tabela permanente de histórico de manifestos (`public.romaneios_hist`), dependendo de persistências pontuais locais.
+*   **RLS Simplificado:** A restrição por filial é imposta via filtros estritos lógica de frontend no React, necessitando de Row Level Security direto no PostgreSQL para auditorias rigorosas em grandes equipes.
+*   **Cálculos em RAM Client-Side:** Dashboard agrega e indexa milhares de faturamentos usando a CPU do navegador cliente, gerando latências no pátio caso o banco local de CTRCs exceda dezenas de milhares de linhas ativas.
 
-### 1. Pré-Requisitos
-- **Node.js** v18 ou superior instalado.
-- **NPM** v9 ou superior.
+---
 
-### 2. Clonagem do Repositório e Instalação de Dependências
-Abra o seu terminal operacional e execute os comandos:
+## 📅 10. Roadmap Resumido
 
+### Curto Prazo (Estabilização)
+*   Persistência de gabaritos flexíveis de CSV no Supabase associados à conta ativa.
+*   Refinamento do buffer de carregamento das planilhas em conexões de alta oscilação.
+
+### Médio Prazo (Consolidação de Domínio)
+*   Criação de tabelas de histórico relacional para armazenar e auditar romaneios encerrados.
+*   Migrar agregações custosas para Views nativas PostgreSQL no Supabase.
+
+### Longo Prazo (Segurança & Alta Escala)
+*   Ativação homogênea de políticas RLS em banco e liberação de logs de auditoria temporal.
+
+---
+
+## 🚀 11. Execução do Projeto
+
+### Pré-requisitos
+*   Node.js v18 ou superior.
+*   NPM v9 ou superior.
+
+### Instalação
 ```bash
-# Entre na pasta raiz onde o projeto foi descompactado ou clonado
-cd rotaoperational
-
-# Instale todas as dependências especificadas no manifest do package.json
+# Entre na pasta e instale os pacotes npm do manifesto
 npm install
 ```
 
----
-
-### 3. Configuração de Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do seu projeto a partir do modelo contido em `.env.example`:
-
-```bash
-# Copia o template de variáveis de ambiente
-cp .env.example .env
-```
-
-Abra o arquivo `.env` gerado e preencha as credenciais. Se você estiver integrando com o Supabase, as seguintes variáveis são mandatórias:
-
+### Variáveis de Ambiente (`.env`)
+Monte seu arquivo locais com as credenciais remotas do Supabase:
 ```env
-# Chave mestra do Gemini API (para integrações inteligentes futuras)
-GEMINI_API_KEY="AI_STUDIO_INJECTED_OR_YOUR_OWN_KEY"
-
-# URL Base de fomento de Aplicação
-APP_URL="http://localhost:3000"
-
-# CONFIGURAÇÕES DA INSTÂNCIA DO SUPABASE (Substitua pelas suas)
-SUPABASE_URL="https://sua-instancia-projeto.supabase.co"
-SUPABASE_KEY="sua-chave-anon-key-ou-service-role-key"
-
-# VARIÁVEIS EXPOSTAS AO CLIENTE VITE (Mesmos valores para conexões diretas de tela)
-VITE_SUPABASE_URL="https://sua-instancia-projeto.supabase.co"
+GEMINI_API_KEY="CHAVE_DE_APOIO_AI"
+SUPABASE_URL="https://seu-appid.supabase.co"
+SUPABASE_KEY="sua-chave-anon-key"
+VITE_SUPABASE_URL="https://seu-appid.supabase.co"
 VITE_SUPABASE_ANON_KEY="sua-chave-anon-key"
 ```
 
----
+### Inicializando o Sistema
 
-### 4. Inicializando o Software em Ambiente de Desenvolvimento
-
-Para rodar com recompilação contínua (hot reloading):
-
+Para rodar em ambiente de desenvolvimento (Porta obrigatória 3000):
 ```bash
 npm run dev
 ```
 
-O servidor Express e o middleware do Vite iniciarão juntos na porta **3000** garantindo que todos os links operem no host `http://localhost:3000`.
-
----
-
-### 5. Compilação e Start para Produção (Deployment para Clientes / Replicadores)
-
-Se você estiver preparando o software para implantar em um servidor web de produção (ex: Docker, Heroku, Cloud Run, AWS):
-
+Para compilação fechada (Production Build) e start direto do servidorExpress:
 ```bash
-# 1. Compila o frontend estático para a pasta /dist
-# 2. Recompila o backend TypeScript e agrupa-o no arquivo otimizado /dist/server.cjs
+# Compila frontend e encapsula o backend em dist/server.cjs
 npm run build
 
-# 3. Inicia o servidor node de produção a partir do código transpilado e empacotado
+# Executa o servidor fechado
 npm start
 ```
 
 ---
 
-## 💾 Modelagem de Banco de Dados: Script de Migração SQL (Copiar para o Supabase)
+## 📐 12. Diretrizes de Desenvolvimento e Filosofia de Evolução
 
-Para preparar as tabelas e garantir compatibilidade instantânea com RotaOperational sem restrições de escrita ou leitura, copie o script de semente de tabelas relativas abaixo e execute-o diretamente no **SQL Editor** do Console Administrativo do seu Supabase:
+O projeto evolui exclusivamente sob os preceitos de **estabilidade operacional**, **reforço de domínio** e **modularização progressiva** sem reescrever ou comprometer compatibilidades:
 
-```sql
--- =========================================================================
--- SCRIPT DE ENGENHARIA DE BANCO DE DADOS: ROTAOPERATIONAL (PRODUÇÃO / TESTES)
--- COPIAR E COLAR NO SQL EDITOR DO SUPABASE PARA ATIVAR O SOFTWARE IMEDIATAMENTE
--- =========================================================================
-
--- 1. Tabela de Veículos de Frota
-CREATE TABLE IF NOT EXISTS public.vehicles (
-  id TEXT PRIMARY KEY, -- Placa do Veículo
-  driver_name TEXT NOT NULL,
-  capacity TEXT NOT NULL,
-  type TEXT NOT NULL,
-  status TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 2. Tabela de Motoristas (Desempenho e Histórico)
-CREATE TABLE IF NOT EXISTS public.drivers (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  score NUMERIC NOT NULL,
-  best_route TEXT NOT NULL,
-  status TEXT NOT NULL,
-  vehicle TEXT NOT NULL,
-  avg_time INTEGER NOT NULL,
-  error_rate NUMERIC NOT NULL,
-  success_rate NUMERIC NOT NULL,
-  avatar TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 3. Documentos Operacionais Faturados / CTRCs
-CREATE TABLE IF NOT EXISTS public.ctrcs (
-  id TEXT PRIMARY KEY, -- Número do CTRC (ex: VGA433233-4)
-  destinatario TEXT NOT NULL,
-  cidade TEXT NOT NULL,
-  weight NUMERIC NOT NULL,
-  volume INTEGER NOT NULL,
-  type TEXT NOT NULL,
-  status TEXT NOT NULL,
-  cidade_ent TEXT,
-  setor TEXT,
-  prev_ent TEXT,
-  remetente TEXT,
-  ocorrencia TEXT,
-  data_ocorr TEXT,
-  nf TEXT,
-  valor NUMERIC,
-  frete NUMERIC,
-  unid TEXT, -- Unidade Operacional Filtro (ex: SPO / VGA / ALF / PPY)
-  pagador TEXT,
-  cod TEXT,
-  descricao_ocorr TEXT,
-  data_ocorrencia TEXT,
-  peso_r NUMERIC,
-  obs TEXT,
-  disponibilidade TEXT,
-  localizacao TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 4. Ocorrências Ativas / Incidentes Críticos de Rua
-CREATE TABLE IF NOT EXISTS public.tickets (
-  id TEXT PRIMARY KEY, -- #TRK-xxxxx
-  title TEXT NOT NULL,
-  destinatario TEXT NOT NULL,
-  address TEXT NOT NULL,
-  age_minutes INTEGER NOT NULL,
-  priority TEXT,
-  status TEXT NOT NULL,
-  icon TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 5. Clientes Críticos e Auditoria de Recorrência
-CREATE TABLE IF NOT EXISTS public.clients (
-  id TEXT PRIMARY KEY,
-  prefix TEXT NOT NULL,
-  name TEXT NOT NULL,
-  score NUMERIC NOT NULL,
-  rejections_30d INTEGER NOT NULL,
-  avg_queue_time TEXT NOT NULL,
-  address TEXT NOT NULL,
-  recurrent_issues_json TEXT NOT NULL, -- Dados Estruturados de Problemas Recorrentes
-  audit_user TEXT,
-  audit_avatar TEXT,
-  audit_time TEXT,
-  audit_detail TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 6. Gestão Corporativa de Usuários (Login e Níveis de Acesso)
-CREATE TABLE IF NOT EXISTS public.app_users (
-  username TEXT PRIMARY KEY,
-  password TEXT NOT NULL,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL,
-  is_master BOOLEAN DEFAULT FALSE,
-  unid TEXT, -- Unidade Relacionada Travada (ex: SPO / VGA / ALF / PPY)
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 7. Dicionário Operacional de Ocorrências e Tratativas
-CREATE TABLE IF NOT EXISTS public.occurrences (
-  codigo TEXT PRIMARY KEY,
-  descricao TEXT NOT NULL,
-  responsabilidade TEXT NOT NULL,
-  tipo TEXT NOT NULL,
-  setor_ocorr TEXT NOT NULL,
-  retorno_rota TEXT NOT NULL,
-  tratativa_solucao TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 8. Clientes Classificados - Curva A
-CREATE TABLE IF NOT EXISTS public.curva_a_clients (
-  cnpj_remetente TEXT PRIMARY KEY,
-  curva_a TEXT NOT NULL,
-  cliente_remetente TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- =========================================================================
--- CONFIGURAÇOES DE SEGURANÇA E ACESSIBILIDADE RLS (ROW LEVEL SECURITY)
--- Para uso corporativo ágil e sincronização de pátio sem impedimentos,
--- desativamos o RLS provisoriamente. Se desejar, configure políticas de e-mail específicas.
--- =========================================================================
-ALTER TABLE public.vehicles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.drivers DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.ctrcs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tickets DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.occurrences DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
-
--- =========================================================================
--- POPUP DE SEED OPERACIONAL PADRÃO (PREVENT LOCKOUT)
--- =========================================================================
-INSERT INTO public.app_users (username, password, name, role, is_master, unid)
-VALUES 
-  ('master', '123', 'Anderson M. (Master)', 'Superintendente de Logística', TRUE, 'TODAS'),
-  ('operador', '123', 'João Silva', 'Operador de Despacho', FALSE, 'SPO'),
-  ('auditor', '123', 'Maria Costa', 'Auditor de Contratos', FALSE, 'VGA')
-ON CONFLICT (username) DO NOTHING;
-```
+1.  **Não quebrar fluxos em uso:** Telas operacionais de faturamento diário nunca devem sofrer reestruturações destrutivas na UI.
+2.  **Desacoplar Lógica de Exibição:** Regras fiscais e cálculos de balanceamento de caminhões devem residir em hooks isolados ou contexts, e nunca mesclados às tags de renderização do componente React.
+3.  **Auditoria Estática Obrigatória:** Antes de submeter ou atualizar códigos, certifique-se de que a transpilação não apresenta furos de tipagem efetuando a validação integrada: `npm run lint`.
 
 ---
 
-## 🔒 Governança de Usuários e Regras de Negócio de Visibilidade (UNID)
-
-O sistema segue padrões rígidos de controle operacional baseado no perfil de privilégio do usuário logado:
-
-1. **Perfil Superintendente (`is_master: true` ou usuário `master`)**:
-   - Possui acesso completo e ilimitado de leitura e escrita a todas as abas.
-   - Pode alterar a Unidade Ativa no seletor do cabeçalho da "Roteirização" para auditar o fluxo de filiais individuais (**SPO**, **PPY**, **ALF**, **VGA**) ou selecionar `TODAS` simultaneamente para uma visão corporativa agregada.
-   - Pode criar, alterar e excluir operadores na tabela administrativa em "Configurações".
-
-2. **Perfil Operador Padrão (`is_master: false` exemplo `operador`)**:
-   - É estritamente **bloqueado e travado** na Unidade Física vinculada a seu cadastro (atribuído no campo `unid` da tabela de usuários).
-   - O seletor de unidade fica oculto no cabeçalho ou desativado, forçando o grid de roteirização a mostrar apenas os CTRCs pertencentes à sua filial (ex: Operadores de São Paulo visualizam e geram romaneios apenas de SPO).
-   - Não pode auditar ou visualizar listas corporativas de outras filiais, reduzindo o risco de erros operacionais e de misturas de cargas físicas em gaiolas e rotas distintas.
-
----
-
-## 🚀 Como Integrar Novas Funcionalidades no Futuro (Roteiro)
-
-Caso queira estender o backend para apoiar 100% os fluxos parciais do frontend, implemente as seguintes APIs no arquivo `/server.ts` e no banco de dados:
-
-1. **Logística Multiusuário Real-time**:
-   Substitua as chamadas do frontend em `src/components/` que atualizam dados locais e faça subscrições nos canais WebSockets do Supabase para refletir visualizações de caminhões em rota instantaneamente:
-   ```javascript
-   supabase
-     .channel('schema-db-changes')
-     .on('postgres_changes', { event: '*', schema: 'public', table: 'ctrcs' }, payload => {
-        // Recarregar lista em tela automaticamente
-     })
-     .subscribe();
-   ```
-
-2. **Tabela de Arquivos de Manifesto (`romaneios`)**:
-   Crie uma tabela `public.romaneios` e implemente a persistência da assinatura física e fechamento do veículo. Desta forma, o operador poderá consultar romaneios gerados no passado e reimprimir relatórios de viagem antigos.
-
----
-
-## 📝 Licença e Propósito de Modificação
-Desenvolvido em conformidade para uso em operações logísticas terrestres brasileiras. Sinta-se livre para clonar, customizar e implantar em novos pátios de triagem. Para suporte técnico e configurações de faturamento robustas, consulte o time de infraestrutura corporativa do seu terminal.
+*RotaOperational: Engenharia, Robustez e Estabilidade para o Despacho Rodoviário Terrestre Nacional.*
