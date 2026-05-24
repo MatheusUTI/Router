@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser } from './types';
 import {
   initialVehicles,
   initialDrivers,
@@ -29,9 +29,11 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Operator profile state
-  const [adminProfile, setAdminProfile] = useState({
-    name: 'Anderson M.',
+  const [adminProfile, setAdminProfile] = useState<AppUser>({
+    username: 'master',
+    name: 'Anderson M. (Master)',
     role: 'Superintendente de Logística',
+    is_master: true
   });
 
   // Global Operational Databases State
@@ -52,8 +54,8 @@ export default function App() {
   // ---------------------------------------------------------
   // LOGIN FLOW HANDLER
   // ---------------------------------------------------------
-  const handleLoginSuccess = (name: string, role: string) => {
-    setAdminProfile({ name, role });
+  const handleLoginSuccess = (user: AppUser) => {
+    setAdminProfile(user);
     setCurrentView('dashboard');
   };
 
@@ -285,8 +287,8 @@ export default function App() {
             onResetOP01={handleResetOP01}
             onResetOP02={handleResetOP02}
             onResetOP03={handleResetOP03}
-            adminName={adminProfile.name}
-            onUpdateAdmin={(name, role) => setAdminProfile({ name, role })}
+            adminUser={adminProfile}
+            onUpdateAdminUser={(user) => setAdminProfile(user)}
             vehicles={vehicles}
             drivers={drivers}
             availableCtrcs={availableCtrcs}

@@ -98,3 +98,13 @@ export interface CriticClient {
   auditTime: string;
   auditDetail: string;
 }
+
+export interface AppUser {
+  username: string;
+  password?: string;
+  name: string;
+  role: string;
+  is_master: boolean;
+  created_at?: string;
+}
+

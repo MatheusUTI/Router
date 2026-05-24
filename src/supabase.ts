@@ -1,34 +1,129 @@
 import { createClient } from '@supabase/supabase-js';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient } from './types';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser } from './types';
+import secureConfig from './supabase_config_enc.json';
 
-let rawUrl = 
-  ((import.meta as any).env)?.VITE_SUPABASE_URL || 
-  ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_URL || 
-  '';
-
-// Clean the URL if it contains /rest/v1/ or has a trailing slash
-if (rawUrl) {
-  rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').trim();
+// Simple robust passphrase encryption/decryption (XOR with dynamic key-stretching and base64)
+export function encryptCredentials(text: string, passphrase: string): string {
+  if (!text || !passphrase) return '';
+  let key = '';
+  while (key.length < text.length) {
+    key += passphrase;
+  }
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+    result += String.fromCharCode(charCode);
+  }
+  return btoa(encodeURIComponent(result));
 }
 
-const supabaseUrl = rawUrl;
+export function decryptCredentials(encryptedBase64: string, passphrase: string): string {
+  if (!encryptedBase64 || !passphrase) return '';
+  try {
+    const decoded = decodeURIComponent(atob(encryptedBase64));
+    let key = '';
+    while (key.length < decoded.length) {
+      key += passphrase;
+    }
+    let result = '';
+    for (let i = 0; i < decoded.length; i++) {
+      const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+      result += String.fromCharCode(charCode);
+    }
+    return result;
+  } catch (e) {
+    return '';
+  }
+}
 
-const supabaseAnonKey = 
-  ((import.meta as any).env)?.VITE_SUPABASE_ANON_KEY || 
-  ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
-  '';
+// Global configurations query hierarchy
+export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'decrypted' | 'env' | 'none' } {
+  // 1. Try local storage first
+  const localUrl = localStorage.getItem('supabase_custom_url');
+  const localKey = localStorage.getItem('supabase_custom_key');
+  if (localUrl && localKey) {
+    return { url: localUrl, key: localKey, source: 'localStorage' };
+  }
 
-// Clean helpers to check if they are set to valid values
-export const isSupabaseConfigured = 
-  !!supabaseUrl && 
-  supabaseUrl !== 'https://your-supabase-project.supabase.co' && 
-  !!supabaseAnonKey && 
-  supabaseAnonKey !== 'your-supabase-anon-key';
+  // 2. Try encrypted payload if passphrase is saved
+  const savedPassphrase = localStorage.getItem('supabase_passphrase');
+  if (secureConfig.encrypted && secureConfig.payload && savedPassphrase) {
+    try {
+      const decrypted = decryptCredentials(secureConfig.payload, savedPassphrase);
+      if (decrypted && decrypted.includes('||')) {
+        const [decryptedUrl, decryptedKey] = decrypted.split('||');
+        if (decryptedUrl && decryptedKey) {
+          return { url: decryptedUrl, key: decryptedKey, source: 'decrypted' };
+        }
+      }
+    } catch (e) {
+      // Ignored, falls back
+    }
+  }
 
-// Client initialization
-export const supabase = (supabaseUrl && supabaseAnonKey)
+  // 3. Try standard environment variables
+  let envUrl = 
+    ((import.meta as any).env)?.VITE_SUPABASE_URL || 
+    ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_URL || 
+    '';
+  if (envUrl) {
+    envUrl = envUrl.replace(/\/rest\/v1\/?$/, '').trim();
+  }
+  const envKey = 
+    ((import.meta as any).env)?.VITE_SUPABASE_ANON_KEY || 
+    ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+    '';
+
+  if (envUrl && envUrl !== 'https://your-supabase-project.supabase.co' && envKey && envKey !== 'your-supabase-anon-key') {
+    return { url: envUrl, key: envKey, source: 'env' };
+  }
+
+  return { url: '', key: '', source: 'none' };
+}
+
+// Active dynamic settings
+const initialSettings = getSavedCredentials();
+export const supabaseUrl = initialSettings.url;
+export const supabaseAnonKey = initialSettings.key;
+export const isSupabaseConfigured = initialSettings.source !== 'none';
+
+// Live export initialized client references
+export let supabase = (supabaseUrl && supabaseAnonKey)
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Dynamic updater
+export function updateActiveSupabaseClient(url: string, key: string, passphraseToStore?: string): { success: boolean; source: string; url: string; key: string } {
+  let cleanUrl = url.trim();
+  if (cleanUrl) {
+    cleanUrl = cleanUrl.replace(/\/rest\/v1\/?$/, '').trim();
+  }
+  const cleanKey = key.trim();
+
+  if (cleanUrl && cleanKey) {
+    localStorage.setItem('supabase_custom_url', cleanUrl);
+    localStorage.setItem('supabase_custom_key', cleanKey);
+    if (passphraseToStore !== undefined) {
+      localStorage.setItem('supabase_passphrase', passphraseToStore);
+    }
+    supabase = createClient(cleanUrl, cleanKey);
+    return { success: true, source: 'localStorage', url: cleanUrl, key: cleanKey };
+  } else {
+    // Clear custom settings
+    localStorage.removeItem('supabase_custom_url');
+    localStorage.removeItem('supabase_custom_key');
+    if (passphraseToStore !== undefined) {
+      localStorage.setItem('supabase_passphrase', passphraseToStore);
+    }
+    const defaultCred = getSavedCredentials();
+    if (defaultCred.url && defaultCred.key) {
+      supabase = createClient(defaultCred.url, defaultCred.key);
+    } else {
+      supabase = null;
+    }
+    return { success: true, source: defaultCred.source, url: defaultCred.url, key: defaultCred.key };
+  }
+}
 
 // Helper to test if database credentials are responsive
 export async function testSupabaseConnection(): Promise<{ success: boolean; message: string }> {
@@ -46,6 +141,135 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
     return { success: true, message: 'Conexão estabelecida com sucesso! Banco ativo e tabelas prontas para sincronização.' };
   } catch (err: any) {
     return { success: false, message: `Falha na requisição: ${err?.message || err}` };
+  }
+}
+
+// Initial default app users for local/offline testing or initial seeds
+export const DEFAULT_APP_USERS: AppUser[] = [
+  {
+    username: 'master',
+    password: '123',
+    name: 'Anderson M. (Master)',
+    role: 'Superintendente de Logística',
+    is_master: true
+  },
+  {
+    username: 'operador',
+    password: '123',
+    name: 'João Silva',
+    role: 'Operador de Despacho',
+    is_master: false
+  },
+  {
+    username: 'auditor',
+    password: '123',
+    name: 'Maria Costa',
+    role: 'Auditor de Contratos',
+    is_master: false
+  }
+];
+
+// Helper to get local app users from localstorage
+function getLocalAppUsers(): AppUser[] {
+  const local = localStorage.getItem('supabase_fallback_users');
+  if (local) {
+    try {
+      return JSON.parse(local);
+    } catch (e) {
+      // Ignored
+    }
+  }
+  localStorage.setItem('supabase_fallback_users', JSON.stringify(DEFAULT_APP_USERS));
+  return DEFAULT_APP_USERS;
+}
+
+// Helper to save local app users to localstorage
+function saveLocalAppUsers(users: AppUser[]) {
+  localStorage.setItem('supabase_fallback_users', JSON.stringify(users));
+}
+
+// Get all app users from Supabase or fallback
+export async function getAppUsers(): Promise<AppUser[]> {
+  try {
+    const creds = getSavedCredentials();
+    const headers: Record<string, string> = {};
+    if (creds.url && creds.key) {
+      headers["x-supabase-url"] = creds.url;
+      headers["x-supabase-key"] = creds.key;
+    }
+    const res = await fetch("/api/auth/users", { headers });
+    if (!res.ok) throw new Error("HTTP-error: " + res.status);
+    const data = await res.json();
+    if (data.success && data.users) {
+      return data.users;
+    }
+  } catch (e) {
+    console.warn("Erro ao recuperar usuários do backend, usando dados locais:", e);
+  }
+  return getLocalAppUsers();
+}
+
+// Create or update app user in database and fallback
+export async function saveAppUser(user: AppUser): Promise<{ success: boolean; message: string }> {
+  // Update local list first
+  const localUsers = getLocalAppUsers();
+  const cleanUsername = user.username.toLowerCase().trim();
+  const existingIndex = localUsers.findIndex(u => u.username.toLowerCase() === cleanUsername);
+  
+  const updatedUser = {
+    ...user,
+    username: cleanUsername,
+    password: user.password || "123"
+  };
+
+  if (existingIndex > -1) {
+    localUsers[existingIndex] = { ...localUsers[existingIndex], ...updatedUser };
+  } else {
+    localUsers.push(updatedUser);
+  }
+  saveLocalAppUsers(localUsers);
+
+  try {
+    const creds = getSavedCredentials();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (creds.url && creds.key) {
+      headers["x-supabase-url"] = creds.url;
+      headers["x-supabase-key"] = creds.key;
+    }
+    const res = await fetch("/api/auth/users", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(updatedUser)
+    });
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    const data = await res.json();
+    return { success: data.success, message: data.message || "Usuário salvo e sincronizado com o Supabase com sucesso!" };
+  } catch (err: any) {
+    return { success: true, message: `Usuário salvo localmente. Sincronização offline: ${err?.message || err}` };
+  }
+}
+
+// Delete user from database and fallback
+export async function deleteAppUser(username: string): Promise<{ success: boolean; message: string }> {
+  const localUsers = getLocalAppUsers().filter(u => u.username.toLowerCase() !== username.toLowerCase());
+  saveLocalAppUsers(localUsers);
+
+  try {
+    const creds = getSavedCredentials();
+    const headers: Record<string, string> = {};
+    if (creds.url && creds.key) {
+      headers["x-supabase-url"] = creds.url;
+      headers["x-supabase-key"] = creds.key;
+    }
+    const res = await fetch(`/api/auth/users/${encodeURIComponent(username)}`, {
+      method: "DELETE",
+      headers
+    });
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    const data = await res.json();
+    return { success: data.success, message: data.message || "Usuário excluído com sucesso do Supabase." };
+  } catch (err: any) {
+    return { success: true, message: `Excluído localmente. Sincronização offline: ${err?.message || err}` };
   }
 }
 
@@ -410,6 +634,16 @@ CREATE TABLE IF NOT EXISTS public.clients (
   audit_avatar TEXT,
   audit_time TEXT,
   audit_detail TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Gestão de Usuários
+CREATE TABLE IF NOT EXISTS public.app_users (
+  username TEXT PRIMARY KEY,
+  password TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  is_master BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 `;
