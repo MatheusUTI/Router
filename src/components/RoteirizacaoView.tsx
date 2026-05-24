@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Ctrc, Vehicle, AppUser } from '../types';
 
 interface RoteirizacaoViewProps {
@@ -226,7 +226,7 @@ export default function RoteirizacaoView({
   };
 
   // Sum total columns pixels for rigid HTML table sizing
-  const totalTableWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0) + 40; // 40 for checkmark column
+  const totalTableWidth = (Object.values(columnWidths).reduce((a, b) => (a as number) + (b as number), 0) as number) + 40; // 40 for checkmark column
 
   // Render Resizable Header Cell Helper
   const renderHeaderCell = (colId: string, label: string, isNumeric = false) => {
