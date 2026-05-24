@@ -28,6 +28,8 @@ export default function Sidebar({
     { view: 'desempenho' as ViewType, label: 'Desempenho', icon: 'assessment', fillIcon: false },
     { view: 'solucao' as ViewType, label: 'Problemas de Entrega', icon: 'report_problem', fillIcon: false },
     { view: 'clientes' as ViewType, label: 'Clientes Críticos', icon: 'gpp_bad', fillIcon: false },
+    { view: 'ocorrencias' as ViewType, label: 'Banco de Ocorrências', icon: 'menu_book', fillIcon: false },
+    { view: 'curva_a' as ViewType, label: 'Clientes Curva A', icon: 'military_tech', fillIcon: false },
     { view: 'configuracoes' as ViewType, label: 'Configurações', icon: 'settings', fillIcon: false },
   ];
 

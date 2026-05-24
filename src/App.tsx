@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
 import {
   initialVehicles,
   initialDrivers,
@@ -8,7 +8,19 @@ import {
   initialExpenses,
   initialTickets,
   initialCriticalClients,
+  initialDeliveryOccurrences,
+  initialCurvaAClients,
 } from './data';
+import {
+  syncVehicleToSupabase,
+  removeVehicleFromSupabase,
+  syncDriverToSupabase,
+  removeDriverFromSupabase,
+  syncOccurrenceToSupabase,
+  removeOccurrenceFromSupabase,
+  syncCurvaAClientToSupabase,
+  removeCurvaAClientFromSupabase
+} from './supabase';
 
 // Import Views
 import Sidebar from './components/Sidebar';
@@ -23,6 +35,8 @@ import FinalizacaoView from './components/FinalizacaoView';
 import SolucaoView from './components/SolucaoView';
 import ConfiguracoesView from './components/ConfiguracoesView';
 import LoginView from './components/LoginView';
+import OcorrenciasView from './components/OcorrenciasView';
+import CurvaAView from './components/CurvaAView';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('login');
@@ -44,6 +58,11 @@ export default function App() {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   const [clients, setClients] = useState<CriticClient[]>(initialCriticalClients);
+  const [occurrences, setOccurrences] = useState<DeliveryOccurrence[]>(initialDeliveryOccurrences);
+  const [curvaAClients, setCurvaAClients] = useState<CurvaAClient[]>(initialCurvaAClients);
+
+  // Syncing state spinner
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Active Romaneio Vehicle Tracker
   const [activeRomaneioVehicleId, setActiveRomaneioVehicleId] = useState<string | null>('RTA3G45');
@@ -67,28 +86,115 @@ export default function App() {
   // ---------------------------------------------------------
   // OPERATIONAL STATE CHANGERS (FROTA)
   // ---------------------------------------------------------
-  const handleAddVehicle = (v: Vehicle) => {
+  const handleAddVehicle = async (v: Vehicle) => {
     setVehicles((prev) => [...prev, v]);
+    setIsSyncing(true);
+    await syncVehicleToSupabase(v);
+    setIsSyncing(false);
   };
 
-  const handleUpdateVehicle = (v: Vehicle) => {
+  const handleUpdateVehicle = async (v: Vehicle) => {
     setVehicles((prev) => prev.map((item) => (item.id === v.id ? v : item)));
+    setIsSyncing(true);
+    await syncVehicleToSupabase(v);
+    setIsSyncing(false);
   };
 
-  const handleRemoveVehicle = (id: string) => {
+  const handleRemoveVehicle = async (id: string) => {
     setVehicles((prev) => prev.filter((item) => item.id !== id));
+    setIsSyncing(true);
+    await removeVehicleFromSupabase(id);
+    setIsSyncing(false);
   };
 
-  const handleAddDriver = (d: DriverScore) => {
+  const handleAddDriver = async (d: DriverScore) => {
     setDrivers((prev) => [...prev, d]);
+    setIsSyncing(true);
+    await syncDriverToSupabase(d);
+    setIsSyncing(false);
   };
 
-  const handleUpdateDriver = (d: DriverScore) => {
+  const handleUpdateDriver = async (d: DriverScore) => {
     setDrivers((prev) => prev.map((item) => (item.id === d.id ? d : item)));
+    setIsSyncing(true);
+    await syncDriverToSupabase(d);
+    setIsSyncing(false);
   };
 
-  const handleRemoveDriver = (id: string) => {
+  const handleRemoveDriver = async (id: string) => {
     setDrivers((prev) => prev.filter((item) => item.id !== id));
+    setIsSyncing(true);
+    await removeDriverFromSupabase(id);
+    setIsSyncing(false);
+  };
+
+  // ---------------------------------------------------------
+  // OPERATIONAL STATE CHANGERS (OCORRENCIAS & CURVA A)
+  // ---------------------------------------------------------
+  const handleAddOccurrence = async (o: DeliveryOccurrence) => {
+    setOccurrences((prev) => [...prev, o]);
+    setIsSyncing(true);
+    await syncOccurrenceToSupabase(o);
+    setIsSyncing(false);
+  };
+
+  const handleUpdateOccurrence = async (o: DeliveryOccurrence) => {
+    setOccurrences((prev) => prev.map((item) => (item.codigo === o.codigo ? o : item)));
+    setIsSyncing(true);
+    await syncOccurrenceToSupabase(o);
+    setIsSyncing(false);
+  };
+
+  const handleRemoveOccurrence = async (codigo: string) => {
+    setOccurrences((prev) => prev.filter((item) => item.codigo !== codigo));
+    setIsSyncing(true);
+    await removeOccurrenceFromSupabase(codigo);
+    setIsSyncing(false);
+  };
+
+  const handleBulkImportOccurrences = async (list: DeliveryOccurrence[]) => {
+    setOccurrences((prev) => {
+      const filteredPrev = prev.filter(p => !list.some(l => l.codigo === p.codigo));
+      return [...filteredPrev, ...list];
+    });
+    setIsSyncing(true);
+    for (const o of list) {
+      await syncOccurrenceToSupabase(o);
+    }
+    setIsSyncing(false);
+  };
+
+  const handleAddCurvaA = async (c: CurvaAClient) => {
+    setCurvaAClients((prev) => [...prev, c]);
+    setIsSyncing(true);
+    await syncCurvaAClientToSupabase(c);
+    setIsSyncing(false);
+  };
+
+  const handleUpdateCurvaA = async (c: CurvaAClient) => {
+    setCurvaAClients((prev) => prev.map((item) => (item.cnpj_remetente === c.cnpj_remetente ? c : item)));
+    setIsSyncing(true);
+    await syncCurvaAClientToSupabase(c);
+    setIsSyncing(false);
+  };
+
+  const handleRemoveCurvaA = async (cnpj: string) => {
+    setCurvaAClients((prev) => prev.filter((item) => item.cnpj_remetente !== cnpj));
+    setIsSyncing(true);
+    await removeCurvaAClientFromSupabase(cnpj);
+    setIsSyncing(false);
+  };
+
+  const handleBulkImportCurvaA = async (list: CurvaAClient[]) => {
+    setCurvaAClients((prev) => {
+      const filteredPrev = prev.filter(p => !list.some(l => l.cnpj_remetente === p.cnpj_remetente));
+      return [...filteredPrev, ...list];
+    });
+    setIsSyncing(true);
+    for (const c of list) {
+      await syncCurvaAClientToSupabase(c);
+    }
+    setIsSyncing(false);
   };
 
   // ---------------------------------------------------------
@@ -200,6 +306,8 @@ export default function App() {
 
   const handleResetOP03 = () => {
     setClients(initialCriticalClients);
+    setOccurrences(initialDeliveryOccurrences);
+    setCurvaAClients(initialCurvaAClients);
   };
 
   // Resolve counts for notifications indicator
@@ -249,6 +357,7 @@ export default function App() {
             vehicles={vehicles}
             onAssignCtre={handleAssignCtre}
             onConsolidateRomaneio={handleConsolidateRomaneio}
+            adminUser={adminProfile}
           />
         );
       case 'finalizacao':
@@ -281,6 +390,28 @@ export default function App() {
             searchValue={searchValue}
           />
         );
+      case 'ocorrencias':
+        return (
+          <OcorrenciasView
+            occurrences={occurrences}
+            onAddOccurrence={handleAddOccurrence}
+            onUpdateOccurrence={handleUpdateOccurrence}
+            onRemoveOccurrence={handleRemoveOccurrence}
+            onBulkImportOccurrences={handleBulkImportOccurrences}
+            isSyncing={isSyncing}
+          />
+        );
+      case 'curva_a':
+        return (
+          <CurvaAView
+            clients={curvaAClients}
+            onAddClient={handleAddCurvaA}
+            onUpdateClient={handleUpdateCurvaA}
+            onRemoveClient={handleRemoveCurvaA}
+            onBulkImportClients={handleBulkImportCurvaA}
+            isSyncing={isSyncing}
+          />
+        );
       case 'configuracoes':
         return (
           <ConfiguracoesView
@@ -294,12 +425,16 @@ export default function App() {
             availableCtrcs={availableCtrcs}
             tickets={tickets}
             clients={clients}
+            occurrences={occurrences}
+            curvaAClients={curvaAClients}
             onSyncFromSupabase={(data) => {
               if (data.vehicles) setVehicles(data.vehicles);
               if (data.drivers) setDrivers(data.drivers);
               if (data.ctrcs) setAvailableCtrcs(data.ctrcs);
               if (data.tickets) setTickets(data.tickets);
               if (data.clients) setClients(data.clients);
+              if (data.occurrences) setOccurrences(data.occurrences);
+              if (data.curvaAClients) setCurvaAClients(data.curvaAClients);
             }}
           />
         );

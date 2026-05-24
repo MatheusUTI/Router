@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser } from '../types';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from '../types';
 import { 
   isSupabaseConfigured, 
   testSupabaseConnection, 
@@ -24,12 +24,16 @@ interface ConfiguracoesViewProps {
   availableCtrcs: Ctrc[];
   tickets: Ticket[];
   clients: CriticClient[];
+  occurrences: DeliveryOccurrence[];
+  curvaAClients: CurvaAClient[];
   onSyncFromSupabase: (data: {
     vehicles?: Vehicle[];
     drivers?: DriverScore[];
     ctrcs?: Ctrc[];
     tickets?: Ticket[];
     clients?: CriticClient[];
+    occurrences?: DeliveryOccurrence[];
+    curvaAClients?: CurvaAClient[];
   }) => void;
 }
 
@@ -44,10 +48,13 @@ export default function ConfiguracoesView({
   availableCtrcs,
   tickets,
   clients,
+  occurrences,
+  curvaAClients,
   onSyncFromSupabase,
 }: ConfiguracoesViewProps) {
   const [tempName, setTempName] = useState(adminUser.name);
   const [tempRole, setTempRole] = useState(adminUser.role);
+  const [tempUnid, setTempUnid] = useState(adminUser.unid || (adminUser.is_master ? 'TODAS' : 'SPO'));
   const [message, setMessage] = useState<string | null>(null);
 
   // Users Database management states
@@ -58,6 +65,7 @@ export default function ConfiguracoesView({
   const [userFormName, setUserFormName] = useState('');
   const [userFormRole, setUserFormRole] = useState('Operador de Despacho');
   const [userFormIsMaster, setUserFormIsMaster] = useState(false);
+  const [userFormUnid, setUserFormUnid] = useState('SPO');
 
   // Supabase Custom Form States for Database Setup
   const [customUrl, setCustomUrl] = useState(() => {
@@ -112,6 +120,7 @@ export default function ConfiguracoesView({
     // Synced profile update in case props changed
     setTempName(adminUser.name);
     setTempRole(adminUser.role);
+    setTempUnid(adminUser.unid || (adminUser.is_master ? 'TODAS' : 'SPO'));
   }, [adminUser]);
 
   const handleCreateOrUpdateUser = async (e: FormEvent) => {
@@ -140,7 +149,8 @@ export default function ConfiguracoesView({
       password: userFormPassword.trim() || '123',
       name: nameRaw,
       role: userFormRole,
-      is_master: userFormIsMaster
+      is_master: userFormIsMaster,
+      unid: userFormUnid
     };
 
     const res = await saveAppUser(payload);
@@ -152,6 +162,7 @@ export default function ConfiguracoesView({
     setUserFormPassword('');
     setUserFormName('');
     setUserFormIsMaster(false);
+    setUserFormUnid('SPO');
 
     handleLoadUsers();
   };
@@ -258,7 +269,7 @@ export default function ConfiguracoesView({
 
     setConfirmModal({
       title: "Confirmar Exportação de Carga Semente",
-      description: "Isso exportará todos os dados locais atuais (veículos, motoristas, CTRCs, chamados, clientes críticos e usuários operacionais) para as tabelas do seu banco de dados Supabase na nuvem. Os registros lá serão sobrepostos ou atualizados. Continuar?",
+      description: "Isso exportará todos os dados locais atuais (veículos, motoristas, CTRCs, chamados, clientes críticos, ocorrências, curva A e usuários operacionais) para as tabelas do seu banco de dados Supabase na nuvem. Os registros lá serão sobrepostos ou atualizados. Continuar?",
       onConfirm: async () => {
         setConfirmModal(null);
         setIsExporting(true);
@@ -270,7 +281,9 @@ export default function ConfiguracoesView({
             ctrcs: availableCtrcs,
             tickets,
             clients,
-            users: appUsers
+            users: appUsers,
+            occurrences,
+            curvaAClients
           });
           setSyncLogs(res.results);
           if (res.success) {
@@ -325,8 +338,10 @@ export default function ConfiguracoesView({
               `✓ ${res.data.vehicles.length} Veículos recuperados.`,
               `✓ ${res.data.drivers.length} Desempenhos de motorista sincronizados.`,
               `✓ ${res.data.ctrcs.length} Documentos operacionais CTRC carregados.`,
-              `✓ ${res.data.tickets.length} Ocorrências mapeadas obtidas.`,
-              `✓ ${res.data.clients.length} Clientes críticos sincronizados.`
+              `✓ ${res.data.tickets.length} Chamados obtidos.`,
+              `✓ ${res.data.clients.length} Clientes críticos sincronizados.`,
+              `✓ ${res.data.occurrences?.length || 0} Dicionários de Ocorrência carregados.`,
+              `✓ ${res.data.curvaAClients?.length || 0} Clientes Curva A restabelecidos.`
             ]);
             setMessage(res.message);
           } else {
@@ -356,7 +371,8 @@ export default function ConfiguracoesView({
     const updated: AppUser = {
       ...adminUser,
       name: tempName,
-      role: tempRole
+      role: tempRole,
+      unid: tempUnid
     };
     await saveAppUser(updated);
     onUpdateAdminUser(updated);
@@ -437,6 +453,35 @@ export default function ConfiguracoesView({
                   <option value="Analista de Desempenho">Analista de Desempenho</option>
                   <option value="Operador de Despacho">Operador de Despacho</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-on-surface block mb-1">Unidade Relacionada (UNID)</label>
+                <select
+                  value={tempUnid}
+                  onChange={(e) => setTempUnid(e.target.value)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-bold text-primary"
+                >
+                  {adminUser.is_master ? (
+                    <>
+                      <option value="TODAS">TODAS AS UNIDADES (Master Filterable)</option>
+                      <option value="SPO">SPO - São Paulo</option>
+                      <option value="PPY">PPY - Pouso Alegre</option>
+                      <option value="ALF">ALF - Alfenas</option>
+                      <option value="VGA">VGA - Varginha</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="SPO">SPO - São Paulo</option>
+                      <option value="PPY">PPY - Pouso Alegre</option>
+                      <option value="ALF">ALF - Alfenas</option>
+                      <option value="VGA">VGA - Varginha</option>
+                    </>
+                  )}
+                </select>
+                <p className="text-[10px] text-on-surface-variant mt-1 leading-normal">
+                  Controla o filtro automático e restrições de visibilidade de CTRCs que impactarão a roteirização.
+                </p>
               </div>
 
               <div className="flex items-center gap-2 pt-2 bg-surface-container-low/40 p-3 rounded-lg border border-outline-variant/30">
@@ -615,6 +660,20 @@ export default function ConfiguracoesView({
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Unidade Padrão (UNID)</label>
+                  <select
+                    value={userFormUnid}
+                    onChange={(e) => setUserFormUnid(e.target.value)}
+                    className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-bold text-[#3ecf8e]"
+                  >
+                    <option value="SPO">SPO - São Paulo</option>
+                    <option value="PPY">PPY - Pouso Alegre</option>
+                    <option value="ALF">ALF - Alfenas</option>
+                    <option value="VGA">VGA - Varginha</option>
+                  </select>
+                </div>
+
                 <div className="flex items-center gap-2 py-1">
                   <input
                     type="checkbox"
@@ -666,6 +725,7 @@ export default function ConfiguracoesView({
                       <th className="p-3">Usuário / Login</th>
                       <th className="p-3">Nome do Operador</th>
                       <th className="p-3">Perfil / Cargo</th>
+                      <th className="p-3">Unidade</th>
                       <th className="p-3">Nível</th>
                       {adminUser.is_master && <th className="p-3 text-right">Ação</th>}
                     </tr>
@@ -676,6 +736,7 @@ export default function ConfiguracoesView({
                         <td className="p-3 font-mono font-bold text-primary">{u.username}</td>
                         <td className="p-3 text-on-surface font-semibold">{u.name}</td>
                         <td className="p-3 text-on-surface-variant">{u.role}</td>
+                        <td className="p-3 font-mono font-bold text-[#3ecf8e]">{u.unid || 'TODAS'}</td>
                         <td className="p-3">
                           {u.is_master ? (
                             <span className="px-2 py-0.5 bg-error/10 text-error font-mono text-[9px] font-bold rounded uppercase tracking-wider">
@@ -703,7 +764,7 @@ export default function ConfiguracoesView({
                     ))}
                     {appUsers.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-on-surface-variant">
+                        <td colSpan={6} className="p-8 text-center text-on-surface-variant">
                           Nenhum usuário operacional cadastrado na tabela.
                         </td>
                       </tr>

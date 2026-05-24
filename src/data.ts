@@ -1,4 +1,4 @@
-import { Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, Occurence } from './types';
+import { Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, Occurence, DeliveryOccurrence, CurvaAClient } from './types';
 
 export const initialVehicles: Vehicle[] = [
   {
@@ -410,3 +410,140 @@ export const initialCriticalClients: CriticClient[] = [
     auditDetail: 'Restrição física anotada na instrução de frota - bloqueio de tração articulada duplo.',
   },
 ];
+
+export const initialDeliveryOccurrences: DeliveryOccurrence[] = [
+  {
+    codigo: '0',
+    descricao: '0',
+    responsabilidade: '0 Transportadora',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Transferência',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'N/A'
+  },
+  {
+    codigo: '1',
+    descricao: 'ENTREGA REALIZADA',
+    responsabilidade: 'Informativa',
+    tipo: 'Entrega',
+    setor_ocorr: 'Em Rota',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'Finalizadora'
+  },
+  {
+    codigo: '2',
+    descricao: 'MERC ENTREGUE-INFORM VIA CELULAR',
+    responsabilidade: 'Cliente',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Em Rota',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'Finalizadora'
+  },
+  {
+    codigo: '3',
+    descricao: 'ENTREGA REALIZADA COMPROVANTE RETIDO',
+    responsabilidade: 'Cliente',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Retidos',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'Finalizadora'
+  },
+  {
+    codigo: '4',
+    descricao: 'DESTINATARIO RETIRA',
+    responsabilidade: 'Cliente',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Disponível',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'N/A'
+  },
+  {
+    codigo: '6',
+    descricao: 'DESTINAT ALEGA PEDIDO CANCELADO',
+    responsabilidade: 'Cliente',
+    tipo: 'Pendência Cliente',
+    setor_ocorr: 'Solução',
+    retorno_rota: 'Sim',
+    tratativa_solucao: 'Abertura'
+  },
+  {
+    codigo: '7',
+    descricao: 'AGUARDANDO DESCARREGAMENTO NO DESTINATARIO',
+    responsabilidade: 'Cliente',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Em Rota',
+    retorno_rota: 'Não',
+    tratativa_solucao: 'N/A'
+  },
+  {
+    codigo: '8',
+    descricao: 'DEST ALEGA MERC DESAC C/PEDIDO',
+    responsabilidade: 'Cliente',
+    tipo: 'Pendência Cliente',
+    setor_ocorr: 'Solução',
+    retorno_rota: 'Sim',
+    tratativa_solucao: 'Abertura'
+  },
+  {
+    codigo: '12',
+    descricao: 'ÁREA DE RISCO',
+    responsabilidade: 'Cliente',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Disponível',
+    retorno_rota: 'Sim',
+    tratativa_solucao: 'N/A'
+  },
+  {
+    codigo: '13',
+    descricao: 'ENTREGA PREJUDICADA P/HORARIO',
+    responsabilidade: 'Transportadora',
+    tipo: 'Em Aberto',
+    setor_ocorr: 'Disponível',
+    retorno_rota: 'Sim',
+    tratativa_solucao: 'N/A'
+  }
+];
+
+export const initialCurvaAClients: CurvaAClient[] = [
+  {
+    curva_a: 'JJ SOLDAS',
+    cnpj_remetente: '9320155739',
+    cliente_remetente: 'JOAO VIDAL ..'
+  },
+  {
+    curva_a: 'ALL NATIONS',
+    cnpj_remetente: '70112000461',
+    cliente_remetente: 'ALL NATIONS COMERCIO EXTERIOR'
+  },
+  {
+    curva_a: 'ALL NATIONS',
+    cnpj_remetente: '70112001000',
+    cliente_remetente: 'ALL NATIONS COMERCIO EXTERIOR'
+  },
+  {
+    curva_a: 'KNORR BREMSE',
+    cnpj_remetente: '264588000190',
+    cliente_remetente: 'KNORR BREMSE SISTEMAS PARA VEICULOS FERROVIARIOS LTDA'
+  },
+  {
+    curva_a: 'KNORR BREMSE',
+    cnpj_remetente: '41617000151',
+    cliente_remetente: 'KNORR BREMSE SISTEMAS P VEICULOS COMERCIAIS BRASIL LTDA'
+  },
+  {
+    curva_a: 'HONDA AUTO',
+    cnpj_remetente: '119233000122',
+    cliente_remetente: 'HONDA AUTOMOVEIS DO BRASIL LTDA'
+  },
+  {
+    curva_a: 'HONDA AUTO',
+    cnpj_remetente: '119233000394',
+    cliente_remetente: 'HONDA AUTOMOVEIS DO BRASIL LTDA'
+  },
+  {
+    curva_a: 'RADU',
+    cnpj_remetente: '1361186000843',
+    cliente_remetente: 'RADU INDUSTRIA IMPORTACAO E EX A1'
+  }
+];
+

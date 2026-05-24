@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser } from './types';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
 
 // Global configurations query hierarchy (Simplified)
 export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'env' | 'none' } {
@@ -187,6 +187,7 @@ export async function getAppUsers(): Promise<AppUser[]> {
           name: u.name,
           role: u.role,
           is_master: !!u.is_master,
+          unid: u.unid,
           created_at: u.created_at
         }));
         
@@ -257,7 +258,8 @@ export async function saveAppUser(user: AppUser): Promise<{ success: boolean; me
           password: updatedUser.password,
           name: updatedUser.name,
           role: updatedUser.role,
-          is_master: updatedUser.is_master
+          is_master: updatedUser.is_master,
+          unid: updatedUser.unid
         });
 
       if (!dbError) {
@@ -355,6 +357,126 @@ export async function deleteAppUser(username: string): Promise<{ success: boolea
   return { success: true, message: "Excluído localmente em cache offline." };
 }
 
+// --- SINGLE RECORD BACKEND / SUPABASE REAL-TIME PERSISTENCE HANDLERS ---
+
+export async function syncVehicleToSupabase(v: Vehicle): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('vehicles').upsert({
+      id: v.id,
+      driver_name: v.driverName,
+      capacity: v.capacity,
+      type: v.type,
+      status: v.status
+    });
+    return !error;
+  } catch (err) {
+    console.warn("syncVehicleToSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function removeVehicleFromSupabase(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    return !error;
+  } catch (err) {
+    console.warn("removeVehicleFromSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function syncDriverToSupabase(d: DriverScore): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('drivers').upsert({
+      id: d.id,
+      name: d.name,
+      score: d.score,
+      best_route: d.bestRoute,
+      status: d.status,
+      vehicle: d.vehicle,
+      avg_time: d.avgTime,
+      error_rate: d.errorRate,
+      success_rate: d.successRate,
+      avatar: d.avatar
+    });
+    return !error;
+  } catch (err) {
+    console.warn("syncDriverToSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function removeDriverFromSupabase(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('drivers').delete().eq('id', id);
+    return !error;
+  } catch (err) {
+    console.warn("removeDriverFromSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function syncOccurrenceToSupabase(o: DeliveryOccurrence): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('occurrences').upsert({
+      codigo: o.codigo,
+      descricao: o.descricao,
+      responsabilidade: o.responsabilidade,
+      tipo: o.tipo,
+      setor_ocorr: o.setor_ocorr,
+      setor_ocorrencia: o.setor_ocorr,
+      retorno_rota: o.retorno_rota,
+      tratativa_solucao: o.tratativa_solucao
+    });
+    return !error;
+  } catch (err) {
+    console.warn("syncOccurrenceToSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function removeOccurrenceFromSupabase(codigo: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('occurrences').delete().eq('codigo', codigo);
+    return !error;
+  } catch (err) {
+    console.warn("removeOccurrenceFromSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function syncCurvaAClientToSupabase(c: CurvaAClient): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('curva_a_clients').upsert({
+      cnpj_remetente: c.cnpj_remetente,
+      curva_a: c.curva_a,
+      cliente_remetente: c.cliente_remetente
+    });
+    return !error;
+  } catch (err) {
+    console.warn("syncCurvaAClientToSupabase failed:", err);
+    return false;
+  }
+}
+
+export async function removeCurvaAClientFromSupabase(cnpj: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('curva_a_clients').delete().eq('cnpj_remetente', cnpj);
+    return !error;
+  } catch (err) {
+    console.warn("removeCurvaAClientFromSupabase failed:", err);
+    return false;
+  }
+}
+
 // Export local states to Supabase (Upload Seed Data / Local Records)
 export async function exportStateToSupabase(data: {
   vehicles: Vehicle[];
@@ -363,6 +485,8 @@ export async function exportStateToSupabase(data: {
   tickets: Ticket[];
   clients: CriticClient[];
   users?: AppUser[];
+  occurrences?: DeliveryOccurrence[];
+  curvaAClients?: CurvaAClient[];
 }): Promise<{ success: boolean; results: string[] }> {
   if (!supabase) throw new Error('Supabase client is not configured.');
   
@@ -521,6 +645,44 @@ export async function exportStateToSupabase(data: {
     }
   }
 
+  // 7. Occurrences
+  if (data.occurrences && data.occurrences.length > 0) {
+    try {
+      const formattedOccs = data.occurrences.map(o => ({
+        codigo: o.codigo,
+        descricao: o.descricao,
+        responsabilidade: o.responsabilidade,
+        tipo: o.tipo,
+        setor_ocorr: o.setor_ocorr,
+        retorno_rota: o.retorno_rota,
+        tratativa_solucao: o.tratativa_solucao
+      }));
+      const { error } = await supabase.from('occurrences').upsert(formattedOccs);
+      if (error) throw error;
+      results.push(`✓ ${formattedOccs.length} tipos de ocorrência exportados.`);
+    } catch (err: any) {
+      hasErrors = true;
+      results.push(`❌ Ocorrências: ${formatSupabaseError(err, 'occurrences')}`);
+    }
+  }
+
+  // 8. Curva A Clients
+  if (data.curvaAClients && data.curvaAClients.length > 0) {
+    try {
+      const formattedCurvas = data.curvaAClients.map(c => ({
+        cnpj_remetente: c.cnpj_remetente,
+        curva_a: c.curva_a,
+        cliente_remetente: c.cliente_remetente
+      }));
+      const { error } = await supabase.from('curva_a_clients').upsert(formattedCurvas);
+      if (error) throw error;
+      results.push(`✓ ${formattedCurvas.length} clientes Curva A exportados.`);
+    } catch (err: any) {
+      hasErrors = true;
+      results.push(`❌ Clientes Curva A: ${formatSupabaseError(err, 'curva_a_clients')}`);
+    }
+  }
+
   return { success: !hasErrors, results };
 }
 
@@ -534,6 +696,8 @@ export async function importStateFromSupabase(): Promise<{
     ctrcs: Ctrc[];
     tickets: Ticket[];
     clients: CriticClient[];
+    occurrences: DeliveryOccurrence[];
+    curvaAClients: CurvaAClient[];
   };
 }> {
   if (!supabase) throw new Error('Supabase client is not configured.');
@@ -558,6 +722,28 @@ export async function importStateFromSupabase(): Promise<{
     // 5. Fetch Clients
     const clientsFetch = await supabase.from('clients').select('*');
     if (clientsFetch.error) throw new Error(`Falha nos Clientes: ${formatSupabaseError(clientsFetch.error, 'clients')}`);
+
+    // 6. Fetch Occurrences (Graceful fallback if table is not active yet)
+    let occurrencesRaw: any[] = [];
+    try {
+      const occurrencesFetch = await supabase.from('occurrences').select('*');
+      if (!occurrencesFetch.error && occurrencesFetch.data) {
+        occurrencesRaw = occurrencesFetch.data;
+      }
+    } catch (e) {
+      console.warn("Tabela de occurrences não ativada ainda:", e);
+    }
+
+    // 7. Fetch Curva A Clients (Graceful fallback)
+    let curvaAClientsRaw: any[] = [];
+    try {
+      const curvaAClientsFetch = await supabase.from('curva_a_clients').select('*');
+      if (!curvaAClientsFetch.error && curvaAClientsFetch.data) {
+        curvaAClientsRaw = curvaAClientsFetch.data;
+      }
+    } catch (e) {
+      console.warn("Tabela de curva_a_clients não ativada ainda:", e);
+    }
 
     // Safe extraction with default array fallbacks
     const vehiclesRaw = vehiclesFetch.data || [];
@@ -667,10 +853,26 @@ export async function importStateFromSupabase(): Promise<{
       };
     });
 
+    const occurrences: DeliveryOccurrence[] = occurrencesRaw.map(o => ({
+      codigo: o.codigo,
+      descricao: o.descricao,
+      responsabilidade: o.responsabilidade,
+      tipo: o.tipo,
+      setor_ocorr: o.setor_ocorr || '',
+      retorno_rota: o.retorno_rota as any,
+      tratativa_solucao: o.tratativa_solucao
+    }));
+
+    const curvaAClients: CurvaAClient[] = curvaAClientsRaw.map(c => ({
+      cnpj_remetente: c.cnpj_remetente,
+      curva_a: c.curva_a,
+      cliente_remetente: c.cliente_remetente
+    }));
+
     return {
       success: true,
       message: 'Dados recuperados e sincronizados do Supabase com sucesso!',
-      data: { vehicles, drivers, ctrcs, tickets, clients }
+      data: { vehicles, drivers, ctrcs, tickets, clients, occurrences, curvaAClients }
     };
   } catch (err: any) {
     return {
@@ -776,6 +978,27 @@ CREATE TABLE IF NOT EXISTS public.app_users (
   name TEXT NOT NULL,
   role TEXT NOT NULL,
   is_master BOOLEAN DEFAULT FALSE,
+  unid TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. Dicionário de Ocorrências Operacionais
+CREATE TABLE IF NOT EXISTS public.occurrences (
+  codigo TEXT PRIMARY KEY,
+  descricao TEXT NOT NULL,
+  responsabilidade TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  setor_ocorr TEXT NOT NULL,
+  retorno_rota TEXT NOT NULL,
+  tratativa_solucao TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. Clientes Curva A (Base de Dados)
+CREATE TABLE IF NOT EXISTS public.curva_a_clients (
+  cnpj_remetente TEXT PRIMARY KEY,
+  curva_a TEXT NOT NULL,
+  cliente_remetente TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -788,4 +1011,6 @@ ALTER TABLE public.ctrcs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tickets DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.occurrences DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
 `;

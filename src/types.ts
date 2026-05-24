@@ -8,6 +8,8 @@ export type ViewType =
   | 'desempenho'
   | 'solucao'
   | 'clientes'
+  | 'ocorrencias'
+  | 'curva_a'
   | 'configuracoes';
 
 export interface Vehicle {
@@ -105,6 +107,24 @@ export interface AppUser {
   name: string;
   role: string;
   is_master: boolean;
+  unid?: string;
   created_at?: string;
 }
+
+export interface DeliveryOccurrence {
+  codigo: string;
+  descricao: string;
+  responsabilidade: string;
+  tipo: string;
+  setor_ocorr: string;
+  retorno_rota: 'Sim' | 'Não';
+  tratativa_solucao: string;
+}
+
+export interface CurvaAClient {
+  cnpj_remetente: string;
+  curva_a: string;
+  cliente_remetente: string;
+}
+
 

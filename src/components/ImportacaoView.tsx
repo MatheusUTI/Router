@@ -32,13 +32,34 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
   const [delimiter, setDelimiter] = useState<string>(';');
   const [removePrefix, setRemovePrefix] = useState<boolean>(true);
 
-  // Field mappings state (associated column headers)
-  const [mappings, setMappings] = useState<Record<string, string>>({
-    id: '',
-    destinatario: '',
-    cidade: '',
-    weight: '',
-    volume: '',
+  // Field mappings state (associated column headers) initialized from localStorage
+  const [mappings, setMappings] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('rota_operational_saved_layout_mapping');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Falha ao ler layout salvo:', e);
+    }
+    return {
+      id: '',
+      destinatario: '',
+      cidade: '',
+      weight: '',
+      volume: '',
+      remetente: '',
+      pagador: '',
+      nf: '',
+      valor: '',
+      frete: '',
+      setor: '',
+      prev_ent: '',
+      unid: '',
+      ocorrencia: '',
+      descricao_ocorr: '',
+      localizacao: '',
+    };
   });
 
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -142,39 +163,102 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
 
   const extractedHeaders = getExtractedHeaders();
 
-  // Trigger when header row index or headers list changes to auto-map fields
+  // Save changes directly in state and persists inside local storage
   const handleMapChange = (field: string, csvHeader: string) => {
-    setMappings(prev => ({ ...prev, [field]: csvHeader }));
+    setMappings(prev => {
+      const next = { ...prev, [field]: csvHeader };
+      localStorage.setItem('rota_operational_saved_layout_mapping', JSON.stringify(next));
+      return next;
+    });
   };
 
   // Run auto-mapping logic based on keywords
   const triggerAutoMapping = () => {
-    const newMappings = { id: '', destinatario: '', cidade: '', weight: '', volume: '' };
+    const newMappings = {
+      id: '',
+      destinatario: '',
+      cidade: '',
+      weight: '',
+      volume: '',
+      remetente: '',
+      pagador: '',
+      nf: '',
+      valor: '',
+      frete: '',
+      setor: '',
+      prev_ent: '',
+      unid: '',
+      ocorrencia: '',
+      descricao_ocorr: '',
+      localizacao: '',
+    };
+
     extractedHeaders.forEach((h) => {
       const lower = h.toLowerCase();
       if (lower.includes('ctrc') || lower.includes('numero') || lower.includes('número')) {
         newMappings.id = h;
-      } else if (lower.includes('destinatario') || lower.includes('recebedor') || lower.includes('cliente')) {
-        // Prefer Destinatario over Remetente/Pagador
+      } else if (lower.includes('destinatario') || lower.includes('recebedor') || lower.includes('cliente destinatario')) {
         if (!newMappings.destinatario || lower.includes('destinatario')) {
           newMappings.destinatario = h;
         }
-      } else if (lower.includes('cidade de entrega') || lower.includes('cidade do destinatario') || lower.includes('cidade') || lower.includes('praca')) {
+      } else if (lower.includes('cidade de entrega') || lower.includes('cidade do destinatario') || lower.includes('cidade') || lower.includes('praca') || lower.includes('praça')) {
         if (!newMappings.cidade || lower.includes('entrega')) {
           newMappings.cidade = h;
         }
       } else if (lower.includes('peso') || lower.includes('weight') || lower.includes('kg')) {
         newMappings.weight = h;
-      } else if (lower.includes('volume') || lower.includes('qtde') || lower.includes('m3') || lower.includes('cubagem')) {
+      } else if (lower.includes('volume') || lower.includes('qtde') || lower.includes('volumes')) {
         newMappings.volume = h;
+      } else if (lower.includes('setor') || lower.includes('rota')) {
+        newMappings.setor = h;
+      } else if (lower.includes('previsao') || lower.includes('prev_ent') || lower.includes('entrega programada') || lower.includes('previsão')) {
+        newMappings.prev_ent = h;
+      } else if (lower.includes('remetente')) {
+        newMappings.remetente = h;
+      } else if (lower.includes('pagador')) {
+        newMappings.pagador = h;
+      } else if (lower.includes('nota fiscal') || lower.includes('nf ')) {
+        newMappings.nf = h;
+      } else if (lower.includes('valor da mercadoria') || lower.includes('valor mercadoria')) {
+        newMappings.valor = h;
+      } else if (lower.includes('valor do frete') || lower.includes('frete')) {
+        newMappings.frete = h;
+      } else if (lower.includes('unidade receptora') || lower.includes('unid')) {
+        newMappings.unid = h;
+      } else if (lower.includes('codigo da ultima ocorrencia') || lower.includes('ocorrencia')) {
+        newMappings.ocorrencia = h;
+      } else if (lower.includes('descricao da ultima ocorrencia') || lower.includes('descricao_ocorr') || lower.includes('descrição')) {
+        newMappings.descricao_ocorr = h;
+      } else if (lower.includes('localizacao') || lower.includes('localização')) {
+        newMappings.localizacao = h;
       }
     });
+
     setMappings(newMappings);
+    localStorage.setItem('rota_operational_saved_layout_mapping', JSON.stringify(newMappings));
   };
 
-  // Run auto-match click hander
-  const handleAutoMatchFields = () => {
-    triggerAutoMapping();
+  const handleResetMappings = () => {
+    const cleared = {
+      id: '',
+      destinatario: '',
+      cidade: '',
+      weight: '',
+      volume: '',
+      remetente: '',
+      pagador: '',
+      nf: '',
+      valor: '',
+      frete: '',
+      setor: '',
+      prev_ent: '',
+      unid: '',
+      ocorrencia: '',
+      descricao_ocorr: '',
+      localizacao: '',
+    };
+    setMappings(cleared);
+    localStorage.removeItem('rota_operational_saved_layout_mapping');
   };
 
   const parsePtBrFloat = (val: string): number => {
@@ -192,8 +276,20 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
     const idIdx = columnHeaders.indexOf(mappings.id);
     const destIdx = columnHeaders.indexOf(mappings.destinatario);
     const cityIdx = columnHeaders.indexOf(mappings.cidade);
+    
     const weightIdx = mappings.weight ? columnHeaders.indexOf(mappings.weight) : -1;
     const volIdx = mappings.volume ? columnHeaders.indexOf(mappings.volume) : -1;
+    const setorIdx = mappings.setor ? columnHeaders.indexOf(mappings.setor) : -1;
+    const prevIdx = mappings.prev_ent ? columnHeaders.indexOf(mappings.prev_ent) : -1;
+    const remIdx = mappings.remetente ? columnHeaders.indexOf(mappings.remetente) : -1;
+    const pagIdx = mappings.pagador ? columnHeaders.indexOf(mappings.pagador) : -1;
+    const nfIdx = mappings.nf ? columnHeaders.indexOf(mappings.nf) : -1;
+    const valIdx = mappings.valor ? columnHeaders.indexOf(mappings.valor) : -1;
+    const freIdx = mappings.frete ? columnHeaders.indexOf(mappings.frete) : -1;
+    const uniIdx = mappings.unid ? columnHeaders.indexOf(mappings.unid) : -1;
+    const ocoIdx = mappings.ocorrencia ? columnHeaders.indexOf(mappings.ocorrencia) : -1;
+    const descOcoIdx = mappings.descricao_ocorr ? columnHeaders.indexOf(mappings.descricao_ocorr) : -1;
+    const locIdx = mappings.localizacao ? columnHeaders.indexOf(mappings.localizacao) : -1;
 
     // We collect data rows lying strictly BELOW the selected header row line
     const dataLines = lines.slice(headerLineIndex + 1);
@@ -210,27 +306,42 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
       const destVal = destIdx !== -1 ? cells[destIdx] : '';
       const cityVal = cityIdx !== -1 ? cells[cityIdx] : '';
 
-      // Skip invalid header rows duplicated or trailer rows like "9;;;;..." represented as empty cells
+      // Skip invalid or trailer rows
       if (!idVal && !destVal) return;
 
-      let weightVal = 180; // default average fallback
-      if (weightIdx !== -1 && cells[weightIdx]) {
-        weightVal = parsePtBrFloat(cells[weightIdx]);
-      }
-
-      let volumesVal = 4; // default volumes fallback
-      if (volIdx !== -1 && cells[volIdx]) {
-        volumesVal = parsePtBrFloat(cells[volIdx]);
-      }
+      const weightVal = weightIdx !== -1 && cells[weightIdx] ? parsePtBrFloat(cells[weightIdx]) : 180;
+      const volumesVal = volIdx !== -1 && cells[volIdx] ? parsePtBrFloat(cells[volIdx]) : 4;
+      const setorVal = setorIdx !== -1 ? cells[setorIdx] : '';
+      const prevVal = prevIdx !== -1 ? cells[prevIdx] : '';
+      const remVal = remIdx !== -1 ? cells[remIdx] : '';
+      const pagVal = pagIdx !== -1 ? cells[pagIdx] : '';
+      const nfVal = nfIdx !== -1 ? cells[nfIdx] : '';
+      const valVal = valIdx !== -1 && cells[valIdx] ? parsePtBrFloat(cells[valIdx]) : 0;
+      const freVal = freIdx !== -1 && cells[freIdx] ? parsePtBrFloat(cells[freIdx]) : 0;
+      const uniVal = uniIdx !== -1 ? cells[uniIdx] : '';
+      const ocoVal = ocoIdx !== -1 ? cells[ocoIdx] : '';
+      const descOcoVal = descOcoIdx !== -1 ? cells[descOcoIdx] : '';
+      const locVal = locIdx !== -1 ? cells[locIdx] : '';
 
       results.push({
         id: idVal ? idVal : `CTRC #${90400 + idx}`,
         destinatario: destVal || 'Destinatário Desconhecido',
         cidade: cityVal || 'Ponto de Distribuição',
         weight: weightVal || 150,
-        volume: volumesVal || 2, // Treated as packages / weight metric support
+        volume: volumesVal || 2,
         type: (weightVal > 1000) ? 'CURVA A' : 'NORMAL',
         status: 'Pendente',
+        setor: setorVal || undefined,
+        prev_ent: prevVal || undefined,
+        remetente: remVal || undefined,
+        pagador: pagVal || undefined,
+        nf: nfVal || undefined,
+        valor: valVal || undefined,
+        frete: freVal || undefined,
+        unid: uniVal || undefined,
+        ocorrencia: ocoVal || undefined,
+        descricao_ocorr: descOcoVal || undefined,
+        localizacao: locVal || undefined,
       });
     });
 
@@ -254,20 +365,40 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
     onAddCtrcs(parsedRecords);
     setSuccessMsg(`Importação realizada com sucesso de ${parsedRecords.length} CTRCs vindos do arquivo local! Eles acabaram de ser anexados ao painel operacional e estão prontos para a formulação do seu Romaneio.`);
     
-    // reset states
+    // reset file states only while retaining mappings layout on local storage
     setFileName(null);
     setLines([]);
     setHeaderLineIndex(-1);
     setCsvRawText('');
-    setMappings({ id: '', destinatario: '', cidade: '', weight: '', volume: '' });
   };
+
+  const isMappingSaved = Object.values(mappings).some(v => v !== '');
+
+  const MAPPABLE_FIELDS = [
+    { key: 'id', label: 'ID ou Número do CTRC / Manifesto', required: true },
+    { key: 'destinatario', label: 'Cliente Recebedor / Destinatário', required: true },
+    { key: 'cidade', label: 'Cidade de Entrega', required: true },
+    { key: 'weight', label: 'Peso Real em Kg', required: false },
+    { key: 'volume', label: 'Quantidade de Volumes', required: false },
+    { key: 'remetente', label: 'Cliente Remetente (CNPJ/Parceiro)', required: false },
+    { key: 'pagador', label: 'Cliente Pagador', required: false },
+    { key: 'nf', label: 'Número da Nota Fiscal (NF)', required: false },
+    { key: 'valor', label: 'Valor da Mercadoria (R$)', required: false },
+    { key: 'frete', label: 'Valor do Frete (R$)', required: false },
+    { key: 'setor', label: 'Setor de Rota / Setorização', required: false },
+    { key: 'prev_ent', label: 'Previsão de Entrega (Data)', required: false },
+    { key: 'unid', label: 'Unidade Receptora', required: false },
+    { key: 'ocorrencia', label: 'Código da Última Ocorrência', required: false },
+    { key: 'descricao_ocorr', label: 'Descrição da Ocorrência', required: false },
+    { key: 'localizacao', label: 'Localização Física Atual', required: false },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
       <div>
         <h2 className="text-3xl font-extrabold text-[#dae2fd] tracking-tight">Importação & Governança de Manifestos</h2>
         <p className="text-sm text-on-surface-variant mt-1.5 max-w-4xl text-[#9cb4e4] leading-relaxed">
-          Evite a redigitação manual de CTRCs. Faça o upload do arquivo bruto extraído do seu ERP institucional (como Camilo dos Santos), mapeie qual linha define os cabeçalhos de forma interativa e trace as colunas físicas para o nosso de-para de rateio.
+          Mapeie as colunas na primeira vez e o layout continuará salvo! Use qualquer ERP corporativo de mercadoria (formato CSV/TXT), localize a linha de cabeçalhos e realize a harmonização de-para com o nosso banco relacional de forma imediata.
         </p>
       </div>
 
@@ -296,7 +427,7 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
               Carregar Arquivo Sistema ERP
             </h3>
             <p className="text-[11px] text-[#9cb4e4] mb-4">
-              Arraste seu manifesto ou use o botão para capturar do seu dispositivo corporativo.
+              Arraste seu arquivo de faturamento operacional ou use o botão para carregar.
             </p>
 
             {/* Drag & Drop Frame */}
@@ -326,7 +457,7 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
               </div>
               
               <p className="text-[11px] font-semibold text-white">Solte o arquivo do manifesto bruto aqui</p>
-              <p className="text-[10px] text-[#9cb4e4] mt-1">Semicolon (;), Comma (,) ou Tabulações</p>
+              <p className="text-[10px] text-[#9cb4e4] mt-1 font-mono">Formato CSV ou TXT (Separadores comuns carregados automaticamente)</p>
 
               <div className="flex gap-2.5 mt-4">
                 <button
@@ -342,7 +473,7 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] border border-slate-700 text-xs font-semibold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[15px] text-primary">cloud_download</span>
-                  Usar Arquivo Anexo (ERP)
+                  Usar Arquivo de Exemplo (Camilo)
                 </button>
               </div>
             </div>
@@ -369,7 +500,7 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                   Selecione a Linha de Cabeçalho do Arquivo
                 </h3>
                 <p className="text-[11px] text-[#9cb4e4] leading-relaxed">
-                  Como cada analista exporta o relatório de maneira variada, indique ao RotaOperational qual das primeiras 10 linhas contém os nomes corretos dos campos.
+                  Toque na linha do documento que discrimina os nomes das colunas físicas.
                 </p>
               </div>
 
@@ -381,8 +512,6 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                     value={delimiter}
                     onChange={(e) => {
                       setDelimiter(e.target.value);
-                      // Clear mappings to avoid incongruence
-                      setMappings({ id: '', destinatario: '', cidade: '', weight: '', volume: '' });
                     }}
                     className="w-full bg-[#1b2540] border border-outline-variant/60 rounded px-2.5 py-1 text-xs text-[#dae2fd] focus:outline-none"
                   >
@@ -399,13 +528,13 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                       onChange={(e) => setRemovePrefix(e.target.checked)}
                       className="w-4 h-4 bg-[#1b2540] border border-outline-variant/60 rounded accent-primary cursor-pointer"
                     />
-                    <span>Remover ID de controle de Linha (ex: '1;', '2;')</span>
+                    <span>Remover ID de controle de Linha (ex: \'1;\', \'2;\')</span>
                   </label>
                 </div>
               </div>
 
               {/* Rows List Selector */}
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 select-none border border-outline-variant/40 rounded-xl p-2.5 bg-[#121828]">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 select-none border border-outline-variant/40 rounded-xl p-2.5 bg-[#121828]">
                 {lines.slice(0, 10).map((line, idx) => {
                   const isSelected = headerLineIndex === idx;
                   const displayLine = line.length > 100 ? `${line.substring(0, 100)}...` : line;
@@ -425,9 +554,9 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                         }`}>
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
                         </span>
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 text-left">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-primary opacity-90">Linha {idx + 1}</p>
-                          <p className="text-[11px] font-mono whitespace-nowrap overflow-hidden text-ellipsis max-w-[280px] md:max-w-xl text-left">{displayLine}</p>
+                          <p className="text-[11px] font-mono whitespace-nowrap overflow-hidden text-ellipsis max-w-[280px] md:max-w-xl">{displayLine}</p>
                         </div>
                       </div>
                       {idx === 1 && (
@@ -452,112 +581,69 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                 <span className="w-5 h-5 rounded bg-primary-container text-on-primary-container text-[11px] flex items-center justify-center font-bold">3</span>
                 De-Para de Atributos do Schema
               </h3>
-              {extractedHeaders.length > 0 && (
-                <button
-                  onClick={handleAutoMatchFields}
-                  className="text-[10px] font-bold text-primary hover:text-white transition-colors uppercase tracking-wider flex items-center gap-1 bg-slate-800 px-2 py-1 rounded"
-                >
-                  <span className="material-symbols-outlined text-[13px]">magic_button</span>
-                  Auto-Detectar
-                </button>
-              )}
             </div>
+            
+            {isMappingSaved && (
+              <div className="mb-3 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg text-[10.5px] flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]">save</span>
+                  Layout anterior carregado automaticamente.
+                </span>
+                <button
+                  onClick={handleResetMappings}
+                  className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded text-[9.5px] font-bold hover:bg-rose-500/35 transition-colors"
+                >
+                  Remapear do Zero
+                </button>
+              </div>
+            )}
+
             <p className="text-[11px] text-[#9cb4e4] mb-4">
-              Diga qual coluna do arquivo físico corresponde aos nossos campos operacionais padrão de roteirização.
+              Associe as colunas físicas mapeadas aos campos correspondentes do sistema. Os dados preenchidos facilitam cálculos avançados.
             </p>
 
             {extractedHeaders.length === 0 ? (
-              <div className="py-14 text-center text-[#9cb4e4] bg-[#111624] border border-outline-variant/50 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-inner">
-                <span className="material-symbols-outlined text-[36px] text-slate-600">border_all</span>
-                <span className="text-xs font-semibold text-white">Associação Desativada</span>
-                <span className="text-[10px] text-[#9cb4e4]/70 max-w-[220px]">Indique acima qual linha representa o cabeçalho para habilitar os selects</span>
+              <div className="py-24 text-center text-[#9cb4e4] bg-[#111624] border border-outline-variant/50 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-inner">
+                <span className="material-symbols-outlined text-[36px] text-slate-600 animate-pulse">border_all</span>
+                <span className="text-xs font-semibold text-white">De-Para Desativado</span>
+                <span className="text-[10px] text-[#9cb4e4]/70 max-w-[220px]">Indique acima qual linha representa o cabeçalho para carregar as colunas.</span>
               </div>
             ) : (
-              <div className="space-y-4 text-left">
-                {/* ID CTRC */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#dae2fd] flex items-center gap-1">
-                    Número do CTRC ou Manifesto <span className="text-rose-500 font-mono">*</span>
-                  </label>
-                  <select
-                    value={mappings.id}
-                    onChange={(e) => handleMapChange('id', e.target.value)}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
+              <div className="space-y-3.5 text-left max-h-[380px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <button
+                    onClick={triggerAutoMapping}
+                    className="py-1.5 bg-slate-800 hover:bg-slate-700 text-primary text-xs font-bold rounded-lg flex items-center justify-center gap-1 border border-primary/25"
                   >
-                    <option value="">-- Selecione a coluna correspondente --</option>
-                    {extractedHeaders.map((h, i) => (
-                      <option key={i} value={h}>{h}</option>
-                    ))}
-                  </select>
+                    <span className="material-symbols-outlined text-[14px]">magic_button</span>
+                    Auto-Configurar
+                  </button>
+                  <button
+                    onClick={handleResetMappings}
+                    className="py-1.5 bg-slate-900 hover:bg-slate-850 text-rose-300 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 border border-outline-variant/40"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                    Limpar Tudo
+                  </button>
                 </div>
 
-                {/* Cliente / Destinatário */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#dae2fd] flex items-center gap-1">
-                    Cliente Recebedor / Destinatário <span className="text-rose-500 font-mono">*</span>
-                  </label>
-                  <select
-                    value={mappings.destinatario}
-                    onChange={(e) => handleMapChange('destinatario', e.target.value)}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
-                  >
-                    <option value="">-- Selecione a coluna correspondente --</option>
-                    {extractedHeaders.map((h, i) => (
-                      <option key={i} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Cidade de Destino */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#dae2fd] flex items-center gap-1">
-                    Cidade de Entrega <span className="text-rose-500 font-mono">*</span>
-                  </label>
-                  <select
-                    value={mappings.cidade}
-                    onChange={(e) => handleMapChange('cidade', e.target.value)}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
-                  >
-                    <option value="">-- Selecione a coluna correspondente --</option>
-                    {extractedHeaders.map((h, i) => (
-                      <option key={i} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Peso Real */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#dae2fd] flex items-center gap-1">
-                    Peso Real em Kg (Opcional)
-                  </label>
-                  <select
-                    value={mappings.weight}
-                    onChange={(e) => handleMapChange('weight', e.target.value)}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
-                  >
-                    <option value="">-- Desconsiderar coluna real --</option>
-                    {extractedHeaders.map((h, i) => (
-                      <option key={i} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Volumes / Cubagem */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#dae2fd] flex items-center gap-1">
-                    Quantidade de Volumes / Cubagem (Opcional)
-                  </label>
-                  <select
-                    value={mappings.volume}
-                    onChange={(e) => handleMapChange('volume', e.target.value)}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
-                  >
-                    <option value="">-- Desconsiderar coluna volumes --</option>
-                    {extractedHeaders.map((h, i) => (
-                      <option key={i} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
+                {MAPPABLE_FIELDS.map((field) => (
+                  <div key={field.key} className="space-y-1 bg-[#111624]/60 p-2.5 rounded-lg border border-outline-variant/35">
+                    <label className="text-[11.5px] font-bold text-[#dae2fd] flex items-center gap-1">
+                      {field.label} {field.required && <span className="text-rose-500 font-mono">*</span>}
+                    </label>
+                    <select
+                      value={mappings[field.key] || ''}
+                      onChange={(e) => handleMapChange(field.key, e.target.value)}
+                      className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded px-2 py-1 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
+                    >
+                      <option value="">{field.required ? '-- Campo Obrigatório --' : '-- Ignorar este campo --'}</option>
+                      {extractedHeaders.map((h, i) => (
+                        <option key={i} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -567,19 +653,19 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
               {parsedRecords.length > 0 ? (
                 <span className="text-emerald-400 font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  {parsedRecords.length} registros extraídos
+                  {parsedRecords.length} registros prontos
                 </span>
               ) : (
-                '0 registros identificados'
+                '0 registros carregados'
               )}
             </span>
             <button
               disabled={extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade}
               onClick={handleApplyMapping}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow ${
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow ${
                 extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  : 'bg-primary hover:bg-[#4d8eff] text-white'
+                  : 'bg-primary hover:bg-[#4d8eff] text-white shadow-lg'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">verified_user</span>
@@ -597,10 +683,10 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[18px]">quick_reference_all</span>
-                Visualização do Rateio Operacional (Primeiros 5 Registros Extraídos)
+                Visualização de Amostra Operacional (Primeiros 5 Linhas Extraídas)
               </h3>
               <p className="text-[11px] text-[#9cb4e4] mt-0.5">
-                Observe como os dados serão inseridos de forma padronizada de acordo com as conversões de de-para.
+                Valide os de-paras aplicados visualizando os atributos brutos extraídos do seu ERP.
               </p>
             </div>
             <div className="text-[10px] font-mono bg-[#111624] border border-outline-variant px-3 py-1 rounded-xl text-[#dae2fd]">
@@ -617,7 +703,8 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                   <th className="px-4 py-3">Cidade de Entrega</th>
                   <th className="px-4 py-3 text-right">Peso Real</th>
                   <th className="px-4 py-3 text-right">Volumes</th>
-                  <th className="px-4 py-3 text-center">Classificação</th>
+                  <th className="px-4 py-3 text-center">Setor</th>
+                  <th className="px-4 py-3 text-center">NF</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal font-mono text-[11px]">
@@ -628,15 +715,8 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
                     <td className="px-4 py-3 text-[#dae2fd] font-sans">{row.cidade}</td>
                     <td className="px-4 py-3 text-right text-amber-200 font-bold">{row.weight.toLocaleString('pt-BR')} Kg</td>
                     <td className="px-4 py-3 text-right text-sky-200">{row.volume} vol</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block text-[9px] font-sans font-bold px-2 py-0.5 rounded-full ${
-                        row.type === 'CURVA A'
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                          : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                      }`}>
-                        {row.type}
-                      </span>
-                    </td>
+                    <td className="px-4 py-3 text-center font-sans text-neutral-300">{row.setor || '-'}</td>
+                    <td className="px-4 py-3 text-center text-xs text-neutral-400">{row.nf || '-'}</td>
                   </tr>
                 ))}
               </tbody>
