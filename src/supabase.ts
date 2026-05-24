@@ -1,10 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient } from './types';
 
-const supabaseUrl = 
+let rawUrl = 
   ((import.meta as any).env)?.VITE_SUPABASE_URL || 
   ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_URL || 
   '';
+
+// Clean the URL if it contains /rest/v1/ or has a trailing slash
+if (rawUrl) {
+  rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').trim();
+}
+
+const supabaseUrl = rawUrl;
 
 const supabaseAnonKey = 
   ((import.meta as any).env)?.VITE_SUPABASE_ANON_KEY || 
