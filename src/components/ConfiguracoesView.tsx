@@ -8,13 +8,10 @@ import {
   SUPABASE_SQL_SCHEMA,
   getSavedCredentials,
   updateActiveSupabaseClient,
-  encryptCredentials,
-  decryptCredentials,
   getAppUsers,
   saveAppUser,
   deleteAppUser
 } from '../supabase';
-import secureConfig from '../supabase_config_enc.json';
 
 interface ConfiguracoesViewProps {
   onResetOP01: () => void;
@@ -75,11 +72,6 @@ export default function ConfiguracoesView({
     const creds = getSavedCredentials();
     return creds.source;
   });
-  const [passphrase, setPassphrase] = useState(() => {
-    return localStorage.getItem('supabase_passphrase') || '';
-  });
-  const [generatedEncryptedJson, setGeneratedEncryptedJson] = useState<string | null>(null);
-  const [isCopiedJson, setIsCopiedJson] = useState(false);
 
   // Supabase Integration States
   const [isTesting, setIsTesting] = useState(false);
@@ -89,6 +81,18 @@ export default function ConfiguracoesView({
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
   const [sqlCopied, setSqlCopied] = useState(false);
   const [showSql, setShowSql] = useState(false);
+
+  // Custom modal states to avoid Chrome/Safari security sandbox blocks inside iframe
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const [alertModal, setAlertModal] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
 
   // Load registered system users
   const handleLoadUsers = async () => {
@@ -113,7 +117,10 @@ export default function ConfiguracoesView({
   const handleCreateOrUpdateUser = async (e: FormEvent) => {
     e.preventDefault();
     if (!adminUser.is_master) {
-      alert("Operação bloqueada! Somente usuários MASTER podem criar ou editar usuários.");
+      setAlertModal({
+        title: "Operação Bloqueada",
+        description: "Somente usuários MASTER podem criar ou editar usuários operacionais."
+      });
       return;
     }
 
@@ -121,7 +128,10 @@ export default function ConfiguracoesView({
     const nameRaw = userFormName.trim();
 
     if (!usernameRaw || !nameRaw) {
-      alert("Insira um nome completo e e-mail/username válidos.");
+      setAlertModal({
+        title: "Campos Requeridos",
+        description: "Insira um nome completo e e-mail/username válidos para o novo operador."
+      });
       return;
     }
 
@@ -148,27 +158,42 @@ export default function ConfiguracoesView({
 
   const handleDeleteUserClick = async (usernameToDelete: string) => {
     if (!adminUser.is_master) {
-      alert("Apenas administradores MASTER podem remover operadores.");
+      setAlertModal({
+        title: "Permissão Negada",
+        description: "Apenas administradores MASTER de logística podem remover operadores de despacho."
+      });
       return;
     }
     if (usernameToDelete.toLowerCase() === adminUser.username.toLowerCase()) {
-      alert("Você está autenticado nesta conta e não pode excluir a si mesmo!");
+      setAlertModal({
+        title: "Ação Não Permitida",
+        description: "Você está logado nesta conta master atualmente e não pode excluir a si mesmo!"
+      });
       return;
     }
-    if (confirm(`Tem certeza que deseja remover o usuário operacional '${usernameToDelete}'?`)) {
-      const res = await deleteAppUser(usernameToDelete);
-      setMessage(res.message);
-      setTimeout(() => setMessage(null), 3000);
-      handleLoadUsers();
-    }
+
+    setConfirmModal({
+      title: "Excluir Usuário Operacional",
+      description: `Tem certeza que deseja remover permanentemente o usuário operacional '${usernameToDelete}' do sistema e do banco de dados sincronizado?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        const res = await deleteAppUser(usernameToDelete);
+        setMessage(res.message);
+        setTimeout(() => setMessage(null), 3000);
+        handleLoadUsers();
+      }
+    });
   };
 
   const handleSaveActiveCredentials = () => {
     if (!adminUser.is_master) {
-      alert("Apenas administradores MASTER podem alterar as chaves de API Supabase.");
+      setAlertModal({
+        title: "Acesso de Configurações Bloqueado",
+        description: "Apenas administradores MASTER podem alterar as chaves de API Supabase do RotaOperational."
+      });
       return;
     }
-    const res = updateActiveSupabaseClient(customUrl, customKey, passphrase);
+    const res = updateActiveSupabaseClient(customUrl, customKey);
     if (res.success) {
       setActiveSource(res.source);
       setCustomUrl(res.url);
@@ -181,81 +206,19 @@ export default function ConfiguracoesView({
 
   const handleClearActiveCredentials = () => {
     if (!adminUser.is_master) {
-      alert("Apenas administradores MASTER podem alterar as chaves de API Supabase.");
+      setAlertModal({
+        title: "Acesso de Configurações Bloqueado",
+        description: "Apenas administradores MASTER podem alterar as chaves de API Supabase do RotaOperational."
+      });
       return;
     }
-    const res = updateActiveSupabaseClient('', '', '');
+    const res = updateActiveSupabaseClient('', '');
     setActiveSource(res.source);
     setCustomUrl(res.url);
     setCustomKey(res.key);
-    setPassphrase('');
     setMessage("Configurações personalizadas limpas. Voltando aos padrões.");
     setTimeout(() => setMessage(null), 3000);
     handleLoadUsers();
-  };
-
-  const handleGenerateEncryptedConfig = () => {
-    if (!adminUser.is_master) {
-      alert("Apenas administradores MASTER podem gerar criptografia.");
-      return;
-    }
-    if (!customUrl || !customKey) {
-      alert("Defina uma URL e Chave Anon primeiro.");
-      return;
-    }
-    if (!passphrase) {
-      alert("Defina uma Senha do Repositório (Master Passphrase) para a criptografia.");
-      return;
-    }
-    const combined = `${customUrl}||${customKey}`;
-    const encryptedPayload = encryptCredentials(combined, passphrase);
-    const configJson = {
-      encrypted: true,
-      passphrase_hint: "Use a senha configurada no painel",
-      payload: encryptedPayload
-    };
-    setGeneratedEncryptedJson(JSON.stringify(configJson, null, 2));
-    setMessage("JSON criptografado gerado abaixo.");
-    setTimeout(() => setMessage(null), 3500);
-  };
-
-  const handleDecryptFromFile = () => {
-    if (!adminUser.is_master) {
-      alert("Acesso restrito para operação.");
-      return;
-    }
-    if (!passphrase) {
-      alert("Insira a Senha do Repositório para descriptografar.");
-      return;
-    }
-    if (secureConfig.encrypted && secureConfig.payload) {
-      const decrypted = decryptCredentials(secureConfig.payload, passphrase);
-      if (decrypted && decrypted.includes('||')) {
-        const [decryptedUrl, decryptedKey] = decrypted.split('||');
-        if (decryptedUrl && decryptedKey) {
-          setCustomUrl(decryptedUrl);
-          setCustomKey(decryptedKey);
-          localStorage.setItem('supabase_passphrase', passphrase);
-          const res = updateActiveSupabaseClient(decryptedUrl, decryptedKey, passphrase);
-          setActiveSource(res.source);
-          setMessage("Credenciais descriptografadas do arquivo de repositório com sucesso!");
-          setTimeout(() => setMessage(null), 3500);
-          handleLoadUsers();
-          return;
-        }
-      }
-      alert("Senha de repositório incorreta ou payload corrompido.");
-    } else {
-      alert("O arquivo /src/supabase_config_enc.json ainda não está criptografado (payload inválido). Por favor, gere o JSON primeiro.");
-    }
-  };
-
-  const handleCopyJsonToClipboard = () => {
-    if (generatedEncryptedJson) {
-      navigator.clipboard.writeText(generatedEncryptedJson);
-      setIsCopiedJson(true);
-      setTimeout(() => setIsCopiedJson(false), 2000);
-    }
   };
 
   const handleTestConnection = async () => {
@@ -272,68 +235,114 @@ export default function ConfiguracoesView({
   };
 
   const handleExportToSupabase = async () => {
-    if (!isSupabaseConfigured) {
-      alert("Por favor, configure as chaves do Supabase primeiro.");
-      return;
-    }
-    if (!confirm("Isso exportará todos os dados locais atuais (veículos, motoristas, CTRCs, chamados, clientes) inserindo ou atualizando as tabelas do seu banco de dados Supabase. Continuar?")) {
-      return;
-    }
-    setIsExporting(true);
-    setSyncLogs(["Iniciando exportação..."]);
-    try {
-      const res = await exportStateToSupabase({
-        vehicles,
-        drivers,
-        ctrcs: availableCtrcs,
-        tickets,
-        clients
+    const trimmedUrl = customUrl.trim();
+    const trimmedKey = customKey.trim();
+    if (!trimmedUrl || !trimmedKey) {
+      setAlertModal({
+        title: "Chaves Supabase Não Configuradas",
+        description: "Por favor, configure sua URL e Chave Anon do Supabase no formulário acima primeiro."
       });
-      setSyncLogs(res.results);
-      if (res.success) {
-        setMessage("Carga de semente operacional exportada para o Supabase com sucesso!");
-      } else {
-        setMessage("Exportação concluída com alguns alertas. Verifique o log.");
-      }
-    } catch (err: any) {
-      setSyncLogs(prev => [...prev, `❌ Falha crítica: ${err?.message || err}`]);
-    } finally {
-      setIsExporting(false);
+      return;
     }
+
+    // Automatically apply/save if credentials in inputs are different from currently active client
+    const activeCreds = getSavedCredentials();
+    if (activeCreds.url !== trimmedUrl || activeCreds.key !== trimmedKey) {
+      const saveRes = updateActiveSupabaseClient(trimmedUrl, trimmedKey);
+      if (saveRes.success) {
+        setActiveSource(saveRes.source);
+        setCustomUrl(saveRes.url);
+        setCustomKey(saveRes.key);
+      }
+    }
+
+    setConfirmModal({
+      title: "Confirmar Exportação de Carga Semente",
+      description: "Isso exportará todos os dados locais atuais (veículos, motoristas, CTRCs, chamados, clientes críticos e usuários operacionais) para as tabelas do seu banco de dados Supabase na nuvem. Os registros lá serão sobrepostos ou atualizados. Continuar?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setIsExporting(true);
+        setSyncLogs(["Iniciando exportação..."]);
+        try {
+          const res = await exportStateToSupabase({
+            vehicles,
+            drivers,
+            ctrcs: availableCtrcs,
+            tickets,
+            clients,
+            users: appUsers
+          });
+          setSyncLogs(res.results);
+          if (res.success) {
+            setMessage("Carga de semente operacional exportada para o Supabase com sucesso!");
+          } else {
+            setMessage("Exportação concluída com alguns alertas. Verifique o log do console.");
+          }
+        } catch (err: any) {
+          setSyncLogs(prev => [...prev, `❌ Falha crítica: ${err?.message || err}`]);
+        } finally {
+          setIsExporting(false);
+        }
+      }
+    });
   };
 
   const handleImportFromSupabase = async () => {
-    if (!isSupabaseConfigured) {
-      alert("Por favor, configure as chaves do Supabase primeiro.");
+    const trimmedUrl = customUrl.trim();
+    const trimmedKey = customKey.trim();
+    if (!trimmedUrl || !trimmedKey) {
+      setAlertModal({
+        title: "Chaves Supabase Não Configuradas",
+        description: "Por favor, configure sua URL e Chave Anon do Supabase no formulário acima primeiro para poder importar dados."
+      });
       return;
     }
-    if (!confirm("Isso atualizará todo o seu painel local baixando as informações armazenadas no Supabase. Os dados locais não salvos serão sobrepostos. Deseja prosseguir?")) {
-      return;
-    }
-    setIsImporting(true);
-    setSyncLogs(["Buscando registros do Supabase..."]);
-    try {
-      const res = await importStateFromSupabase();
-      if (res.success && res.data) {
-        onSyncFromSupabase(res.data);
-        setSyncLogs([
-          "✓ Conexão estabelecida com sucesso.",
-          `✓ ${res.data.vehicles.length} Veículos recuperados.`,
-          `✓ ${res.data.drivers.length} Desempenhos de motorista sincronizados.`,
-          `✓ ${res.data.ctrcs.length} Documentos operacionais CTRC carregados.`,
-          `✓ ${res.data.tickets.length} Ocorrências mapeadas obtidas.`,
-          `✓ ${res.data.clients.length} Clientes críticos sincronizados.`
-        ]);
-        setMessage(res.message);
-      } else {
-        setSyncLogs(prev => [...prev, `❌ Falha: ${res.message}`]);
-        alert(`Erro na sincronização: ${res.message}`);
+
+    // Automatically apply/save if credentials in inputs are different from currently active client
+    const activeCreds = getSavedCredentials();
+    if (activeCreds.url !== trimmedUrl || activeCreds.key !== trimmedKey) {
+      const saveRes = updateActiveSupabaseClient(trimmedUrl, trimmedKey);
+      if (saveRes.success) {
+        setActiveSource(saveRes.source);
+        setCustomUrl(saveRes.url);
+        setCustomKey(saveRes.key);
       }
-    } catch (err: any) {
-      setSyncLogs(prev => [...prev, `❌ Falha crítica: ${err?.message || err}`]);
-    } finally {
-      setIsImporting(false);
     }
+
+    setConfirmModal({
+      title: "Confirmar Importação de Banco de Dados",
+      description: "Isso atualizará todas as tabelas em seu painel local baixando as informações de produção armazenadas no seu Supabase. Os dados locais não salvos que divergirem serão sobrepostos. Deseja prosseguir?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setIsImporting(true);
+        setSyncLogs(["Buscando registros do Supabase..."]);
+        try {
+          const res = await importStateFromSupabase();
+          if (res.success && res.data) {
+            onSyncFromSupabase(res.data);
+            setSyncLogs([
+              "✓ Conexão estabelecida com sucesso.",
+              `✓ ${res.data.vehicles.length} Veículos recuperados.`,
+              `✓ ${res.data.drivers.length} Desempenhos de motorista sincronizados.`,
+              `✓ ${res.data.ctrcs.length} Documentos operacionais CTRC carregados.`,
+              `✓ ${res.data.tickets.length} Ocorrências mapeadas obtidas.`,
+              `✓ ${res.data.clients.length} Clientes críticos sincronizados.`
+            ]);
+            setMessage(res.message);
+          } else {
+            setSyncLogs(prev => [...prev, `❌ Falha: ${res.message}`]);
+            setAlertModal({
+              title: "Falha na Sincronização",
+              description: res.message
+            });
+          }
+        } catch (err: any) {
+          setSyncLogs(prev => [...prev, `❌ Falha crítica: ${err?.message || err}`]);
+        } finally {
+          setIsImporting(false);
+        }
+      }
+    });
   };
 
   const copyToClipboard = () => {
@@ -357,13 +366,18 @@ export default function ConfiguracoesView({
   };
 
   const executeReset = (routine: 'OP-01' | 'OP-02' | 'OP-03') => {
-    if (confirm(`Tem certeza que deseja executar o Reset de Governança ${routine}? Essa ação restaurará dados iniciais e reiniciará as métricas operacionais.`)) {
-      if (routine === 'OP-01') onResetOP01();
-      else if (routine === 'OP-02') onResetOP02();
-      else onResetOP03();
+    setConfirmModal({
+      title: "Executar Reset de Governança",
+      description: `Tem certeza que deseja executar o Reset de Governança ${routine}? Essa ação restaurará dados operacionais iniciais e reiniciará as métricas operacionais para os valores padrão do sistema local. Deseja prosseguir com o reset local?`,
+      onConfirm: () => {
+        setConfirmModal(null);
+        if (routine === 'OP-01') onResetOP01();
+        else if (routine === 'OP-02') onResetOP02();
+        else onResetOP03();
 
-      setMessage(`Rotina de governança complementar ${routine} foi disparada e executada com sucesso! Os bancos de dados locais foram recarregados.`);
-    }
+        setMessage(`Rotina de governança complementar ${routine} foi disparada e executada com sucesso! Os bancos de dados locais foram recarregados.`);
+      }
+    });
   };
 
   return (
@@ -729,7 +743,7 @@ export default function ConfiguracoesView({
               Gerenciamento de Chaves de Acesso e Sincronização Supabase
             </h3>
             <p className="text-xs text-on-surface-variant">
-              Configure as chaves dinâmicas de acesso ao seu banco de dados Supabase e gerencie backups e credenciais de forma criptografada.
+              Configure as chaves dinâmicas de acesso ao seu banco de dados Supabase para ativar a sincronização em tempo real.
             </p>
           </div>
 
@@ -739,12 +753,6 @@ export default function ConfiguracoesView({
               <span className="px-2.5 py-1 bg-primary/10 text-primary border border-primary/30 font-bold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
                 Salvo no Browser (localStorage)
-              </span>
-            )}
-            {activeSource === 'decrypted' && (
-              <span className="px-2.5 py-1 bg-[#3ecf8e]/10 text-[#3ecf8e] border border-[#3ecf8e]/30 font-bold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-[#3ecf8e] rounded-full animate-pulse"></span>
-                Descriptografado do Repositório
               </span>
             )}
             {activeSource === 'env' && (
@@ -821,91 +829,24 @@ export default function ConfiguracoesView({
             </div>
           </div>
 
-          <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-outline-variant/50 lg:pl-4 pt-4 lg:pt-0">
-            <h4 className="text-xs font-bold text-on-surface flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px] text-[#3ecf8e]">lock</span>
-              Proteção Criptografada do Repositório Git
-            </h4>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant mb-1 flex justify-between">
-                  <span>SENHA DO REPOSITÓRIO (Master Passphrase)</span>
-                  <span className="text-[10px] text-primary lowercase tracking-tight">Criptografa / Descriptografa localmente</span>
-                </label>
-                <input
-                  type="password"
-                  value={passphrase}
-                  onChange={(e) => {
-                    setPassphrase(e.target.value);
-                    localStorage.setItem('supabase_passphrase', e.target.value);
-                  }}
-                  placeholder="Insira a sua senha secreta"
-                  className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs font-mono text-on-surface focus:ring-1 focus:ring-[#3ecf8e]/50 focus:outline-none"
-                />
-              </div>
-
-              <div className="p-2.5 bg-surface-container/60 border border-[#3ecf8e]/10 rounded-lg text-[10px] text-on-surface-variant leading-relaxed space-y-1">
-                <span className="font-bold text-[#3ecf8e] uppercase tracking-wide block">Garantia contra vazamento:</span>
-                Não salve suas credenciais em texto claro no repositório público do GitHub. Criptografe suas credenciais reais em um bloco JSON encasulado com sua senha. No commit do repositório, os dados ficarão criptografados! Ao clonar, defina sua senha de repositório e clique em Descriptografar para carregar instantaneamente.
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleGenerateEncryptedConfig}
-                className="px-3 py-2 bg-surface hover:bg-surface-container-high border border-outline-variant text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[15px] text-[#3ecf8e]">fingerprint</span>
-                Gerar Configuração Criptografada
-              </button>
-
-              {secureConfig.encrypted && (
-                <button
-                  type="button"
-                  onClick={handleDecryptFromFile}
-                  className="px-3 py-2 bg-[#3ecf8e]/10 hover:bg-[#3ecf8e]/20 text-[#3ecf8e] border border-[#3ecf8e]/30 text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[15px]">enhanced_encryption</span>
-                  Descriptografar Arquivo de Repositório (.json)
-                </button>
-              )}
+          <div className="space-y-4 lg:border-l border-outline-variant/50 lg:pl-4 flex flex-col justify-between">
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-on-surface flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px] text-[#3ecf8e]">info</span>
+                Como integrar seu Banco de Dados Supabase?
+              </h4>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                Para tornar o RotaOperational totalmente funcional com o seu próprio banco de dados na nuvem:
+              </p>
+              <ul className="text-[11px] text-on-surface-variant list-disc pl-4 space-y-1 leading-relaxed">
+                <li>Crie um projeto grátis no painel oficial do <strong>Supabase</strong>.</li>
+                <li>Copie a <strong>Project URL</strong> e a <strong>Anon public API key</strong> das configurações de API do projeto.</li>
+                <li>Insira as chaves nos campos ao lado, salve e clique em <strong>Testar Conexão</strong>.</li>
+                <li>Abra o dropdown do Script SQL abaixo, copie o código e execute no SQL Editor do Supabase para criar as tabelas.</li>
+              </ul>
             </div>
           </div>
         </div>
-
-        {/* Generated Encrypted payload box */}
-        {generatedEncryptedJson && (
-          <div className="bg-surface-container/50 p-4 border border-[#3ecf8e]/20 rounded-xl space-y-2.5 animate-fadeIn">
-            <div className="flex justify-between items-center text-xs font-bold text-[#3ecf8e]">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-[#3ecf8e] rounded-full"></span>
-                Configuração Pronta para committing no GitHub!
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyJsonToClipboard}
-                className="px-2 py-1 bg-tertiary text-on-tertiary hover:bg-tertiary-fixed rounded text-[9px] font-bold tracking-tight uppercase flex items-center gap-1"
-              >
-                <span className="material-symbols-outlined text-[12px]">
-                  {isCopiedJson ? 'done' : 'content_copy'}
-                </span>
-                {isCopiedJson ? "Copiado!" : "Copiar JSON Criptografado"}
-              </button>
-            </div>
-            
-            <p className="text-[10px] text-on-surface-variant leading-relaxed">
-              Substitua o conteúdo do arquivo <code className="bg-surface font-mono font-bold text-on-surface p-0.5 rounded px-1">/src/supabase_config_enc.json</code> no seu repositório Git com o JSON abaixo. Seus dados estarão 100% protegidos contra robôs de monitoramento de credenciais públicas do GitHub!
-            </p>
-
-            <textarea
-              value={generatedEncryptedJson}
-              readOnly
-              className="w-full h-32 bg-surface text-[10px] font-mono text-on-surface-variant p-3 border border-outline-variant rounded-lg focus:outline-none select-all"
-            />
-          </div>
-        )}
 
         {/* Database Sync Controls (Buttons container) */}
         <div className="space-y-3">
@@ -926,7 +867,7 @@ export default function ConfiguracoesView({
 
             <button
               onClick={handleExportToSupabase}
-              disabled={isExporting || activeSource === 'none'}
+              disabled={isExporting || !customUrl.trim() || !customKey.trim()}
               className={`px-4 py-2 bg-[#3ecf8e] text-[#001f11] hover:bg-[#32b479] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">cloud_upload</span>
@@ -935,7 +876,7 @@ export default function ConfiguracoesView({
 
             <button
               onClick={handleImportFromSupabase}
-              disabled={isImporting || activeSource === 'none'}
+              disabled={isImporting || !customUrl.trim() || !customKey.trim()}
               className={`px-4 py-2 bg-primary text-on-primary hover:bg-primary-fixed text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">cloud_download</span>
@@ -1008,6 +949,65 @@ export default function ConfiguracoesView({
           )}
         </div>
       </div>
+
+      {/* Reusable Sandbox-compliant Custom Alert Modal */}
+      {alertModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-surface border border-outline-variant rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined text-error text-3xl shrink-0">warning</span>
+              <div className="space-y-1">
+                <h3 className="font-bold text-on-surface text-sm sm:text-base">{alertModal.title}</h3>
+                <p className="text-[11px] sm:text-xs text-on-surface-variant leading-relaxed">
+                  {alertModal.description}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setAlertModal(null)}
+                className="px-4 py-1.5 bg-primary text-on-primary hover:bg-primary-fixed text-xs font-bold rounded-lg transition-colors border border-transparent"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reusable Sandbox-compliant Custom Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-surface border border-outline-variant rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined text-primary text-3xl shrink-0 font-light">help</span>
+              <div className="space-y-1">
+                <h3 className="font-bold text-on-surface text-sm sm:text-base">{confirmModal.title}</h3>
+                <p className="text-[11px] sm:text-xs text-on-surface-variant leading-relaxed">
+                  {confirmModal.description}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-1.5 bg-surface hover:bg-surface-container border border-outline-variant text-[11px] font-bold rounded-lg text-on-surface transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="px-4 py-1.5 bg-[#3ecf8e] text-[#001f11] hover:bg-[#32b479] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98]"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

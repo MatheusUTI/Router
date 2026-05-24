@@ -1,43 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser } from './types';
-import secureConfig from './supabase_config_enc.json';
 
-// Simple robust passphrase encryption/decryption (XOR with dynamic key-stretching and base64)
-export function encryptCredentials(text: string, passphrase: string): string {
-  if (!text || !passphrase) return '';
-  let key = '';
-  while (key.length < text.length) {
-    key += passphrase;
-  }
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-    result += String.fromCharCode(charCode);
-  }
-  return btoa(encodeURIComponent(result));
-}
-
-export function decryptCredentials(encryptedBase64: string, passphrase: string): string {
-  if (!encryptedBase64 || !passphrase) return '';
-  try {
-    const decoded = decodeURIComponent(atob(encryptedBase64));
-    let key = '';
-    while (key.length < decoded.length) {
-      key += passphrase;
-    }
-    let result = '';
-    for (let i = 0; i < decoded.length; i++) {
-      const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-      result += String.fromCharCode(charCode);
-    }
-    return result;
-  } catch (e) {
-    return '';
-  }
-}
-
-// Global configurations query hierarchy
-export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'decrypted' | 'env' | 'none' } {
+// Global configurations query hierarchy (Simplified)
+export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'env' | 'none' } {
   // 1. Try local storage first
   const localUrl = localStorage.getItem('supabase_custom_url');
   const localKey = localStorage.getItem('supabase_custom_key');
@@ -45,23 +10,7 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
     return { url: localUrl, key: localKey, source: 'localStorage' };
   }
 
-  // 2. Try encrypted payload if passphrase is saved
-  const savedPassphrase = localStorage.getItem('supabase_passphrase');
-  if (secureConfig.encrypted && secureConfig.payload && savedPassphrase) {
-    try {
-      const decrypted = decryptCredentials(secureConfig.payload, savedPassphrase);
-      if (decrypted && decrypted.includes('||')) {
-        const [decryptedUrl, decryptedKey] = decrypted.split('||');
-        if (decryptedUrl && decryptedKey) {
-          return { url: decryptedUrl, key: decryptedKey, source: 'decrypted' };
-        }
-      }
-    } catch (e) {
-      // Ignored, falls back
-    }
-  }
-
-  // 3. Try standard environment variables
+  // 2. Try standard environment variables (Vite-supported)
   let envUrl = 
     ((import.meta as any).env)?.VITE_SUPABASE_URL || 
     ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_URL || 
@@ -85,7 +34,7 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
 const initialSettings = getSavedCredentials();
 export const supabaseUrl = initialSettings.url;
 export const supabaseAnonKey = initialSettings.key;
-export const isSupabaseConfigured = initialSettings.source !== 'none';
+export let isSupabaseConfigured = initialSettings.source !== 'none';
 
 // Live export initialized client references
 export let supabase = (supabaseUrl && supabaseAnonKey)
@@ -93,7 +42,7 @@ export let supabase = (supabaseUrl && supabaseAnonKey)
   : null;
 
 // Dynamic updater
-export function updateActiveSupabaseClient(url: string, key: string, passphraseToStore?: string): { success: boolean; source: string; url: string; key: string } {
+export function updateActiveSupabaseClient(url: string, key: string): { success: boolean; source: string; url: string; key: string } {
   let cleanUrl = url.trim();
   if (cleanUrl) {
     cleanUrl = cleanUrl.replace(/\/rest\/v1\/?$/, '').trim();
@@ -103,23 +52,20 @@ export function updateActiveSupabaseClient(url: string, key: string, passphraseT
   if (cleanUrl && cleanKey) {
     localStorage.setItem('supabase_custom_url', cleanUrl);
     localStorage.setItem('supabase_custom_key', cleanKey);
-    if (passphraseToStore !== undefined) {
-      localStorage.setItem('supabase_passphrase', passphraseToStore);
-    }
     supabase = createClient(cleanUrl, cleanKey);
+    isSupabaseConfigured = true;
     return { success: true, source: 'localStorage', url: cleanUrl, key: cleanKey };
   } else {
     // Clear custom settings
     localStorage.removeItem('supabase_custom_url');
     localStorage.removeItem('supabase_custom_key');
-    if (passphraseToStore !== undefined) {
-      localStorage.setItem('supabase_passphrase', passphraseToStore);
-    }
     const defaultCred = getSavedCredentials();
     if (defaultCred.url && defaultCred.key) {
       supabase = createClient(defaultCred.url, defaultCred.key);
+      isSupabaseConfigured = true;
     } else {
       supabase = null;
+      isSupabaseConfigured = false;
     }
     return { success: true, source: defaultCred.source, url: defaultCred.url, key: defaultCred.key };
   }
@@ -142,6 +88,20 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
   } catch (err: any) {
     return { success: false, message: `Falha na requisição: ${err?.message || err}` };
   }
+}
+
+// Translate specific Supabase database errors into friendly Portuguese instructions
+function formatSupabaseError(err: any, tableName: string): string {
+  if (!err) return '';
+  const code = err.code;
+  const msg = err.message || String(err);
+  if (code === '42P01' || msg.includes('relation') || msg.includes('does not exist')) {
+    return `A tabela '${tableName}' não existe no banco Supabase. Por favor, copie o Script SQL no final desta página e execute-o no 'SQL Editor' do seu painel Supabase para criar as tabelas necessárias.`;
+  }
+  if (code === '42501' || msg.includes('row-level security') || msg.includes('permission denied') || msg.includes('violates row-level security')) {
+    return `Permissão negada na tabela '${tableName}' (Erro RLS). Certifique-se de que desativou o Row Level Security (RLS) ou configurou as políticas corretas conforme o script SQL abaixo.`;
+  }
+  return `${msg} (Código: ${code || 'sem-codigo'})`;
 }
 
 // Initial default app users for local/offline testing or initial seeds
@@ -245,7 +205,7 @@ export async function saveAppUser(user: AppUser): Promise<{ success: boolean; me
     const data = await res.json();
     return { success: data.success, message: data.message || "Usuário salvo e sincronizado com o Supabase com sucesso!" };
   } catch (err: any) {
-    return { success: true, message: `Usuário salvo localmente. Sincronização offline: ${err?.message || err}` };
+    return { success: false, message: `Erro ao sincronizar com o servidor: ${err?.message || err}` };
   }
 }
 
@@ -280,6 +240,7 @@ export async function exportStateToSupabase(data: {
   ctrcs: Ctrc[];
   tickets: Ticket[];
   clients: CriticClient[];
+  users?: AppUser[];
 }): Promise<{ success: boolean; results: string[] }> {
   if (!supabase) throw new Error('Supabase client is not configured.');
   
@@ -300,7 +261,7 @@ export async function exportStateToSupabase(data: {
     results.push(`✓ ${formattedVehicles.length} veículos exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
-    results.push(`❌ Veículos: ${err.message || err}`);
+    results.push(`❌ Veículos: ${formatSupabaseError(err, 'vehicles')}`);
   }
 
   // 2. Drivers
@@ -322,7 +283,7 @@ export async function exportStateToSupabase(data: {
     results.push(`✓ ${formattedDrivers.length} motoristas exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
-    results.push(`❌ Motoristas: ${err.message || err}`);
+    results.push(`❌ Motoristas: ${formatSupabaseError(err, 'drivers')}`);
   }
 
   // 3. CTRCs
@@ -360,7 +321,7 @@ export async function exportStateToSupabase(data: {
     results.push(`✓ ${formattedCtrcs.length} documentos CTRC exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
-    results.push(`❌ CTRCs: ${err.message || err}`);
+    results.push(`❌ CTRCs: ${formatSupabaseError(err, 'ctrcs')}`);
   }
 
   // 4. Tickets
@@ -380,7 +341,7 @@ export async function exportStateToSupabase(data: {
     results.push(`✓ ${formattedTickets.length} chamados críticos exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
-    results.push(`❌ Chamados: ${err.message || err}`);
+    results.push(`❌ Chamados: ${formatSupabaseError(err, 'tickets')}`);
   }
 
   // 5. Clients
@@ -404,7 +365,32 @@ export async function exportStateToSupabase(data: {
     results.push(`✓ ${formattedClients.length} clientes auditados exportados com sucesso.`);
   } catch (err: any) {
     hasErrors = true;
-    results.push(`❌ Clientes: ${err.message || err}`);
+    results.push(`❌ Clientes: ${formatSupabaseError(err, 'clients')}`);
+  }
+
+  // 6. Users (Auth & app_users table)
+  if (data.users && data.users.length > 0) {
+    try {
+      let syncedUsersCount = 0;
+      let failedUsersCount = 0;
+      
+      for (const u of data.users) {
+        try {
+          const syncRes = await saveAppUser(u);
+          if (syncRes.success) {
+            syncedUsersCount++;
+          } else {
+            failedUsersCount++;
+          }
+        } catch (uErr) {
+          failedUsersCount++;
+        }
+      }
+      results.push(`✓ ${syncedUsersCount} usuários persistidos no banco corporativo (${failedUsersCount} falhas).`);
+    } catch (err: any) {
+      hasErrors = true;
+      results.push(`❌ Usuários: ${err.message || err}`);
+    }
   }
 
   return { success: !hasErrors, results };
@@ -427,26 +413,44 @@ export async function importStateFromSupabase(): Promise<{
   try {
     // 1. Fetch Vehicles
     const vehiclesFetch = await supabase.from('vehicles').select('*');
-    if (vehiclesFetch.error) throw new Error(`Falha nos Veículos: ${vehiclesFetch.error.message}`);
+    if (vehiclesFetch.error) throw new Error(`Falha nos Veículos: ${formatSupabaseError(vehiclesFetch.error, 'vehicles')}`);
 
     // 2. Fetch Drivers
     const driversFetch = await supabase.from('drivers').select('*');
-    if (driversFetch.error) throw new Error(`Falha nos Motoristas: ${driversFetch.error.message}`);
+    if (driversFetch.error) throw new Error(`Falha nos Motoristas: ${formatSupabaseError(driversFetch.error, 'drivers')}`);
 
     // 3. Fetch CTRCs
     const ctrcsFetch = await supabase.from('ctrcs').select('*');
-    if (ctrcsFetch.error) throw new Error(`Falha nos CTRCs: ${ctrcsFetch.error.message}`);
+    if (ctrcsFetch.error) throw new Error(`Falha nos CTRCs: ${formatSupabaseError(ctrcsFetch.error, 'ctrcs')}`);
 
     // 4. Fetch Tickets
     const ticketsFetch = await supabase.from('tickets').select('*');
-    if (ticketsFetch.error) throw new Error(`Falha nos Chamados: ${ticketsFetch.error.message}`);
+    if (ticketsFetch.error) throw new Error(`Falha nos Chamados: ${formatSupabaseError(ticketsFetch.error, 'tickets')}`);
 
     // 5. Fetch Clients
     const clientsFetch = await supabase.from('clients').select('*');
-    if (clientsFetch.error) throw new Error(`Falha nos Clientes: ${clientsFetch.error.message}`);
+    if (clientsFetch.error) throw new Error(`Falha nos Clientes: ${formatSupabaseError(clientsFetch.error, 'clients')}`);
+
+    // Safe extraction with default array fallbacks
+    const vehiclesRaw = vehiclesFetch.data || [];
+    const driversRaw = driversFetch.data || [];
+    const ctrcsRaw = ctrcsFetch.data || [];
+    const ticketsRaw = ticketsFetch.data || [];
+    const clientsRaw = clientsFetch.data || [];
+
+    // Check if the database is completely empty (no rows in any of the operational tables)
+    if (
+      vehiclesRaw.length === 0 &&
+      driversRaw.length === 0 &&
+      ctrcsRaw.length === 0 &&
+      ticketsRaw.length === 0 &&
+      clientsRaw.length === 0
+    ) {
+      throw new Error("Seu banco de dados Supabase foi alcançado com sucesso, mas está totalmente vazio (as tabelas existem mas não têm dados). Por favor, execute a 'Carga Semente' primeiro para enviar os registros locais da sua tela para a nuvem.");
+    }
 
     // Map database formats back to internal React component types
-    const vehicles: Vehicle[] = vehiclesFetch.data.map(v => ({
+    const vehicles: Vehicle[] = vehiclesRaw.map(v => ({
       id: v.id,
       driverName: v.driver_name,
       capacity: v.capacity,
@@ -454,7 +458,7 @@ export async function importStateFromSupabase(): Promise<{
       status: v.status as any
     }));
 
-    const drivers: DriverScore[] = driversFetch.data.map(d => ({
+    const drivers: DriverScore[] = driversRaw.map(d => ({
       id: d.id,
       name: d.name,
       score: Number(d.score),
@@ -467,7 +471,7 @@ export async function importStateFromSupabase(): Promise<{
       avatar: d.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(d.name)}`
     }));
 
-    const ctrcs: Ctrc[] = ctrcsFetch.data.map(c => ({
+    const ctrcs: Ctrc[] = ctrcsRaw.map(c => ({
       id: c.id,
       destinatario: c.destinatario,
       cidade: c.cidade,
@@ -496,7 +500,7 @@ export async function importStateFromSupabase(): Promise<{
       localizacao: c.localizacao || undefined
     }));
 
-    const tickets: Ticket[] = ticketsFetch.data.map(t => ({
+    const tickets: Ticket[] = ticketsRaw.map(t => ({
       id: t.id,
       title: t.title,
       destinatario: t.destinatario,
@@ -507,7 +511,7 @@ export async function importStateFromSupabase(): Promise<{
       icon: t.icon || 'warning'
     }));
 
-    const clients: CriticClient[] = clientsFetch.data.map(c => {
+    const clients: CriticClient[] = clientsRaw.map(c => {
       let recurrentIssues = [];
       try {
         if (c.recurrent_issues_json) {
@@ -646,4 +650,14 @@ CREATE TABLE IF NOT EXISTS public.app_users (
   is_master BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ==========================================
+-- IMPORTANTE: Para que o sistema sincronize livremente sem erros de política (RLS),
+-- execute estes comandos para liberar o acesso público de leitura e escrita:
+ALTER TABLE public.vehicles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.drivers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ctrcs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tickets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
 `;

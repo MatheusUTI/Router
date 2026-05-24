@@ -134,8 +134,37 @@ async function startServer() {
             user: mappedUser
           });
         } else {
-          console.log(`[BACKEND] Autenticação direta com Supabase Auth falhou: ${authError?.message}. Verificando provisionamento de fallback...`);
+          console.log(`[BACKEND] Autenticação direta com Supabase Auth falhou: ${authError?.message}. Verificando tabela app_users como fallback...`);
           
+          try {
+            const { data: dbData, error: dbError } = await activeSupabase
+              .from("app_users")
+              .select("*")
+              .eq("username", cleanUser);
+
+            if (!dbError && dbData && dbData.length > 0) {
+              const dbUser = dbData[0];
+              if (dbUser.password === cleanPass) {
+                console.log(`[BACKEND] Login realizado com sucesso via public.app_users como fallback para: ${cleanUser}`);
+                return res.json({
+                  success: true,
+                  user: {
+                    username: dbUser.username,
+                    name: dbUser.name,
+                    role: dbUser.role,
+                    is_master: !!dbUser.is_master,
+                    created_at: dbUser.created_at || new Date().toISOString(),
+                    warning: "Autenticado via tabela de dados (Supabase Auth pendente ou restrito)."
+                  }
+                });
+              }
+            } else if (dbError) {
+              console.warn("[BACKEND] Erro ao consultar tabela app_users no login fallback:", dbError.message);
+            }
+          } catch (dbQueryErr: any) {
+            console.warn("[BACKEND] Exceção ao consultar tabela app_users no login fallback:", dbQueryErr.message || dbQueryErr);
+          }
+
           // Let's check fallback auto-provisioning!
           // If the password matches a fallback user, we dynamically register them in Supabase Auth!
           const fallbackMatch = DEFAULT_APP_USERS.find(
