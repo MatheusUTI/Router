@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Ctrc, AppUser } from '../../../types';
-import { getSlaStatus } from '../helpers/getSlaStatus';
+import { RoteirizacaoItem, AppUser } from '../../../types';
 
 export interface UseRoteirizacaoFiltersProps {
-  ctrcs: any[];
+  ctrcs: RoteirizacaoItem[];
   adminUser: AppUser;
 }
 
@@ -30,10 +29,11 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
       .filter((c) => {
+        const currentUnid = (c.unid || '').toUpperCase();
         if (!adminUser.is_master) {
-          return c.unid === (adminUser.unid || 'SPO').toUpperCase();
+          return currentUnid === (adminUser.unid || 'SPO').toUpperCase();
         } else {
-          if (selectedUnit !== 'TODAS') return c.unid === selectedUnit;
+          if (selectedUnit !== 'TODAS') return currentUnid === selectedUnit;
         }
         return true;
       })
@@ -45,12 +45,13 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // Apply sequential filtering logic
   const filteredCtrcs = useMemo(() => {
     return ctrcs.filter((ctrc) => {
+      const currentUnid = (ctrc.unid || '').toUpperCase();
       // 1. Filial target check
       if (!adminUser.is_master) {
         const profileUnid = (adminUser.unid || 'SPO').toUpperCase();
-        if (ctrc.unid !== profileUnid) return false;
+        if (currentUnid !== profileUnid) return false;
       } else {
-        if (selectedUnit !== 'TODAS' && ctrc.unid !== selectedUnit) return false;
+        if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
       }
 
       // 2. Sector filtering
@@ -58,21 +59,17 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
 
       // 3. Tactical Focus Category matching
       if (activeTacticalFilter === 'delayed') {
-        const sla = getSlaStatus(ctrc.prev_ent);
-        if (!sla.isDelayed) return false;
+        if (!ctrc.slaStatus.isDelayed) return false;
       } else if (activeTacticalFilter === 'curva') {
         if (!ctrc.isCurvaA) return false;
       } else if (activeTacticalFilter === 'heavy') {
-        const w = ctrc.peso_r || ctrc.weight || 0;
-        if (w < 1000) return false;
+        if (ctrc.pesoStatus.category === 'PESADO' || ctrc.pesoStatus.category === 'CRÍTICO') return false;
       } else if (activeTacticalFilter === 'priority') {
         if (ctrc.normPriority !== 'CRÍTICA' && ctrc.normPriority !== 'ALTA') return false;
       } else if (activeTacticalFilter === 'retained') {
-        if (!ctrc.ocorrencia) return false;
+        if (ctrc.availabilityStatus !== 'retido') return false;
       } else if (activeTacticalFilter === 'missingbox') {
-        const loc = (ctrc.localizacao || '').toUpperCase();
-        const isNone = !loc || loc.includes('SEM BOX') || loc.includes('NÃO DEFINIDO') || loc.includes('PENDENTE');
-        if (!isNone) return false;
+        if (ctrc.availabilityLabel === 'SEM BOX') return false;
       }
 
       // 4. Case-insensitive unified query search

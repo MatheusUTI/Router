@@ -1,197 +1,289 @@
-# 🚚 RotaOperational
+# Router - Plataforma de Roteirização Operacional e Expedição Logística
 
-Plataforma operacional web para logística rodoviária de alto rendimento, dedicada à triagem física, importação de documentos operacionais (CTRCs) e roteirização rápida de cargas. O sistema é concebido sob o modelo **Local-First com Sincronização em Nuvem (Supabase)**, garantindo resiliência operacional contínua mesmo em galpões industriais com conectividade intermitente ou ausência de sinal de internet.
+> Sistema de alta performance, projetado sob a filosofia *Offline-First / Local-First*, voltado para a governança operacional, roteirização tática e expedição de cargas no transporte rodoviário de distribuição urbana e fracionada.
 
-O RotaOperational não é um ERP genérico ou uma plataforma analítica de BI; ele atua estritamente como um **terminal operacional pragmático** focado na agilidade diária de pátio e conformidade de despacho físico.
-
----
-
-## 🌎 1. Visão Geral
-
-O sistema integra o controle logístico de filiais descentralizadas, resolvendo a fragmentação na conversão de planilhas de faturamento de ERPs corporativos em cargas físicas consolidadas. O operador local manipula e valida informações em um ambiente de alta velocidade livre de oscilações de rede.
-
-A governança do fluxo é baseada na filial de origem do operador logístico (`unid`), bloqueando visualizações ou edições não autorizadas entre diferentes bases regionais (ex: São Paulo - **SPO**, Varginha - **VGA**).
+O **Router** foi desenvolvido para preencher uma lacuna crítica nas operações de transporte: a resiliência operacional no chão de fábrica e na doca de expedição. Diferente de soluções SaaS tradicionais puramente em nuvem, o Router foi concebido para continuar operando sem latência e sem interrupções mesmo diante de instabilidades parciais ou totais de rede.
 
 ---
 
-## ⚙️ 2. Princípios Operacionais
+## 1. Visão Geral do Sistema
 
-A engenharia e desenvolvimento da plataforma seguem premissas reais de operação industrial:
+No ecossistema de transporte de cargas e logística de distribuição (TMS/WMS), a velocidade operacional e a continuidade dos processos de expedição e montagem de cargas são imperativas. Paradas de poucos minutos na doca de carregamento causadas por lentidão de rede, indisponibilidade do banco de dados na nuvem ou quedas de conexão geram custos em cadeia (veículos ociosos, atrasos em janelas de entrega do varejo e horas extras de operadores).
 
-*   **Operação antes de Analytics:** Prioridade máxima na fluidez da triagem física e faturamento por placa. Telas de indicadores e relatórios analíticos são tratados como satélites.
-*   **Offline antes de Realtime:** A tolerância a falhas locais é mandatória. O sistema processa importações e monta cargas em memória/cache local, exigindo internet ativa apenas para sincronizações planejadas.
-*   **Fluxo Operacional antes de Complexidade Visual:** Foco em tabelas densas, buscas rápidas por teclado e inputs numéricos diretos (*Cosmic Slate Theme* de baixa fadiga para ambientes logísticos).
-*   **Evolução Incremental sem Ruptura:** Rejeição à reescrita completa. Novos recursos e refatorações são aplicados progressivamente, resguardando módulos funcionais estáveis.
-*   **Governança por Unidade Operacional:** Trancas físicas de dados impostas na raiz do login com base na filial fiduciária.
+O **Router** opera na ponta operacional, atuando como o elo de execução de roteirização rápida:
+- **Resolução de Instabilidade de Rede**: Permite que filiais, pátios e docas trabalhem de forma ininterrupta por meio de persistência síncrona local de todos os CTRCs (*Conhecimentos de Transporte Eletrônicos*), ocorrências, cadastros de frota e dados de cidades.
+- **Rápida Roteirização Tática**: Consolida dados operacionais brutos provenientes de importações de ERP ou TMS centrais, executa o enriquecimento automático (detecção de SLA, curva de importância, identificação de frete FOB e restrições de restrições de entrega) e viabiliza a alocação visual dinâmica a veículos disponíveis no pátio.
+- **Conformidade de Expedição**: Garante o controle rígido de limite de capacidade técnica dos veículos (peso de payload e cubagem/volume), sugerindo de forma automatizada o veículo ideal compatível com o rascunho de carregamento construído pelo assistente expedição humana.
 
 ---
 
-## 🔄 3. Fluxo Operacional Principal
+## 2. Filosofia Arquitetural
 
-O fluxo de decolagem de mercadorias no RotaOperational simula a sequência de triagem de um pátio real:
+A arquitetura do Router é governada pela soberania e consistência local dos dados na interface com o usuário. A premissa central é de que **a operação nunca depende diretamente da nuvem para realizar tarefas de execução tática imediata**.
 
-```txt id="u20r6k"
-Login
-→ Importação CSV/TXT
-→ Mapeamento
-→ Validação
-→ Roteirização
-→ Alocação em veículos
-→ Expedição
-→ Finalização da viagem
-→ Ocorrências
-→ Encerramento operacional
+### Diretrizes de Projeto:
+- **Offline-First / Local-First**: O estado ativo da tela de roteirização e os dados persistidos residem no banco do navegador (IndexedDB) gerenciado de forma transacional. Toda e qualquer ação de filtragem, agrupamento, rascunho, montagem de carga e pré-emissão de Romaneios gera atualizações síncronas locais instantâneas (tempo de resposta inferior a 5ms).
+- **Consistência Eventual e Fila Transacional (*Sync Queue*)**: Alterações de estado que exigem consolidação no núcleo de dados centralizado (Supabase) são empilhadas em uma fila de sincronização persistente localmente. Caso o operador esteja sem rede, a fila conserva os pacotes de alteração de forma sequencial idempotente e os transmite de maneira inteligente à medida que o canal é restabelecido.
+- **Decisões Desacopladas de Redes Remotas**: O carregamento inicial extrai dicionários (cidades/rotas válidas, tabela de ocorrências padronizadas, clientes especiais Curva A). Uma vez hidratado, o cálculo e a classificação são inteiramente realizados na CPU da máquina cliente, blindando a operação contra picos de latência ou gargalos em microsserviços.
+
+---
+
+## 3. Stack Tecnológico
+
+O Router utiliza uma combinação de tecnologias sólidas que favorecem tempos mínimos de renderização, suporte duradouro a processamento de dados local estruturado, e sincronia segura:
+
+### Frontend
+- **React**: Biblioteca componentizável para estruturação de UI reativa e modular de estado previsível.
+- **TypeScript**: Estrita tipagem estática que previne quebras nas transformações complexas de modelos de CTRC, validações operacionais de veículo e interações de romaneios.
+- **Vite**: Ferramenta de build extremamente veloz que otimiza ciclos de desenvolvimento e minimiza o bundle final de entrega.
+- **Tailwind CSS**: Framework utilitário de CSS que viabiliza densidade visual rica com mínima pegada de folhas de estilos e fluidez em telas de baixa resolução (notadamente notebooks operacionais).
+
+### Persistência Local
+- **IndexedDB**: API de persistência em baixo nível no browser que possibilita o armazenamento de megabytes de registros localmente sem as severas restrições de cota do LocalStorage.
+- **Dexie.js**: Wrapper declarativo sobre IndexedDB que assegura controle de versões de banco de dados, índices performáticos, tratamento robusto de concorrência e transações seguras.
+
+### Backend & Sincronização
+- **Supabase**: Plataforma Backend-as-a-Service escalável, fornecendo banco de dados corporativo relacional Postgres, autenticação e suporte nativo a sincronização síncrona.
+
+---
+
+## 4. Estrutura de Diretórios
+
+A distribuição de pastas reflete a arquitetura limpa de separação de conceitos do Router:
+
 ```
-
-1.  **Login Regional:** Validação de login com leitura das permissões (`is_master`) e correspondente unidade de retenção fixa (`unid`).
-2.  **Importação de Faturamento:** Upload por drag-and-drop de arquivos de frete tabulados provenientes do ERP de faturamento.
-3.  **Mapeamento de Cabeçalho:** Ajuste flutuante opcional para associar cabeçalhos de novos layouts do ERP sem quebrar o banco.
-4.  **Validação de Registro:** Identificação local de erros matemáticos de volume ou CTRCs já despachados.
-5.  **Roteirização e Alocação:** Operadores examinam apenas os fretes destinados à sua filial ativa e alocam-nos às placas correspondentes.
-6.  **Expedição e Finalização:** Consolidação financeira das movimentações (lançamento de custos de viagem) e emissão de romaneio PDF.
-7.  **Encerramento:** Feedback de conclusão e liberação das placas para reuso, fechando-se o loop do pátio.
-
----
-
-## 📦 4. Módulos Principais
-
-### A. Núcleo Operacional (Alta Prioridade)
-*   **Módulo de Importação:** Interface e parser de planilhas CSV com salvamento reusável de mapeamento de colunas em cookies/gabaritos locais.
-*   **Módulo de Roteirização:** Grid elástico estilo planilha Excel com redimensionamento responsivo de células para listagem, ordenação e atribuição em lote de fretes.
-*   **Módulo de Expedição e Finalização:** Emissor de relatórios logísticos em PDF com input flutuante de despesas operacionais da rota.
-*   **Módulo de Ativos Terrestres (Frota):** CRUD ativo de caminhões e cadastro qualitativo de scores econômicos de motoristas.
-*   **Módulo de Sincronização Cloud:** Gateway central de backups que unifica as alterações locais e as consolida de forma segura no Supabase.
-
-### B. Recursos Secundários (Acessos de Auditoria - Gaveta Adicional)
-*   **Painel Central (Dashboard):** KPIs consolidados e totalizações simplificadas baseadas no cache de terminal.
-*   **Clientes Críticos e Curva A:** Classificador conceitual de compradores prioritários para apoio a auditorias financeiras.
-*   **Ocorrências de Rota:** Catálogo passivo de divergências padrão (CBR) para orientação técnica de anomalias logísticas.
-
----
-
-## 🛠️ 5. Arquitetura Atual
-
-O sistema adota uma estrutura homogênea full-stack de baixo atrito:
-
-*   **Frontend SPA:** Construído em **React + TypeScript + Vite**, estilizado horizontalmente através do **Tailwind CSS** e animado via **Motion**.
-*   **Retaguarda Proxy Express:** Servidor back-end em Node.js configurado para executar na porta única ingressadora **3000** garantindo provisionamento transparente de usuários e seeds na inicialização inicial do container.
-*   **Banco PostgreSQL Supabase:** Repositório estável das tabelas operacionais em nuvem (`ctrcs`, `vehicles`, `drivers`, `tickets`, `app_users`).
-*   **Mecanismo Local-First:** Os fluxos utilizam o `localStorage` do navegador para staging, prevenindo perda de triagem corrente em quedas de sinal de roteadores industriais.
-
----
-
-## 📂 6. Estrutura do Projeto
-
-Organização madura baseada na direção evolutiva de componentes puros para modularização modular por capacidades lógicas:
-
-```txt id="ihb6l3"
 src/
- ├── components/       # Componentes de UI e views operacionais acopladas
- │    ├── LoginView.tsx        # Controle de decolagem de sessão corporativa
- │    ├── ImportacaoView.tsx   # Parser local de CSV e templates de-para
- │    ├── RoteirizacaoView.tsx # Grid de arranjo físico Excel elástico
- │    ├── FinalizacaoView.tsx  # Manifesto e custos adicionais
- │    ├── FrotaView.tsx        # CRUD de caminhões e perfis de controle
- │    ├── Sidebar.tsx          # Menu reativo separando core de áreas de roadmap
- │    └── ... (outras views de auditoria secundárias)
- ├── types/            # Modelagem de interfaces e enums do domínio logístico
- ├── utils/            # Ferramentas auxiliares de processamento matemático e formatters
- └── supabase.ts       # Hub de API remota REST direta contra tabelas Cloud
+├── components/
+│   └── roteirizacao/
+│       ├── helpers/                 # Algoritmos utilitários puros de tratamento operacional
+│       │   ├── getOcorrenciaStatus.ts  # Decisão de status de disponibilidade da carga
+│       │   ├── getPesoStatus.ts        # Classificação de peso de lotes
+│       │   ├── getSlaStatus.ts         # Cálculo de vencimentos
+│       │   └── isClienteCurvaA.ts      # Classificação de prioridades comerciais
+│       ├── hooks/                   # Custom Hooks isolando lógica de estado de UI e filtros
+│       │   ├── useCargaSelection.ts    # Seleção de CTRCs
+│       │   ├── useRoteirizacaoFilters.ts # Fluxo de filtros de foco tático e texto unificados
+│       │   ├── useRoteirizacaoGrouping.ts # Agrupadores dinâmicos (Cidade, Setor, Rota)
+│       │   └── useVehicleAllocation.ts # Logística de rascunhos de carga e compatibilidade
+│       ├── services/                # Camada de serviços de lógica de negócios enriquecida
+│       │   └── roteirizacaoEnrichmentService.ts # Conversão de CTRC Bruto em RoteirizacaoItem
+│       ├── CargaGroup.tsx           # Renderizador de sanfonas/grupos de carregamento
+│       ├── CargaItem.tsx            # View unitária do CTRC enriquecido altamente compacto
+│       ├── CargaList.tsx            # Driver de listagem de cargas (Normal ou Agrupado)
+│       ├── FrotaPanel.tsx           # Kanban e área de gestão rápida da frota do pátio
+│       ├── RoteirizacaoView.tsx     # View mestra integradora do dashboard operacional
+│       └── VehicleCard.tsx          # Componente representativo do veículo, capacidades e rascunho
+├── infrastructure/
+│   └── localdb/
+│       ├── repositories/            # Camada DAO/Repositórios encapsulando persistência local
+│       │   ├── helperRepository.ts
+│       │   ├── curvaAClientRepository.ts
+│       │   ├── userPreferenceRepository.ts
+│       │   ├── syncMetadataRepository.ts
+│       │   ├── ctrcRepository.ts
+│       │   ├── vehicleRepository.ts
+│       │   ├── driverRepository.ts
+│       │   ├── occurrenceRepository.ts
+│       │   ├── syncQueueRepository.ts
+│       │   └── cidadeRotaRepository.ts
+│       └── db.ts                    # Declaração do Dexie de banco operacional local e esquemas
+├── types.ts                         # Central de contratos de tipos estritos do ecossistema Router
+└── App.tsx                          # Orquestrador de visualizações e inicialização
 ```
 
 ---
 
-## 🧭 7. Domínio Operacional (Visão Semântica)
+## 5. Módulos do Sistema
 
-A semântica de código do RotaOperational abstrai termos de telas para focar em regras de negócio fiduciárias:
+O Router expandiu seu arcabouço de persistência local para garantir governança logística total, dividindo seus domínios de escopo de forma clara.
 
-*   **Importação & Staging:** Controle isolado em memória RAM do processamento de faturamento bruto sem expor dados inconsistentes às tabelas ativas.
-*   **Viagem & Manifesto:** O agregado logístico (placa + rota + custos + lista de CTRCs) que valida se a cubagem e o peso nominal estequiométrico limite do caminhão não foram ultrapassados no carregamento.
-*   **Sessão Operacional:** Amarração restritiva baseada no token `user.unid` que delimita o escopo físico visível de leitura e gravação no pátio.
+### Módulos Já Operacionais
+- **Enriquecimento Operacional**: Conversão assíncrona de CTRC bruto importado em um objeto de negócios enriquecido de dados normalizados de rotas, classes comerciais, restrições e SLAs.
+- **RoteirizacaoView / Dashboard**: Vista contendo duas colunas (Cargas x Veículos), priorizando rascunhos em tempo real com controle de payload restante e sugestão automatizada de veículo.
+- **Importação ERP (Mapeadores)**: Mapeador de carga flexível capaz de traduzir metadados brutos originados de sistemas ERP em payloads válidos.
+- **Persistência Local Offline**: Bancos transacionais de cadastros, dicionários de cidades e ocorrências diretamente no IndexedDB via Dexie.
+- **Gestão da Frota do Pátio**: Rastreamento rápido e preciso da ocupação de veículos por peso (kg) e volumetria (volumes) por viagem ou rascunho.
+- **Base de Curva A Local**: Registro indexado de CNPJs prioritários para indicação destacada instantânea na expedição.
+- **Ajudantes/Helpers Cadastrados**: Repositório operacional local focado em validar disponibilidade estrutural de auxiliares de rota.
 
----
+### Módulos em Amadurecimento
+- **Roteirização Automática / Sugestões Complexas**: Algoritmo que calcula agrupamento lógico de CTRCs com o veículo disponível de menor custo associado que atenda às datas de entrega.
+- **Algoritmo TSP (Travelling Salesperson) de Sequenciamento**: Ordenação geográfica lógica de posições e sequências de e-commerce/varejo após a finalização e emissão do romaneio.
+- **Consolidador Centralizado de Romaneios**: Processo em background que transfere pacotes assinados de romaneios locais consolidados em lotes para arquivamento no Supabase Cloud.
 
-## 🚦 8. Estado Atual do Projeto
-
-Identificação clara de integridade e usabilidade atual das engrenagens do sistema:
-
-*   **Funcionalidades Estáveis:** Autenticação regional fiduciária, CRUD de frotas e motoristas, grid elástico e alocação de cargas no pátio, emissão e exportação de relatórios romaneios em PDF.
-*   **Áreas Parciais:** O mapeador flexível de arquivos CSV funciona e salva o layout, mas necessita de persistência no banco Supabase para eliminar dependência estrita do cache do navegador.
-*   **Áreas em Evolução:** Os custos de viagem adicionais introduzidos na Finalização não se convertem em histórico relacional permanente nas tabelas, sendo descartados pós-fechamento do veículo.
-
----
-
-## ⚠️ 9. Dívidas Técnicas Conhecidas
-
-*   **Persistência Volátil de Romaneios:** Ausência de uma tabela permanente de histórico de manifestos (`public.romaneios_hist`), dependendo de persistências pontuais locais.
-*   **RLS Simplificado:** A restrição por filial é imposta via filtros estritos lógica de frontend no React, necessitando de Row Level Security direto no PostgreSQL para auditorias rigorosas em grandes equipes.
-*   **Cálculos em RAM Client-Side:** Dashboard agrega e indexa milhares de faturamentos usando a CPU do navegador cliente, gerando latências no pátio caso o banco local de CTRCs exceda dezenas de milhares de linhas ativas.
+### Módulos Futuros
+- **Mobile de Assinatura Digital e Entrega**: Extensão móvel para o motorista realizar coletas, baixar entregas em campo e atualizar reativamente o status de pátio na doca.
+- **Torre de Controle de Frota**: Monitoramento georreferenciado e controle de tempos de descarregamento em tempo real.
 
 ---
 
-## 📅 10. Roadmap Resumido
+## 6. Fluxo Operacional Real
 
-### Curto Prazo (Estabilização)
-*   Persistência de gabaritos flexíveis de CSV no Supabase associados à conta ativa.
-*   Refinamento do buffer de carregamento das planilhas em conexões de alta oscilação.
+O processamento das cargas passa por um fluxo rígido de transições lógicas, garantindo previsibilidade de dados e rastreamento constante:
 
-### Médio Prazo (Consolidação de Domínio)
-*   Criação de tabelas de histórico relacional para armazenar e auditar romaneios encerrados.
-*   Migrar agregações custosas para Views nativas PostgreSQL no Supabase.
-
-### Longo Prazo (Segurança & Alta Escala)
-*   Ativação homogênea de políticas RLS em banco e liberação de logs de auditoria temporal.
+```
+[Importação de Cargas do ERP / CSV]
+                     │
+                     ▼
+       [Normalização de Endereço] ────────► Busca no dicionário local 'cidades_rotas'
+                     │                      (Normaliza: Setor Comercial, Rota e Prazo Logístico)
+                     ▼
+      [Enriquecimento Operacional] ───────► Classifica: Peso (Leve, Médio, Pesado, Crítico)
+                     │                      Determina: SLA de Entrega (Atrasado, No Prazo, Hoje)
+                     │                      Resolve: Ocorrências Ativas e Criticidade
+                     │                      Mapeia comercialmente: Curva A e Modalidade FOB/CIF
+                     ▼
+        [Montagem Dinâmica de Carga] ◄────► Painel de Expedição / Operador
+                     │                      (Lógica visual de agrupamento por Cidade/Setor/Rota)
+                     ▼
+    [Validação Dinâmica de Veículos] ──────► Sugere os veículos recomendados (melhor cubagem)
+                     │                       Valida restrições físicas de Payload (Evita Excesso)
+                     ▼
+     [Geração de Rascunho / Draft]
+                     │
+                     ▼
+    [Consolidação e Emissão de Romaneio] ──► Gravação síncrona local no IndexedDB ('savedRomaneios')
+                     │                       Inserção de evento operacional na 'sync_queue'
+                     ▼
+   [Background Sync / Consolidador Cloud] ──► Sincronização automática em lotes junto ao Supabase
+```
 
 ---
 
-## 🚀 11. Execução do Projeto
+## 7. Interfaces do Modelo de Dados
 
-### Pré-requisitos
-*   Node.js v18 ou superior.
-*   NPM v9 ou superior.
+O núcleo de tipos estritos modela as entidades para garantir segurança em conversões e cálculos de transporte:
 
-### Instalação
+```typescript
+// Helper: Cadastro de Ajudantes locais disponíveis para viagem
+export interface Helper {
+  id: string;
+  name: string;
+  status: string;
+  unit: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// CurvaAClientLocal: Cadastros locais persistidos de clientes prioritários (Curva A)
+export interface CurvaAClientLocal {
+  id: string;
+  cnpj_remetente: string;
+  cliente_remetente: string;
+  curva_a: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// UserPreference: Opções ergonômicas persistidas de cada operador logístico
+export interface UserPreference {
+  id: string; // ID estrutural baseado no usuário logado
+  username: string;
+  view: string;
+  preferences: any; 
+  updated_at: string;
+}
+
+// SyncMetadata: Rastreamento do ciclo de vida de sincronia de tabelas com cloud
+export interface SyncMetadata {
+  entity: string;
+  last_pull_at: string;
+  last_push_at: string;
+  last_success_at: string;
+}
+
+// RoteirizacaoItem: Objeto operacional rico do CTRC pronto para exibição e tomada de decisão
+export interface RoteirizacaoItem extends Ctrc {
+  normCidade: string;
+  normSetor: string;
+  normRota: string;
+  normPrazo?: number;
+  normPriority?: string;
+  slaStatus: {
+    label: string;
+    bgClass: string;
+    textClass: string;
+    daysDiff: number;
+    isToday: boolean;
+    isDelayed: boolean;
+  };
+  pesoStatus: {
+    textClass: string;
+    badgeClass: string;
+    category: 'LEVE' | 'MÉDIO' | 'PESADO' | 'CRÍTICO';
+    label: string;
+  };
+  occurrenceCode?: string;
+  occurrenceDescription?: string;
+  occurrenceCriticality: 'CRÍTICA' | 'MÉDIA' | 'SUAVE' | 'NENHUMA';
+  availabilityStatus: 'disponivel' | 'em rota' | 'retido' | 'transferência' | 'aguardando' | 'problema';
+  availabilityLabel: string;
+  locationLabel: string;
+  isCurvaA: boolean;
+  curvaAClass?: string;
+  isFob: boolean;
+  visualFlags: {
+    isCurvaA: boolean;
+    isFob: boolean;
+    isDelayed: boolean;
+    statusClass: string;
+    rowClass: string;
+  };
+}
+```
+
+---
+
+## 8. UX Operacional do Cockpit de Roteirização
+
+Diferente de interfaces corporativas baseadas em grids excessivos inspirados em planilhas sem propósito de fluxo, a UX do Router foi desenhada com foco em **ergonomia cognitiva para expedição sob alta pressão**:
+1. **Redução de Ruído**: Cores de alta constraste cinza-escuro/azul-marinho profundo protegem a visão do operador durante longos turnos noturnos na doca.
+2. **Zero Scroll Horizontal**: Todas as informações relevantes de um lote estão empacotadas de forma concisa. Dimensões críticas (peso, volume, vencimento) utilizam contrastes agressivos e tipografias de rápida identificação visual.
+3. **Indicador de Recomendação Inteligente (Sugestão Ativa)**: Ao selecionar cargas pendentes, o painel de veículos reordenará instantaneamente os caminhões no topo, inserindo um badge dourado de destaque (`⭐ RECOMENDADO`) no veículo que oferece o melhor aproveitamento físico da capacidade de carga sem ultrapassar o limite estabelecido de peso restante.
+4. **Visibilidade do Fluxo (*Disabled Mode*)**: Cargas de peso superior ao limite restante de determinado veículo forçam uma opacidade reduzida (`opacity-40 pointer-events-none`) em seu card correspondente, instruindo o operador visualmente de forma instantânea onde as cargas não podem caber fisicamente.
+
+---
+
+## 9. Como Rodar o Projeto
+
+Para executar o Router em seu ambiente local, certifique-se de possuir o Node.js v18+ instalado.
+
+### 1. Clonar o Repositório e Instalar Dependências
 ```bash
-# Entre na pasta e instale os pacotes npm do manifesto
+# Navegue até a raiz do projeto e instale as dependências
 npm install
 ```
 
-### Variáveis de Ambiente (`.env`)
-Monte seu arquivo locais com as credenciais remotas do Supabase:
+### 2. Configurar Variáveis de Ambiente
+Crie um arquivo `.env` na raiz do projeto com base no arquivo `.env.example`:
 ```env
-GEMINI_API_KEY="CHAVE_DE_APOIO_AI"
-SUPABASE_URL="https://seu-appid.supabase.co"
-SUPABASE_KEY="sua-chave-anon-key"
-VITE_SUPABASE_URL="https://seu-appid.supabase.co"
-VITE_SUPABASE_ANON_KEY="sua-chave-anon-key"
+# Configurações do Banco de Dados Cloud (Supabase)
+VITE_SUPABASE_URL=sua-url-do-supabase
+VITE_SUPABASE_ANON_KEY=sua-chave-anonima-do-supabase
 ```
 
-### Inicializando o Sistema
-
-Para rodar em ambiente de desenvolvimento (Porta obrigatória 3000):
+### 3. Rodar em Modo de Desenvolvimento
+O banco de dados IndexedDB local inicializará e será povoado automaticamente. Para subir o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
+O servidor de desenvolvimento estará disponível em `http://localhost:3000`.
 
-Para compilação fechada (Production Build) e start direto do servidorExpress:
+### 4. Executar Compilação de Produção
 ```bash
-# Compila frontend e encapsula o backend em dist/server.cjs
+# Transpila e empacota os ativos para distribuição otimizada na pasta dist/
 npm run build
-
-# Executa o servidor fechado
-npm start
 ```
 
 ---
 
-## 📐 12. Diretrizes de Desenvolvimento e Filosofia de Evolução
+## 10. Status Atual do Projeto e Maturidade
 
-O projeto evolui exclusivamente sob os preceitos de **estabilidade operacional**, **reforço de domínio** e **modularização progressiva** sem reescrever ou comprometer compatibilidades:
-
-1.  **Não quebrar fluxos em uso:** Telas operacionais de faturamento diário nunca devem sofrer reestruturações destrutivas na UI.
-2.  **Desacoplar Lógica de Exibição:** Regras fiscais e cálculos de balanceamento de caminhões devem residir em hooks isolados ou contexts, e nunca mesclados às tags de renderização do componente React.
-3.  **Auditoria Estática Obrigatória:** Antes de submeter ou atualizar códigos, certifique-se de que a transpilação não apresenta furos de tipagem efetuando a validação integrada: `npm run lint`.
+- 🟩 **Instalado e Consolidado**: Persistência local multi-tabelas IndexedDB transacional; motor de enriquecimento automático de CTRCs brutos em lote; interface modular do cockpit de roteirização rápida e dinâmica com feedback tátil e bloqueaduras de payload.
+- 🟡 **Em Amadurecimento**: Sincronização assíncrona do histórico de romaneios assinados da 'sync_queue' com a nuvem centralizada no Supabase e conciliação remota periódica.
+- 💤 **Planejado**: Automatização completa de arranjos bidimensionais de caixas em baú de carregamento logístico (cubagem tática gráfica tridimensional).
 
 ---
 
-*RotaOperational: Engenharia, Robustez e Estabilidade para o Despacho Rodoviário Terrestre Nacional.*
+> **Filosofia do Produto**: "O Router não foi projetado meramente para conectar dados de transporte à nuvem, mas para garantir robustez implacável e processamento de decisão na doca logística. Operações rodoviárias não param por causa de pacotes de dados perdidos; o Router garante que a sua expedição continue rodando de forma soberana."

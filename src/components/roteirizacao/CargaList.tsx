@@ -1,21 +1,19 @@
 import React from 'react';
-import { Ctrc, CurvaAClient, DeliveryOccurrence } from '../../types';
+import { RoteirizacaoItem } from '../../types';
 import CargaGroup from './CargaGroup';
 import CargaItem from './CargaItem';
 
 interface CargaListProps {
-  filteredCtrcs: Ctrc[];
+  filteredCtrcs: RoteirizacaoItem[];
   groupingMode: 'city' | 'sector' | 'none';
   setGroupingMode: (mode: 'city' | 'sector' | 'none') => void;
   expandedGroups: Record<string, boolean>;
   toggleGroup: (groupKey: string) => void;
-  groupedData: Record<string, Ctrc[]>;
+  groupedData: Record<string, RoteirizacaoItem[]>;
   selectedIds: string[];
   onToggleItem: (id: string) => void;
   onToggleGroupSelection: (ids: string[]) => void;
   onSelectAllVisible: (ids: string[]) => void;
-  curvaAClients: CurvaAClient[];
-  occurrencesDict: Record<string, DeliveryOccurrence>;
 }
 
 export default function CargaList({
@@ -29,8 +27,6 @@ export default function CargaList({
   onToggleItem,
   onToggleGroupSelection,
   onSelectAllVisible,
-  curvaAClients,
-  occurrencesDict,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -48,7 +44,7 @@ export default function CargaList({
             id="master-cargo-checkbox"
             checked={allVisibleChecked}
             onChange={() => onSelectAllVisible(visibleIds)}
-            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-700 bg-[#070c14] focus:ring-0 cursor-pointer"
+            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer"
           />
           <label htmlFor="master-cargo-checkbox" className="text-[11px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer">
             Selecionar Todos ({filteredCtrcs.length})
@@ -98,14 +94,12 @@ export default function CargaList({
         ) : groupingMode === 'none' ? (
           // Direct List Mode
           <div className="divide-y divide-[#14203a]">
-            {filteredCtrcs.map((ctrc) => (
+            {filteredCtrcs.map((item) => (
               <CargaItem
-                key={ctrc.id}
-                ctrc={ctrc}
-                isSelected={selectedIds.includes(ctrc.id)}
+                key={item.id}
+                item={item}
+                isSelected={selectedIds.includes(item.id)}
                 onToggle={onToggleItem}
-                curvaAClients={curvaAClients}
-                occurrencesDict={occurrencesDict}
               />
             ))}
           </div>
@@ -127,8 +121,6 @@ export default function CargaList({
                 onToggleCollapse={() => toggleGroup(groupKey)}
                 selectedIds={selectedIds}
                 onToggleItem={onToggleItem}
-                curvaAClients={curvaAClients}
-                occurrencesDict={occurrencesDict}
                 onToggleGroupSelection={onToggleGroupSelection}
               />
             );

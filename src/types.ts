@@ -138,4 +138,77 @@ export interface CidadeRota {
   prioridade_operacional: 'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA';
 }
 
+export interface Helper {
+  id: string;
+  name: string;
+  status: string;
+  unit: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CurvaAClientLocal {
+  id: string; // generated client identification string
+  cnpj_remetente: string;
+  cliente_remetente: string;
+  curva_a: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPreference {
+  id: string; // Typically username-based ID
+  username: string;
+  view: string;
+  preferences: any;
+  updated_at: string;
+}
+
+export interface SyncMetadata {
+  entity: string;
+  last_pull_at: string;
+  last_push_at: string;
+  last_success_at: string;
+}
+
+export interface RoteirizacaoItem extends Ctrc {
+  normCidade: string;
+  normSetor: string;
+  normRota: string;
+  normPrazo?: number;
+  normPriority?: string;
+  slaStatus: {
+    label: string;
+    bgClass: string;
+    textClass: string;
+    daysDiff: number;
+    isToday: boolean;
+    isDelayed: boolean;
+  };
+  pesoStatus: {
+    textClass: string;
+    badgeClass: string;
+    category: 'LEVE' | 'MÉDIO' | 'PESADO' | 'CRÍTICO';
+    label: string;
+  };
+  occurrenceCode?: string;
+  occurrenceDescription?: string;
+  occurrenceCriticality: 'CRÍTICA' | 'MÉDIA' | 'SUAVE' | 'NENHUMA';
+  availabilityStatus: 'disponivel' | 'em rota' | 'retido' | 'transferência' | 'aguardando' | 'problema';
+  availabilityLabel: string;
+  locationLabel: string;
+  isCurvaA: boolean;
+  curvaAClass?: string;
+  isFob: boolean;
+  visualFlags: {
+    isCurvaA: boolean;
+    isFob: boolean;
+    isDelayed: boolean;
+    statusClass: string;
+    rowClass: string;
+  };
+}
+
+
 

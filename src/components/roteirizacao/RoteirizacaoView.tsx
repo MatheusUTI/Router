@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
+import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
+import { HelperRepository } from '../../infrastructure/localdb/repositories/helperRepository';
+import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
 
 // Modular Imports
 import RoteirizacaoHeader from './RoteirizacaoHeader';
@@ -15,9 +18,6 @@ import { useCargaSelection } from './hooks/useCargaSelection';
 import { useRoteirizacaoGrouping } from './hooks/useRoteirizacaoGrouping';
 import { useVehicleAllocation } from './hooks/useVehicleAllocation';
 
-// Custom Helpers
-import { isClienteCurvaA } from './helpers/isClienteCurvaA';
-
 interface RoteirizacaoViewProps {
   availableCtrcs: Ctrc[];
   vehicles: Vehicle[];
@@ -25,19 +25,6 @@ interface RoteirizacaoViewProps {
   onConsolidateRomaneio: (vehicleId: string, assignedCtrcs: Ctrc[]) => void;
   adminUser: AppUser;
   curvaAClients?: CurvaAClient[];
-}
-
-export interface NormalizedCtrc extends Ctrc {
-  unid: string;
-  normCidade: string;
-  normSetor: string;
-  normRota: string;
-  normPrazo: number;
-  normPriority: 'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA';
-  isCurvaA: boolean;
-  curvaAClass?: string;
-  enrichedOcorrenciaDesc?: string;
-  enrichedOcorrenciaTratativa?: string;
 }
 
 export default function RoteirizacaoView({
@@ -48,18 +35,18 @@ export default function RoteirizacaoView({
   adminUser,
   curvaAClients = [],
 }: RoteirizacaoViewProps) {
-  // Operational caching of occurrences
-  const [dbOccurrences, setDbOccurrences] = useState<Record<string, DeliveryOccurrence>>({});
+  // Operational caching of enrichment bases
+  const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
+  const [cidadesRotas, setCidadesRotas] = useState<CidadeRota[]>([]);
+  const [curvaAClientsLocal, setCurvaAClientsLocal] = useState<CurvaAClientLocal[]>([]);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
+  const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
 
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
 
   // Toast status notice
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Normalization state
-  const [normalizedCtrcs, setNormalizedCtrcs] = useState<NormalizedCtrc[]>([]);
-  const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
 
   // Load clock ticking (UTC 15:58 standard)
   useEffect(() => {
@@ -74,74 +61,64 @@ export default function RoteirizacaoView({
     return () => clearInterval(interval);
   }, []);
 
-  // Poll database load occurrences
+  // Poll database load auxiliary libraries in parallel
   useEffect(() => {
-    const loadCache = async () => {
+    const loadEnrichmentBases = async () => {
+      setIsNormalizing(true);
       try {
-        const occList = await OccurrenceRepository.getAll();
-        const map: Record<string, DeliveryOccurrence> = {};
-        occList.forEach((occ) => {
-          map[occ.codigo] = occ;
-        });
-        setDbOccurrences(map);
+        const [occList, crList, caList, hList] = await Promise.all([
+          OccurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
+          CidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
+          CurvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
+          HelperRepository.getAll().catch(() => [] as Helper[]),
+        ]);
+
+        setDbOccurrencesList(occList);
+        setCidadesRotas(crList);
+        setCurvaAClientsLocal(caList);
+        setHelpers(hList);
       } catch (e) {
-        console.error('[Roteirizacao] Erro carregando banco de ocorrencias:', e);
+        console.error('[Roteirizacao] Erro carregando bases auxiliares de enriquecimento:', e);
+      } finally {
+        setIsNormalizing(false);
       }
     };
-    loadCache();
+    loadEnrichmentBases();
   }, []);
 
-  // Sync available pending items with custom autopilot normalization rules
-  useEffect(() => {
-    const syncAndNormalize = async () => {
-      setIsNormalizing(true);
-      const items: NormalizedCtrc[] = [];
-
-      for (const c of availableCtrcs) {
-        const unitLabel = (c.unid || c.id.split(/[0-9]/)[0] || 'SPO').toUpperCase();
-
-        let normCidade = c.cidade_ent || c.cidade || 'NÃO ESPECIFICADO';
-        normCidade = normCidade.split(',')[0].trim().toUpperCase();
-
-        let normSetor = c.setor || 'NÃO DEFINIDO';
-        let normRota = 'ROTA INDEFINIDA';
-        let normPrazo = 2; // Default Standard Transit Day D+2
-        let normPriority: 'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA' = 'NORMAL';
-
-        // Autopilot smart corrector lookup
-        try {
-          const match = await CidadeRotaRepository.normalize(normCidade, c.setor);
-          normCidade = match.cidade;
-          normSetor = match.setor;
-          normRota = match.rota;
-          normPrazo = match.prazo;
-          normPriority = match.prioridade;
-        } catch (e) {
-          // fallback gracefully
+  // Combine prop curvaAClients and custom curving clients stored locally
+  const combinedCurvaClients = useMemo(() => {
+    const arr: CurvaAClient[] = [...curvaAClients];
+    curvaAClientsLocal.forEach((lc) => {
+      if (lc.ativo) {
+        const exists = arr.some(
+          (a) => a.cnpj_remetente === lc.cnpj_remetente || a.cliente_remetente === lc.cliente_remetente
+        );
+        if (!exists) {
+          arr.push({
+            cnpj_remetente: lc.cnpj_remetente,
+            cliente_remetente: lc.cliente_remetente,
+            curva_a: lc.curva_a,
+          });
         }
-
-        // Curva A check
-        const curvaCheck = isClienteCurvaA(c, curvaAClients);
-
-        items.push({
-          ...c,
-          unid: unitLabel,
-          normCidade,
-          normSetor,
-          normRota,
-          normPrazo,
-          normPriority,
-          isCurvaA: curvaCheck.isCurvaA,
-          curvaAClass: curvaCheck.classification || 'A',
-        });
       }
+    });
+    return arr;
+  }, [curvaAClients, curvaAClientsLocal]);
 
-      setNormalizedCtrcs(items);
-      setIsNormalizing(false);
-    };
-
-    syncAndNormalize();
-  }, [availableCtrcs, dbOccurrences, curvaAClients]);
+  // Dynamic enrichment output mapping to RoteirizacaoItem list
+  const enrichedCtrcsList = useMemo(() => {
+    if (isNormalizing) return [] as RoteirizacaoItem[];
+    return RoteirizacaoEnrichmentService.enrichCargas(
+      availableCtrcs,
+      cidadesRotas,
+      dbOccurrencesList,
+      combinedCurvaClients,
+      vehicles,
+      [], // drivers score if not retrieved yet
+      helpers
+    );
+  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing]);
 
   // Temporary allocations triggers
   const {
@@ -168,8 +145,8 @@ export default function RoteirizacaoView({
 
   // Calculate unassigned pending items (that are not yet assigned to any vehicle in draft mode)
   const unassignedCtrcs = useMemo(() => {
-    return normalizedCtrcs.filter((c) => !draftAssignments[c.id]);
-  }, [normalizedCtrcs, draftAssignments]);
+    return enrichedCtrcsList.filter((c) => !draftAssignments[c.id]);
+  }, [enrichedCtrcsList, draftAssignments]);
 
   // Hook-centric management of filters and text search
   const {
@@ -237,7 +214,7 @@ export default function RoteirizacaoView({
 
   // Dispatch final consolidate, triggering DB writes
   const handleEmitRomaneio = (vehicleId: string) => {
-    const draftedItemsOfVehicle = normalizedCtrcs.filter((c) => draftAssignments[c.id] === vehicleId);
+    const draftedItemsOfVehicle = enrichedCtrcsList.filter((c) => draftAssignments[c.id] === vehicleId);
     if (draftedItemsOfVehicle.length === 0) return;
 
     // Trigger sequential persistent callbacks
@@ -309,8 +286,6 @@ export default function RoteirizacaoView({
             onToggleItem={toggleRow}
             onToggleGroupSelection={handleToggleGroupSelection}
             onSelectAllVisible={toggleSelectAll}
-            curvaAClients={curvaAClients}
-            occurrencesDict={dbOccurrences}
           />
         )}
 
@@ -320,7 +295,7 @@ export default function RoteirizacaoView({
           draftAssignments={draftAssignments}
           selectedIds={selectedIds}
           selectedWeight={selectedWeight}
-          availablePendingCtrcs={normalizedCtrcs}
+          availablePendingCtrcs={enrichedCtrcsList}
           onAllocateSelectedToVehicle={handleAssignSelectionToVehicle}
           onEmitRomaneio={handleEmitRomaneio}
           onUnassignCarga={unassignCarga}

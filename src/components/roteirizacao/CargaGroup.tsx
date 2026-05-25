@@ -1,18 +1,15 @@
 import React from 'react';
-import { Ctrc, CurvaAClient, DeliveryOccurrence } from '../../types';
+import { RoteirizacaoItem } from '../../types';
 import CargaItem from './CargaItem';
-import { getSlaStatus } from './helpers/getSlaStatus';
 
 interface CargaGroupProps {
   key?: string | number;
   groupKey: string;
-  items: Ctrc[];
+  items: RoteirizacaoItem[];
   isExpanded: boolean;
   onToggleCollapse: () => void;
   selectedIds: string[];
   onToggleItem: (id: string) => void;
-  curvaAClients: CurvaAClient[];
-  occurrencesDict: Record<string, DeliveryOccurrence>;
   onToggleGroupSelection: (ids: string[]) => void;
 }
 
@@ -23,8 +20,6 @@ export default function CargaGroup({
   onToggleCollapse,
   selectedIds,
   onToggleItem,
-  curvaAClients,
-  occurrencesDict,
   onToggleGroupSelection,
 }: CargaGroupProps) {
   // Aggregate stats of this group's CTRCs
@@ -33,20 +28,17 @@ export default function CargaGroup({
   const totalValue = items.reduce((sum, item) => sum + (item.valor || 0), 0);
 
   // SLA Delays count
-  const delayedCount = items.filter((item) => {
-    const sla = getSlaStatus(item.prev_ent);
-    return sla.isDelayed;
-  }).length;
+  const delayedCount = items.filter((item) => item.slaStatus.isDelayed).length;
 
   // Active Occurrence count
-  const occurrenceCount = items.filter((item) => item.ocorrencia && item.ocorrencia.trim() !== '').length;
+  const occurrenceCount = items.filter((item) => item.occurrenceCode).length;
   
   // Calculate selection status
   const itemIds = items.map((i) => i.id);
   const allGroupChecked = itemIds.length > 0 && itemIds.every((id) => selectedIds.includes(id));
 
   // Auto detect typical sub route code if available
-  const subRouteLabel = items[0]?.setor || '';
+  const subRouteLabel = items[0]?.normSetor || '';
 
   return (
     <div className="border-b border-[#16223f] bg-[#0d1322]">
@@ -117,14 +109,12 @@ export default function CargaGroup({
       {/* Group Entries List */}
       {isExpanded && (
         <div className="bg-[#090f1a] divide-y divide-[#14203a]/50">
-          {items.map((ctrc) => (
+          {items.map((item) => (
             <CargaItem
-              key={ctrc.id}
-              ctrc={ctrc}
-              isSelected={selectedIds.includes(ctrc.id)}
+              key={item.id}
+              item={item}
+              isSelected={selectedIds.includes(item.id)}
               onToggle={onToggleItem}
-              curvaAClients={curvaAClients}
-              occurrencesDict={occurrencesDict}
             />
           ))}
         </div>
