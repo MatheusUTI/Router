@@ -276,11 +276,12 @@ export default function RoteirizacaoView({
                 className="bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 font-sans text-xs text-on-surface font-semibold focus:outline-none focus:border-primary cursor-pointer hover:border-outline transition-colors"
                 title="Selecione qual unidade gerencial filtrar na roteirização"
               >
-                <option value="TODAS">Unidade: Todas</option>
+                <option value="TODAS">Unidade: Todas filiais</option>
                 <option value="SPO">Unidade: SPO (São Paulo)</option>
-                <option value="PPY">Unidade: PPY (Pouso Alegre)</option>
-                <option value="ALF">Unidade: ALF (Alfenas)</option>
                 <option value="VGA">Unidade: VGA (Varginha)</option>
+                <option value="BHS">Unidade: BHS (Belo Horizonte)</option>
+                <option value="RIO">Unidade: RIO (Rio de Janeiro)</option>
+                <option value="CWB">Unidade: CWB (Curitiba)</option>
               </select>
             ) : (
               <span className="bg-[#4d8eff]/10 text-primary border border-[#4d8eff]/20 font-bold font-sans text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">

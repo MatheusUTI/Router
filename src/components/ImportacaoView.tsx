@@ -1,8 +1,9 @@
 import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
-import { Ctrc } from '../types';
+import { Ctrc, AppUser } from '../types';
 
 interface ImportacaoViewProps {
   onAddCtrcs: (newCtrcs: Ctrc[]) => void;
+  adminUser?: AppUser;
 }
 
 // Exact Camilo dos Santos ERP output from user prompt
@@ -21,7 +22,7 @@ const CAMILO_DOS_SANTOS_RAW = `0;RODOVIARIO CAMILO DOS SANTOS  ;CTRCs EXPEDIDOS 
 2;BHZ907482-1;MAXIBRASIL INDUSTRIA DE COSMET;MAXIBRASIL INDUSTRIA DE COSMET;MAGALHAES;AVENIDA PEDRO SALES 167 ;CENTRO;06  ROTA 6;VGAP;LAVRAS;MAGALHAES;;;;LAVRAS;VGA;154360;121,447;23;6870,76;321,34;0;0;60;23/05/2026;23/05/2026;danielk;RCS - VGA;Saida para entrega na cidade de LAVRAS.;;;25/05/2026;;;0;RCS VGA - EM ENTREGA;;;
 9;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;`;
 
-export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
+export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoViewProps) {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvRawText, setCsvRawText] = useState<string>('');
@@ -338,7 +339,7 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
         nf: nfVal || undefined,
         valor: valVal || undefined,
         frete: freVal || undefined,
-        unid: uniVal || undefined,
+        unid: uniVal || adminUser?.unid || 'SPO',
         ocorrencia: ocoVal || undefined,
         descricao_ocorr: descOcoVal || undefined,
         localizacao: locVal || undefined,
@@ -397,9 +398,16 @@ export default function ImportacaoView({ onAddCtrcs }: ImportacaoViewProps) {
     <div className="space-y-6 animate-fade-in text-left">
       <div>
         <h2 className="text-3xl font-extrabold text-[#dae2fd] tracking-tight">Importação & Governança de Manifestos</h2>
-        <p className="text-sm text-on-surface-variant mt-1.5 max-w-4xl text-[#9cb4e4] leading-relaxed">
-          Mapeie as colunas na primeira vez e o layout continuará salvo! Use qualquer ERP corporativo de mercadoria (formato CSV/TXT), localize a linha de cabeçalhos e realize a harmonização de-para com o nosso banco relacional de forma imediata.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
+          <p className="text-sm text-[#9cb4e4] leading-relaxed max-w-2xl">
+            Mapeie as colunas na primeira vez e o layout continuará salvo! Use qualquer ERP corporativo de mercadoria (formato CSV/TXT), localize a linha de cabeçalhos e realize a harmonização de-para com o nosso banco relacional de forma imediata.
+          </p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#101524] border border-primary/20 text-xs font-semibold text-primary shadow-inner">
+            <span className="material-symbols-outlined text-[16px] animate-pulse">pin_drop</span>
+            <span>Unidade Operativa:</span> 
+            <span className="font-mono bg-primary text-on-primary px-2 py-0.5 rounded text-xs font-bold shadow-sm">{adminUser?.unid || 'SPO'}</span>
+          </div>
+        </div>
       </div>
 
       {successMsg && (

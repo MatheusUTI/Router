@@ -12,6 +12,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   // Login Form States
   const [username, setUsername] = useState('master');
   const [password, setPassword] = useState('123');
+  const [loginUnid, setLoginUnid] = useState('SPO');
   
   // Register Form States
   const [regEmail, setRegEmail] = useState('');
@@ -19,6 +20,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [regName, setRegName] = useState('');
   const [regRole, setRegRole] = useState('Superintendente de Logística');
   const [regIsMaster, setRegIsMaster] = useState(true);
+  const [regUnid, setRegUnid] = useState('SPO');
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -63,7 +65,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       if (res.ok && data.success) {
         setSuccessMsg("Autenticação efetuada com sucesso!");
         setTimeout(() => {
-          onLoginSuccess(data.user);
+          onLoginSuccess({
+            ...data.user,
+            unid: data.user.unid || loginUnid
+          });
         }, 800);
       } else {
         setErrorMsg(data.error || "Credenciais inválidas. Verifique o usuário corporativo e a senha.");
@@ -77,7 +82,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       );
 
       if (userMatch) {
-        onLoginSuccess(userMatch);
+        onLoginSuccess({
+          ...userMatch,
+          unid: userMatch.unid || loginUnid
+        });
       } else {
         setErrorMsg("Erro de conexão ou credenciais locais inválidas.");
       }
@@ -115,7 +123,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         password: pass,
         name,
         role: regRole,
-        is_master: regIsMaster
+        is_master: regIsMaster,
+        unid: regUnid
       };
 
       const creds = getSavedCredentials();
@@ -142,7 +151,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             password: pass,
             name,
             role: regRole,
-            is_master: regIsMaster
+            is_master: regIsMaster,
+            unid: regUnid
           });
         }, 1200);
       } else {
@@ -165,13 +175,17 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         role: 'Superintendente de Logística',
         is_master: true
       };
-      onLoginSuccess(masterUser);
+      onLoginSuccess({
+        ...masterUser,
+        unid: masterUser.unid || loginUnid
+      });
     } catch {
       onLoginSuccess({
         username: 'master',
         name: 'Anderson M. (Master)',
         role: 'Superintendente de Logística',
-        is_master: true
+        is_master: true,
+        unid: loginUnid
       });
     } finally {
       setIsLoading(false);
@@ -271,6 +285,29 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   disabled={isLoading}
                   className="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 text-xs text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-on-surface block mb-1.5">
+                Unidade Operacional (Filial de Trabalho)
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant select-none">
+                  domain
+                </span>
+                <select
+                  value={loginUnid}
+                  onChange={(e) => setLoginUnid(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200"
+                >
+                  <option value="SPO">SPO - São Paulo / Matriz</option>
+                  <option value="VGA">VGA - Varginha / MG</option>
+                  <option value="BHS">BHS - Belo Horizonte / MG</option>
+                  <option value="RIO">RIO - Rio de Janeiro / RJ</option>
+                  <option value="CWB">CWB - Curitiba / PR</option>
+                </select>
               </div>
             </div>
 
@@ -378,6 +415,24 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 <option value="Controlador de Frota">Controlador de Frota</option>
                 <option value="Analista de Desempenho">Analista de Desempenho</option>
                 <option value="Operador de Despacho">Operador de Despacho</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-on-surface block mb-1.5">
+                Unidade Logística de Atuação
+              </label>
+              <select
+                value={regUnid}
+                onChange={(e) => setRegUnid(e.target.value)}
+                disabled={isLoading || !isDbOnline}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              >
+                <option value="SPO">SPO - São Paulo / Matriz</option>
+                <option value="VGA">VGA - Varginha / MG</option>
+                <option value="BHS">BHS - Belo Horizonte / MG</option>
+                <option value="RIO">RIO - Rio de Janeiro / RJ</option>
+                <option value="CWB">CWB - Curitiba / PR</option>
               </select>
             </div>
 

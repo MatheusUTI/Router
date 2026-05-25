@@ -399,7 +399,7 @@ export default function App() {
           />
         );
       case 'importacao':
-        return <ImportacaoView onAddCtrcs={handleAddCtrcs} />;
+        return <ImportacaoView onAddCtrcs={handleAddCtrcs} adminUser={adminProfile} />;
       case 'frota':
         return (
           <FrotaView
@@ -437,6 +437,7 @@ export default function App() {
             savedRomaneios={savedRomaneios}
             onSaveRomaneio={handleSaveRomaneio}
             onDeleteRomaneio={handleDeleteRomaneio}
+            adminUser={adminProfile}
           />
         );
       case 'desempenho':

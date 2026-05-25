@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Ctrc, Vehicle } from '../types';
+import { Ctrc, Vehicle, AppUser } from '../types';
 import {
   Printer,
   ArrowLeft,
@@ -30,6 +30,7 @@ interface FinalizacaoViewProps {
   savedRomaneios?: any[];
   onSaveRomaneio?: (romaneio: any) => void;
   onDeleteRomaneio?: (id: string) => void;
+  adminUser?: AppUser;
 }
 
 export default function FinalizacaoView({
@@ -39,6 +40,7 @@ export default function FinalizacaoView({
   savedRomaneios = [],
   onSaveRomaneio,
   onDeleteRomaneio,
+  adminUser,
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'active' (Current separation logic) or 'history' (Saved routes list & reprint)
   const [activeTab, setActiveTab] = useState<'active' | 'history'>(() => {
@@ -172,8 +174,18 @@ export default function FinalizacaoView({
   const totalVolumes = linkedCtrcs.reduce((acc, c) => acc + (c.volume || 0), 0);
   const totalWeight = linkedCtrcs.reduce((acc, c) => acc + (c.peso_r || c.weight || 0), 0);
 
-  // Filter historical saved routes by search token
+  // Filter historical saved routes by search token and active unit
   const filteredHistory = savedRomaneios.filter((rom) => {
+    // 1. UNID Access Enforcement in history list
+    if (adminUser && !adminUser.is_master) {
+      const userUnid = (adminUser.unid || 'SPO').toUpperCase();
+      const hasUnitCargos = !rom.ctrcs || rom.ctrcs.length === 0 || rom.ctrcs.some((c: Ctrc) => {
+        const ctrcUnid = (c.unid || c.id.split(/[0-9]/)[0] || 'SPO').toUpperCase();
+        return ctrcUnid === userUnid;
+      });
+      if (!hasUnitCargos) return false;
+    }
+
     const term = historySearch.toLowerCase().trim();
     if (!term) return true;
 
@@ -186,7 +198,7 @@ export default function FinalizacaoView({
       (rom.observations && rom.observations.toLowerCase().includes(term));
 
     // Recursive search into embedded routed CTRCs
-    const matchesCtrcs = rom.ctrcs.some((c: Ctrc) => 
+    const matchesCtrcs = rom.ctrcs && rom.ctrcs.some((c: Ctrc) => 
       c.id.toLowerCase().includes(term) ||
       c.destinatario.toLowerCase().includes(term) ||
       c.cidade.toLowerCase().includes(term) ||
