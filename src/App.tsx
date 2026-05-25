@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
 import {
   initialVehicles,
@@ -21,6 +21,14 @@ import {
   syncCurvaAClientToSupabase,
   removeCurvaAClientFromSupabase
 } from './supabase';
+
+// Local Persistence Layer & Repositories
+import { runCompatibilityMigration } from './infrastructure/localdb/adapters/localStorageAdapter';
+import { CtrcRepository } from './infrastructure/localdb/repositories/ctrcRepository';
+import { VehicleRepository } from './infrastructure/localdb/repositories/vehicleRepository';
+import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
+import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
+import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
 
 // Import Views
 import Sidebar from './components/Sidebar';
@@ -132,10 +140,56 @@ export default function App() {
   };
 
   // ---------------------------------------------------------
+  // INITIALIZATION AND OFFLINE LOGISTICS HYDRATION
+  // ---------------------------------------------------------
+  useEffect(() => {
+    async function initLocalDB() {
+      try {
+        // Executa compatibilidade de localStorage legado e seeding estruturado para o IndexedDB
+        await runCompatibilityMigration();
+
+        // Hidratação a partir do IndexedDB
+        const localVehicles = await VehicleRepository.getAll();
+        if (localVehicles.length > 0) {
+          setVehicles(localVehicles);
+        }
+
+        const localDrivers = await DriverRepository.getAll();
+        if (localDrivers.length > 0) {
+          setDrivers(localDrivers);
+        }
+
+        const localOccurrences = await OccurrenceRepository.getAll();
+        if (localOccurrences.length > 0) {
+          setOccurrences(localOccurrences);
+        }
+
+        const localRomaneios = await TripRepository.getAll();
+        if (localRomaneios.length > 0) {
+          const sorted = [...localRomaneios].sort((a, b) => b.id.localeCompare(a.id));
+          setSavedRomaneios(sorted);
+        }
+
+        const localCtrcs = await CtrcRepository.getAll();
+        if (localCtrcs.length > 0) {
+          const available = localCtrcs.filter((c) => c.status === 'Disponível');
+          const linked = localCtrcs.filter((c) => c.status !== 'Disponível');
+          setAvailableCtrcs(available);
+          setLinkedCtrcs(linked);
+        }
+      } catch (err) {
+        console.error('[App] Falha crítica de inicialização IndexedDB, usando memória:', err);
+      }
+    }
+    initLocalDB();
+  }, []);
+
+  // ---------------------------------------------------------
   // OPERATIONAL STATE CHANGERS (FROTA)
   // ---------------------------------------------------------
   const handleAddVehicle = async (v: Vehicle) => {
     setVehicles((prev) => [...prev, v]);
+    await VehicleRepository.put(v);
     setIsSyncing(true);
     await syncVehicleToSupabase(v);
     setIsSyncing(false);
@@ -143,6 +197,7 @@ export default function App() {
 
   const handleUpdateVehicle = async (v: Vehicle) => {
     setVehicles((prev) => prev.map((item) => (item.id === v.id ? v : item)));
+    await VehicleRepository.put(v);
     setIsSyncing(true);
     await syncVehicleToSupabase(v);
     setIsSyncing(false);
@@ -150,6 +205,7 @@ export default function App() {
 
   const handleRemoveVehicle = async (id: string) => {
     setVehicles((prev) => prev.filter((item) => item.id !== id));
+    await VehicleRepository.delete(id);
     setIsSyncing(true);
     await removeVehicleFromSupabase(id);
     setIsSyncing(false);
@@ -157,6 +213,7 @@ export default function App() {
 
   const handleAddDriver = async (d: DriverScore) => {
     setDrivers((prev) => [...prev, d]);
+    await DriverRepository.put(d);
     setIsSyncing(true);
     await syncDriverToSupabase(d);
     setIsSyncing(false);
@@ -164,6 +221,7 @@ export default function App() {
 
   const handleUpdateDriver = async (d: DriverScore) => {
     setDrivers((prev) => prev.map((item) => (item.id === d.id ? d : item)));
+    await DriverRepository.put(d);
     setIsSyncing(true);
     await syncDriverToSupabase(d);
     setIsSyncing(false);
@@ -171,6 +229,7 @@ export default function App() {
 
   const handleRemoveDriver = async (id: string) => {
     setDrivers((prev) => prev.filter((item) => item.id !== id));
+    await DriverRepository.delete(id);
     setIsSyncing(true);
     await removeDriverFromSupabase(id);
     setIsSyncing(false);
@@ -181,6 +240,7 @@ export default function App() {
   // ---------------------------------------------------------
   const handleAddOccurrence = async (o: DeliveryOccurrence) => {
     setOccurrences((prev) => [...prev, o]);
+    await OccurrenceRepository.put(o);
     setIsSyncing(true);
     await syncOccurrenceToSupabase(o);
     setIsSyncing(false);
@@ -188,6 +248,7 @@ export default function App() {
 
   const handleUpdateOccurrence = async (o: DeliveryOccurrence) => {
     setOccurrences((prev) => prev.map((item) => (item.codigo === o.codigo ? o : item)));
+    await OccurrenceRepository.put(o);
     setIsSyncing(true);
     await syncOccurrenceToSupabase(o);
     setIsSyncing(false);
@@ -195,6 +256,7 @@ export default function App() {
 
   const handleRemoveOccurrence = async (codigo: string) => {
     setOccurrences((prev) => prev.filter((item) => item.codigo !== codigo));
+    await OccurrenceRepository.delete(codigo);
     setIsSyncing(true);
     await removeOccurrenceFromSupabase(codigo);
     setIsSyncing(false);
@@ -205,6 +267,9 @@ export default function App() {
       const filteredPrev = prev.filter(p => !list.some(l => l.codigo === p.codigo));
       return [...filteredPrev, ...list];
     });
+    for (const o of list) {
+      await OccurrenceRepository.put(o);
+    }
     setIsSyncing(true);
     for (const o of list) {
       await syncOccurrenceToSupabase(o);
@@ -248,21 +313,29 @@ export default function App() {
   // ---------------------------------------------------------
   // IMPORTAÇÃO DE CTRC
   // ---------------------------------------------------------
-  const handleAddCtrcs = (newCtrcs: Ctrc[]) => {
+  const handleAddCtrcs = async (newCtrcs: Ctrc[]) => {
     setAvailableCtrcs((prev) => [...prev, ...newCtrcs]);
+    await CtrcRepository.putMany(newCtrcs);
   };
 
   // ---------------------------------------------------------
   // ROTEIRIZAÇÃO FLOW HANDLER
   // ---------------------------------------------------------
-  const handleAssignCtre = (ctrcId: string, vehicleId: string) => {
+  const handleAssignCtre = async (ctrcId: string, vehicleId: string) => {
     // Flag vehicle status to active "Em Rota" when cargo starts mapping
     setVehicles((prev) =>
-      prev.map((v) => (v.id === vehicleId ? { ...v, status: 'Em Rota' } : v))
+      prev.map((v) => {
+        if (v.id === vehicleId) {
+          const updated = { ...v, status: 'Em Rota' as const };
+          VehicleRepository.put(updated);
+          return updated;
+        }
+        return v;
+      })
     );
   };
 
-  const handleConsolidateRomaneio = (vehicleId: string, assignedCtrcs: Ctrc[]) => {
+  const handleConsolidateRomaneio = async (vehicleId: string, assignedCtrcs: Ctrc[]) => {
     // Purge from pending/available list
     const assignedIds = assignedCtrcs.map((c) => c.id);
     setAvailableCtrcs((prev) => prev.filter((c) => !assignedIds.includes(c.id)));
@@ -270,11 +343,16 @@ export default function App() {
     // Set the designated vehicle ID for the active session
     setActiveRomaneioVehicleId(vehicleId);
 
+    const updatedCtrcs = assignedCtrcs.map((c) => ({ ...c, status: 'Pendente' as const }));
+
     // Append to Romaneio's linked CTRCs checklist
     setLinkedCtrcs((prev) => [
       ...prev,
-      ...assignedCtrcs.map((c) => ({ ...c, status: 'Pendente' as const })),
+      ...updatedCtrcs,
     ]);
+
+    // Persiste no IndexedDB em segundo plano
+    await CtrcRepository.putMany(updatedCtrcs);
 
     // Go to finalization page!
     setCurrentView('finalizacao');
@@ -283,9 +361,16 @@ export default function App() {
   // ---------------------------------------------------------
   // FINALIZAÇÃO DE ROMANEIO & FINANCEIRO
   // ---------------------------------------------------------
-  const handleUpdateCtrcStatus = (id: string, status: 'Pendente' | 'Entregue' | 'Recusado') => {
+  const handleUpdateCtrcStatus = async (id: string, status: 'Pendente' | 'Entregue' | 'Recusado') => {
     setLinkedCtrcs((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item))
+      prev.map((item) => {
+        if (item.id === id) {
+          const updated = { ...item, status };
+          CtrcRepository.put(updated);
+          return updated;
+        }
+        return item;
+      })
     );
   };
 
@@ -297,31 +382,32 @@ export default function App() {
     setExpenses((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleCloseRomaneio = () => {
+  const handleCloseRomaneio = async () => {
     // Purge linked list representing the manifest closing session
     setLinkedCtrcs([]);
     // Restore primary vehicles to "Disponível"
     setVehicles((prev) =>
-      prev.map((v) => (v.status === 'Em Rota' ? { ...v, status: 'Disponível' } : v))
+      prev.map((v) => {
+        if (v.status === 'Em Rota') {
+          const updated = { ...v, status: 'Disponível' as const };
+          VehicleRepository.put(updated);
+          return updated;
+        }
+        return v;
+      })
     );
     // Reset vehicle tracker
     setActiveRomaneioVehicleId(null);
   };
 
-  const handleSaveRomaneio = (newRom: any) => {
-    setSavedRomaneios((prev) => {
-      const updated = [newRom, ...prev];
-      localStorage.setItem('saved_romaneios', JSON.stringify(updated));
-      return updated;
-    });
+  const handleSaveRomaneio = async (newRom: any) => {
+    setSavedRomaneios((prev) => [newRom, ...prev]);
+    await TripRepository.put(newRom);
   };
 
-  const handleDeleteRomaneio = (id: string) => {
-    setSavedRomaneios((prev) => {
-      const updated = prev.filter((r) => r.id !== id);
-      localStorage.setItem('saved_romaneios', JSON.stringify(updated));
-      return updated;
-    });
+  const handleDeleteRomaneio = async (id: string) => {
+    setSavedRomaneios((prev) => prev.filter((r) => r.id !== id));
+    await TripRepository.delete(id);
   };
 
   // ---------------------------------------------------------

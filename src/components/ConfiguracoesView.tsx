@@ -1,5 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from '../types';
+import { db } from '../infrastructure/localdb/db';
+import { SyncQueueRepository } from '../infrastructure/localdb/repositories/syncQueueRepository';
 import { 
   isSupabaseConfigured, 
   testSupabaseConnection, 
@@ -52,6 +54,58 @@ export default function ConfiguracoesView({
   curvaAClients,
   onSyncFromSupabase,
 }: ConfiguracoesViewProps) {
+  // IndexedDB Table statistics states
+  const [dbStats, setDbStats] = useState({
+    ctrcs: 0,
+    vehicles: 0,
+    drivers: 0,
+    romaneios: 0,
+    occurrences: 0,
+    syncQueue: 0,
+    pendingSyncs: 0,
+  });
+  const [syncQueueItems, setSyncQueueItems] = useState<any[]>([]);
+
+  const loadDbStats = async () => {
+    try {
+      const ctrcsCount = await db.ctrcs.count();
+      const vehiclesCount = await db.vehicles.count();
+      const driversCount = await db.drivers.count();
+      const romaneiosCount = await db.savedRomaneios.count();
+      const occurrencesCount = await db.occurrences.count();
+      const syncQueueCount = await db.sync_queue.count();
+      const pendingSyncsArray = await SyncQueueRepository.getPending();
+      const allSyncItems = await SyncQueueRepository.getAll();
+      
+      setDbStats({
+        ctrcs: ctrcsCount,
+        vehicles: vehiclesCount,
+        drivers: driversCount,
+        romaneios: romaneiosCount,
+        occurrences: occurrencesCount,
+        syncQueue: syncQueueCount,
+        pendingSyncs: pendingSyncsArray.length,
+      });
+      setSyncQueueItems(allSyncItems.slice(-5).reverse());
+    } catch (e) {
+      console.error('[Config] Falha ao carregar estatísticas do IndexedDB:', e);
+    }
+  };
+
+  const handleClearSyncQueue = async () => {
+    try {
+      await SyncQueueRepository.clearCompleted();
+      await loadDbStats();
+      setSupabaseStatus('✓ Fila de sincronização concluída purgada do IndexedDB com sucesso!');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadDbStats();
+  }, [vehicles, drivers, occurrences]);
+
   const [tempName, setTempName] = useState(adminUser.name);
   const [tempRole, setTempRole] = useState(adminUser.role);
   const [tempUnid, setTempUnid] = useState(adminUser.unid || (adminUser.is_master ? 'TODAS' : 'SPO'));
@@ -1008,6 +1062,144 @@ export default function ConfiguracoesView({
               />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* IndexedDB Local Persistence Governance Board */}
+      <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-6 text-left relative overflow-hidden animate-fade-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#4d8eff] text-[18px]">analytics</span>
+              Base de Dados Operacional Local (IndexedDB)
+            </h3>
+            <p className="text-xs text-on-surface-variant">
+              Governança local de armazenamento de-para e fila transacional de resiliência offline do navegador (Dexie Engine).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#101524] border border-[#4d8eff]/20 text-[10px] font-bold text-[#4d8eff] tracking-wider uppercase">
+            <span className="w-1.5 h-1.5 bg-[#4d8eff] rounded-full animate-pulse"></span>
+            Offline-First Protegido
+          </div>
+        </div>
+
+        {/* Database Table Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <div className="p-3 bg-surface rounded-xl border border-outline-variant/50 text-left space-y-1">
+            <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider block">CTRCs Locais</span>
+            <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.ctrcs}</span>
+          </div>
+
+          <div className="p-3 bg-surface rounded-xl border border-outline-variant/50 text-left space-y-1">
+            <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider block">Veículos</span>
+            <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.vehicles}</span>
+          </div>
+
+          <div className="p-3 bg-surface rounded-xl border border-outline-variant/50 text-left space-y-1">
+            <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider block">Motoristas</span>
+            <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.drivers}</span>
+          </div>
+
+          <div className="p-3 bg-surface rounded-xl border border-outline-variant/50 text-left space-y-1">
+            <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider block">Ocorrências</span>
+            <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.occurrences}</span>
+          </div>
+
+          <div className="p-3 bg-surface rounded-xl border border-outline-variant/50 text-left space-y-1">
+            <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider block">Histórico Viagens</span>
+            <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.romaneios}</span>
+          </div>
+
+          <div className="p-3 bg-surface rounded-xl border border-primary/20 bg-primary/5 text-left space-y-1 shadow-inner">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">Fila Sync (Total)</span>
+            <span className="text-lg font-extrabold font-mono text-primary flex items-center gap-1">
+              <span>{dbStats.syncQueue}</span>
+              {dbStats.pendingSyncs > 0 && (
+                <span className="text-[9px] bg-primary text-on-primary font-bold px-1.5 py-0.5 rounded-full animate-bounce">
+                  {dbStats.pendingSyncs} pend
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Sync Queue Table Preview */}
+        <div className="space-y-3 bg-surface p-4 rounded-xl border border-outline-variant/60">
+          <div className="flex justify-between items-center pb-1">
+            <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px] text-primary">dynamic_feed</span>
+              Fila Transacional Recente (sync_queue)
+            </h4>
+            <span className="text-[10px] font-mono text-on-surface-variant">Armazenamento sob-demanda Dexie</span>
+          </div>
+
+          {syncQueueItems.length === 0 ? (
+            <div className="p-5 text-center text-xs text-on-surface-variant border border-dashed border-outline-variant rounded-lg">
+              <span className="material-symbols-outlined text-[20px] mb-1 text-on-surface-variant/40 block">check_circle</span>
+              Nenhuma transação pendente ou aguardando consolidação. Fila de sincronização limpa!
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-outline-variant/40 bg-surface-container-low/40">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#101524] text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/40">
+                  <tr>
+                    <th className="px-3.5 py-2">ID</th>
+                    <th className="px-3.5 py-2">Entidade</th>
+                    <th className="px-3.5 py-2">Operação</th>
+                    <th className="px-3.5 py-2">Data Enfileirada</th>
+                    <th className="px-3.5 py-2">Estado local</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20 font-mono text-[11px]">
+                  {syncQueueItems.map((item, index) => (
+                    <tr key={index} className="hover:bg-surface/50 transition-colors">
+                      <td className="px-3.5 py-2 text-on-surface-variant">#{item.id}</td>
+                      <td className="px-3.5 py-2 font-semibold text-primary uppercase">{item.entity}</td>
+                      <td className="px-3.5 py-2">
+                        <span className={`px-2 py-0.5 rounded font-sans font-bold text-[9px] ${
+                          item.operation === 'CREATE' ? 'bg-[#3ecf8e]/10 text-[#3ecf8e]' :
+                          item.operation === 'DELETE' ? 'bg-error/10 text-error' :
+                          'bg-primary/10 text-primary'
+                        }`}>
+                          {item.operation}
+                        </span>
+                      </td>
+                      <td className="px-3.5 py-2 text-on-surface-variant">{new Date(item.created_at).toLocaleTimeString()}</td>
+                      <td className="px-3.5 py-2">
+                        <span className={`inline-flex items-center gap-1 font-sans text-[10px] font-bold ${
+                          item.status === 'completed' ? 'text-[#3ecf8e]' : 'text-primary'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'completed' ? 'bg-[#3ecf8e]' : 'bg-primary animate-pulse'}`}></span>
+                          {item.status === 'completed' ? 'Consolidado na nuvem' : 'Salvo localmente'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              onClick={loadDbStats}
+              className="px-3 py-1.5 bg-surface hover:bg-surface-container border border-outline-variant rounded-lg text-[10px] font-mono text-on-surface font-semibold flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[14px]">refresh</span>
+              Atualizar Estatísticas
+            </button>
+
+            {dbStats.syncQueue > 0 && (
+              <button
+                onClick={handleClearSyncQueue}
+                className="px-3 py-1.5 bg-[#93000a]/10 hover:bg-[#93000a]/20 border border-error/20 rounded-lg text-[10px] font-mono text-error font-semibold flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[14px]">cleaning_services</span>
+                Limpar Fila Concluída
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
