@@ -38,6 +38,7 @@ export default function Sidebar({
     { view: 'clientes' as ViewType, label: 'Clientes Críticos', icon: 'gpp_bad', fillIcon: false, roadmap: true },
     { view: 'ocorrencias' as ViewType, label: 'Ocorrências Ref', icon: 'menu_book', fillIcon: false, roadmap: true },
     { view: 'curva_a' as ViewType, label: 'Clientes Curva A', icon: 'military_tech', fillIcon: false, roadmap: true },
+    { view: 'cidades_rotas' as ViewType, label: 'Cidades e Rotas', icon: 'map', fillIcon: false, roadmap: false },
   ];
 
   const [futureExpanded, setFutureExpanded] = useState(false);

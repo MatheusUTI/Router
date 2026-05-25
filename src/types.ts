@@ -10,6 +10,7 @@ export type ViewType =
   | 'clientes'
   | 'ocorrencias'
   | 'curva_a'
+  | 'cidades_rotas'
   | 'configuracoes';
 
 export interface Vehicle {
@@ -125,6 +126,16 @@ export interface CurvaAClient {
   cnpj_remetente: string;
   curva_a: string;
   cliente_remetente: string;
+}
+
+export interface CidadeRota {
+  id?: number;
+  cidade: string; // e.g. "ALFENAS"
+  alias: string;  // e.g. "ALFENAS-MG, ALFENA, RTA-ALFENAS"
+  setor: string;  // e.g. "SUL-1"
+  rota: string;   // e.g. "ROTA 06"
+  prazo_padrao: number; // e.g. 2 for D+2
+  prioridade_operacional: 'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA';
 }
 
 

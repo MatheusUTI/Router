@@ -1,9 +1,9 @@
 import Dexie, { type Table } from 'dexie';
-import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence } from '../../types';
+import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota } from '../../types';
 
 export interface SyncQueueItem {
   id?: number;
-  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence';
+  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota';
   operation: 'CREATE' | 'UPDATE' | 'DELETE';
   payload: any;
   created_at: string;
@@ -31,6 +31,7 @@ export class RotaLocalDatabase extends Dexie {
   savedRomaneios!: Table<RomaneioSave, string>;
   occurrences!: Table<DeliveryOccurrence, string>;
   sync_queue!: Table<SyncQueueItem, number>;
+  cidades_rotas!: Table<CidadeRota, number>;
 
   constructor() {
     super('RotaLocalDatabase');
@@ -41,6 +42,9 @@ export class RotaLocalDatabase extends Dexie {
       savedRomaneios: 'id, vehicleId, date',
       occurrences: 'codigo, tipo',
       sync_queue: '++id, entity, status, operation'
+    });
+    this.version(2).stores({
+      cidades_rotas: '++id, cidade, setor, rota'
     });
   }
 }

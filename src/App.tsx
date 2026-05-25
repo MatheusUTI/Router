@@ -45,6 +45,7 @@ import ConfiguracoesView from './components/ConfiguracoesView';
 import LoginView from './components/LoginView';
 import OcorrenciasView from './components/OcorrenciasView';
 import CurvaAView from './components/CurvaAView';
+import CidadesRotasView from './components/CidadesRotasView';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('login');
@@ -508,6 +509,7 @@ export default function App() {
             onAssignCtre={handleAssignCtre}
             onConsolidateRomaneio={handleConsolidateRomaneio}
             adminUser={adminProfile}
+            curvaAClients={curvaAClients}
           />
         );
       case 'finalizacao':
@@ -565,6 +567,10 @@ export default function App() {
             onBulkImportClients={handleBulkImportCurvaA}
             isSyncing={isSyncing}
           />
+        );
+      case 'cidades_rotas':
+        return (
+          <CidadesRotasView />
         );
       case 'configuracoes':
         return (
