@@ -155,6 +155,8 @@ export default function RoteirizacaoView({
     setSelectedUnit,
     selectedSector,
     setSelectedSector,
+    selectedLocationFilter,
+    setSelectedLocationFilter,
     searchQuery,
     setSearchQuery,
     activeTacticalFilter,
@@ -262,6 +264,8 @@ export default function RoteirizacaoView({
         setSelectedUnit={setSelectedUnit}
         selectedSector={selectedSector}
         setSelectedSector={setSelectedSector}
+        selectedLocationFilter={selectedLocationFilter}
+        setSelectedLocationFilter={setSelectedLocationFilter}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTacticalFilter={activeTacticalFilter}

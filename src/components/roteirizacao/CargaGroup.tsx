@@ -27,15 +27,49 @@ export default function CargaGroup({
   const totalVolume = items.reduce((sum, item) => sum + (item.volume || 1), 0);
   const totalValue = items.reduce((sum, item) => sum + (item.valor || 0), 0);
 
-  // SLA Delays count
-  const delayedCount = items.filter((item) => item.slaStatus.isDelayed).length;
+  // Group decision status breakdown
+  let vaiCount = 0;
+  let atencaoCount = 0;
+  let naoVaiCount = 0;
+  let aguardarCount = 0;
+  let prioridadeCount = 0;
 
-  // Active Occurrence count
-  const occurrenceCount = items.filter((item) => item.occurrenceCode).length;
+  for (const item of items) {
+    const status = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
+    const occurrenceCri = (item.occurrenceCriticality || '') as string;
 
-  // Curva A count
-  const curvaACount = items.filter((item) => item.isCurvaA).length;
-  
+    if (
+      occurrenceCri === 'CRÍTICA' ||
+      status === 'retido' ||
+      status === 'problema' ||
+      status === 'devolução'
+    ) {
+      naoVaiCount++;
+    } else if (
+      item.isCurvaA ||
+      item.slaStatus?.isDelayed ||
+      item.normPriority === 'CRÍTICA'
+    ) {
+      prioridadeCount++;
+    } else if (
+      item.slaStatus?.isToday ||
+      item.slaStatus?.daysDiff === 1 ||
+      (item.occurrenceCode && occurrenceCri !== 'CRÍTICA') ||
+      item.pesoStatus?.category === 'CRÍTICO' ||
+      item.pesoStatus?.category === 'PESADO' ||
+      status === 'aguardando'
+    ) {
+      atencaoCount++;
+    } else if (
+      status === 'transferência' ||
+      status === 'em rota'
+    ) {
+      aguardarCount++;
+    } else {
+      vaiCount++;
+    }
+  }
+
   // Calculate selection status
   const itemIds = items.map((i) => i.id);
   const allGroupChecked = itemIds.length > 0 && itemIds.every((id) => selectedIds.includes(id));
@@ -43,7 +77,7 @@ export default function CargaGroup({
   // Auto detect typical sub route code if available
   const subRouteLabel = items[0]?.normSetor || '';
 
-  // Format total weight
+  // Format total weight for high scannability
   const totalWeightTons = totalWeight >= 1000 
     ? `${(totalWeight / 1000).toFixed(1)}t` 
     : `${totalWeight} kg`;
@@ -51,7 +85,7 @@ export default function CargaGroup({
   return (
     <div className="border-b border-[#14203a]/40 bg-[#0d1322]">
       {/* Group Header Row - Sticky for rich scrolling */}
-      <div className="sticky top-0 z-20 bg-[#111b30] hover:bg-[#15213b] p-2.5 flex items-center justify-between gap-3 border-l-4 border-indigo-500 select-none transition-all shadow-md">
+      <div className="sticky top-0 z-20 bg-[#111b30] hover:bg-[#15213b] p-3 flex items-center justify-between gap-3 border-l-4 border-indigo-500 select-none transition-all shadow-md">
         {/* Toggle + Checkbox + Group Name */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
           {/* Arrow */}
@@ -70,7 +104,7 @@ export default function CargaGroup({
             className="w-4 h-4 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all shrink-0"
           />
 
-          <div className="flex flex-col md:flex-row md:items-baseline md:gap-3 min-w-0">
+          <div className="flex flex-col min-w-0">
             <span className="font-black text-[#f8fafc] uppercase tracking-wide text-[13.5px] truncate">
               {groupKey}
               {subRouteLabel && (
@@ -80,8 +114,8 @@ export default function CargaGroup({
               )}
             </span>
             
-            {/* Horizontal parameters summary */}
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-bold font-mono truncate">
+            {/* Horizontal physical attributes summary line */}
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-bold font-mono truncate mt-0.5">
               <span className="bg-[#070c14] text-[10px] text-zinc-300 px-1.5 py-0.5 rounded leading-none shrink-0 font-black">
                 {items.length} {items.length === 1 ? 'CARGA' : 'CARGAS'}
               </span>
@@ -90,36 +124,44 @@ export default function CargaGroup({
               <span className="text-slate-600 font-sans">•</span>
               <span className="text-yellow-400 shrink-0">{totalVolume} VOLS</span>
               <span className="text-slate-600 font-sans">•</span>
-              <span className="text-indigo-300 font-medium shrink-0">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
+              <span className="text-indigo-350 font-medium shrink-0">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
+            </div>
+
+            {/* Diagnostic Operational Decision summary line */}
+            <div className="flex items-center gap-1.5 text-[9.5px] font-mono mt-1.5 flex-wrap">
+              {vaiCount > 0 && (
+                <span className="text-emerald-405 font-black bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 text-emerald-400">
+                  {vaiCount} VÃO
+                </span>
+              )}
+              {prioridadeCount > 0 && (
+                <span className="text-purple-305 font-black bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 text-purple-300">
+                  {prioridadeCount} PRIORIDADE
+                </span>
+              )}
+              {atencaoCount > 0 && (
+                <span className="text-amber-405 font-black bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 text-amber-500">
+                  {atencaoCount} ATENÇÃO
+                </span>
+              )}
+              {naoVaiCount > 0 && (
+                <span className="text-red-405 font-black bg-red-500/10 px-1.5 py-0.2 rounded border border-red-500/20 text-red-400">
+                  {naoVaiCount} NÃO VÃO
+                </span>
+              )}
+              {aguardarCount > 0 && (
+                <span className="text-sky-305 font-black bg-sky-500/10 px-1.5 py-0.2 rounded border border-sky-500/20 text-sky-400">
+                  {aguardarCount} AGUARDAR
+                </span>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Dynamic Alerts Column on the very right */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {curvaACount > 0 && (
-            <span className="bg-red-500/10 border border-red-500/20 text-red-450 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide">
-              ★ {curvaACount} CURVA {curvaACount === 1 ? 'A' : 'A'}
-            </span>
-          )}
-
-          {delayedCount > 0 && (
-            <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide animate-pulse">
-              ⚠️ {delayedCount} atraso{delayedCount !== 1 ? 's' : ''}
-            </span>
-          )}
-
-          {occurrenceCount > 0 && (
-            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide">
-              {occurrenceCount} OC
-            </span>
-          )}
         </div>
       </div>
 
       {/* Group Entries List */}
       {isExpanded && (
-        <div className="bg-[#090f1a] divide-y divide-[#14203a]/50">
+        <div className="bg-[#090f1a] divide-y divide-[#14203a]/40">
           {items.map((item) => (
             <CargaItem
               key={item.id}

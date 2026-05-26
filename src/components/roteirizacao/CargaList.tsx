@@ -5,8 +5,8 @@ import CargaItem from './CargaItem';
 
 interface CargaListProps {
   filteredCtrcs: RoteirizacaoItem[];
-  groupingMode: 'city' | 'sector' | 'none';
-  setGroupingMode: (mode: 'city' | 'sector' | 'none') => void;
+  groupingMode: 'city' | 'sector' | 'destinatario' | 'previsao' | 'none';
+  setGroupingMode: (mode: 'city' | 'sector' | 'destinatario' | 'previsao' | 'none') => void;
   expandedGroups: Record<string, boolean>;
   toggleGroup: (groupKey: string) => void;
   groupedData: Record<string, RoteirizacaoItem[]>;
@@ -71,6 +71,24 @@ export default function CargaList({
             }`}
           >
             Setor
+          </button>
+          <button
+            id="group-by-destinatario-btn"
+            onClick={() => setGroupingMode('destinatario')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'destinatario' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Destinatário
+          </button>
+          <button
+            id="group-by-previsao-btn"
+            onClick={() => setGroupingMode('previsao')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'previsao' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Previsão
           </button>
           <button
             id="group-by-none-btn"

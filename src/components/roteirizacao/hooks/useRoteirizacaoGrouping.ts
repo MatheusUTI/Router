@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 
-export type GroupingMode = 'city' | 'sector' | 'none';
+export type GroupingMode = 'city' | 'sector' | 'destinatario' | 'previsao' | 'none';
 
-export function useRoteirizacaoGrouping<T extends { normCidade: string; normSetor: string }>(items: T[]) {
+export function useRoteirizacaoGrouping<T extends { normCidade: string; normSetor: string; destinatario?: string; prev_ent?: string }>(items: T[]) {
   const [groupingMode, setGroupingMode] = useState<GroupingMode>('city');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -29,7 +29,17 @@ export function useRoteirizacaoGrouping<T extends { normCidade: string; normSeto
     }
 
     items.forEach((item) => {
-      const key = groupingMode === 'city' ? item.normCidade : item.normSetor;
+      let key = '';
+      if (groupingMode === 'city') {
+        key = item.normCidade;
+      } else if (groupingMode === 'sector') {
+        key = item.normSetor;
+      } else if (groupingMode === 'destinatario') {
+        key = item.destinatario ? item.destinatario.toUpperCase().trim() : 'REMETENTE/DESTINATÁRIO INDEFINIDO';
+      } else if (groupingMode === 'previsao') {
+        key = item.prev_ent ? item.prev_ent.trim() : 'SEM PREVISÃO';
+      }
+
       const groupKey = key || 'NÃO ESPECIFICADO';
 
       if (!map[groupKey]) {
