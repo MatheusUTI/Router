@@ -32,6 +32,9 @@ export default function CargaGroup({
 
   // Active Occurrence count
   const occurrenceCount = items.filter((item) => item.occurrenceCode).length;
+
+  // Curva A count
+  const curvaACount = items.filter((item) => item.isCurvaA).length;
   
   // Calculate selection status
   const itemIds = items.map((i) => i.id);
@@ -40,16 +43,21 @@ export default function CargaGroup({
   // Auto detect typical sub route code if available
   const subRouteLabel = items[0]?.normSetor || '';
 
+  // Format total weight
+  const totalWeightTons = totalWeight >= 1000 
+    ? `${(totalWeight / 1000).toFixed(1)}t` 
+    : `${totalWeight} kg`;
+
   return (
-    <div className="border-b border-[#16223f] bg-[#0d1322]">
-      {/* Group Header Row */}
-      <div className="bg-[#10192e] p-2 flex items-center justify-between gap-2 border-l-2 border-indigo-500 select-none">
+    <div className="border-b border-[#14203a]/40 bg-[#0d1322]">
+      {/* Group Header Row - Sticky for rich scrolling */}
+      <div className="sticky top-0 z-20 bg-[#111b30] hover:bg-[#15213b] p-2.5 flex items-center justify-between gap-3 border-l-4 border-indigo-500 select-none transition-all shadow-md">
         {/* Toggle + Checkbox + Group Name */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
           {/* Arrow */}
           <button
             onClick={onToggleCollapse}
-            className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white rounded hover:bg-[#1a2440] transition-colors cursor-pointer text-xs shrink-0"
+            className="w-5.5 h-5.5 flex items-center justify-center text-slate-300 hover:text-white rounded bg-[#1a2641]/50 hover:bg-[#202f50] border border-indigo-950 transition-colors cursor-pointer text-[10px] shrink-0 font-bold"
           >
             {isExpanded ? '▼' : '▶'}
           </button>
@@ -59,50 +67,53 @@ export default function CargaGroup({
             type="checkbox"
             checked={allGroupChecked}
             onChange={() => onToggleGroupSelection(itemIds)}
-            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer shrink-0"
+            className="w-4 h-4 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all shrink-0"
           />
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0">
-            <span className="font-extrabold text-[#f1f5f9] uppercase tracking-wide text-[12px] truncate">
-              {groupKey} {subRouteLabel && <span className="text-indigo-400 font-semibold text-[11px] font-mono ml-1">• {subRouteLabel}</span>}
+          <div className="flex flex-col md:flex-row md:items-baseline md:gap-3 min-w-0">
+            <span className="font-black text-[#f8fafc] uppercase tracking-wide text-[13.5px] truncate">
+              {groupKey}
+              {subRouteLabel && (
+                <span className="text-indigo-400 font-semibold text-xs ml-1.5 font-mono">
+                  [SET: {subRouteLabel}]
+                </span>
+              )}
             </span>
             
             {/* Horizontal parameters summary */}
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium truncate">
-              <span className="font-mono bg-[#070c14] text-[10px] text-zinc-300 font-bold px-1 py-0.2 rounded leading-none">
-                {items.length} {items.length === 1 ? 'carga' : 'cargas'}
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-bold font-mono truncate">
+              <span className="bg-[#070c14] text-[10px] text-zinc-300 px-1.5 py-0.5 rounded leading-none shrink-0 font-black">
+                {items.length} {items.length === 1 ? 'CARGA' : 'CARGAS'}
               </span>
-              <span>•</span>
-              <span className="font-mono text-emerald-400 font-bold">{totalWeight.toLocaleString('pt-BR')} kg</span>
-              <span>•</span>
-              <span className="font-mono text-yellow-400 font-semibold">{totalVolume} vol{totalVolume !== 1 ? 's' : ''}</span>
-              <span>•</span>
-              <span className="font-mono text-indigo-300">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
-              
-              {delayedCount > 0 && (
-                <>
-                  <span>•</span>
-                  <span className="bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                    ⚠️ {delayedCount} ATRASO{delayedCount !== 1 ? 'S' : ''}
-                  </span>
-                </>
-              )}
-
-              {occurrenceCount > 0 && (
-                <>
-                  <span>•</span>
-                  <span className="bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[10px] font-semibold px-1.5 py-0.2 rounded">
-                    {occurrenceCount} OCORRÊNCIA{occurrenceCount !== 1 ? 'S' : ''}
-                  </span>
-                </>
-              )}
+              <span className="text-slate-600 font-sans">•</span>
+              <span className="text-emerald-400 font-black shrink-0">{totalWeightTons}</span>
+              <span className="text-slate-600 font-sans">•</span>
+              <span className="text-yellow-400 shrink-0">{totalVolume} VOLS</span>
+              <span className="text-slate-600 font-sans">•</span>
+              <span className="text-indigo-300 font-medium shrink-0">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
             </div>
           </div>
         </div>
 
-        {/* Manual selection total weight notice */}
-        <div className="text-[10.5px] font-mono text-slate-500 hidden md:block shrink-0 uppercase">
-          grupo {groupKey.substring(0, 10)}
+        {/* Dynamic Alerts Column on the very right */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {curvaACount > 0 && (
+            <span className="bg-red-500/10 border border-red-500/20 text-red-450 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide">
+              ★ {curvaACount} CURVA {curvaACount === 1 ? 'A' : 'A'}
+            </span>
+          )}
+
+          {delayedCount > 0 && (
+            <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide animate-pulse">
+              ⚠️ {delayedCount} atraso{delayedCount !== 1 ? 's' : ''}
+            </span>
+          )}
+
+          {occurrenceCount > 0 && (
+            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wide">
+              {occurrenceCount} OC
+            </span>
+          )}
         </div>
       </div>
 

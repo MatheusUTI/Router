@@ -16,6 +16,8 @@ interface RoteirizacaoHeaderProps {
   filteredCtrcsCount: number;
   onClearFilters: () => void;
   currentTime?: string;
+  onOpenFleetDrawer?: () => void;
+  draftCount?: number;
 }
 
 export default function RoteirizacaoHeader({
@@ -32,7 +34,9 @@ export default function RoteirizacaoHeader({
   totalCtrcsCount,
   filteredCtrcsCount,
   onClearFilters,
-  currentTime = '15:50'
+  currentTime = '15:50',
+  onOpenFleetDrawer,
+  draftCount = 0,
 }: RoteirizacaoHeaderProps) {
   // Mini stats for quick overview
   const tacticalOptions = [
@@ -114,6 +118,20 @@ export default function RoteirizacaoHeader({
 
         {/* Action Controls */}
         <div className="flex items-center gap-3">
+          {onOpenFleetDrawer && (
+            <button
+              onClick={onOpenFleetDrawer}
+              className="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 text-xs px-2.5 py-1 rounded font-black tracking-wide transition-all flex items-center gap-1.5 cursor-pointer select-none"
+            >
+              <span>🚚 GERENCIAR FROTA</span>
+              {draftCount > 0 && (
+                <span className="bg-amber-500 text-[#080c14] font-black px-1.5 py-0.2 rounded-full text-[9px] min-w-[15px] text-center">
+                  {draftCount}
+                </span>
+              )}
+            </button>
+          )}
+
           <button
             id="btn-clear-filters-header"
             onClick={onClearFilters}

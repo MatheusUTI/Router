@@ -9,7 +9,7 @@ import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichment
 // Modular Imports
 import RoteirizacaoHeader from './RoteirizacaoHeader';
 import CargaList from './CargaList';
-import FrotaPanel from './FrotaPanel';
+import ConsolidacaoDrawer from './ConsolidacaoDrawer';
 import SelectionSummary from './SelectionSummary';
 
 // Custom Hooks
@@ -41,6 +41,7 @@ export default function RoteirizacaoView({
   const [curvaAClientsLocal, setCurvaAClientsLocal] = useState<CurvaAClientLocal[]>([]);
   const [helpers, setHelpers] = useState<Helper[]>([]);
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -185,18 +186,24 @@ export default function RoteirizacaoView({
   } = useRoteirizacaoGrouping(filteredCtrcs);
 
   // Checklist aggregation totals calculation
-  const { selectedWeight, selectedVolume, selectedValue } = useMemo(() => {
+  const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
     // Collect active checked entries
     const checkedItems = filteredCtrcs.filter((c) => selectedIds.includes(c.id));
     const weightSum = checkedItems.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
     const volumeSum = checkedItems.reduce((sum, item) => sum + (item.volume || 1), 0);
     const valueSum = checkedItems.reduce((sum, item) => sum + (item.valor || 0), 0);
+    const freteSum = checkedItems.reduce((sum, item) => sum + (item.frete || 0), 0);
 
     return {
       selectedWeight: weightSum,
       selectedVolume: volumeSum,
       selectedValue: valueSum,
+      selectedFrete: freteSum,
     };
+  }, [filteredCtrcs, selectedIds]);
+
+  const selectedCtrcsList = useMemo(() => {
+    return filteredCtrcs.filter((c) => selectedIds.includes(c.id));
   }, [filteredCtrcs, selectedIds]);
 
   // Core functions for alocating selected items to individual plates
@@ -264,11 +271,13 @@ export default function RoteirizacaoView({
         filteredCtrcsCount={filteredCtrcs.length}
         onClearFilters={clearFilters}
         currentTime={currentTime}
+        onOpenFleetDrawer={() => setIsDrawerOpen(true)}
+        draftCount={Object.keys(draftAssignments).length}
       />
 
-      {/* Main Containers: Left List & Right Fleet Panel */}
+      {/* Main Containers: Left List (Full Width) */}
       <div className="flex-1 flex gap-3 p-3 min-h-0 relative">
-        {/* Left Cargo Fila Column */}
+        {/* Cargo Fila Column */}
         {isNormalizing ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-[#080c14] border border-[#16223f] rounded-xl font-mono">
             <span className="animate-spin text-xl">⏳</span>
@@ -288,19 +297,6 @@ export default function RoteirizacaoView({
             onSelectAllVisible={toggleSelectAll}
           />
         )}
-
-        {/* Right Active Fleet Column */}
-        <FrotaPanel
-          vehicles={vehicles}
-          draftAssignments={draftAssignments}
-          selectedIds={selectedIds}
-          selectedWeight={selectedWeight}
-          availablePendingCtrcs={enrichedCtrcsList}
-          onAllocateSelectedToVehicle={handleAssignSelectionToVehicle}
-          onEmitRomaneio={handleEmitRomaneio}
-          onUnassignCarga={unassignCarga}
-          onClearVehicleDraft={clearVehicleDraft}
-        />
       </div>
 
       {/* Persistent Overlay Toast alerts */}
@@ -313,13 +309,27 @@ export default function RoteirizacaoView({
 
       {/* Expandable Footer Action parameters */}
       <SelectionSummary
-        selectedCount={selectedIds.length}
+        selectedCtrcs={selectedCtrcsList}
+        onOpenConsolidacao={() => setIsDrawerOpen(true)}
+        onClearSelection={clearSelection}
+      />
+
+      {/* Slide-over Consolidation & Fleet Alocation Drawer */}
+      <ConsolidacaoDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        vehicles={vehicles}
+        draftAssignments={draftAssignments}
+        selectedIds={selectedIds}
         selectedWeight={selectedWeight}
         selectedVolume={selectedVolume}
         selectedValue={selectedValue}
-        vehicles={vehicles}
-        onAllocateToVehicle={handleAssignSelectionToVehicle}
-        onClearSelection={clearSelection}
+        selectedFrete={selectedFrete}
+        availablePendingCtrcs={enrichedCtrcsList}
+        onAllocateSelectedToVehicle={handleAssignSelectionToVehicle}
+        onEmitRomaneio={handleEmitRomaneio}
+        onUnassignCarga={unassignCarga}
+        onClearVehicleDraft={clearVehicleDraft}
       />
     </div>
   );

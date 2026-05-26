@@ -1,94 +1,127 @@
-import React from 'react';
-import { Vehicle } from '../../types';
+import React, { useMemo } from 'react';
+import { RoteirizacaoItem } from '../../types';
 
 interface SelectionSummaryProps {
-  selectedCount: number;
-  selectedWeight: number;
-  selectedVolume: number;
-  selectedValue: number;
-  vehicles: Vehicle[];
-  onAllocateToVehicle: (vehicleId: string) => void;
+  selectedCtrcs: RoteirizacaoItem[];
+  onOpenConsolidacao: () => void;
   onClearSelection: () => void;
 }
 
 export default function SelectionSummary({
-  selectedCount,
-  selectedWeight,
-  selectedVolume,
-  selectedValue,
-  vehicles,
-  onAllocateToVehicle,
+  selectedCtrcs,
+  onOpenConsolidacao,
   onClearSelection,
 }: SelectionSummaryProps) {
+  const selectedCount = selectedCtrcs.length;
   if (selectedCount === 0) return null;
 
+  // Aggregate selected values inside the summary footer bar
+  const selectedWeight = useMemo(() => {
+    return selectedCtrcs.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
+  }, [selectedCtrcs]);
+
+  const selectedVolume = useMemo(() => {
+    return selectedCtrcs.reduce((sum, item) => sum + (item.volume || 1), 0);
+  }, [selectedCtrcs]);
+
+  const selectedValue = useMemo(() => {
+    return selectedCtrcs.reduce((sum, item) => sum + (item.valor || 0), 0);
+  }, [selectedCtrcs]);
+
+  const uniqueCities = useMemo(() => {
+    return new Set(selectedCtrcs.map((item) => item.normCidade?.trim().toUpperCase() || '')).size;
+  }, [selectedCtrcs]);
+
+  const delayedCount = useMemo(() => {
+    return selectedCtrcs.filter((item) => item.slaStatus?.isDelayed).length;
+  }, [selectedCtrcs]);
+
+  // Format weight to tons with 1 decimal place if it's 1000 kg or greater, else keep as kilograms
+  const formattedWeight = useMemo(() => {
+    if (selectedWeight >= 1000) {
+      return `${(selectedWeight / 1000).toFixed(1)}t`;
+    }
+    return `${selectedWeight} kg`;
+  }, [selectedWeight]);
+
   return (
-    <div className="bg-[#121c33] border-t border-[#1a3875] h-10 px-4 flex items-center justify-between z-40 shrink-0 shadow-[0_-4px_16px_rgba(0,0,0,0.5)]">
-      {/* Selection Stats */}
-      <div className="flex items-center gap-4 text-xs">
-        <div className="flex items-center gap-1">
-          <span className="bg-indigo-600 text-white font-black px-1.5 py-0.5 rounded text-[11px] min-w-[20px] text-center">
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-5xl bg-[#121c33]/95 backdrop-blur-md border border-indigo-500/40 h-12 px-5 py-2.5 rounded-xl flex items-center justify-between z-40 shrink-0 shadow-[0_10px_25px_rgba(0,0,0,0.6)] animate-[slideUp_150ms_ease-out]">
+      
+      {/* 1. Left Section - Metrics and Status highlights */}
+      <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs text-slate-200">
+        
+        {/* Selected CTRCs Count Badge */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="bg-indigo-650 text-white font-black px-2 py-0.5 rounded-md text-[11px] min-w-[22px] text-center shadow-md">
             {selectedCount}
           </span>
-          <span className="text-indigo-200 font-semibold uppercase">CTRCs Selecionados</span>
+          <span className="text-indigo-200 font-extrabold uppercase tracking-wide text-[10px]">
+            {selectedCount === 1 ? 'CTRC Selecionado' : 'CTRCs Selecionados'}
+          </span>
         </div>
 
-        <div className="h-4 w-px bg-slate-700"></div>
+        {/* Separator */}
+        <div className="h-5 w-px bg-[#1e2d4e]"></div>
 
-        <div className="text-slate-300 font-mono">
-          PESO TOTAL: <span className="text-emerald-400 font-bold">{selectedWeight.toLocaleString('pt-BR')} kg</span>
+        {/* Weight indicator */}
+        <div className="font-mono text-slate-300 font-bold shrink-0">
+          ⚖️ <span className="text-emerald-400 font-black">{formattedWeight}</span>
         </div>
 
-        <div className="h-4 w-px bg-slate-700"></div>
+        {/* Separator */}
+        <div className="h-5 w-px bg-[#1e2d4e]"></div>
 
-        <div className="text-slate-300 font-mono">
-          VOLUMES: <span className="text-yellow-400 font-bold">{selectedVolume}</span>
+        {/* Volumes */}
+        <div className="font-mono text-slate-300 font-bold shrink-0">
+          📦 <span className="text-yellow-400 font-black">{selectedVolume}</span> <span className="text-slate-400 text-[10px]">VOL</span>
         </div>
 
-        <div className="h-4 w-px bg-slate-700 font-mono"></div>
+        {/* Separator */}
+        <div className="h-5 w-px bg-[#1e2d4e]"></div>
 
-        <div className="text-slate-300 hidden md:block font-mono">
-          VALOR: <span className="text-indigo-300 font-bold">R$ {selectedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        {/* Cities */}
+        <div className="text-slate-300 font-bold font-mono shrink-0">
+          📍 <span className="text-sky-400 font-black">{uniqueCities}</span> {uniqueCities === 1 ? 'PRAÇA' : 'PRAÇAS'}
         </div>
+
+        {/* Separator & Delayed highlights (rendered dynamically only if count > 0) */}
+        {delayedCount > 0 && (
+          <>
+            <div className="h-5 w-px bg-[#1e2d4e]"></div>
+            <div className="text-red-400 font-bold font-mono animate-pulse shrink-0">
+              ⚠️ <span className="font-black text-rose-500">{delayedCount}</span> {delayedCount === 1 ? 'ATRASADO' : 'ATRASADOS'}
+            </div>
+          </>
+        )}
+
+        {/* Option value highlight on wider screens */}
+        <div className="h-5 w-px bg-[#1e2d4e] hidden lg:block"></div>
+        <div className="text-slate-400 font-mono hidden lg:block">
+          VALOR: <span className="text-indigo-300 font-bold">R$ {selectedValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
+        </div>
+
       </div>
 
-      {/* Instant Action Alocation controls */}
-      <div className="flex items-center gap-2">
+      {/* 2. Right Section - Execution Controls CTA */}
+      <div className="flex items-center gap-3">
+        {/* Clear selection lever */}
         <button
-          id="btn-clear-selection-footer"
           onClick={onClearSelection}
-          className="text-[11px] text-slate-400 hover:text-white uppercase font-bold tracking-wider px-2 py-1 hover:bg-[#1a2440] rounded transition-all transition-duration-150 cursor-pointer"
+          className="text-[10.5px] text-slate-400 hover:text-white uppercase font-black tracking-wider px-2.5 py-1.5 hover:bg-slate-800/40 rounded-lg transition-all duration-150 cursor-pointer"
         >
-          Limpar Seleção
+          Limpar
         </button>
 
-        <div className="h-5 w-px bg-indigo-900/40"></div>
-
-        <div className="flex items-center gap-1.5 bg-[#070c14]/50 rounded px-2 py-0.5 border border-indigo-500/30">
-          <span className="text-[10px] text-indigo-300 font-bold uppercase font-mono">DESPACHAR PARA:</span>
-          <select
-            id="footer-fast-vehicle-dispatcher"
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val) {
-                onAllocateToVehicle(val);
-                e.target.value = ''; // Reset select value after triggers
-              }
-            }}
-            defaultValue=""
-            className="bg-transparent border-none text-white text-[11px] font-mono leading-none focus:outline-none focus:ring-0 cursor-pointer p-0 font-bold"
-          >
-            <option value="" disabled className="bg-[#0b1322]">SELECIONE VEÍCULO</option>
-            {vehicles
-              .filter((v) => v.status === 'Disponível' || v.status === 'Em Rota')
-              .map((v) => (
-                <option key={v.id} value={v.id} className="bg-[#0b1322] font-mono">
-                  {v.id} ({v.type} - {v.capacity})
-                </option>
-              ))}
-          </select>
-        </div>
+        {/* Major CTA Button: Consolidar Rota */}
+        <button
+          onClick={onOpenConsolidacao}
+          className="bg-indigo-650 hover:bg-indigo-550 border border-indigo-500/50 hover:border-indigo-400/60 shadow-lg text-white font-black text-[11px] uppercase tracking-wider px-4 py-1.5 rounded-lg transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-1.5"
+        >
+          <span>Consolidar Rota</span>
+          <span className="text-[11px]">→</span>
+        </button>
       </div>
+
     </div>
   );
 }
