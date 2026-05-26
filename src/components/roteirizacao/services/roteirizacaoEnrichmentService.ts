@@ -66,9 +66,9 @@ export const RoteirizacaoEnrichmentService = {
         normPrazo = matchRoute.prazo_padrao;
         normPriority = matchRoute.prioridade_operacional;
       } else {
-        normCidade = 'ROTA NÃO MAPEADA';
-        normSetor = 'SEM SETOR';
-        normRota = 'SEM ROTA';
+        normCidade = cityInput || 'CIDADE NÃO INFORMADA';
+        normSetor = (ctrc.setor || 'SEM SETOR').toUpperCase().trim();
+        normRota = 'ROTA NÃO MAPEADA';
       }
 
       // 2. SLA calculations
