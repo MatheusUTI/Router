@@ -256,7 +256,7 @@ export default function RoteirizacaoView({
   };
 
   return (
-    <div className="w-full flex flex-col h-[calc(100vh-130px)] bg-[#080c14] border border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-200 select-none">
+    <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-[#080c14] border border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-200 select-none">
       {/* Prime Header Block */}
       <RoteirizacaoHeader
         adminUser={adminUser}

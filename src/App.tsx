@@ -613,7 +613,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-[#dae2fd] font-sans antialiased pt-16 md:pl-[72px] transition-all duration-300">
+    <div className={`min-h-screen bg-background text-[#dae2fd] font-sans antialiased ${currentView === 'roteirizacao' ? 'pt-0' : 'pt-16'} md:pl-[72px] transition-all duration-300`}>
       {/* Collapsible overlay sidebar */}
       <Sidebar
         currentView={currentView}
@@ -626,17 +626,19 @@ export default function App() {
       />
 
       {/* Global page top-header */}
-      <Header
-        currentView={currentView}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        notificationCount={pendingTicketsCount}
-        onClearNotifications={handleClearNotifications}
-        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-      />
+      {currentView !== 'roteirizacao' && (
+        <Header
+          currentView={currentView}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          notificationCount={pendingTicketsCount}
+          onClearNotifications={handleClearNotifications}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        />
+      )}
 
       {/* Main Content viewport container */}
-      <main className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
+      <main className={currentView === 'roteirizacao' ? 'p-1 w-full max-w-none' : 'p-4 sm:p-6 md:p-8 max-w-7xl mx-auto min-h-[calc(100vh-4rem)]'}>
         {renderActiveView()}
       </main>
     </div>

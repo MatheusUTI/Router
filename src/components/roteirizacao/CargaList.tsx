@@ -1,6 +1,5 @@
 import React from 'react';
 import { RoteirizacaoItem } from '../../types';
-import CargaGroup from './CargaGroup';
 import CargaItem from './CargaItem';
 
 interface CargaListProps {
@@ -103,7 +102,7 @@ export default function CargaList({
       </div>
 
       {/* Main Items View Area */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#14203a] scrollbar-thin scrollbar-track-[#080c14] scrollbar-thumb-indigo-550 scroll-smooth">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto divide-y divide-[#14203a] scrollbar-thin scrollbar-track-[#080c14] scrollbar-thumb-indigo-550 scroll-smooth">
         {filteredCtrcs.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-2">
             <span className="text-3xl">📦</span>
@@ -122,27 +121,20 @@ export default function CargaList({
             ))}
           </div>
         ) : (
-          // Grouped modes (City or Sector)
-          Object.keys(groupedData).map((groupKey) => {
-            const groupCtrcs = groupedData[groupKey] || [];
-            if (groupCtrcs.length === 0) return null;
-            
-            // Expanded index validation - default value can be true to start fully open/expanded
-            const isExpanded = expandedGroups[groupKey] !== false;
-
-            return (
-              <CargaGroup
-                key={groupKey}
-                groupKey={groupKey}
-                items={groupCtrcs}
-                isExpanded={isExpanded}
-                onToggleCollapse={() => toggleGroup(groupKey)}
-                selectedIds={selectedIds}
-                onToggleItem={onToggleItem}
-                onToggleGroupSelection={onToggleGroupSelection}
-              />
-            );
-          })
+          // Grouped modes (City, Sector, etc.) - rendered sequentially without group header lines
+          <div className="divide-y divide-[#14203a]">
+            {Object.keys(groupedData).flatMap((groupKey) => {
+              const groupCtrcs = groupedData[groupKey] || [];
+              return groupCtrcs.map((item) => (
+                <CargaItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggle={onToggleItem}
+                />
+              ));
+            })}
+          </div>
         )}
       </div>
     </div>
