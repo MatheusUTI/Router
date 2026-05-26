@@ -136,6 +136,12 @@ export interface CidadeRota {
   rota: string;   // e.g. "ROTA 06"
   prazo_padrao: number; // e.g. 2 for D+2
   prioridade_operacional: 'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA';
+  segunda?: boolean;
+  terca?: boolean;
+  quarta?: boolean;
+  quinta?: boolean;
+  sexta?: boolean;
+  cod?: string;
 }
 
 export interface Helper {

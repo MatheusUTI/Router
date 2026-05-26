@@ -1,4 +1,5 @@
 import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem } from '../../../types';
+import { initialDeliveryOccurrences } from '../../../data';
 import { getSlaStatus } from '../helpers/getSlaStatus';
 import { getPesoStatus } from '../helpers/getPesoStatus';
 import { getOcorrenciaStatus } from '../helpers/getOcorrenciaStatus';
@@ -34,6 +35,13 @@ export const RoteirizacaoEnrichmentService = {
   ): RoteirizacaoItem[] {
     // Build maps for efficient lookup
     const occMap = new Map<string, DeliveryOccurrence>();
+    // Preload system defaults so they never show as "unmapped"
+    for (const o of initialDeliveryOccurrences) {
+      if (o.codigo) {
+        occMap.set(o.codigo.trim().toUpperCase(), o);
+      }
+    }
+    // Overlay database records
     for (const o of occurrences) {
       if (o.codigo) {
         occMap.set(o.codigo.trim().toUpperCase(), o);
@@ -41,34 +49,78 @@ export const RoteirizacaoEnrichmentService = {
     }
 
     return ctrcs.map((ctrc) => {
-      // 1. Normalize city, sector & route
+      // Helper function for normalization of legacy route label
+      const normalizeRouteLabel = (setorStr: string): string => {
+        const clean = setorStr.toUpperCase().trim();
+        if (!clean || clean === 'SEM SETOR' || clean === 'SEM ROTA' || clean === 'PADRÃO') {
+          return 'ROTA NÃO MAPEADA';
+        }
+        if (clean === '99') {
+          return 'ROTA 99';
+        }
+
+        const rotaWordMatch = clean.match(/ROTA\s*(\d+)/i);
+        if (rotaWordMatch) {
+          const num = parseInt(rotaWordMatch[1], 10);
+          return `ROTA ${num < 10 ? '0' + num : num}`;
+        }
+
+        const onlyNumMatch = clean.match(/(\d+)/);
+        if (onlyNumMatch) {
+          const num = parseInt(onlyNumMatch[1], 10);
+          return `ROTA ${num < 10 ? '0' + num : num}`;
+        }
+
+        return clean;
+      };
+
+      const setorBruto = String(ctrc.setor || '').trim();
+      const is99 = setorBruto === '99' || 
+                   setorBruto.toUpperCase().replace(/\s/g, '').includes('ROTA99') || 
+                   setorBruto.toUpperCase().trim() === 'ROTA 99';
+
       const cityInput = (ctrc.cidade_ent || ctrc.cidade || '').toUpperCase().trim();
+      // Remove common state suffixes/prefixes (e.g. "VARGINHA - MG" -> "VARGINHA" or "ALFENAS/MG" -> "ALFENAS")
+      const cleanedCityInput = cityInput.split(/[-/]/)[0].trim();
+
       let normCidade = cityInput;
-      let normSetor = (ctrc.setor || 'PADRÃO').toUpperCase().trim();
-      let normRota = 'ROT-PADRÃO';
+      let normSetor = '';
+      let normRota = '';
       let normPrazo: number | undefined = undefined;
       let normPriority: string | undefined = 'NORMAL';
 
-      const matchRoute = cidadesRotas.find((cr) => {
-        const routeCity = cr.cidade.toUpperCase().trim();
-        if (routeCity === cityInput) return true;
-        if (cr.alias) {
-          const aliases = cr.alias.toUpperCase().split(',').map((s) => s.trim());
-          if (aliases.includes(cityInput)) return true;
-        }
-        return false;
-      });
-
-      if (matchRoute) {
-        normCidade = matchRoute.cidade.toUpperCase().trim();
-        normSetor = matchRoute.setor.toUpperCase().trim();
-        normRota = matchRoute.rota.toUpperCase().trim();
-        normPrazo = matchRoute.prazo_padrao;
-        normPriority = matchRoute.prioridade_operacional;
-      } else {
+      if (is99) {
         normCidade = cityInput || 'CIDADE NÃO INFORMADA';
-        normSetor = (ctrc.setor || 'SEM SETOR').toUpperCase().trim();
-        normRota = 'ROTA NÃO MAPEADA';
+        normRota = 'ROTA 99';
+        normSetor = 'ROTA 99';
+      } else {
+        const matchRoute = cidadesRotas.find((cr) => {
+          const routeCity = cr.cidade.toUpperCase().trim();
+          const cleanRouteCity = routeCity.split(/[-/]/)[0].trim();
+          if (routeCity === cityInput || cleanRouteCity === cleanedCityInput) return true;
+          if (cr.alias) {
+            const aliases = cr.alias.toUpperCase().split(',').map((s) => s.trim());
+            const cleanedAliases = aliases.map(a => a.split(/[-/]/)[0].trim());
+            if (aliases.includes(cityInput) || 
+                aliases.includes(cleanedCityInput) || 
+                cleanedAliases.includes(cleanedCityInput)) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        if (matchRoute) {
+          normCidade = matchRoute.cidade.toUpperCase().trim();
+          normRota = matchRoute.rota.toUpperCase().trim();
+          normSetor = normalizeRouteLabel(matchRoute.setor.toUpperCase().trim());
+          normPrazo = matchRoute.prazo_padrao;
+          normPriority = matchRoute.prioridade_operacional;
+        } else {
+          normCidade = cityInput || 'CIDADE NÃO INFORMADA';
+          normRota = normalizeRouteLabel(setorBruto);
+          normSetor = normalizeRouteLabel(setorBruto);
+        }
       }
 
       // 2. SLA calculations

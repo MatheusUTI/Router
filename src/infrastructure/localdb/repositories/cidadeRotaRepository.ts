@@ -2,29 +2,76 @@ import { db } from '../db';
 import { CidadeRota } from '../../../types';
 import { addToSyncQueue } from './syncQueueRepository';
 
+export const normalizeRouteLabel = (setorStr: string): string => {
+  const clean = setorStr.toUpperCase().trim();
+  if (!clean || clean === 'SEM SETOR' || clean === 'SEM ROTA' || clean === 'PADRÃO') {
+    return 'ROTA NÃO MAPEADA';
+  }
+  if (clean === '99') {
+    return 'ROTA 99';
+  }
+
+  const rotaWordMatch = clean.match(/ROTA\s*(\d+)/i);
+  if (rotaWordMatch) {
+    const num = parseInt(rotaWordMatch[1], 10);
+    return `ROTA ${num < 10 ? '0' + num : num}`;
+  }
+
+  const onlyNumMatch = clean.match(/(\d+)/);
+  if (onlyNumMatch) {
+    const num = parseInt(onlyNumMatch[1], 10);
+    return `ROTA ${num < 10 ? '0' + num : num}`;
+  }
+
+  return clean;
+};
+
 export const CidadeRotaRepository = {
   async getAll(): Promise<CidadeRota[]> {
-    return db.cidades_rotas.toArray();
+    const records = await db.cidades_rotas.toArray();
+    return records.map(record => ({
+      ...record,
+      setor: normalizeRouteLabel(record.setor || ''),
+      rota: record.rota && record.rota.trim().toUpperCase().includes('ROTA')
+        ? normalizeRouteLabel(record.rota)
+        : (record.rota || '').trim().toUpperCase()
+    }));
   },
 
   async getById(id: number): Promise<CidadeRota | undefined> {
-    return db.cidades_rotas.get(id);
+    const record = await db.cidades_rotas.get(id);
+    if (!record) return undefined;
+    return {
+      ...record,
+      setor: normalizeRouteLabel(record.setor || ''),
+      rota: record.rota && record.rota.trim().toUpperCase().includes('ROTA')
+        ? normalizeRouteLabel(record.rota)
+        : (record.rota || '').trim().toUpperCase()
+    };
   },
 
   async getByCidade(cidade: string): Promise<CidadeRota | undefined> {
     const term = cidade.trim().toUpperCase();
-    // Exact match
-    let found = await db.cidades_rotas.where('cidade').equals(term).first();
-    if (found) return found;
+    // Exact match of cidade field
+    const found = await db.cidades_rotas.where('cidade').equals(term).first();
+    if (found) {
+      return {
+        ...found,
+        setor: normalizeRouteLabel(found.setor || ''),
+        rota: found.rota && found.rota.trim().toUpperCase().includes('ROTA')
+          ? normalizeRouteLabel(found.rota)
+          : (found.rota || '').trim().toUpperCase()
+      };
+    }
 
-    // Check alias or alias list
-    const all = await db.cidades_rotas.toArray();
-    found = all.find((cr) => {
+    // Check alias or alias list using memory search over our clean records
+    const all = await this.getAll();
+    const foundByAlias = all.find((cr) => {
       if (cr.cidade === term) return true;
       const aliases = cr.alias ? cr.alias.split(',').map(a => a.trim().toUpperCase()) : [];
       return aliases.includes(term) || cr.cidade.includes(term) || term.includes(cr.cidade);
     });
-    return found;
+    return foundByAlias;
   },
 
   async put(item: CidadeRota, skipSync = true): Promise<number> {
@@ -33,8 +80,10 @@ export const CidadeRotaRepository = {
       ...item,
       cidade: item.cidade.trim().toUpperCase(),
       alias: (item.alias || '').trim().toUpperCase(),
-      setor: (item.setor || '').trim().toUpperCase(),
-      rota: (item.rota || '').trim().toUpperCase(),
+      setor: normalizeRouteLabel(item.setor || ''),
+      rota: item.rota && item.rota.trim().toUpperCase().includes('ROTA')
+        ? normalizeRouteLabel(item.rota)
+        : (item.rota || '').trim().toUpperCase(),
     };
 
     let id: number;

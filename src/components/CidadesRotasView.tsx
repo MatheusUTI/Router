@@ -1,6 +1,7 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { CidadeRota } from '../types';
 import { CidadeRotaRepository } from '../infrastructure/localdb/repositories/cidadeRotaRepository';
+import { initialCidadesRotas } from '../data';
 
 interface CidadesRotasViewProps {
   onNotifyUpdate?: () => void;
@@ -21,6 +22,12 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
   const [formRota, setFormRota] = useState('');
   const [formPrazo, setFormPrazo] = useState<number>(2);
   const [formPriority, setFormPriority] = useState<'CRÍTICA' | 'ALTA' | 'NORMAL' | 'BAIXA'>('NORMAL');
+  const [formSegunda, setFormSegunda] = useState(false);
+  const [formTerca, setFormTerca] = useState(false);
+  const [formQuarta, setFormQuarta] = useState(false);
+  const [formQuinta, setFormQuinta] = useState(false);
+  const [formSexta, setFormSexta] = useState(false);
+  const [formCod, setFormCod] = useState('');
 
   // Bulk CSV loader states
   const [showImporter, setShowImporter] = useState(false);
@@ -53,7 +60,13 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
       setor: formSetor.trim().toUpperCase(),
       rota: formRota.trim().toUpperCase(),
       prazo_padrao: Number(formPrazo),
-      prioridade_operacional: formPriority
+      prioridade_operacional: formPriority,
+      segunda: formSegunda,
+      terca: formTerca,
+      quarta: formQuarta,
+      quinta: formQuinta,
+      sexta: formSexta,
+      cod: formCod.trim()
     };
 
     try {
@@ -75,6 +88,12 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
     setFormRota('');
     setFormPrazo(2);
     setFormPriority('NORMAL');
+    setFormSegunda(false);
+    setFormTerca(false);
+    setFormQuarta(false);
+    setFormQuinta(false);
+    setFormSexta(false);
+    setFormCod('');
     setIsEditing(false);
     setShowForm(false);
   };
@@ -87,6 +106,12 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
     setFormRota(item.rota);
     setFormPrazo(item.prazo_padrao);
     setFormPriority(item.prioridade_operacional);
+    setFormSegunda(!!item.segunda);
+    setFormTerca(!!item.terca);
+    setFormQuarta(!!item.quarta);
+    setFormQuinta(!!item.quinta);
+    setFormSexta(!!item.sexta);
+    setFormCod(item.cod || '');
     setIsEditing(true);
     setShowForm(true);
   };
@@ -110,31 +135,83 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
 
     try {
       for (const line of lines) {
-        const parts = line.split(/[;,]/).map(p => p.trim().replace(/^["']|["']$/g, ''));
-        if (parts.length < 3) continue;
+        if (line.toUpperCase().includes('CIDADE')) {
+          continue; // pular linha do cabeçalho
+        }
+
+        const parts = line.split(/[;|]/).map(p => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length < 2) continue;
 
         const cidade = parts[0].toUpperCase();
-        const alias = parts[1].toUpperCase();
-        const setor = parts[2].toUpperCase();
-        const rota = parts[3] ? parts[3].toUpperCase() : `ROTA ${setor}`;
-        const prazo = parts[4] ? Number(parts[4]) : 2;
-        const priority = (parts[5] || 'NORMAL').toUpperCase() as any;
+        if (!cidade) continue;
 
-        const validPriorities = ['CRÍTICA', 'ALTA', 'NORMAL', 'BAIXA'];
-        const validatedPriority = validPriorities.includes(priority) ? priority : 'NORMAL';
-
-        // Check if city already exists to edit or add
+        // Buscar registro existente para mesclar
         const existing = await CidadeRotaRepository.getByCidade(cidade);
 
-        await CidadeRotaRepository.put({
-          id: existing?.id,
-          cidade,
-          alias,
-          setor,
-          rota,
-          prazo_padrao: isNaN(prazo) ? 2 : prazo,
-          prioridade_operacional: validatedPriority
-        });
+        // Detectar o formato:
+        // Layout A (Antigo): CIDADE;ALIAS;SETOR;ROTA;PRAZO;PRIORIDADE
+        // Layout B (Frequência Semanal): CIDADE;SETOR;SEGUNDA;TERÇA;QUARTA;QUINTA;SEXTA;COD
+        const isWeeklyFormat = parts.length >= 7 && (
+          parts[2].toUpperCase() === 'X' || parts[2] === ''
+        ) && (
+          parts[3].toUpperCase() === 'X' || parts[3] === ''
+        );
+
+        let mergedItem: CidadeRota;
+
+        if (isWeeklyFormat) {
+          const setor = parts[1].toUpperCase();
+          const rota = parts[1].toUpperCase();
+          const segunda = parts[2].toUpperCase() === 'X';
+          const terca = parts[3].toUpperCase() === 'X';
+          const quarta = parts[4].toUpperCase() === 'X';
+          const quinta = parts[5].toUpperCase() === 'X';
+          const sexta = parts[6].toUpperCase() === 'X';
+          const cod = parts[7] || '';
+
+          mergedItem = {
+            id: existing?.id,
+            cidade,
+            alias: existing?.alias || '',
+            setor,
+            rota,
+            prazo_padrao: existing?.prazo_padrao || 2,
+            prioridade_operacional: existing?.prioridade_operacional || 'NORMAL',
+            segunda,
+            terca,
+            quarta,
+            quinta,
+            sexta,
+            cod
+          };
+        } else {
+          const alias = parts[1].toUpperCase();
+          const setor = parts[2].toUpperCase();
+          const rota = parts[3] ? parts[3].toUpperCase() : `ROTA ${setor}`;
+          const prazo = parts[4] ? Number(parts[4]) : 2;
+          const priority = (parts[5] || 'NORMAL').toUpperCase() as any;
+
+          const validPriorities = ['CRÍTICA', 'ALTA', 'NORMAL', 'BAIXA'];
+          const validatedPriority = validPriorities.includes(priority) ? priority : 'NORMAL';
+
+          mergedItem = {
+            id: existing?.id,
+            cidade,
+            alias: alias || existing?.alias || '',
+            setor,
+            rota,
+            prazo_padrao: isNaN(prazo) ? (existing?.prazo_padrao || 2) : prazo,
+            prioridade_operacional: validatedPriority,
+            segunda: existing?.segunda || false,
+            terca: existing?.terca || false,
+            quarta: existing?.quarta || false,
+            quinta: existing?.quinta || false,
+            sexta: existing?.sexta || false,
+            cod: existing?.cod || ''
+          };
+        }
+
+        await CidadeRotaRepository.put(mergedItem);
         count++;
       }
 
@@ -150,27 +227,17 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
   };
 
   const handleLoadDefaults = async () => {
-    if (confirm('Isso irá inserir as regras padrões do sistema para roteirização rápida. Continuar?')) {
-      const defaults: CidadeRota[] = [
-        { cidade: 'ALFENAS', alias: 'ALFENA, ALFENAS-MG, ALFENAS MG', setor: 'ROTA 01', rota: 'VGA-ALFENAS', prazo_padrao: 2, prioridade_operacional: 'ALTA' },
-        { cidade: 'VARGINHA', alias: 'VARGINHA-MG, VARGINHA MG, VAG, VGA', setor: 'ROTA 01', rota: 'VGA-URBANO', prazo_padrao: 1, prioridade_operacional: 'CRÍTICA' },
-        { cidade: 'BELO HORIZONTE', alias: 'BH, BELO HORIZONTE-MG, BEAGÁ, BHS', setor: 'ROTA 03', rota: 'BHS-CAPITAL', prazo_padrao: 1, prioridade_operacional: 'NORMAL' },
-        { cidade: 'SÃO PAULO', alias: 'SP, SAO PAULO, SPO, SANPA', setor: 'ROTA 04', rota: 'SPO-CAPITAL', prazo_padrao: 1, prioridade_operacional: 'ALTA' },
-        { cidade: 'ITAJUBÁ', alias: 'ITAJUBA, ITAJUBÁ-MG, ITAJUBA MG', setor: 'ROTA 06', rota: 'SUL DE COOP', prazo_padrao: 2, prioridade_operacional: 'BAIXA' },
-        { cidade: 'POUSO ALEGRE', alias: 'PA, POUSO ALEGRE-MG, POUSO ALEGRE MG', setor: 'ROTA 02', rota: 'VGA-PA', prazo_padrao: 1, prioridade_operacional: 'ALTA' },
-        { cidade: 'LAVRAS', alias: 'LAVRAS-MG, LAVRAS MG', setor: 'ROTA 05', rota: 'VGA-LAVRAS', prazo_padrao: 2, prioridade_operacional: 'NORMAL' }
-      ];
-
-      for (const d of defaults) {
+    if (confirm('Isso irá inserir as 39 regras padrões do sistema para roteirização rápida baseada na planilha oficial. Continuar?')) {
+      for (const d of initialCidadesRotas) {
         const exist = await CidadeRotaRepository.getByCidade(d.cidade);
         await CidadeRotaRepository.put({
           id: exist?.id,
           ...d
-        });
+         });
       }
       await loadData();
       if (onNotifyUpdate) onNotifyUpdate();
-      alert('Padrões logísticos operacionais restaurados.');
+      alert('Padrões logísticos operacionais oficiais restaurados com sucesso.');
     }
   };
 
@@ -323,9 +390,11 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
             <thead className="bg-[#101524] text-[10.5px] text-on-surface-variant font-semibold uppercase tracking-wider border-b border-outline-variant/40">
               <tr>
                 <th className="px-4 py-3 text-white">Cidade Canonical</th>
+                <th className="px-4 py-3 text-center">COD</th>
                 <th className="px-4 py-3">Aliases cadastrados (Para De)</th>
                 <th className="px-4 py-3">Setor Padronizado</th>
                 <th className="px-4 py-3">Rota de Entrega</th>
+                <th className="px-4 py-3">Frequência Semanal</th>
                 <th className="px-4 py-3 text-center">Prazo SLA</th>
                 <th className="px-4 py-3">Operação Fiscal</th>
                 <th className="px-4 py-3 text-right">Ações de Governança</th>
@@ -341,11 +410,21 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
                 return (
                   <tr key={item.id} className="hover:bg-surface/40 transition-colors">
                     <td className="px-4 py-2.5 font-bold text-[#dae2fd] uppercase font-sans">{item.cidade}</td>
+                    <td className="px-2 py-2.5 text-center text-amber-400 font-bold font-mono text-[10px]">{item.cod || '-'}</td>
                     <td className="px-4 py-2.5 text-on-surface-variant text-[10.5px] font-sans italic hover:text-white transition-colors">
                       {item.alias ? item.alias.split(',').join(' | ') : 'Nenhum sinônimo parametrizado.'}
                     </td>
                     <td className="px-4 py-2.5 font-semibold text-primary">{item.setor}</td>
                     <td className="px-4 py-2.5 text-slate-300">{item.rota}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex gap-1 font-sans text-[9px] font-bold">
+                        <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.segunda ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-600 border border-transparent'}`} title="Segunda-feira">S</span>
+                        <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.terca ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-600 border border-transparent'}`} title="Terça-feira">T</span>
+                        <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quarta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-600 border border-transparent'}`} title="Quarta-feira">Q</span>
+                        <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quinta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-600 border border-transparent'}`} title="Quinta-feira">Q</span>
+                        <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.sexta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-600 border border-transparent'}`} title="Sexta-feira">S</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-2.5 text-center font-bold">
                       <span className="px-2 py-0.5 rounded bg-surface border border-outline-variant/40 text-[#dae2fd]">
                         D+{item.prazo_padrao}
@@ -380,7 +459,7 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
 
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-on-surface-variant font-sans">
+                  <td colSpan={9} className="text-center py-16 text-on-surface-variant font-sans">
                     <span className="material-symbols-outlined text-[32px] text-on-surface-variant/40 mb-1 block">
                       grid_off
                     </span>
@@ -490,6 +569,45 @@ export default function CidadesRotasView({ onNotifyUpdate }: CidadesRotasViewPro
                     <option value="NORMAL">🔵 NORMAL</option>
                     <option value="BAIXA">🟢 BAIXA</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 border-t border-outline-variant/30 pt-3">
+                <div className="space-y-1 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">Código interno Rota (COD)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 2"
+                    value={formCod}
+                    onChange={(e) => setFormCod(e.target.value)}
+                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary uppercase"
+                  />
+                </div>
+
+                <div className="space-y-1 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Dias de Frequência</label>
+                  <div className="flex gap-2 pt-1">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={formSegunda} onChange={(e) => setFormSegunda(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary focus:ring-0 w-3.5 h-3.5" />
+                      <span className="text-[10px] text-[#dae2fd] font-semibold">Seg</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={formTerca} onChange={(e) => setFormTerca(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary focus:ring-0 w-3.5 h-3.5" />
+                      <span className="text-[10px] text-[#dae2fd] font-semibold">Ter</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={formQuarta} onChange={(e) => setFormQuarta(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary focus:ring-0 w-3.5 h-3.5" />
+                      <span className="text-[10px] text-[#dae2fd] font-semibold">Qua</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={formQuinta} onChange={(e) => setFormQuinta(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary focus:ring-0 w-3.5 h-3.5" />
+                      <span className="text-[10px] text-[#dae2fd] font-semibold">Qui</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={formSexta} onChange={(e) => setFormSexta(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary focus:ring-0 w-3.5 h-3.5" />
+                      <span className="text-[10px] text-[#dae2fd] font-semibold">Sex</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 

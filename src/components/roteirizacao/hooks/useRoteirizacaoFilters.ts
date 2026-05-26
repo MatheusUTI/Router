@@ -28,7 +28,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // 'all' | 'delayed' | 'curva' | 'heavy' | 'priority' | 'retained' | 'missingbox'
   const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
 
-  // Unique list of sectors based on selected unit
+  // Unique list of sectors based on selected unit (filtered by normRota instead of normSetor)
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
       .filter((c) => {
@@ -40,7 +40,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         }
         return true;
       })
-      .map((c) => c.normSetor)
+      .map((c) => c.normRota)
       .filter(Boolean);
     return Array.from(new Set(list)).sort() as string[];
   }, [ctrcs, selectedUnit, adminUser]);
@@ -57,8 +57,8 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
       }
 
-      // 2. Sector filtering
-      if (selectedSector !== 'all' && ctrc.normSetor !== selectedSector) return false;
+      // 2. Sector filtering (now based on normRota instead of normSetor)
+      if (selectedSector !== 'all' && ctrc.normRota !== selectedSector) return false;
 
       // 3. Tactical Focus Category matching
       if (activeTacticalFilter === 'delayed') {

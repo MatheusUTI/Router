@@ -4,7 +4,9 @@ import {
   initialDrivers, 
   initialAvailableCtrcs, 
   initialLinkedCtrcs, 
-  initialDeliveryOccurrences 
+  initialDeliveryOccurrences,
+  initialCidadesRotas,
+  initialCurvaAClients
 } from '../../../data';
 
 /**
@@ -97,6 +99,29 @@ export async function runCompatibilityMigration(): Promise<{
     if (occurrencesCount === 0) {
       for (const o of initialDeliveryOccurrences) {
         await db.occurrences.put(o);
+      }
+    }
+
+    // 6. Seeding de Cidades e Rotas (Se vazio)
+    const cidadesRotasCount = await db.cidades_rotas.count();
+    if (cidadesRotasCount === 0) {
+      for (const cr of initialCidadesRotas) {
+        const payload: any = { ...cr };
+        // Dexie will generate auto-increment id if it's undefined
+        delete payload.id;
+        await db.cidades_rotas.put(payload);
+      }
+    }
+
+    // 7. Seeding de Clientes Curva A (Se vazio)
+    const curvaACount = await db.curva_a_clients.count();
+    if (curvaACount === 0) {
+      for (const ca of initialCurvaAClients) {
+        await db.curva_a_clients.put({
+          curva_a: ca.curva_a,
+          cnpj_remetente: ca.cnpj_remetente,
+          cliente_remetente: ca.cliente_remetente
+        } as any);
       }
     }
 

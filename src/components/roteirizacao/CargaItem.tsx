@@ -233,9 +233,17 @@ export default function CargaItem({
               <span className="text-slate-400 font-bold block truncate">
                 ⚠️ OC {item.occurrenceCode} • não mapeada
               </span>
-            ) : (
+            ) : item.occurrenceCriticality === 'CRÍTICA' ? (
               <span className="text-red-400 font-extrabold block truncate" title={item.occurrenceDescription}>
+                🚨 OC {item.occurrenceCode} • {item.occurrenceDescription}
+              </span>
+            ) : item.occurrenceCriticality === 'MÉDIA' ? (
+              <span className="text-amber-400 font-bold block truncate" title={item.occurrenceDescription}>
                 ⚠️ OC {item.occurrenceCode} • {item.occurrenceDescription}
+              </span>
+            ) : (
+              <span className="text-indigo-400 font-bold block truncate" title={item.occurrenceDescription}>
+                ℹ️ OC {item.occurrenceCode} • {item.occurrenceDescription}
               </span>
             )
           ) : (
