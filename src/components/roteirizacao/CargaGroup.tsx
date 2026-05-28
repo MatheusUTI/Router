@@ -1,5 +1,5 @@
 import React from 'react';
-import { RoteirizacaoItem, RoutePlanningItem } from '../../types';
+import { RoteirizacaoItem, RoutePlanningItem, DensityMode } from '../../types';
 import CargaItem from './CargaItem';
 
 interface CargaGroupProps {
@@ -12,6 +12,7 @@ interface CargaGroupProps {
   onToggleItem: (id: string) => void;
   onToggleGroupSelection: (ids: string[]) => void;
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
+  densityMode?: DensityMode;
 }
 
 export default function CargaGroup({
@@ -23,6 +24,7 @@ export default function CargaGroup({
   onToggleItem,
   onToggleGroupSelection,
   onUpdatePlanning,
+  densityMode,
 }: CargaGroupProps) {
   // Aggregate stats of this group's CTRCs
   const totalWeight = items.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
@@ -168,6 +170,7 @@ export default function CargaGroup({
               isSelected={selectedIds.includes(item.id)}
               onToggle={onToggleItem}
               onUpdatePlanning={onUpdatePlanning}
+              densityMode={densityMode}
             />
           ))}
         </div>

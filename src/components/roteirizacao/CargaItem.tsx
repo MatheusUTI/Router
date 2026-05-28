@@ -8,6 +8,7 @@ interface CargaItemProps {
   isSelected: boolean;
   onToggle: (id: string) => void;
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
+  densityMode?: 'compact' | 'default' | 'comfortable';
 }
 
 const resolveStatusColor = (statusStr: string): { bg: string; text: string; border: string } => {
@@ -105,6 +106,7 @@ export default function CargaItem({
   isSelected,
   onToggle,
   onUpdatePlanning,
+  densityMode = 'default',
 }: CargaItemProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [typedRoute, setTypedRoute] = useState(item.operationalRoute || '');
@@ -117,6 +119,13 @@ export default function CargaItem({
   }, [item.operationalRoute, item.operationalNote]);
 
   const pStyle = resolvePlanningStyle(item.planningStatus);
+
+  // Dynamic density classes
+  const padOuterY = densityMode === 'compact' ? 'py-0.5' : densityMode === 'comfortable' ? 'py-2.5' : 'py-1';
+  const padBlock2 = densityMode === 'compact' ? 'py-0.5 pl-2 pr-1' : densityMode === 'comfortable' ? 'py-2.5 pl-3 pr-2' : 'py-1 pl-2.5 pr-1.5';
+  const padBlock3 = densityMode === 'compact' ? 'py-0.5 px-2' : densityMode === 'comfortable' ? 'py-2.5 px-3' : 'py-1 px-2.5';
+  const padBlock4 = densityMode === 'compact' ? 'py-0.5 px-2 gap-0' : densityMode === 'comfortable' ? 'py-2.5 px-3 gap-1.5' : 'py-1 px-2.5 gap-0.5';
+  const padBlock5 = densityMode === 'compact' ? 'py-0.5 px-2 gap-0' : densityMode === 'comfortable' ? 'py-2.5 px-3 gap-1.5' : 'py-1 px-2.5 gap-0.5';
 
   return (
     <div
@@ -133,7 +142,7 @@ export default function CargaItem({
     >
       {/* Block 1: [FAIXA LATERAL COMPACTA] (24px) */}
       <div 
-        className={`shrink-0 flex flex-col items-center justify-start py-1 px-0.5 gap-1.5 font-mono select-none border-l-[2px] ${pStyle.borderClass} ${pStyle.badgeBg}`}
+        className={`shrink-0 flex flex-col items-center justify-start ${padOuterY} px-0.5 gap-1.5 font-mono select-none border-l-[2px] ${pStyle.borderClass} ${pStyle.badgeBg}`}
         style={{ minWidth: '24px', maxWidth: '24px' }}
       >
         <div 
@@ -160,7 +169,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className="min-w-0 flex flex-col justify-center text-left py-1 pl-2.5 pr-1.5 select-text leading-tight">
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight`}>
         <span className="text-white hover:text-indigo-200 font-extrabold text-[12px] uppercase tracking-wide truncate block" title={item.normCidade}>
           {item.normCidade || 'LOCALIDADE IND'}
         </span>
@@ -193,7 +202,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
-      <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 select-text border-l border-[#131f38]/15">
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[#131f38]/15`}>
         <div className="flex items-center gap-1 leading-none truncate w-full">
           <span className="text-slate-4a5 font-black select-none shrink-0 text-[8.5px] tracking-tight">DEST:</span>
           <span className="text-slate-100 font-semibold truncate block uppercase text-[10.5px] tracking-wide" title={item.destinatario}>
@@ -229,7 +238,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 4: [BLOCO OPERACIONAL] - SLA, Ocorrência, Disponibilidade e Localização */}
-      <div className="min-w-0 px-2.5 flex flex-col justify-center gap-0.5 leading-tight py-1 border-l border-[#131f38]/15">
+      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[#131f38]/15`}>
         
         {/* Line 1: SLA and date parameters */}
         <div className="flex items-center gap-1.5 text-[9px] font-bold font-mono text-slate-400 leading-none">
@@ -302,7 +311,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className="min-w-0 flex flex-col items-end justify-center text-right leading-none gap-0.5 px-2.5 py-1 shrink-0 whitespace-nowrap text-[9.5px] font-mono border-l border-[#131f38]/15 bg-[#070c14]/15">
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[9.5px] font-mono border-l border-[#131f38]/15 bg-[#070c14]/15`}>
         <span className="text-slate-105 font-black text-[12px] leading-none">
           {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
         </span>

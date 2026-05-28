@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
 import { HelperRepository } from '../../infrastructure/localdb/repositories/helperRepository';
 import { RoutePlanningRepository } from '../../infrastructure/localdb/repositories/routePlanningRepository';
+import { UserPreferenceRepository } from '../../infrastructure/localdb/repositories/userPreferenceRepository';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
 
 // Modular Imports
@@ -44,6 +45,10 @@ export default function RoteirizacaoView({
   const [routePlanningItems, setRoutePlanningItems] = useState<RoutePlanningItem[]>([]);
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+
+  // User Preferences sync and visual density management
+  const [densityMode, setDensityMode] = useState<DensityMode>('default');
+  const [isPrefLoaded, setIsPrefLoaded] = useState<boolean>(false);
 
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -220,6 +225,118 @@ export default function RoteirizacaoView({
     groupedData,
   } = useRoteirizacaoGrouping(filteredCtrcs);
 
+  // Helper to save setting update
+  const handleUpdatePreference = async (partial: Partial<RoteirizacaoPreferences>) => {
+    if (!adminUser || !adminUser.username) return;
+    try {
+      const username = adminUser.username;
+      const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+      const existingRoteirizacao = localPref?.preferences?.roteirizacao || {};
+      
+      const newRoteirizacao = {
+        ...existingRoteirizacao,
+        ...partial
+      };
+
+      // 1. Salvar localmente imediatamente
+      const updated = await UserPreferenceRepository.mergeLocalPreference(
+        username,
+        'roteirizacao',
+        { roteirizacao: newRoteirizacao }
+      );
+      
+      // 2. Chamar o push para o Supabase em background (não-bloqueante)
+      UserPreferenceRepository.pushUserPreferenceToCloud(updated).catch((err) => {
+        console.warn('[Roteirizacao] Erro silencioso ao tentar sincronizar preferência com nuvem:', err);
+      });
+    } catch (err) {
+      console.error('[Roteirizacao] Erro ao salvar preferência:', err);
+    }
+  };
+
+  // Synchronized Preferences Loading on load
+  useEffect(() => {
+    const loadAndSyncPreferences = async () => {
+      if (!adminUser || !adminUser.username) return;
+      
+      const username = adminUser.username;
+      
+      try {
+        // 1. Load Local cached preferences first (for instant apply)
+        const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        if (localPref && localPref.preferences && localPref.preferences.roteirizacao) {
+          const rotPref = localPref.preferences.roteirizacao;
+          if (rotPref.densityMode) {
+            setDensityMode(rotPref.densityMode);
+          }
+          if (rotPref.groupingMode) {
+            setGroupingMode(rotPref.groupingMode as any);
+          }
+          if (rotPref.selectedUnit) {
+            setSelectedUnit(rotPref.selectedUnit);
+          }
+          if (rotPref.selectedSector) {
+            setSelectedSector(rotPref.selectedSector);
+          }
+          if (rotPref.selectedLocationFilter) {
+            setSelectedLocationFilter(rotPref.selectedLocationFilter);
+          }
+          if (rotPref.activeTacticalFilter) {
+            setActiveTacticalFilter(rotPref.activeTacticalFilter);
+          }
+        }
+        setIsPrefLoaded(true);
+
+        // 2. Tentar sincronizar e buscar preferências atualizadas do Supabase em background
+        await UserPreferenceRepository.syncUserPreferences(username);
+
+        // 3. Recarregar após a sincronia em background se houver alguma versão mais nova
+        const syncedPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        if (syncedPref && syncedPref.preferences && syncedPref.preferences.roteirizacao) {
+          const rotPref = syncedPref.preferences.roteirizacao;
+          if (rotPref.densityMode) {
+            setDensityMode(rotPref.densityMode);
+          }
+          if (rotPref.groupingMode) {
+            setGroupingMode(rotPref.groupingMode as any);
+          }
+          if (rotPref.selectedUnit) {
+            setSelectedUnit(rotPref.selectedUnit);
+          }
+          if (rotPref.selectedSector) {
+            setSelectedSector(rotPref.selectedSector);
+          }
+          if (rotPref.selectedLocationFilter) {
+            setSelectedLocationFilter(rotPref.selectedLocationFilter);
+          }
+          if (rotPref.activeTacticalFilter) {
+            setActiveTacticalFilter(rotPref.activeTacticalFilter);
+          }
+        }
+      } catch (err) {
+        console.error('[Roteirizacao] Erro no carregamento/sincronia das preferências do usuário:', err);
+        setIsPrefLoaded(true);
+      }
+    };
+    
+    setIsPrefLoaded(false);
+    loadAndSyncPreferences();
+  }, [adminUser?.username]);
+
+  // Save preferences when state changes
+  useEffect(() => {
+    if (!isPrefLoaded || isNormalizing) return;
+    
+    handleUpdatePreference({
+      densityMode,
+      groupingMode,
+      selectedUnit,
+      selectedSector,
+      selectedLocationFilter,
+      activeTacticalFilter
+    });
+  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, isPrefLoaded, isNormalizing]);
+
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
     // Collect active checked entries
@@ -334,6 +451,8 @@ export default function RoteirizacaoView({
             onToggleGroupSelection={handleToggleGroupSelection}
             onSelectAllVisible={toggleSelectAll}
             onUpdatePlanning={handleUpdatePlanning}
+            densityMode={densityMode}
+            onUpdateDensity={(density) => setDensityMode(density)}
           />
         )}
       </div>

@@ -163,12 +163,33 @@ export interface CurvaAClientLocal {
   updated_at: string;
 }
 
+export type DensityMode = 'compact' | 'default' | 'comfortable';
+
+export interface RoteirizacaoPreferences {
+  densityMode: DensityMode;
+  groupingMode?: string;
+  selectedUnit?: string;
+  selectedSector?: string;
+  selectedLocationFilter?: string;
+  activeTacticalFilter?: string;
+  showFinancialValues?: boolean;
+  compactHeader?: boolean;
+}
+
+export interface UserPreferencesPayload {
+  roteirizacao?: RoteirizacaoPreferences;
+  [key: string]: any;
+}
+
 export interface UserPreference {
   id: string; // Typically username-based ID
+  userId?: string;
   username: string;
   view: string;
-  preferences: any;
+  preferences: UserPreferencesPayload;
   updated_at: string;
+  synced_at?: string;
+  sync_status?: 'local' | 'synced' | 'pending' | 'failed';
 }
 
 export interface SyncMetadata {
