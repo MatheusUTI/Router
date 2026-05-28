@@ -15,7 +15,7 @@ export default function SelectionSummary({
   const selectedCount = selectedCtrcs.length;
   if (selectedCount === 0) return null;
 
-  // Aggregate selected values inside the summary footer bar
+  // Aggregate selected parameters
   const selectedWeight = useMemo(() => {
     return selectedCtrcs.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
   }, [selectedCtrcs]);
@@ -24,53 +24,34 @@ export default function SelectionSummary({
     return selectedCtrcs.reduce((sum, item) => sum + (item.volume || 1), 0);
   }, [selectedCtrcs]);
 
-  const selectedValue = useMemo(() => {
-    return selectedCtrcs.reduce((sum, item) => sum + (item.valor || 0), 0);
+  const uniqueSelectedRoutesCount = useMemo(() => {
+    const routes = selectedCtrcs.map((item) => item.effectiveRoute || item.normRota).filter(Boolean);
+    return new Set(routes).size;
   }, [selectedCtrcs]);
 
-  const uniqueCities = useMemo(() => {
-    return new Set(selectedCtrcs.map((item) => item.normCidade?.trim().toUpperCase() || '')).size;
-  }, [selectedCtrcs]);
-
-  // Decision counts aggregator
   const counts = useMemo(() => {
-    let vai = 0;
-    let atencao = 0;
-    let naoVai = 0;
+    let urgent = 0;
+    let priority = 0;
+    let segurar = 0;
+    let naoSaiHoje = 0;
+    let semLoc = 0;
 
     for (const item of selectedCtrcs) {
-      const status = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
-      const occurrenceCri = (item.occurrenceCriticality || '') as string;
-
-      if (
-        occurrenceCri === 'CRÍTICA' ||
-        status === 'retido' ||
-        status === 'problema' ||
-        status === 'devolução'
-      ) {
-        naoVai++;
-      } else if (
-        item.isCurvaA ||
-        item.slaStatus?.isDelayed ||
-        item.normPriority === 'CRÍTICA' ||
-        item.slaStatus?.isToday ||
-        item.slaStatus?.daysDiff === 1 ||
-        (item.occurrenceCode && occurrenceCri !== 'CRÍTICA') ||
-        item.pesoStatus?.category === 'CRÍTICO' ||
-        item.pesoStatus?.category === 'PESADO' ||
-        status === 'aguardando'
-      ) {
-        atencao++;
-      } else {
-        vai++;
-      }
+      if (item.planningStatus === 'URGENTE') urgent++;
+      if (item.planningStatus === 'PRIORIDADE') priority++;
+      if (item.planningStatus === 'SEGURAR') segurar++;
+      if (item.planningStatus === 'NAO_SAI_HOJE') naoSaiHoje++;
+      
+      const hasNoLoc = !item.localizacao || item.localizacao.trim() === '' || (item.locationLabel || '').toUpperCase().includes('SEM BOX');
+      if (hasNoLoc) semLoc++;
     }
-    return { vai, atencao, naoVai };
+
+    return { urgent, priority, segurar, naoSaiHoje, semLoc };
   }, [selectedCtrcs]);
 
-  const hasBloqueados = counts.naoVai > 0;
+  const hasSpecialAlert = counts.segurar > 0 || counts.naoSaiHoje > 0;
 
-  // Format weight to tons with 1 decimal place if it's 1000 kg or greater, else keep as kilograms
+  // Format weight to tons with 1 decimal place if >= 1000 kg, else kilograms
   const formattedWeight = useMemo(() => {
     if (selectedWeight >= 1000) {
       return `${(selectedWeight / 1000).toFixed(1)}t`;
@@ -79,10 +60,10 @@ export default function SelectionSummary({
   }, [selectedWeight]);
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-5xl bg-[#111929]/95 backdrop-blur-md border border-indigo-500/40 min-h-[52px] py-2 px-4 rounded-xl flex flex-wrap gap-2 items-center justify-between z-40 shrink-0 shadow-[0_10px_30px_rgba(0,0,0,0.7)] animate-[slideUp_150ms_ease-out]">
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-6xl bg-[#111929]/95 backdrop-blur-md border border-indigo-500/40 min-h-[58px] py-2 px-4 rounded-xl flex flex-wrap gap-2 items-center justify-between z-40 shrink-0 shadow-[0_10px_35px_rgba(0,0,0,0.85)] animate-[slideUp_150ms_ease-out]">
       
-      {/* 1. Left Section - Metrics and Status highlights */}
-      <div className="flex flex-wrap items-center gap-2 sm: gap-3 md:gap-3.5 text-xs text-slate-200">
+      {/* Metrics Section */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-3.5 text-xs text-slate-200">
         
         {/* Selected CTRCs Count Badge */}
         <div className="flex items-center gap-1.5 shrink-0">
@@ -90,86 +71,90 @@ export default function SelectionSummary({
             {selectedCount}
           </span>
           <span className="text-slate-300 font-extrabold uppercase tracking-wide text-[10px]">
-            {selectedCount === 1 ? 'Selecionado' : 'Selecionados'}
+            {selectedCount === 1 ? 'Lote Selecionado' : 'Lotes Selecionados'}
           </span>
         </div>
 
-        {/* Separator */}
-        <div className="h-5 w-px bg-[#1e2d4e] hidden sm:block"></div>
-
-        {/* Weight indicator */}
-        <div className="font-mono text-slate-300 font-bold shrink-0 text-[11px]">
-          ⚖️ <span className="text-emerald-450 font-black">{formattedWeight}</span>
-        </div>
-
-        {/* Separator */}
-        <div className="h-5 w-px bg-[#1e2d4e] hidden sm:block"></div>
-
-        {/* Volumes */}
-        <div className="font-mono text-slate-300 font-bold shrink-0 text-[11px]">
-          📦 <span className="text-yellow-450 font-black">{selectedVolume}</span> <span className="text-slate-500 text-[9.5px]">VOL</span>
-        </div>
-
-        {/* Separator */}
-        <div className="h-5 w-px bg-[#1e2d4e] hidden md:block"></div>
-
-        {/* Cities */}
-        <div className="text-slate-300 font-bold font-mono shrink-0 text-[11px] hidden md:block">
-          📍 <span className="text-sky-400 font-black">{uniqueCities}</span> {uniqueCities === 1 ? 'PRAÇA' : 'PRAÇAS'}
-        </div>
-
-        {/* Separator */}
         <div className="h-5 w-px bg-[#1e2d4e]"></div>
 
-        {/* Real-time batch diagnostics pills */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {counts.vai > 0 && (
-            <span className="bg-emerald-500/10 text-emerald-400 font-bold text-[9.5px] px-1.5 py-0.2 rounded border border-emerald-500/20 font-mono">
-              {counts.vai} VÃO
+        {/* Physical Totals */}
+        <div className="font-mono text-slate-300 font-bold shrink-0 text-[11px]">
+          ⚖️ Peso: <span className="text-emerald-400 font-black">{formattedWeight}</span>
+        </div>
+
+        <div className="h-5 w-px bg-[#1e2d4e] hidden sm:block"></div>
+
+        <div className="font-mono text-slate-300 font-bold shrink-0 text-[11px]">
+          📦 Vols: <span className="text-yellow-450 font-black">{selectedVolume}</span>
+        </div>
+
+        <div className="h-4 w-px bg-[#1e2d4e] hidden sm:block"></div>
+
+        {/* Selected distinct routes count */}
+        <div className="text-slate-300 font-bold font-mono shrink-0 text-[11px]">
+          🧭 Rotas: <span className="text-sky-400 font-black">{uniqueSelectedRoutesCount}</span>
+        </div>
+
+        <div className="h-5 w-px bg-[#1e2d4e]"></div>
+
+        {/* Strategic category breakdown badges */}
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+          {counts.urgent > 0 && (
+            <span className="bg-red-500/15 text-red-400 font-bold text-[9px] px-1.5 py-0.2 rounded border border-red-500/30 font-mono">
+              🚨 {counts.urgent} URGENTES
             </span>
           )}
-          {counts.atencao > 0 && (
-            <span className="bg-amber-500/10 text-amber-500 font-bold text-[9.5px] px-1.5 py-0.2 rounded border border-amber-500/20 font-mono">
-              {counts.atencao} ATENÇÃO
+          {counts.priority > 0 && (
+            <span className="bg-amber-500/15 text-amber-405 font-bold text-[9px] px-1.5 py-0.2 rounded border border-amber-500/30 font-mono">
+              ✨ {counts.priority} PRIORID.
             </span>
           )}
-          {counts.naoVai > 0 && (
-            <span className="bg-red-500/10 text-red-400 font-bold text-[9.5px] px-1.5 py-0.2 rounded border border-red-500/25 font-mono animate-pulse">
-              {counts.naoVai} BLOQUEADO
+          {counts.segurar > 0 && (
+            <span className="bg-orange-500/20 text-orange-400 font-black text-[9px] px-1.5 py-0.2 rounded border border-orange-500/40 font-mono animate-pulse">
+              ⏸️ {counts.segurar} SEGURADOS
+            </span>
+          )}
+          {counts.naoSaiHoje > 0 && (
+            <span className="bg-slate-800 text-slate-400 font-bold text-[9px] px-1.5 py-0.2 rounded border border-slate-700 font-mono">
+              🚫 {counts.naoSaiHoje} DEFERIDOS
+            </span>
+          )}
+          {counts.semLoc > 0 && (
+            <span className="bg-[#1e1b4b] text-indigo-300 font-medium text-[9px] px-1.5 py-0.2 rounded border border-indigo-500/30 font-mono">
+              📍 {counts.semLoc} SEM LOC
             </span>
           )}
         </div>
 
       </div>
 
-      {/* 2. Right Section - Execution Controls CTA */}
+      {/* Action CTA Panel with Hold Safety Checks */}
       <div className="flex items-center gap-3 shrink-0">
         
-        {/* Warning Indicator */}
-        {hasBloqueados && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded animate-pulse">
-            ⚠️ Seleção contém bloqueios
+        {/* Soft warning alert (clearly visible, non-blocking) */}
+        {hasSpecialAlert && (
+          <div className="bg-red-650/20 border border-red-500/45 text-red-400 text-[10px] font-extrabold uppercase tracking-wide px-2 py-1 rounded animate-pulse select-none max-w-xs truncate" title="Atenção: A seleção possui cargas seguradas ou despriorizadas.">
+            ⚠️ Contém Cargas Seguradas/NÃO SAI
           </div>
         )}
 
-        {/* Clear selection lever */}
         <button
           onClick={onClearSelection}
-          className="text-[10.5px] text-slate-400 hover:text-white uppercase font-black tracking-wider px-2.5 py-1.5 hover:bg-slate-800/40 rounded-lg transition-all duration-150 cursor-pointer"
+          className="text-[10.5px] text-slate-400 hover:text-white uppercase font-black tracking-wider px-2.5 py-1.5 hover:bg-slate-800/40 rounded-lg transition-all duration-150 cursor-pointer select-none"
         >
           Limpar
         </button>
 
-        {/* Major CTA Button: Consolidar Rota */}
+        {/* Consolidar Rota trigger */}
         <button
           onClick={onOpenConsolidacao}
-          className={`font-black text-[11px] uppercase tracking-wider px-4.5 py-2 rounded-lg transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg ${
-            hasBloqueados
-              ? 'bg-amber-600 hover:bg-amber-550 border border-amber-500/60 text-white'
+          className={`font-black text-[11px] uppercase tracking-wider px-4.5 py-2.5 rounded-lg transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg ${
+            hasSpecialAlert
+              ? 'bg-amber-600 hover:bg-amber-550 border border-amber-500/50 text-white'
               : 'bg-indigo-650 hover:bg-indigo-600 border border-indigo-550 text-white'
           }`}
         >
-          <span>{hasBloqueados ? 'Prosseguir mesmo com Bloqueio' : 'Consolidar Rota'}</span>
+          <span>Consolidar Rota</span>
           <span className="text-[11px]">→</span>
         </button>
       </div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
 import { HelperRepository } from '../../infrastructure/localdb/repositories/helperRepository';
+import { RoutePlanningRepository } from '../../infrastructure/localdb/repositories/routePlanningRepository';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
 
 // Modular Imports
@@ -40,11 +41,17 @@ export default function RoteirizacaoView({
   const [cidadesRotas, setCidadesRotas] = useState<CidadeRota[]>([]);
   const [curvaAClientsLocal, setCurvaAClientsLocal] = useState<CurvaAClientLocal[]>([]);
   const [helpers, setHelpers] = useState<Helper[]>([]);
+  const [routePlanningItems, setRoutePlanningItems] = useState<RoutePlanningItem[]>([]);
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
+
+  // Define planning date (defaults to today's date formatted as YYYY-MM-DD)
+  const [planningDate, setPlanningDate] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   // Toast status notice
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -67,17 +74,19 @@ export default function RoteirizacaoView({
     const loadEnrichmentBases = async () => {
       setIsNormalizing(true);
       try {
-        const [occList, crList, caList, hList] = await Promise.all([
+        const [occList, crList, caList, hList, planList] = await Promise.all([
           OccurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
           CidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
           CurvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
           HelperRepository.getAll().catch(() => [] as Helper[]),
+          RoutePlanningRepository.getAll().catch(() => [] as RoutePlanningItem[]),
         ]);
 
         setDbOccurrencesList(occList);
         setCidadesRotas(crList);
         setCurvaAClientsLocal(caList);
         setHelpers(hList);
+        setRoutePlanningItems(planList);
       } catch (e) {
         console.error('[Roteirizacao] Erro carregando bases auxiliares de enriquecimento:', e);
       } finally {
@@ -86,6 +95,29 @@ export default function RoteirizacaoView({
     };
     loadEnrichmentBases();
   }, []);
+
+  // Set up planning update callback handler
+  const handleUpdatePlanning = async (ctrcId: string, patch: Partial<RoutePlanningItem>) => {
+    try {
+      const updatedItem = await RoutePlanningRepository.upsertForCtrc(ctrcId, planningDate, patch);
+      
+      setRoutePlanningItems((prev) => {
+        const index = prev.findIndex((p) => p.id === updatedItem.id);
+        if (index > -1) {
+          const next = [...prev];
+          next[index] = updatedItem;
+          return next;
+        } else {
+          return [...prev, updatedItem];
+        }
+      });
+
+      setToastMessage(`📝 Planejamento atualizado para CTRC ${ctrcId}`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err) {
+      console.error('[Roteirizacao] Erro ao salvar planejamento local:', err);
+    }
+  };
 
   // Combine prop curvaAClients and custom curving clients stored locally
   const combinedCurvaClients = useMemo(() => {
@@ -117,9 +149,10 @@ export default function RoteirizacaoView({
       combinedCurvaClients,
       vehicles,
       [], // drivers score if not retrieved yet
-      helpers
+      helpers,
+      routePlanningItems
     );
-  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing]);
+  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems]);
 
   // Temporary allocations triggers
   const {
@@ -277,6 +310,7 @@ export default function RoteirizacaoView({
         currentTime={currentTime}
         onOpenFleetDrawer={() => setIsDrawerOpen(true)}
         draftCount={Object.keys(draftAssignments).length}
+        planningDate={planningDate}
       />
 
       {/* Main Containers: Left List (Full Width) */}
@@ -299,6 +333,7 @@ export default function RoteirizacaoView({
             onToggleItem={toggleRow}
             onToggleGroupSelection={handleToggleGroupSelection}
             onSelectAllVisible={toggleSelectAll}
+            onUpdatePlanning={handleUpdatePlanning}
           />
         )}
       </div>

@@ -28,7 +28,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // 'all' | 'delayed' | 'curva' | 'heavy' | 'priority' | 'retained' | 'missingbox'
   const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
 
-  // Unique list of sectors based on selected unit (filtered by normRota instead of normSetor)
+  // Unique list of sectors based on selected unit (filtered by effectiveRoute or normRota)
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
       .filter((c) => {
@@ -36,11 +36,11 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         if (!adminUser.is_master) {
           return currentUnid === (adminUser.unid || 'SPO').toUpperCase();
         } else {
-          if (selectedUnit !== 'TODAS') return currentUnid === selectedUnit;
+          if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
         }
         return true;
       })
-      .map((c) => c.normRota)
+      .map((c) => c.effectiveRoute || c.normRota)
       .filter(Boolean);
     return Array.from(new Set(list)).sort() as string[];
   }, [ctrcs, selectedUnit, adminUser]);
@@ -57,29 +57,37 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
       }
 
-      // 2. Sector filtering (now based on normRota instead of normSetor)
-      if (selectedSector !== 'all' && ctrc.normRota !== selectedSector) return false;
+      // 2. Sector/Route filtering (based on effectiveRoute or normRota)
+      if (selectedSector !== 'all' && (ctrc.effectiveRoute || ctrc.normRota) !== selectedSector) return false;
 
-      // 3. Tactical Focus Category matching
-      if (activeTacticalFilter === 'delayed') {
-        if (!ctrc.slaStatus.isDelayed) return false;
-      } else if (activeTacticalFilter === 'curva') {
-        if (!ctrc.isCurvaA) return false;
-      } else if (activeTacticalFilter === 'heavy') {
-        if (ctrc.pesoStatus.category !== 'PESADO' && ctrc.pesoStatus.category !== 'CRÍTICO') return false;
+      // 3. Tactical Focus Category matching (aligned 1-to-1 with SPEC guidelines)
+      if (activeTacticalFilter === 'urgent') {
+        const isUrgent = ctrc.planningStatus === 'URGENTE' || ctrc.manualPriority === 'URGENTE';
+        if (!isUrgent) return false;
       } else if (activeTacticalFilter === 'priority') {
-        if (ctrc.normPriority !== 'CRÍTICA' && ctrc.normPriority !== 'ALTA' && !ctrc.isCurvaA) return false;
+        const isPri = ctrc.planningStatus === 'PRIORIDADE' || ctrc.manualPriority === 'PRIORIDADE';
+        if (!isPri) return false;
+      } else if (activeTacticalFilter === 'hold') {
+        const isHold = ctrc.planningStatus === 'SEGURAR' || ctrc.manualPriority === 'SEGURAR';
+        if (!isHold) return false;
+      } else if (activeTacticalFilter === 'delayed_today') {
+        const isNso = ctrc.planningStatus === 'NAO_SAI_HOJE' || ctrc.manualPriority === 'NAO_SAI_HOJE';
+        if (!isNso) return false;
+      } else if (activeTacticalFilter === 'scheduled') {
+        const isSched = ctrc.status === 'Agendamento' || ctrc.planningStatus === 'AGENDADO' || ctrc.manualPriority === 'AGENDADO';
+        if (!isSched) return false;
       } else if (activeTacticalFilter === 'retained') {
         if (ctrc.availabilityStatus !== 'retido' && ctrc.availabilityStatus !== 'problema') return false;
-      } else if (activeTacticalFilter === 'missingbox') {
-        if (ctrc.availabilityLabel === 'SEM BOX' || ctrc.locationLabel.toUpperCase().includes('SEM BOX')) {
-          // Keep it
-        } else {
-          return false;
-        }
+      } else if (activeTacticalFilter === 'no_location') {
+        const hasNoLoc = !ctrc.localizacao || ctrc.localizacao.trim() === '' || (ctrc.locationLabel || '').toUpperCase().includes('SEM BOX');
+        if (!hasNoLoc) return false;
+      } else if (activeTacticalFilter === 'curva_a') {
+        if (!ctrc.isCurvaA) return false;
+      } else if (activeTacticalFilter === 'fob') {
+        if (!ctrc.isFob) return false;
       }
 
-      // 4. Case-insensitive unified query search (CTRC, NF, remetente, destinatário, cidade, setor, localização)
+      // 4. Case-insensitive unified query search (CTRC, NF, remetente, destinatário, cidade, rota/effectiveRoute, localização, observação operacional)
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase().trim();
         const mId = (ctrc.id || '').toLowerCase().includes(query);
@@ -88,8 +96,11 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         const mCid = (ctrc.normCidade || '').toLowerCase().includes(query);
         const mNf = (ctrc.nf || '').toLowerCase().includes(query);
         const mSetor = (ctrc.normSetor || '').toLowerCase().includes(query);
+        const mRoute = (ctrc.effectiveRoute || '').toLowerCase().includes(query) || (ctrc.normRota || '').toLowerCase().includes(query);
         const mLoc = (ctrc.locationLabel || '').toLowerCase().includes(query) || (ctrc.localizacao || '').toLowerCase().includes(query);
-        if (!mId && !mDest && !mRem && !mCid && !mNf && !mSetor && !mLoc) return false;
+        const mNote = (ctrc.operationalNote || '').toLowerCase().includes(query);
+        
+        if (!mId && !mDest && !mRem && !mCid && !mNf && !mSetor && !mLoc && !mRoute && !mNote) return false;
       }
 
       // 5. Situation/Location physical filter

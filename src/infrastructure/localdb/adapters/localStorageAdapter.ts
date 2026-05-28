@@ -116,12 +116,18 @@ export async function runCompatibilityMigration(): Promise<{
     // 7. Seeding de Clientes Curva A (Se vazio)
     const curvaACount = await db.curva_a_clients.count();
     if (curvaACount === 0) {
+      let idx = 0;
       for (const ca of initialCurvaAClients) {
+        idx++;
         await db.curva_a_clients.put({
+          id: `${ca.cnpj_remetente || 'CNPJ_NI'}-${idx}`,
           curva_a: ca.curva_a,
           cnpj_remetente: ca.cnpj_remetente,
-          cliente_remetente: ca.cliente_remetente
-        } as any);
+          cliente_remetente: ca.cliente_remetente,
+          ativo: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
       }
     }
 

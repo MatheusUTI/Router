@@ -1,4 +1,4 @@
-import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem } from '../../../types';
+import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem } from '../../../types';
 import { initialDeliveryOccurrences } from '../../../data';
 import { getSlaStatus } from '../helpers/getSlaStatus';
 import { getPesoStatus } from '../helpers/getPesoStatus';
@@ -31,7 +31,8 @@ export const RoteirizacaoEnrichmentService = {
     curvaAClients: CurvaAClient[] = [],
     vehicles: Vehicle[] = [],
     drivers: DriverScore[] = [],
-    helpers: Helper[] = []
+    helpers: Helper[] = [],
+    routePlanningItems: RoutePlanningItem[] = []
   ): RoteirizacaoItem[] {
     // Build maps for efficient lookup
     const occMap = new Map<string, DeliveryOccurrence>();
@@ -177,6 +178,16 @@ export const RoteirizacaoEnrichmentService = {
         rowClass = 'border-l-[3px] border-l-amber-500/50 bg-amber-950/[0.01]';
       }
 
+      // 10. Planning override lookup
+      const planItem = routePlanningItems.find((p) => p.ctrcId === ctrc.id);
+      const suggestedRoute = planItem?.suggestedRoute || normRota;
+      const operationalRoute = planItem?.operationalRoute;
+      const effectiveRoute = operationalRoute || suggestedRoute;
+      const isManualRoute = !!(operationalRoute && operationalRoute !== suggestedRoute);
+      const manualPriority = planItem?.manualPriority;
+      const planningStatus = planItem?.planningStatus || 'A_PLANEJAR';
+      const operationalNote = planItem?.operationalNote;
+
       return {
         ...ctrc,
         normCidade,
@@ -214,6 +225,13 @@ export const RoteirizacaoEnrichmentService = {
           statusClass,
           rowClass,
         },
+        suggestedRoute,
+        operationalRoute,
+        effectiveRoute,
+        manualPriority,
+        planningStatus,
+        operationalNote,
+        isManualRoute,
       };
     });
   }

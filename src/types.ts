@@ -178,6 +178,39 @@ export interface SyncMetadata {
   last_success_at: string;
 }
 
+export type PlanningPriority =
+  | 'NORMAL'
+  | 'PRIORIDADE'
+  | 'URGENTE'
+  | 'SEGURAR'
+  | 'NAO_SAI_HOJE'
+  | 'AGENDADO';
+
+export type PlanningStatus =
+  | 'A_PLANEJAR'
+  | 'PLANEJADO'
+  | 'URGENTE'
+  | 'PRIORIDADE'
+  | 'SEGURAR'
+  | 'NAO_SAI_HOJE'
+  | 'AGENDADO'
+  | 'CONSOLIDADO';
+
+export interface RoutePlanningItem {
+  id: string;
+  ctrcId: string;
+  planningDate: string;
+  suggestedRoute: string;
+  operationalRoute?: string;
+  manualPriority?: PlanningPriority;
+  planningStatus: PlanningStatus;
+  operationalNote?: string;
+  lockedByUser?: boolean;
+  updatedBy?: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
 export interface RoteirizacaoItem extends Ctrc {
   normCidade: string;
   normSetor: string;
@@ -214,6 +247,13 @@ export interface RoteirizacaoItem extends Ctrc {
     statusClass: string;
     rowClass: string;
   };
+  suggestedRoute?: string;
+  operationalRoute?: string;
+  effectiveRoute?: string;
+  manualPriority?: PlanningPriority;
+  planningStatus?: PlanningStatus;
+  operationalNote?: string;
+  isManualRoute?: boolean;
 }
 
 

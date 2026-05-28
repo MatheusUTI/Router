@@ -20,6 +20,7 @@ interface RoteirizacaoHeaderProps {
   currentTime?: string;
   onOpenFleetDrawer?: () => void;
   draftCount?: number;
+  planningDate?: string;
 }
 
 export default function RoteirizacaoHeader({
@@ -41,17 +42,25 @@ export default function RoteirizacaoHeader({
   currentTime = '15:50',
   onOpenFleetDrawer,
   draftCount = 0,
+  planningDate,
 }: RoteirizacaoHeaderProps) {
-  // Padronized operational tactical focuses
+  // Padronized operational tactical focuses based 1-to-1 on SPEC page 3
   const tacticalOptions = [
-    { id: 'all', label: 'TODOS', color: 'text-indigo-400' },
-    { id: 'delayed', label: 'SLA ESTOURADO', color: 'text-red-400' },
-    { id: 'curva', label: '★ CURVA A', color: 'text-purple-300' },
-    { id: 'heavy', label: 'PESO CRÍTICO', color: 'text-amber-400' },
-    { id: 'priority', label: 'ALTA PRIORIDADE', color: 'text-orange-400' },
-    { id: 'retained', label: 'RETIDOS', color: 'text-rose-500' },
-    { id: 'missingbox', label: 'AGUARDANDO BOX', color: 'text-indigo-400' }
+    { id: 'all', label: 'TODOS', color: 'text-slate-400 font-bold' },
+    { id: 'urgent', label: '🚨 P0 / URGENTE', color: 'text-red-400 font-extrabold' },
+    { id: 'priority', label: '✨ P1 / PRIORIDADE', color: 'text-amber-400 font-extrabold' },
+    { id: 'hold', label: '⏸️ SEGURAR', color: 'text-orange-400 font-bold' },
+    { id: 'delayed_today', label: '🚫 NÃO SAI', color: 'text-rose-500 font-bold' },
+    { id: 'scheduled', label: '📅 AGENDADOS', color: 'text-teal-400 font-bold' },
+    { id: 'retained', label: '🔒 RETIDOS', color: 'text-rose-455 font-bold' },
+    { id: 'no_location', label: '📍 SEM LOC', color: 'text-sky-300 font-bold' },
+    { id: 'curva_a', label: '⭐ CURVA A', color: 'text-purple-300 font-semibold' },
+    { id: 'fob', label: '💰 FOB', color: 'text-yellow-505 font-semibold' }
   ];
+
+  const formattedPlanningDate = planningDate 
+    ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="bg-[#0b1322] border-b border-[#1a2440] py-1.5 px-3 flex flex-col gap-1.5 shrink-0">
@@ -62,10 +71,13 @@ export default function RoteirizacaoHeader({
           {/* Status signal + Title */}
           <div className="flex items-center gap-1.5 mr-1">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0ea5e9]"></span>
             </span>
-            <h1 className="text-xs font-black text-slate-100 tracking-tight uppercase leading-none">Roteirização Tática</h1>
+            <div className="flex flex-col">
+              <h1 className="text-xs font-black text-slate-100 tracking-tight uppercase leading-none">Mesa de Roteirização</h1>
+              <span className="text-[8.5px] font-mono text-indigo-400 font-black tracking-widest leading-none mt-0.5">PLAN: {formattedPlanningDate}</span>
+            </div>
           </div>
 
           {/* Unit selection */}

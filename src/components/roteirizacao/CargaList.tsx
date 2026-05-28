@@ -1,11 +1,12 @@
 import React from 'react';
-import { RoteirizacaoItem } from '../../types';
+import { RoteirizacaoItem, RoutePlanningItem } from '../../types';
 import CargaItem from './CargaItem';
+import CargaGroup from './CargaGroup';
 
 interface CargaListProps {
   filteredCtrcs: RoteirizacaoItem[];
-  groupingMode: 'city' | 'sector' | 'destinatario' | 'previsao' | 'none';
-  setGroupingMode: (mode: 'city' | 'sector' | 'destinatario' | 'previsao' | 'none') => void;
+  groupingMode: 'sector' | 'city' | 'destinatario' | 'previsao' | 'priority' | 'status' | 'location' | 'none';
+  setGroupingMode: (mode: 'sector' | 'city' | 'destinatario' | 'previsao' | 'priority' | 'status' | 'location' | 'none') => void;
   expandedGroups: Record<string, boolean>;
   toggleGroup: (groupKey: string) => void;
   groupedData: Record<string, RoteirizacaoItem[]>;
@@ -13,6 +14,7 @@ interface CargaListProps {
   onToggleItem: (id: string) => void;
   onToggleGroupSelection: (ids: string[]) => void;
   onSelectAllVisible: (ids: string[]) => void;
+  onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
 }
 
 export default function CargaList({
@@ -26,6 +28,7 @@ export default function CargaList({
   onToggleItem,
   onToggleGroupSelection,
   onSelectAllVisible,
+  onUpdatePlanning,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -51,8 +54,17 @@ export default function CargaList({
         </div>
 
         {/* Group Selector Pills */}
-        <div className="flex items-center gap-1 bg-[#070c14] p-0.5 rounded border border-[#16223f] select-none scale-95 origin-right">
-          <span className="text-[9.5px] text-slate-500 font-bold uppercase px-1.5 py-0.2">Agrupar:</span>
+        <div className="flex flex-wrap items-center gap-1 bg-[#070c14] p-1 rounded border border-[#16223f] select-none scale-95 origin-right">
+          <span className="text-[9.5px] text-slate-500 font-bold uppercase px-1 py-0.2">Agrupar:</span>
+          <button
+            id="group-by-sector-btn"
+            onClick={() => setGroupingMode('sector')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'sector' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Rota Operacional
+          </button>
           <button
             id="group-by-city-btn"
             onClick={() => setGroupingMode('city')}
@@ -61,15 +73,6 @@ export default function CargaList({
             }`}
           >
             Cidade
-          </button>
-          <button
-            id="group-by-sector-btn"
-            onClick={() => setGroupingMode('sector')}
-            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
-              groupingMode === 'sector' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Setor
           </button>
           <button
             id="group-by-destinatario-btn"
@@ -88,6 +91,33 @@ export default function CargaList({
             }`}
           >
             Previsão
+          </button>
+          <button
+            id="group-by-priority-btn"
+            onClick={() => setGroupingMode('priority')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'priority' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Prioridade
+          </button>
+          <button
+            id="group-by-status-btn"
+            onClick={() => setGroupingMode('status')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'status' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Status
+          </button>
+          <button
+            id="group-by-location-btn"
+            onClick={() => setGroupingMode('location')}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              groupingMode === 'location' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Localização
           </button>
           <button
             id="group-by-none-btn"
@@ -117,22 +147,29 @@ export default function CargaList({
                 item={item}
                 isSelected={selectedIds.includes(item.id)}
                 onToggle={onToggleItem}
+                onUpdatePlanning={onUpdatePlanning}
               />
             ))}
           </div>
         ) : (
-          // Grouped modes (City, Sector, etc.) - rendered sequentially without group header lines
-          <div className="divide-y divide-[#14203a]">
-            {Object.keys(groupedData).flatMap((groupKey) => {
+          // Grouped modes with beautiful collapsible segment headers
+          <div className="flex flex-col select-none">
+            {Object.keys(groupedData).map((groupKey) => {
               const groupCtrcs = groupedData[groupKey] || [];
-              return groupCtrcs.map((item) => (
-                <CargaItem
-                  key={item.id}
-                  item={item}
-                  isSelected={selectedIds.includes(item.id)}
-                  onToggle={onToggleItem}
+              const isExpanded = expandedGroups[groupKey] !== false;
+              return (
+                <CargaGroup
+                  key={groupKey}
+                  groupKey={groupKey}
+                  items={groupCtrcs}
+                  isExpanded={isExpanded}
+                  onToggleCollapse={() => toggleGroup(groupKey)}
+                  selectedIds={selectedIds}
+                  onToggleItem={onToggleItem}
+                  onToggleGroupSelection={onToggleGroupSelection}
+                  onUpdatePlanning={onUpdatePlanning}
                 />
-              ));
+              );
             })}
           </div>
         )}

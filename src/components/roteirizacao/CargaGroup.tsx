@@ -1,5 +1,5 @@
 import React from 'react';
-import { RoteirizacaoItem } from '../../types';
+import { RoteirizacaoItem, RoutePlanningItem } from '../../types';
 import CargaItem from './CargaItem';
 
 interface CargaGroupProps {
@@ -11,6 +11,7 @@ interface CargaGroupProps {
   selectedIds: string[];
   onToggleItem: (id: string) => void;
   onToggleGroupSelection: (ids: string[]) => void;
+  onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
 }
 
 export default function CargaGroup({
@@ -21,6 +22,7 @@ export default function CargaGroup({
   selectedIds,
   onToggleItem,
   onToggleGroupSelection,
+  onUpdatePlanning,
 }: CargaGroupProps) {
   // Aggregate stats of this group's CTRCs
   const totalWeight = items.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
@@ -83,15 +85,15 @@ export default function CargaGroup({
     : `${totalWeight} kg`;
 
   return (
-    <div className="border-b border-[#14203a]/40 bg-[#0d1322]">
-      {/* Group Header Row - Sticky for rich scrolling */}
-      <div className="sticky top-0 z-20 bg-[#111b30] hover:bg-[#15213b] p-3 flex items-center justify-between gap-3 border-l-4 border-indigo-500 select-none transition-all shadow-md">
-        {/* Toggle + Checkbox + Group Name */}
-        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+    <div className="border-b border-[#14203a]/45 bg-[#0d1322]">
+      {/* Group Header Row - Compact, single line sticky bar */}
+      <div className="sticky top-0 z-20 bg-[#111b32] hover:bg-[#15213d] py-1.5 px-3 flex items-center justify-between gap-2 border-l-[3px] border-indigo-500 select-none transition-all shadow-sm">
+        {/* Toggle + Checkbox + Group Name + Single Line Summary */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {/* Arrow */}
           <button
             onClick={onToggleCollapse}
-            className="w-5.5 h-5.5 flex items-center justify-center text-slate-300 hover:text-white rounded bg-[#1a2641]/50 hover:bg-[#202f50] border border-indigo-950 transition-colors cursor-pointer text-[10px] shrink-0 font-bold"
+            className="w-4.5 h-4.5 flex items-center justify-center text-slate-350 hover:text-white rounded bg-[#1a2641]/50 hover:bg-[#202f50] border border-indigo-950/40 transition-colors cursor-pointer text-[9px] shrink-0 font-extrabold"
           >
             {isExpanded ? '▼' : '▶'}
           </button>
@@ -101,60 +103,57 @@ export default function CargaGroup({
             type="checkbox"
             checked={allGroupChecked}
             onChange={() => onToggleGroupSelection(itemIds)}
-            className="w-4 h-4 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all shrink-0"
+            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all shrink-0"
           />
 
-          <div className="flex flex-col min-w-0">
-            <span className="font-black text-[#f8fafc] uppercase tracking-wide text-[13.5px] truncate">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap py-0.5 leading-none">
+            <span className="font-extrabold text-[#f8fafc] uppercase tracking-wide text-[12.5px] truncate">
               {groupKey}
-              {subRouteLabel && (
-                <span className="text-indigo-400 font-semibold text-xs ml-1.5 font-mono">
-                  [SET: {subRouteLabel}]
+              {subRouteLabel && groupKey !== subRouteLabel && (
+                <span className="text-indigo-400 font-semibold text-[11px] ml-1.5 font-mono">
+                  • {subRouteLabel}
                 </span>
               )}
             </span>
             
-            {/* Horizontal physical attributes summary line */}
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-bold font-mono truncate mt-0.5">
-              <span className="bg-[#070c14] text-[10px] text-zinc-300 px-1.5 py-0.5 rounded leading-none shrink-0 font-black">
-                {items.length} {items.length === 1 ? 'CARGA' : 'CARGAS'}
-              </span>
-              <span className="text-slate-600 font-sans">•</span>
-              <span className="text-emerald-400 font-black shrink-0">{totalWeightTons}</span>
-              <span className="text-slate-600 font-sans">•</span>
-              <span className="text-yellow-400 shrink-0">{totalVolume} VOLS</span>
-              <span className="text-slate-600 font-sans">•</span>
-              <span className="text-indigo-350 font-medium shrink-0">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
-            </div>
+            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            
+            <span className="text-slate-350 font-bold font-mono text-[10.5px] shrink-0">
+              {items.length} {items.length === 1 ? 'carga' : 'cargas'}
+            </span>
+            
+            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            
+            <span className="text-emerald-400 font-black font-mono text-[10.5px] shrink-0">
+              {totalWeightTons}
+            </span>
+            
+            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            
+            <span className="text-yellow-450 font-black font-mono text-[10.5px] shrink-0">
+              {totalVolume} {totalVolume === 1 ? 'vol' : 'vols'}
+            </span>
+            
+            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            
+            <span className="text-indigo-300 font-bold font-mono text-[10.5px] shrink-0">
+              R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
+            </span>
 
-            {/* Diagnostic Operational Decision summary line */}
-            <div className="flex items-center gap-1.5 text-[9.5px] font-mono mt-1.5 flex-wrap">
-              {vaiCount > 0 && (
-                <span className="text-emerald-405 font-black bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 text-emerald-400">
-                  {vaiCount} VÃO
-                </span>
-              )}
-              {prioridadeCount > 0 && (
-                <span className="text-purple-305 font-black bg-purple-500/10 px-1.5 py-0.2 rounded border border-purple-500/20 text-purple-300">
-                  {prioridadeCount} PRIORIDADE
-                </span>
-              )}
-              {atencaoCount > 0 && (
-                <span className="text-amber-405 font-black bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 text-amber-500">
-                  {atencaoCount} ATENÇÃO
-                </span>
-              )}
-              {naoVaiCount > 0 && (
-                <span className="text-red-405 font-black bg-red-500/10 px-1.5 py-0.2 rounded border border-red-500/20 text-red-400">
-                  {naoVaiCount} NÃO VÃO
-                </span>
-              )}
-              {aguardarCount > 0 && (
-                <span className="text-sky-305 font-black bg-sky-500/10 px-1.5 py-0.2 rounded border border-sky-500/20 text-sky-400">
-                  {aguardarCount} AGUARDAR
-                </span>
-              )}
-            </div>
+            {(() => {
+              const attentionCount = naoVaiCount + prioridadeCount + atencaoCount + aguardarCount;
+              if (attentionCount > 0) {
+                return (
+                  <>
+                    <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+                    <span className="text-red-400 font-black font-mono text-[10.5px] shrink-0 flex items-center gap-1">
+                      ⚠️ {attentionCount} {attentionCount === 1 ? 'atenção' : 'atenções'}
+                    </span>
+                  </>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       </div>
@@ -168,6 +167,7 @@ export default function CargaGroup({
               item={item}
               isSelected={selectedIds.includes(item.id)}
               onToggle={onToggleItem}
+              onUpdatePlanning={onUpdatePlanning}
             />
           ))}
         </div>
