@@ -13,6 +13,8 @@ interface RoteirizacaoHeaderProps {
   setSearchQuery: (query: string) => void;
   activeTacticalFilter: string;
   setActiveTacticalFilter: (filter: string) => void;
+  selectedEligibility: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS';
+  setSelectedEligibility: (eligibility: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS') => void;
   uniqueSectors: string[];
   totalCtrcsCount: number;
   filteredCtrcsCount: number;
@@ -21,6 +23,7 @@ interface RoteirizacaoHeaderProps {
   onOpenFleetDrawer?: () => void;
   draftCount?: number;
   planningDate?: string;
+  densityMode?: 'compact' | 'default' | 'comfortable';
 }
 
 export default function RoteirizacaoHeader({
@@ -35,6 +38,8 @@ export default function RoteirizacaoHeader({
   setSearchQuery,
   activeTacticalFilter,
   setActiveTacticalFilter,
+  selectedEligibility,
+  setSelectedEligibility,
   uniqueSectors,
   totalCtrcsCount,
   filteredCtrcsCount,
@@ -43,6 +48,7 @@ export default function RoteirizacaoHeader({
   onOpenFleetDrawer,
   draftCount = 0,
   planningDate,
+  densityMode = 'default',
 }: RoteirizacaoHeaderProps) {
   // Padronized operational tactical focuses based 1-to-1 on SPEC page 3
   const tacticalOptions = [
@@ -62,8 +68,78 @@ export default function RoteirizacaoHeader({
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+  // Density variations setup
+  const isCompact = densityMode === 'compact';
+  const isComfortable = densityMode === 'comfortable';
+
+  // Container styling
+  const containerClass = `bg-[#0b1322] border-b border-[#1a2440] ${
+    isCompact ? 'py-1 px-2.5 gap-1' : isComfortable ? 'py-2 px-3.5 gap-2' : 'py-1.5 px-3 gap-1.5'
+  } flex flex-col shrink-0`;
+
+  // Selectors wrapping styling
+  const selectorWrapClass = `flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded ${
+    isCompact ? 'px-1 py-0.2' : isComfortable ? 'px-2 py-1' : 'px-1.5 py-0.5'
+  }`;
+  
+  const selectorLabelClass = `font-bold uppercase font-mono tracking-tight leading-none ${
+    isCompact ? 'text-[8px]' : isComfortable ? 'text-[9.5px]' : 'text-[9px]'
+  } text-slate-400`;
+
+  const selectClass = `bg-transparent text-slate-100 font-sans font-black focus:outline-none cursor-pointer border-none p-0 outline-none leading-none ${
+    isCompact ? 'text-[9.5px]' : isComfortable ? 'text-[11px]' : 'text-[10px]'
+  }`;
+
+  const selectMonoClass = `bg-transparent text-slate-100 font-mono font-black focus:outline-none cursor-pointer border-none p-0 outline-none leading-none ${
+    isCompact ? 'text-[9.5px]' : isComfortable ? 'text-[11px]' : 'text-[10px]'
+  }`;
+
+  // Title styling
+  const titleClass = `font-black text-slate-100 tracking-tight uppercase leading-none ${
+    isCompact ? 'text-[11px]' : isComfortable ? 'text-[13px]' : 'text-xs'
+  }`;
+  const subtitleClass = `font-mono text-indigo-400 font-black tracking-widest leading-none mt-0.5 ${
+    isCompact ? 'text-[8.5px]' : isComfortable ? 'text-[10px]' : 'text-[9px]'
+  }`;
+
+  // Buttons styling
+  const btnClass = `bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 rounded font-bold tracking-wide transition-all flex items-center gap-1 cursor-pointer select-none leading-none ${
+    isCompact ? 'text-[9px] px-1.5 py-0.2' : isComfortable ? 'text-[11px] px-2.5 py-1' : 'text-[10px] px-2 py-0.5'
+  }`;
+
+  const btnSecondaryClass = `bg-[#1a2440] hover:bg-[#253359] text-gray-200 rounded font-semibold transition-all cursor-pointer select-none leading-none ${
+    isCompact ? 'text-[9px] px-1.5 py-0.2' : isComfortable ? 'text-[11px] px-2.5 py-1' : 'text-[10px] px-2 py-0.5'
+  }`;
+
+  const badgeClass = `bg-[#070c14] border border-[#1a2440] rounded font-mono text-indigo-300 shrink-0 leading-none ${
+    isCompact ? 'px-1 py-0.2 text-[9px]' : isComfortable ? 'px-2 py-1 text-[11px]' : 'px-1.5 py-0.5 text-[10px]'
+  }`;
+
+  // Search input styling
+  const searchInputClass = `w-full bg-[#070c14] border border-[#1a2440] rounded-md pr-1.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all uppercase ${
+    isCompact ? 'pl-4.5 py-0.2 text-[9.5px]' : isComfortable ? 'pl-5.5 py-1 text-[11.5px]' : 'pl-5 py-0.5 text-[10.5px]'
+  }`;
+  const searchWrapClass = isCompact ? 'relative w-36 md:w-44' : isComfortable ? 'relative w-48 md:w-64' : 'relative w-44 md:w-56';
+
+  // Foco Rapido row elements
+  const focusWrapClass = `flex items-center gap-2  shrink-0 ${
+    isCompact ? 'py-0.2 mt-0.5 pt-0.5' : isComfortable ? 'py-1 mt-0.5 border-t border-[#16223f]/40 pt-1.5' : 'py-0.5 border-t border-[#16223f]/40 pt-1'
+  }`;
+  const focusLabelClass = `text-slate-400 font-bold font-mono tracking-wider uppercase shrink-0 ${
+    isCompact ? 'text-[8.5px]' : isComfortable ? 'text-[10px]' : 'text-[9px]'
+  }`;
+  const chipContainerClass = `flex items-center overflow-x-auto no-scrollbar py-0.2 shrink-0 ${
+    isCompact ? 'gap-1' : isComfortable ? 'gap-1.8' : 'gap-1.5'
+  }`;
+  const chipClass = `rounded font-bold tracking-tight transition-all uppercase border cursor-pointer flex items-center gap-1 shrink-0 ${
+    isCompact ? 'px-1.5 py-0.2 text-[9px]' : isComfortable ? 'px-2.5 py-1 text-[11px]' : 'px-2 py-0.5 text-[10px]'
+  }`;
+  const rightStatusClass = `ml-auto font-mono bg-[#070c14] rounded border border-[#16223f]/40 shrink-0 text-slate-400 ${
+    isCompact ? 'px-1.5 py-0.2 text-[9px]' : isComfortable ? 'px-2.5 py-1 text-[11px]' : 'px-2 py-0.5 text-[10px]'
+  }`;
+
   return (
-    <div className="bg-[#0b1322] border-b border-[#1a2440] py-1.5 px-3 flex flex-col gap-1.5 shrink-0">
+    <div className={containerClass}>
       {/* Prime Header Bar in one compact line */}
       <div className="flex flex-wrap items-center justify-between gap-y-1 gap-x-2">
         {/* Left indicators and selectors */}
@@ -75,20 +151,20 @@ export default function RoteirizacaoHeader({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0ea5e9]"></span>
             </span>
             <div className="flex flex-col">
-              <h1 className="text-xs font-black text-slate-100 tracking-tight uppercase leading-none">Mesa de Roteirização</h1>
-              <span className="text-[8.5px] font-mono text-indigo-400 font-black tracking-widest leading-none mt-0.5">PLAN: {formattedPlanningDate}</span>
+              <h1 className={titleClass}>Mesa de Roteirização</h1>
+              <span className={subtitleClass}>PLAN: {formattedPlanningDate}</span>
             </div>
           </div>
 
           {/* Unit selection */}
-          <div className="flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded px-1.5 py-0.5">
-            <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">FILIAL:</span>
+          <div className={selectorWrapClass}>
+            <span className={selectorLabelClass}>FILIAL:</span>
             {adminUser.is_master ? (
               <select
                 id="header-unit-selector"
                 value={selectedUnit}
                 onChange={(e) => setSelectedUnit(e.target.value)}
-                className="bg-transparent text-slate-100 font-mono font-black text-[10px] focus:outline-none cursor-pointer border-none p-0 outline-none leading-none"
+                className={selectMonoClass}
               >
                 <option value="TODAS" className="bg-[#0b1322]">TODAS</option>
                 <option value="SPO" className="bg-[#0b1322]">SPO</option>
@@ -103,13 +179,13 @@ export default function RoteirizacaoHeader({
           </div>
 
           {/* Sector Selector */}
-          <div className="flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded px-1.5 py-0.5">
-            <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">SETOR:</span>
+          <div className={selectorWrapClass}>
+            <span className={selectorLabelClass}>SETOR:</span>
             <select
               id="header-sector-selector"
               value={selectedSector}
               onChange={(e) => setSelectedSector(e.target.value)}
-              className="bg-transparent text-slate-100 font-sans font-black text-[10px] focus:outline-none cursor-pointer border-none p-0 outline-none leading-none"
+              className={selectClass}
             >
               <option value="all" className="bg-[#0b1322]">TODOS</option>
               {uniqueSectors.map((sec) => (
@@ -119,13 +195,13 @@ export default function RoteirizacaoHeader({
           </div>
 
           {/* Situation Physical Location Filter */}
-          <div className="flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded px-1.5 py-0.5">
-            <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">OCUPAÇÃO:</span>
+          <div className={selectorWrapClass}>
+            <span className={selectorLabelClass}>OCUPAÇÃO:</span>
             <select
               id="header-location-filter"
               value={selectedLocationFilter}
               onChange={(e) => setSelectedLocationFilter(e.target.value)}
-              className="bg-transparent text-slate-100 font-sans font-black text-[10px] focus:outline-none cursor-pointer border-none p-0 outline-none leading-none"
+              className={selectClass}
             >
               <option value="all" className="bg-[#0b1322]">TODAS</option>
               <option value="na_base" className="bg-[#0b1322]">NA BASE</option>
@@ -135,29 +211,45 @@ export default function RoteirizacaoHeader({
               <option value="box" className="bg-[#0b1322]">AGUARDANDO BOX</option>
             </select>
           </div>
+
+          {/* Eligibility Filter */}
+          <div className={selectorWrapClass}>
+            <span className={selectorLabelClass}>ELEGIBILIDADE:</span>
+            <select
+              id="header-eligibility-filter"
+              value={selectedEligibility}
+              onChange={(e) => setSelectedEligibility(e.target.value as any)}
+              className={selectClass}
+            >
+              <option value="ROTEIRIZAVEL" className="bg-[#0b1322]">✅ ROTEIRIZÁVEIS</option>
+              <option value="REVISAR" className="bg-[#0b1322]">⚠️ REVISAR</option>
+              <option value="NAO_ROTEIRIZAVEL" className="bg-[#0b1322]">🚫 NÃO ROTEIRIZÁVEIS</option>
+              <option value="TODAS" className="bg-[#0b1322]">📜 TODAS</option>
+            </select>
+          </div>
         </div>
 
         {/* Search, Action controls, and Clock */}
         <div className="flex items-center gap-2">
           {/* Universal Search Input */}
-          <div className="relative w-44 md:w-56">
+          <div className={searchWrapClass}>
             <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] font-mono select-none">🔍</span>
             <input
               id="header-universal-search"
               type="text"
-              placeholder="Buscar CTRC, NF, rem, dest..."
+              placeholder="Buscar CTRC, NF..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#070c14] border border-[#1a2440] rounded-md pl-5 pr-1.5 py-0.5 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all uppercase"
+              className={searchInputClass}
             />
           </div>
 
           {onOpenFleetDrawer && (
             <button
               onClick={onOpenFleetDrawer}
-              className="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/20 hover:border-indigo-500/40 text-[10px] px-2 py-0.5 rounded font-bold tracking-wide transition-all flex items-center gap-1 cursor-pointer select-none"
+              className={btnClass}
             >
-              <span>🚚 FROTA</span>
+              <span>🚚 Consolidar</span>
               {draftCount > 0 && (
                 <span className="bg-amber-500 text-[#080c14] font-black px-1 rounded-full text-[8.5px] min-w-[12px] text-center">
                   {draftCount}
@@ -169,22 +261,22 @@ export default function RoteirizacaoHeader({
           <button
             id="btn-clear-filters-header"
             onClick={onClearFilters}
-            className="bg-[#1a2440] hover:bg-[#253359] text-gray-200 text-[10px] px-2 py-0.5 rounded font-semibold transition-all cursor-pointer select-none"
+            className={btnSecondaryClass}
           >
             Limpar
           </button>
 
-          <div className="bg-[#070c14] border border-[#1a2440] rounded px-1.5 py-0.5 text-[10px] font-mono text-indigo-300 shrink-0 leading-none">
+          <div className={badgeClass}>
             {currentTime} <span className="text-slate-500 text-[8.5px]">UTC</span>
           </div>
         </div>
       </div>
 
       {/* Modern Compact Chips Area ("Foco Rápido") */}
-      <div className="flex items-center gap-2 py-0.5 border-t border-[#16223f]/40 pt-1 shrink-0">
-        <span className="text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase shrink-0">Foco Rápido:</span>
+      <div className={focusWrapClass}>
+        <span className={focusLabelClass}>Foco Rápido:</span>
         
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.2 shrink-0">
+        <div className={chipContainerClass}>
           {tacticalOptions.map((opt) => {
             const isActive = activeTacticalFilter === opt.id;
             return (
@@ -192,7 +284,7 @@ export default function RoteirizacaoHeader({
                 key={opt.id}
                 id={`tactical-chip-${opt.id}`}
                 onClick={() => setActiveTacticalFilter(opt.id)}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-tight transition-all uppercase border cursor-pointer flex items-center gap-1 shrink-0 ${
+                className={`${chipClass} ${
                   isActive
                     ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/50 font-black shadow-sm'
                     : 'bg-[#070c14] hover:bg-[#1a2440] text-slate-400 hover:text-slate-200 border-[#16223f]/50'
@@ -204,7 +296,7 @@ export default function RoteirizacaoHeader({
           })}
         </div>
 
-        <div className="ml-auto text-[10px] text-slate-400 font-mono bg-[#070c14] px-2 py-0.5 rounded border border-[#16223f]/40 shrink-0">
+        <div className={rightStatusClass}>
           Fila: <span className="text-white font-bold">{filteredCtrcsCount}</span> / {totalCtrcsCount}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem } from './types';
 import {
   initialVehicles,
   initialDrivers,
@@ -29,6 +29,7 @@ import { VehicleRepository } from './infrastructure/localdb/repositories/vehicle
 import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
+import { CtrcOccurrenceHistoryRepository } from './infrastructure/localdb/repositories/ctrcOccurrenceHistoryRepository';
 
 // Import Views
 import Sidebar from './components/Sidebar';
@@ -315,8 +316,61 @@ export default function App() {
   // IMPORTAÇÃO DE CTRC
   // ---------------------------------------------------------
   const handleAddCtrcs = async (newCtrcs: Ctrc[]) => {
-    setAvailableCtrcs((prev) => [...prev, ...newCtrcs]);
+    // 1. Maintain current state memory & persistence intact
+    setAvailableCtrcs((prev) => {
+      // De-duplicate in memory based on ID so new records overwrite/append gracefully
+      const filtered = prev.filter(p => !newCtrcs.some(n => n.id === p.id));
+      return [...filtered, ...newCtrcs];
+    });
     await CtrcRepository.putMany(newCtrcs);
+
+    // 2. Incremental historical occurrence capture to IndexedDB
+    try {
+      const nowStr = new Date().toISOString();
+      const historyItemsToSave: CtrcOccurrenceHistoryItem[] = [];
+
+      for (const ctrc of newCtrcs) {
+        // Query current historic logs for this single CTRC
+        const history = await CtrcOccurrenceHistoryRepository.getByCtrcId(ctrc.id);
+        const sortedHistory = history.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const latest = sortedHistory[0];
+
+        const currentCode = (ctrc.ocorrencia || '').trim();
+        const currentStatus = (ctrc.status || '').trim();
+        const currentLocation = (ctrc.localizacao || '').trim();
+
+        // Detect if there's any state displacement
+        const isNewEvent = !latest || 
+          (latest.occurrenceCode || '') !== currentCode ||
+          (latest.status || '') !== currentStatus ||
+          (latest.locationLabel || '') !== currentLocation;
+
+        if (isNewEvent) {
+          const historyId = `${ctrc.id}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          historyItemsToSave.push({
+            id: historyId,
+            ctrcId: ctrc.id,
+            importDate: nowStr.split('T')[0], // YYYY-MM-DD
+            occurrenceCode: ctrc.ocorrencia || undefined,
+            occurrenceDescription: ctrc.descricao_ocorr || undefined,
+            locationLabel: ctrc.localizacao || undefined,
+            status: ctrc.status || undefined,
+            unid: ctrc.unid || undefined,
+            cidade: ctrc.cidade || undefined,
+            rota: ctrc.setor || undefined,
+            prevEnt: ctrc.prev_ent || undefined,
+            createdAt: nowStr,
+          });
+        }
+      }
+
+      if (historyItemsToSave.length > 0) {
+        await CtrcOccurrenceHistoryRepository.upsertManyDeduped(historyItemsToSave);
+        console.log(`[Importacao] Gravados ${historyItemsToSave.length} novos eventos no histórico.`);
+      }
+    } catch (err) {
+      console.error('[Importacao] Erro durante o salvamento do histórico de ocorrências do CTRC:', err);
+    }
   };
 
   // ---------------------------------------------------------

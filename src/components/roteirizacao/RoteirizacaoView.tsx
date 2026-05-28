@@ -117,7 +117,7 @@ export default function RoteirizacaoView({
         }
       });
 
-      setToastMessage(`📝 Planejamento atualizado para CTRC ${ctrcId}`);
+      setToastMessage(`📌 Ajuste salvo para CTRC ${ctrcId}`);
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
       console.error('[Roteirizacao] Erro ao salvar planejamento local:', err);
@@ -199,6 +199,8 @@ export default function RoteirizacaoView({
     setSearchQuery,
     activeTacticalFilter,
     setActiveTacticalFilter,
+    selectedEligibility,
+    setSelectedEligibility,
     uniqueSectors,
     filteredCtrcs,
     clearFilters,
@@ -420,6 +422,8 @@ export default function RoteirizacaoView({
         setSearchQuery={setSearchQuery}
         activeTacticalFilter={activeTacticalFilter}
         setActiveTacticalFilter={setActiveTacticalFilter}
+        selectedEligibility={selectedEligibility}
+        setSelectedEligibility={setSelectedEligibility}
         uniqueSectors={uniqueSectors}
         totalCtrcsCount={unassignedCtrcs.length}
         filteredCtrcsCount={filteredCtrcs.length}
@@ -428,6 +432,7 @@ export default function RoteirizacaoView({
         onOpenFleetDrawer={() => setIsDrawerOpen(true)}
         draftCount={Object.keys(draftAssignments).length}
         planningDate={planningDate}
+        densityMode={densityMode}
       />
 
       {/* Main Containers: Left List (Full Width) */}
@@ -459,9 +464,13 @@ export default function RoteirizacaoView({
 
       {/* Persistent Overlay Toast alerts */}
       {toastMessage && (
-        <div className="absolute top-16 right-4 z-50 bg-[#0d1527] border-l-4 border-indigo-500 border-y border-r border-indigo-500/20 text-indigo-300 text-xs p-3 rounded-lg shadow-2xl flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
-          <span>🚚</span>
-          <p className="leading-tight uppercase font-mono">{toastMessage}</p>
+        <div className="absolute top-16 right-4 z-50 bg-[#0d1527] border-l-4 border-indigo-500 border-y border-r border-[#1a2440] text-indigo-300 text-xs p-3 rounded-lg shadow-2xl flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
+          {toastMessage.startsWith('📌') || toastMessage.startsWith('📝') ? (
+            <span>📌</span>
+          ) : (
+            <span>🚚</span>
+          )}
+          <p className="leading-tight uppercase font-mono">{toastMessage.replace(/^[📌📝🚛🚚]\s*/, '')}</p>
         </div>
       )}
 
@@ -470,6 +479,7 @@ export default function RoteirizacaoView({
         selectedCtrcs={selectedCtrcsList}
         onOpenConsolidacao={() => setIsDrawerOpen(true)}
         onClearSelection={clearSelection}
+        densityMode={densityMode}
       />
 
       {/* Slide-over Consolidation & Fleet Alocation Drawer */}

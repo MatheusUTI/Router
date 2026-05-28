@@ -28,6 +28,9 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // 'all' | 'delayed' | 'curva' | 'heavy' | 'priority' | 'retained' | 'missingbox'
   const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
 
+  // Eligibility filter ('ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS')
+  const [selectedEligibility, setSelectedEligibility] = useState<'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS'>('ROTEIRIZAVEL');
+
   // Unique list of sectors based on selected unit (filtered by effectiveRoute or normRota)
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
@@ -137,9 +140,15 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         }
       }
 
+      // 6. Eligibility filter
+      if (selectedEligibility !== 'TODAS') {
+        const eligibility = ctrc.routingEligibility || 'ROTEIRIZAVEL';
+        if (eligibility !== selectedEligibility) return false;
+      }
+
       return true;
     });
-  }, [ctrcs, adminUser, selectedUnit, selectedSector, activeTacticalFilter, searchQuery, selectedLocationFilter]);
+  }, [ctrcs, adminUser, selectedUnit, selectedSector, activeTacticalFilter, searchQuery, selectedLocationFilter, selectedEligibility]);
 
   // Reset function
   const clearFilters = () => {
@@ -147,6 +156,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setSelectedSector('all');
     setActiveTacticalFilter('all');
     setSelectedLocationFilter('all');
+    setSelectedEligibility('ROTEIRIZAVEL');
     if (adminUser.is_master) {
       setSelectedUnit('TODAS');
     }
@@ -163,6 +173,8 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setSearchQuery,
     activeTacticalFilter,
     setActiveTacticalFilter,
+    selectedEligibility,
+    setSelectedEligibility,
     uniqueSectors,
     filteredCtrcs,
     clearFilters

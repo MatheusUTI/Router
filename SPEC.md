@@ -266,3 +266,62 @@ A integração ao motor reativo é fornecida pelo `RoteirizacaoEnrichmentService
 ## 11. Diagnósticos e Evolução Contínua
 
 As causas reais das sobras residem no sequenciamento lógico de docas e falta de previsibilidade de restrições de trânsito em agendamentos específicos. A Mesa de Roteirização pavimenta este terreno de dados isolando as rotas da contratação imediata da frota, eliminando planilhas fragmentadas nas docas de Varginha.
+
+---
+
+## 12. Gestão de Preferências de Usuário Multi-Dispositivo
+
+As preferências estéticas e comportamentais do usuário (ex: modo de densidade visual, setor selecionado, etc.) são geridas sob as seguintes premissas técnicas:
+
+- **Armazenamento Local Autoritativo**: As preferências são persistidas localmente no IndexedDB via `UserPreferenceRepository`, mantendo a reatividade instantânea no carregamento da tela. Evita-se o uso de `localStorage` como fonte ou cache principal.
+- **Sincronização Direta de Nuvem**: Realiza-se a leitura das preferências do usuário vinculadas ao seu `username` diretamente do Supabase e sincronização reversa em background não-bloqueante no carregamento ou atualização.
+- **Isolamento Tático de Dados Operacionais**: Preferências usam este fluxo otimizado de sincronização direta enquanto faturas e planejamentos de CTRC operacionais continuam estritamente protegidos pelo motor de transação idempotent local/offline-first (`sync_queue`). Futuramente, o fluxo de preferências do usuário também poderá ser integrado à `sync_queue` de forma unificada se houver necessidade de manter controle transacional estrito de auditoria corporativa.
+- **Resiliência Offline**: Se em modo offline, o sistema consome e edita os valores salvos sob o IndexedDB local. Ao restabelecer conexão (ou novo login em outro dispositivo), as preferências são mescladas com a nuvem, garantindo a continuidade da experiência visual de forma transparente.
+
+---
+
+## 13. Governança de CTRCs, Elegibilidade e Central de Ocorrências
+
+Para evitar poluição visual e mitigar riscos operacionais provocados pela importação diária de relatórios SSW que cobrem janelas de até 31 dias, o sistema separa rigidamente a visualização imediata de cargas elegíveis das informações de interesse histórico.
+
+### 13.1 Elegibilidade de Roteirização (`RoutingEligibility`)
+
+Cada CTRC importado recebe uma classificação automática de elegibilidade para a Mesa de Roteirização:
+
+- **ROTEIRIZÁVEL (`ROTEIRIZAVEL`)**: CTRC ativo física e documentalmente na filial, que representa uma carga aguardando entrega imediata no pátio ou galpão.
+- **A REVISAR (`REVISAR`)**: CTRC com irregularidades reversíveis de média criticidade (ex: ocorrências comerciais ou pendências operacionais ativas que impedem o carregamento sem prévia liberação pelo SAC ou Faturamento).
+- **NÃO ROTEIRIZÁVEL (`NAO_ROTEIRIZAVEL`)**: Registro já entregue em campo com comprovante arquivado, cargas em rota física de entrega atual, devoluções definitivas concluídas ou com ocorrências de trânsito intransponíveis.
+
+### 13.2 Regras de Classificação Científica e Códigos do ERP
+
+O motor de classificação analítica do `RoteirizacaoEnrichmentService` resolve o status de elegibilidade obedecendo aos seguintes critérios sistêmicos:
+
+1. **Classificação Não Roteirizável (`NAO_ROTEIRIZAVEL`)**:
+   - CTRCs com status explícito `"ENTREGUE"` ou `"EM ROTA"` ou `"TRANSFERÊNCIA"`.
+   - Códigos de Ocorrência do SSW considerados finalizadores ou impeditivos definitivos:
+     - **Código 01 / 81 / 82**: Comprovantes de entrega retidos ou cargas definitivamente entregues.
+     - **Código 03**: Força a não roteirização automática por desvio severo ou cancelamento.
+   - Presença de qualquer ocorrência registrada cuja flag interna no cadastro (`DeliveryOccurrence`) esteja marcada como finalizadora de ciclo.
+
+2. **Classificação A Revisar (`REVISAR`)**:
+   - CTRCs com status `"Aguardando"` ou `"Problema"`.
+   - Presença de ocorrências ativas caracterizadas por trancamento temporário (ex: recusa parcial, reentrega agendada, endereço não localizado em processo de confirmação).
+
+3. **Classificação Roteirizável (`ROTEIRIZAVEL`)**:
+   - CTRC sem ocorrências finalizadoras impedindo trânsito, com mercadoria fisicamente presente ou em processo de recebimento na doca local e que não se encaixa nas regras de bloqueio anteriores.
+
+### 13.3 Rastreamento Histórico de Eventos (`ctrc_occurrence_history`)
+
+Cada importação de arquivo SSW preserva a integridade cronológica de movimentação de cada CTRC localmente. O sistema monitora alterações de Ocorrência, Status e Localização física do CTRC. Caso ocorra uma movimentação (state displacement), um novo evento incremental é registrado na tabela IndexedDB `ctrc_occurrence_history` com os seguintes campos tipados:
+
+- `id`: Identificador lógico único (ID composto).
+- `ctrcId`: ID do CTRC fonte.
+- `importDate`: Data YYYY-MM-DD em que a importação capturou o evento.
+- `occurrenceCode`: Código da ocorrência extraído.
+- `occurrenceDescription`: Descrição literal da ocorrência do ERP.
+- `locationLabel`: Localização ou Box físico no galpão.
+- `status`: Situação do CTRC no ERP.
+- `createdAt`: Carimbo temporal em milissegundos ou ISO UTC.
+
+Essa arquitetura garante que nenhum CTRC histórico seja deletado ou descartado, mantendo a Central de CTRCs/Ocorrências perfeitamente munida de registros validados de devoluções, sinistros, reentregas e atrasos para auditorias gerenciais de SLA.
+

@@ -275,6 +275,33 @@ export interface RoteirizacaoItem extends Ctrc {
   planningStatus?: PlanningStatus;
   operationalNote?: string;
   isManualRoute?: boolean;
+  routingEligibility?: RoutingEligibility;
+  routingBlockReason?: string;
+  routingEligibilitySource?: string;
+}
+
+export type RoutingEligibility =
+  | 'ROTEIRIZAVEL'
+  | 'REVISAR'
+  | 'NAO_ROTEIRIZAVEL';
+
+export interface CtrcOccurrenceHistoryItem {
+  id: string;
+  ctrcId: string;
+  importDate: string;
+  occurrenceCode?: string;
+  occurrenceDescription?: string;
+  occurrenceSector?: string;
+  solutionType?: string;
+  locationLabel?: string;
+  status?: string;
+  unid?: string;
+  cidade?: string;
+  rota?: string;
+  prevEnt?: string;
+  sourceFile?: string;
+  hash?: string;
+  createdAt: string;
 }
 
 

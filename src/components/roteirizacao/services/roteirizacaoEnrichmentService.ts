@@ -1,9 +1,95 @@
-import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem } from '../../../types';
+import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem, RoutingEligibility } from '../../../types';
 import { initialDeliveryOccurrences } from '../../../data';
 import { getSlaStatus } from '../helpers/getSlaStatus';
 import { getPesoStatus } from '../helpers/getPesoStatus';
 import { getOcorrenciaStatus } from '../helpers/getOcorrenciaStatus';
 import { isClienteCurvaA } from '../helpers/isClienteCurvaA';
+
+export interface RoutingEligibilityInfo {
+  routingEligibility: RoutingEligibility;
+  routingBlockReason?: string;
+  routingEligibilitySource?: string;
+}
+
+export function resolveRoutingEligibility(
+  ctrc: Ctrc,
+  occurrence: DeliveryOccurrence | undefined
+): RoutingEligibilityInfo {
+  const code = (ctrc.ocorrencia || '').trim().toUpperCase();
+  
+  // Se código 3:
+  if (code === '3' || code === '03' || code === '003') {
+    return {
+      routingEligibility: 'NAO_ROTEIRIZAVEL',
+      routingBlockReason: 'Entrega realizada com comprovante retido',
+      routingEligibilitySource: 'REGRA_CODIGO_3'
+    };
+  }
+
+  if (occurrence) {
+    const tratativa = (occurrence.tratativa_solucao || '').toUpperCase().trim();
+    const setorOcorr = (occurrence.setor_ocorr || '').toUpperCase().trim();
+
+    // Se Tratativa de Solução = Finalizadora:
+    if (tratativa === 'FINALIZADORA') {
+      return {
+        routingEligibility: 'NAO_ROTEIRIZAVEL',
+        routingBlockReason: `Tratativa de Solução Finalizadora [${occurrence.codigo}]: ${occurrence.descricao}`,
+        routingEligibilitySource: 'TRATATIVA_FINALIZADORA'
+      };
+    }
+
+    // Se Setor Ocorrencia = Em Rota:
+    if (setorOcorr === 'EM ROTA') {
+      return {
+        routingEligibility: 'NAO_ROTEIRIZAVEL',
+        routingBlockReason: `Setor de oco Em Rota [${occurrence.codigo}]: ${occurrence.descricao}`,
+        routingEligibilitySource: 'SETOR_EM_ROTA'
+      };
+    }
+
+    // Se Setor Ocorrencia = Disponível:
+    if (setorOcorr === 'DISPONÍVEL' || setorOcorr === 'DISPONIVEL') {
+      return {
+        routingEligibility: 'ROTEIRIZAVEL',
+        routingBlockReason: undefined,
+        routingEligibilitySource: 'SETOR_DISPONIVEL'
+      };
+    }
+  }
+
+  // Se ocorrência não mapeada:
+  if (ctrc.ocorrencia && ctrc.ocorrencia.trim() !== '' && !occurrence) {
+    return {
+      routingEligibility: 'REVISAR',
+      routingBlockReason: `Ocorrência [${ctrc.ocorrencia}] não cadastrada`,
+      routingEligibilitySource: 'OCORRENCIA_NAO_MAPEADA'
+    };
+  }
+
+  // Se inconsistência
+  const statusStr = (ctrc.status || '').toUpperCase().trim();
+  if (statusStr === 'ENTREGUE') {
+    return {
+      routingEligibility: 'NAO_ROTEIRIZAVEL',
+      routingBlockReason: 'Status de entrega finalizado',
+      routingEligibilitySource: 'STATUS_INCONSISTENCIA_ENTREGUE'
+    };
+  }
+  if (statusStr === 'EM ROTA' || statusStr === 'ROT') {
+    return {
+      routingEligibility: 'NAO_ROTEIRIZAVEL',
+      routingBlockReason: 'Trânsito físico ativo (Em Rota)',
+      routingEligibilitySource: 'STATUS_INCONSISTENCIA_EM_ROTA'
+    };
+  }
+
+  return {
+    routingEligibility: 'ROTEIRIZAVEL',
+    routingBlockReason: undefined,
+    routingEligibilitySource: 'PADRAO'
+  };
+}
 
 export const getFormattedLocation = (loc: string | undefined, statusStr?: string): string => {
   if (!loc || loc.trim() === '') {
@@ -131,10 +217,11 @@ export const RoteirizacaoEnrichmentService = {
       const occurrenceCode = ctrc.ocorrencia ? ctrc.ocorrencia.trim() : undefined;
       let occurrenceDescription = 'Ocorrência não mapeada';
       let occurrenceCriticality: 'CRÍTICA' | 'MÉDIA' | 'SUAVE' | 'NENHUMA' = 'NENHUMA';
+      let foundOcc: DeliveryOccurrence | undefined = undefined;
 
       if (occurrenceCode) {
         const codeUpper = occurrenceCode.toUpperCase();
-        const foundOcc = occMap.get(codeUpper);
+        foundOcc = occMap.get(codeUpper);
         if (foundOcc) {
           occurrenceDescription = foundOcc.descricao;
         }
@@ -148,6 +235,8 @@ export const RoteirizacaoEnrichmentService = {
           occurrenceCriticality = 'SUAVE';
         }
       }
+
+      const eligibilityInfo = resolveRoutingEligibility(ctrc, foundOcc);
 
       // 4. Availability Status
       const ocoStatus = getOcorrenciaStatus(ctrc.ocorrencia, ctrc.status, ctrc.localizacao);
@@ -232,6 +321,9 @@ export const RoteirizacaoEnrichmentService = {
         planningStatus,
         operationalNote,
         isManualRoute,
+        routingEligibility: eligibilityInfo.routingEligibility,
+        routingBlockReason: eligibilityInfo.routingBlockReason,
+        routingEligibilitySource: eligibilityInfo.routingEligibilitySource,
       };
     });
   }
