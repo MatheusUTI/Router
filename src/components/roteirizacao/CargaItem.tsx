@@ -273,6 +273,11 @@ export default function CargaItem({
               AGENDA
             </span>
           )}
+          {item.occurrenceSector && (
+            <span className="font-extrabold text-indigo-300 bg-indigo-950/30 px-1 rounded-sm border border-indigo-800/20 text-[7.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+              {item.occurrenceSector}
+            </span>
+          )}
         </div>
 
         {/* Line 2: Occurrence Code and Description */}

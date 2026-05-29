@@ -238,6 +238,39 @@ export const RoteirizacaoEnrichmentService = {
 
       const eligibilityInfo = resolveRoutingEligibility(ctrc, foundOcc);
 
+      let occurrenceSector = 'Sem setor';
+      if (foundOcc) {
+        const rawSector = foundOcc.setor_ocorr.trim();
+        if (rawSector === 'Disponível Cobranca' || rawSector === 'Cobrança') {
+          occurrenceSector = 'Disponível Cobrança';
+        } else if (rawSector === 'Disponível Transferencia') {
+          occurrenceSector = 'Disponível Transferência';
+        } else if (rawSector === 'Disponível Pendência' || rawSector === 'Disponível Pendencia') {
+          occurrenceSector = 'Disponível Pendência';
+        } else if (rawSector === 'Disponível') {
+          occurrenceSector = 'Disponível';
+        } else if (rawSector === 'Agendamento') {
+          occurrenceSector = 'Agendamento';
+        } else if (rawSector === 'Em Rota') {
+          occurrenceSector = 'Em Rota';
+        } else if (rawSector === 'Retidos') {
+          occurrenceSector = 'Retidos';
+        } else if (rawSector === 'Solução' || rawSector === 'Solucao') {
+          occurrenceSector = 'Solução';
+        } else if (rawSector === 'Transferência' || rawSector === 'Transferencia') {
+          occurrenceSector = 'Transferência';
+        } else {
+          occurrenceSector = rawSector;
+        }
+      } else {
+        const codeUpper = occurrenceCode ? occurrenceCode.toUpperCase() : '';
+        if (!codeUpper || codeUpper === '0' || codeUpper === '00' || codeUpper === 'PENDENTE') {
+          occurrenceSector = 'Disponível';
+        } else {
+          occurrenceSector = 'Sem setor';
+        }
+      }
+
       // 4. Availability Status
       const ocoStatus = getOcorrenciaStatus(ctrc.ocorrencia, ctrc.status, ctrc.localizacao);
       const availabilityStatus = ocoStatus.status;
@@ -324,6 +357,7 @@ export const RoteirizacaoEnrichmentService = {
         routingEligibility: eligibilityInfo.routingEligibility,
         routingBlockReason: eligibilityInfo.routingBlockReason,
         routingEligibilitySource: eligibilityInfo.routingEligibilitySource,
+        occurrenceSector,
       };
     });
   }

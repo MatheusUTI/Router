@@ -1,6 +1,15 @@
 import { useState, useMemo } from 'react';
 import { RoteirizacaoItem, AppUser } from '../../../types';
 
+export const DEFAULT_ROUTE_SECTORS = [
+  'Agendamento',
+  'Disponível',
+  'Disponível Cobrança',
+  'Disponível Pendência',
+  'Disponível Transferência',
+  'Solução'
+];
+
 export interface UseRoteirizacaoFiltersProps {
   ctrcs: RoteirizacaoItem[];
   adminUser: AppUser;
@@ -27,6 +36,29 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // Tactical operational filters
   // 'all' | 'delayed' | 'curva' | 'heavy' | 'priority' | 'retained' | 'missingbox'
   const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
+
+  // Multi-select Occurrence Sectors filter
+  const [selectedOccurrenceSectors, setSelectedOccurrenceSectors] = useState<string[]>(DEFAULT_ROUTE_SECTORS);
+
+  // Available unique occurrence sectors
+  const availableSectors = useMemo(() => {
+    const sectors = ctrcs.map((c) => c.occurrenceSector || 'Sem setor');
+    const unique = Array.from(new Set(sectors));
+    const baseline = [
+      'Agendamento',
+      'Disponível',
+      'Disponível Cobrança',
+      'Disponível Pendência',
+      'Disponível Transferência',
+      'Em Rota',
+      'Retidos',
+      'Solução',
+      'Transferência',
+      'Sem setor'
+    ];
+    const combined = Array.from(new Set([...unique, ...baseline]));
+    return combined.sort();
+  }, [ctrcs]);
 
   // Eligibility filter ('ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS')
   const [selectedEligibility, setSelectedEligibility] = useState<'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS'>('ROTEIRIZAVEL');
@@ -140,15 +172,13 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         }
       }
 
-      // 6. Eligibility filter
-      if (selectedEligibility !== 'TODAS') {
-        const eligibility = ctrc.routingEligibility || 'ROTEIRIZAVEL';
-        if (eligibility !== selectedEligibility) return false;
-      }
+      // 6. Setor Ocorrência Filter (multi-select)
+      const sector = ctrc.occurrenceSector || 'Sem setor';
+      if (!selectedOccurrenceSectors.includes(sector)) return false;
 
       return true;
     });
-  }, [ctrcs, adminUser, selectedUnit, selectedSector, activeTacticalFilter, searchQuery, selectedLocationFilter, selectedEligibility]);
+  }, [ctrcs, adminUser, selectedUnit, selectedSector, activeTacticalFilter, searchQuery, selectedLocationFilter, selectedOccurrenceSectors]);
 
   // Reset function
   const clearFilters = () => {
@@ -156,7 +186,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setSelectedSector('all');
     setActiveTacticalFilter('all');
     setSelectedLocationFilter('all');
-    setSelectedEligibility('ROTEIRIZAVEL');
+    setSelectedOccurrenceSectors(DEFAULT_ROUTE_SECTORS);
     if (adminUser.is_master) {
       setSelectedUnit('TODAS');
     }
@@ -175,6 +205,9 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setActiveTacticalFilter,
     selectedEligibility,
     setSelectedEligibility,
+    selectedOccurrenceSectors,
+    setSelectedOccurrenceSectors,
+    availableSectors,
     uniqueSectors,
     filteredCtrcs,
     clearFilters

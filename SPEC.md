@@ -284,13 +284,20 @@ As preferências estéticas e comportamentais do usuário (ex: modo de densidade
 
 Para evitar poluição visual e mitigar riscos operacionais provocados pela importação diária de relatórios SSW que cobrem janelas de até 31 dias, o sistema separa rigidamente a visualização imediata de cargas elegíveis das informações de interesse histórico.
 
-### 13.1 Elegibilidade de Roteirização (`RoutingEligibility`)
+### 13.1 Elegibilidade de Roteirização e Filtro de Setor de Ocorrência
 
-Cada CTRC importado recebe uma classificação automática de elegibilidade para a Mesa de Roteirização:
+O sistema diferencia a classificação interna de segurança da visualização operacional do usuário:
 
-- **ROTEIRIZÁVEL (`ROTEIRIZAVEL`)**: CTRC ativo física e documentalmente na filial, que representa uma carga aguardando entrega imediata no pátio ou galpão.
-- **A REVISAR (`REVISAR`)**: CTRC com irregularidades reversíveis de média criticidade (ex: ocorrências comerciais ou pendências operacionais ativas que impedem o carregamento sem prévia liberação pelo SAC ou Faturamento).
-- **NÃO ROTEIRIZÁVEL (`NAO_ROTEIRIZAVEL`)**: Registro já entregue em campo com comprovante arquivado, cargas em rota física de entrega atual, devoluções definitivas concluídas ou com ocorrências de trânsito intransponíveis.
+1. **Elegibilidade Interna (`routingEligibility`)**:
+   - Classificação estrita de segurança e risco operacional (`ROTEIRIZAVEL`, `REVISAR`, `NAO_ROTEIRIZAVEL`).
+   - Usada internamente para emitir alertas fortes e impedir consolidações perigosas em segundo plano, mesmo que o usuário visualize cargas pertencentes a setores passivos.
+
+2. **Filtro de Visualização Principal: Setor de Ocorrência**:
+   - Substitui o filtro técnico de Elegibilidade no painel visual principal.
+   - Fornece seleção múltipla tipo planilha do Excel para maior afinidade operacional.
+   - Apresenta as opções "Todos", "Limpar" e "Padrão Roteirização".
+   - **Visão Padrão**: Seleciona automaticamente apenas os setores úteis para Roteirização: `['Agendamento', 'Disponível', 'Disponível Cobrança', 'Disponível Pendência', 'Disponível Transferência', 'Solução']`.
+   - **Setores Não Roteirizáveis**: Setores como `['Em Rota', 'Retidos', 'Transferência']` ficam ocultos inicialmente, mas podem ser ativados livremente pelo operador. Nesse caso, as regras de `routingEligibility` emitem alertas fortes de segurança no painel inferior.
 
 ### 13.2 Regras de Classificação Científica e Códigos do ERP
 

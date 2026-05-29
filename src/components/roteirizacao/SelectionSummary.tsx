@@ -6,6 +6,7 @@ interface SelectionSummaryProps {
   onOpenConsolidacao: () => void;
   onClearSelection: () => void;
   densityMode?: 'compact' | 'default' | 'comfortable';
+  onGeneratePreRomaneio?: () => void;
 }
 
 export default function SelectionSummary({
@@ -13,6 +14,7 @@ export default function SelectionSummary({
   onOpenConsolidacao,
   onClearSelection,
   densityMode = 'default',
+  onGeneratePreRomaneio,
 }: SelectionSummaryProps) {
   const selectedCount = selectedCtrcs.length;
   if (selectedCount === 0) return null;
@@ -37,21 +39,23 @@ export default function SelectionSummary({
     let segurar = 0;
     let naoSaiHoje = 0;
     let semLoc = 0;
+    let naoRoteirizavel = 0;
 
     for (const item of selectedCtrcs) {
       if (item.planningStatus === 'URGENTE') urgent++;
       if (item.planningStatus === 'PRIORIDADE') priority++;
       if (item.planningStatus === 'SEGURAR') segurar++;
       if (item.planningStatus === 'NAO_SAI_HOJE') naoSaiHoje++;
+      if (item.routingEligibility === 'NAO_ROTEIRIZAVEL') naoRoteirizavel++;
       
       const hasNoLoc = !item.localizacao || item.localizacao.trim() === '' || (item.locationLabel || '').toUpperCase().includes('SEM BOX');
       if (hasNoLoc) semLoc++;
     }
 
-    return { urgent, priority, segurar, naoSaiHoje, semLoc };
+    return { urgent, priority, segurar, naoSaiHoje, semLoc, naoRoteirizavel };
   }, [selectedCtrcs]);
 
-  const hasSpecialAlert = counts.segurar > 0 || counts.naoSaiHoje > 0;
+  const hasSpecialAlert = counts.segurar > 0 || counts.naoSaiHoje > 0 || counts.naoRoteirizavel > 0;
 
   // Format weight to tons with 1 decimal place if >= 1000 kg, else kilograms
   const formattedWeight = useMemo(() => {
@@ -132,6 +136,14 @@ export default function SelectionSummary({
       : 'bg-indigo-650 hover:bg-indigo-600 border border-indigo-550 text-white'
   }`;
 
+  const btnPreRomaneioClass = `font-black uppercase tracking-wider transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg leading-none ${
+    isCompact 
+      ? 'text-[10px] px-3 py-2 rounded-md' 
+      : isComfortable 
+      ? 'text-[12px] px-5 py-3 rounded-xl' 
+      : 'text-[11px] px-4.5 py-2.5 rounded-lg'
+  } bg-emerald-650 hover:bg-emerald-600 border border-emerald-550 text-white`;
+
   return (
     <div className={barClass}>
       
@@ -197,6 +209,11 @@ export default function SelectionSummary({
               📍 {counts.semLoc} SEM LOC
             </span>
           )}
+          {counts.naoRoteirizavel > 0 && (
+            <span className={`${alertBadgeClass} bg-red-950/40 text-red-400 border-red-500/40 animate-pulse`}>
+              🚫 {counts.naoRoteirizavel} NÃO ROTEIRIZÁVEIS
+            </span>
+          )}
         </div>
 
       </div>
@@ -205,11 +222,15 @@ export default function SelectionSummary({
       <div className={actionWrapperClass}>
         
         {/* Soft warning alert (clearly visible, non-blocking) */}
-        {hasSpecialAlert && (
+        {counts.naoRoteirizavel > 0 ? (
+          <div className="border border-red-500 text-red-400 font-extrabold uppercase bg-red-950/20 rounded animate-pulse select-none" style={{ fontSize: isCompact ? '8.5px' : isComfortable ? '11px' : '10px', padding: isCompact ? '2px 6px' : '4px 8px' }} title="Atenção: A seleção contém cargas não roteirizáveis">
+            ⚠️ NÃO ROTEIRIZÁVEL SELECIONADO
+          </div>
+        ) : hasSpecialAlert ? (
           <div className={warningLabelClass} title="Atenção: A seleção possui cargas seguradas ou despriorizadas.">
             ⚠️ Carga Segura/NÃO SAI
           </div>
-        )}
+        ) : null}
 
         <button
           onClick={onClearSelection}
@@ -217,6 +238,17 @@ export default function SelectionSummary({
         >
           Limpar
         </button>
+
+        {/* Pré-Romaneio Action */}
+        {onGeneratePreRomaneio && (
+          <button
+            onClick={onGeneratePreRomaneio}
+            className={btnPreRomaneioClass}
+            title="Gerar Pré-Romaneio de separação por rota/portão"
+          >
+            <span>📦 Pré-Separar</span>
+          </button>
+        )}
 
         {/* Consolidar Rota trigger */}
         <button

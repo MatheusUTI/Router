@@ -15,6 +15,9 @@ interface RoteirizacaoHeaderProps {
   setActiveTacticalFilter: (filter: string) => void;
   selectedEligibility: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS';
   setSelectedEligibility: (eligibility: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS') => void;
+  selectedOccurrenceSectors: string[];
+  setSelectedOccurrenceSectors: (sectors: string[]) => void;
+  availableSectors: string[];
   uniqueSectors: string[];
   totalCtrcsCount: number;
   filteredCtrcsCount: number;
@@ -40,6 +43,9 @@ export default function RoteirizacaoHeader({
   setActiveTacticalFilter,
   selectedEligibility,
   setSelectedEligibility,
+  selectedOccurrenceSectors,
+  setSelectedOccurrenceSectors,
+  availableSectors,
   uniqueSectors,
   totalCtrcsCount,
   filteredCtrcsCount,
@@ -67,6 +73,32 @@ export default function RoteirizacaoHeader({
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = React.useState(false);
+
+  const getSectorSummary = () => {
+    const isAllSelected = availableSectors.every((s) => selectedOccurrenceSectors.includes(s));
+    if (isAllSelected) {
+      return 'Todos';
+    }
+    if (selectedOccurrenceSectors.length === 0) {
+      return 'Nenhum';
+    }
+    if (selectedOccurrenceSectors.length === 1) {
+      return selectedOccurrenceSectors[0];
+    }
+    // Prioritize showing a nice fallback
+    const firstWord = selectedOccurrenceSectors[0];
+    return `${firstWord} +${selectedOccurrenceSectors.length - 1}`;
+  };
+
+  const toggleSector = (sector: string) => {
+    if (selectedOccurrenceSectors.includes(sector)) {
+      setSelectedOccurrenceSectors(selectedOccurrenceSectors.filter((s) => s !== sector));
+    } else {
+      setSelectedOccurrenceSectors([...selectedOccurrenceSectors, sector]);
+    }
+  };
 
   // Density variations setup
   const isCompact = densityMode === 'compact';
@@ -212,20 +244,94 @@ export default function RoteirizacaoHeader({
             </select>
           </div>
 
-          {/* Eligibility Filter */}
-          <div className={selectorWrapClass}>
-            <span className={selectorLabelClass}>ELEGIBILIDADE:</span>
-            <select
-              id="header-eligibility-filter"
-              value={selectedEligibility}
-              onChange={(e) => setSelectedEligibility(e.target.value as any)}
-              className={selectClass}
+          {/* Setor de Ocorrência Multi-select Filter */}
+          <div className={`${selectorWrapClass} relative`}>
+            <span className={selectorLabelClass}>SETOR OCORRÊNCIA:</span>
+            <button
+              onClick={() => setIsSectorDropdownOpen(!isSectorDropdownOpen)}
+              className="bg-transparent text-slate-100 font-sans font-black focus:outline-none cursor-pointer border-none p-0 outline-none leading-none select-none flex items-center gap-1 hover:text-indigo-400 transition-colors"
+              style={{ fontSize: isCompact ? '9.5px' : isComfortable ? '11px' : '10px' }}
             >
-              <option value="ROTEIRIZAVEL" className="bg-[#0b1322]">✅ ROTEIRIZÁVEIS</option>
-              <option value="REVISAR" className="bg-[#0b1322]">⚠️ REVISAR</option>
-              <option value="NAO_ROTEIRIZAVEL" className="bg-[#0b1322]">🚫 NÃO ROTEIRIZÁVEIS</option>
-              <option value="TODAS" className="bg-[#0b1322]">📜 TODAS</option>
-            </select>
+              <span>{getSectorSummary().toUpperCase()}</span>
+              <span className="text-[8px] opacity-75">▼</span>
+            </button>
+
+            {isSectorDropdownOpen && (
+              <>
+                {/* Backdrop overlay to close when clicking outside */}
+                <div 
+                  className="fixed inset-0 z-[140] cursor-default" 
+                  onClick={() => setIsSectorDropdownOpen(false)} 
+                />
+                
+                {/* Dropdown Card */}
+                <div className="absolute top-full left-0 mt-1.5 bg-[#090f1d] border border-slate-700/60 rounded-xl p-3 z-[150] shadow-2xl w-64 text-xs flex flex-col gap-2 font-mono">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-1.5 uppercase select-none">
+                    <span>Selecionar Setores</span>
+                    <span className="text-indigo-400 font-black">{selectedOccurrenceSectors.length} de {availableSectors.length}</span>
+                  </div>
+
+                  {/* Quick Action Controls */}
+                  <div className="grid grid-cols-3 gap-1 py-1">
+                    <button
+                      onClick={() => {
+                        setSelectedOccurrenceSectors(availableSectors);
+                      }}
+                      className="bg-slate-800/60 hover:bg-slate-700/80 active:scale-95 text-[9px] text-slate-200 py-1 px-1.5 rounded font-black border border-slate-700/30 uppercase cursor-pointer transition-all text-center leading-none"
+                    >
+                      Todos
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedOccurrenceSectors([]);
+                      }}
+                      className="bg-slate-850/40 hover:bg-slate-800/80 active:scale-95 text-[9px] text-slate-300 py-1 px-1.5 rounded font-black border border-slate-800/40 uppercase cursor-pointer transition-all text-center leading-none"
+                    >
+                      Limpar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedOccurrenceSectors([
+                          'Agendamento',
+                          'Disponível',
+                          'Disponível Cobrança',
+                          'Disponível Pendência',
+                          'Disponível Transferência',
+                          'Solução'
+                        ]);
+                      }}
+                      className="bg-emerald-950/45 hover:bg-emerald-900/60 active:scale-95 text-[9px] text-emerald-300 py-1 px-1.5 rounded font-black border border-emerald-800/30 uppercase cursor-pointer transition-all text-center leading-none"
+                      title="Setores úteis para faturamento normal"
+                    >
+                      Padrão
+                    </button>
+                  </div>
+
+                  {/* Checklist options */}
+                  <div className="max-h-56 overflow-y-auto flex flex-col gap-1.5 pr-1 scrollbar-thin select-none py-1">
+                    {availableSectors.map((sector) => {
+                      const isChecked = selectedOccurrenceSectors.includes(sector);
+                      return (
+                        <label 
+                          key={sector} 
+                          className="flex items-center gap-2.5 py-1 px-1.5 rounded hover:bg-slate-800/40 cursor-pointer text-[11px] text-slate-300 transition-colors uppercase"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSector(sector)}
+                            className="rounded border-slate-700 text-indigo-500 bg-slate-900 focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5 accent-indigo-500"
+                          />
+                          <span className={isChecked ? 'text-white font-black' : 'text-slate-400 font-medium'}>
+                            {sector}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

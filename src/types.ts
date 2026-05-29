@@ -165,6 +165,8 @@ export interface CurvaAClientLocal {
 
 export type DensityMode = 'compact' | 'default' | 'comfortable';
 
+export type OccurrenceSectorFilter = string[];
+
 export interface RoteirizacaoPreferences {
   densityMode: DensityMode;
   groupingMode?: string;
@@ -174,6 +176,7 @@ export interface RoteirizacaoPreferences {
   activeTacticalFilter?: string;
   showFinancialValues?: boolean;
   compactHeader?: boolean;
+  selectedOccurrenceSectors?: string[];
 }
 
 export interface UserPreferencesPayload {
@@ -278,6 +281,7 @@ export interface RoteirizacaoItem extends Ctrc {
   routingEligibility?: RoutingEligibility;
   routingBlockReason?: string;
   routingEligibilitySource?: string;
+  occurrenceSector?: string;
 }
 
 export type RoutingEligibility =
@@ -302,6 +306,40 @@ export interface CtrcOccurrenceHistoryItem {
   sourceFile?: string;
   hash?: string;
   createdAt: string;
+}
+
+export type PreRomaneioStatus =
+  | 'RASCUNHO'
+  | 'EM_SEPARACAO'
+  | 'SEPARADO'
+  | 'COM_DIVERGENCIA'
+  | 'CANCELADO'
+  | 'CONVERTIDO_ROMANEIO';
+
+export interface RouteGateMap {
+  id: string;
+  route: string;      // Ex: ROTA 06
+  gate: string;       // Ex: PORTÃO 06
+  active: boolean;
+  updatedAt: string;
+}
+
+export interface PreRomaneio {
+  id: string;
+  planningDate: string;
+  route: string;
+  gate: string;
+  status: PreRomaneioStatus;
+  ctrcIds: string[];
+  totalWeight: number;
+  totalVolumes: number;
+  totalValue: number;
+  totalFrete: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  convertedRomaneioId?: string;
+  notes?: string;
 }
 
 

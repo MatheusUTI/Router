@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem } from '../../types';
+import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem, RouteGateMap, PreRomaneio } from '../../types';
 
 export interface SyncQueueItem {
   id?: number;
@@ -38,6 +38,8 @@ export class RotaLocalDatabase extends Dexie {
   sync_metadata!: Table<SyncMetadata, string>;
   route_planning_items!: Table<RoutePlanningItem, string>;
   ctrc_occurrence_history!: Table<CtrcOccurrenceHistoryItem, string>;
+  route_gate_map!: Table<RouteGateMap, string>;
+  pre_romaneios!: Table<PreRomaneio, string>;
 
   constructor() {
     super('RotaLocalDatabase');
@@ -63,6 +65,10 @@ export class RotaLocalDatabase extends Dexie {
     });
     this.version(5).stores({
       ctrc_occurrence_history: 'id, ctrcId, importDate, occurrenceCode, occurrenceSector, solutionType, status, unid, createdAt'
+    });
+    this.version(6).stores({
+      route_gate_map: 'id, route, gate, active',
+      pre_romaneios: 'id, planningDate, route, gate, status, createdAt, updatedAt'
     });
   }
 }

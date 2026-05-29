@@ -30,6 +30,8 @@ import { DriverRepository } from './infrastructure/localdb/repositories/driverRe
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
 import { CtrcOccurrenceHistoryRepository } from './infrastructure/localdb/repositories/ctrcOccurrenceHistoryRepository';
+import { RouteGateRepository } from './infrastructure/localdb/repositories/routeGateRepository';
+import { PreRomaneioRepository } from './infrastructure/localdb/repositories/preRomaneioRepository';
 
 // Import Views
 import Sidebar from './components/Sidebar';
@@ -149,6 +151,7 @@ export default function App() {
       try {
         // Executa compatibilidade de localStorage legado e seeding estruturado para o IndexedDB
         await runCompatibilityMigration();
+        await RouteGateRepository.seedDefaultGates();
 
         // Hidratação a partir do IndexedDB
         const localVehicles = await VehicleRepository.getAll();

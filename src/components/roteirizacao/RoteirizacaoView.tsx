@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
 import { HelperRepository } from '../../infrastructure/localdb/repositories/helperRepository';
 import { RoutePlanningRepository } from '../../infrastructure/localdb/repositories/routePlanningRepository';
 import { UserPreferenceRepository } from '../../infrastructure/localdb/repositories/userPreferenceRepository';
+import { RouteGateRepository } from '../../infrastructure/localdb/repositories/routeGateRepository';
+import { PreRomaneioRepository } from '../../infrastructure/localdb/repositories/preRomaneioRepository';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
 
 // Modular Imports
@@ -45,6 +47,7 @@ export default function RoteirizacaoView({
   const [routePlanningItems, setRoutePlanningItems] = useState<RoutePlanningItem[]>([]);
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [generatedPreRomaneios, setGeneratedPreRomaneios] = useState<PreRomaneio[] | null>(null);
 
   // User Preferences sync and visual density management
   const [densityMode, setDensityMode] = useState<DensityMode>('default');
@@ -201,6 +204,9 @@ export default function RoteirizacaoView({
     setActiveTacticalFilter,
     selectedEligibility,
     setSelectedEligibility,
+    selectedOccurrenceSectors,
+    setSelectedOccurrenceSectors,
+    availableSectors,
     uniqueSectors,
     filteredCtrcs,
     clearFilters,
@@ -286,6 +292,9 @@ export default function RoteirizacaoView({
           if (rotPref.activeTacticalFilter) {
             setActiveTacticalFilter(rotPref.activeTacticalFilter);
           }
+          if (rotPref.selectedOccurrenceSectors) {
+            setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
+          }
         }
         setIsPrefLoaded(true);
 
@@ -314,6 +323,9 @@ export default function RoteirizacaoView({
           if (rotPref.activeTacticalFilter) {
             setActiveTacticalFilter(rotPref.activeTacticalFilter);
           }
+          if (rotPref.selectedOccurrenceSectors) {
+            setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
+          }
         }
       } catch (err) {
         console.error('[Roteirizacao] Erro no carregamento/sincronia das preferências do usuário:', err);
@@ -335,9 +347,10 @@ export default function RoteirizacaoView({
       selectedUnit,
       selectedSector,
       selectedLocationFilter,
-      activeTacticalFilter
+      activeTacticalFilter,
+      selectedOccurrenceSectors
     });
-  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, isPrefLoaded, isNormalizing]);
+  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, isPrefLoaded, isNormalizing]);
 
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
@@ -395,6 +408,72 @@ export default function RoteirizacaoView({
     onConsolidateRomaneio(vehicleId, draftedItemsOfVehicle);
   };
 
+  const handleGeneratePreRomaneio = async () => {
+    const selectedCtrcs = filteredCtrcs.filter((c) => selectedIds.includes(c.id));
+    if (selectedCtrcs.length === 0) return;
+
+    try {
+      // 1. Group selected CTRCs by effectiveRoute
+      const groupedByRoute: Record<string, RoteirizacaoItem[]> = {};
+      selectedCtrcs.forEach((ctrc) => {
+        const route = ctrc.effectiveRoute || ctrc.normRota || 'ROTA 99';
+        if (!groupedByRoute[route]) {
+          groupedByRoute[route] = [];
+        }
+        groupedByRoute[route].push(ctrc);
+      });
+
+      // 2. Fetch all seeded route gate maps
+      const allGates = await RouteGateRepository.getAll();
+
+      const newPreRomaneios: PreRomaneio[] = [];
+      const nowStr = new Date().toISOString();
+
+      for (const [route, ctrcs] of Object.entries(groupedByRoute)) {
+        // Resolve mapped gate
+        const gateMatch = allGates.find((g) => g.route.toUpperCase() === route.toUpperCase());
+        const gateName = gateMatch ? gateMatch.gate : `PORTÃO ${route.replace(/[^0-9]/g, '') || '99'}`;
+
+        const totalWeight = ctrcs.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
+        const totalVolumes = ctrcs.reduce((sum, item) => sum + (item.volume || 1), 0);
+        const totalValue = ctrcs.reduce((sum, item) => sum + (item.valor || 0), 0);
+        const totalFrete = ctrcs.reduce((sum, item) => sum + (item.frete || 0), 0);
+
+        const id = `pr_${Date.now()}_${route.replace(/\s+/g, '_')}_${Math.random().toString(36).substr(2, 5)}`;
+
+        newPreRomaneios.push({
+          id,
+          planningDate,
+          route,
+          gate: gateName,
+          status: 'EM_SEPARACAO',
+          ctrcIds: ctrcs.map((c) => c.id),
+          totalWeight,
+          totalVolumes,
+          totalValue,
+          totalFrete,
+          createdBy: adminUser.name || adminUser.username,
+          createdAt: nowStr,
+          updatedAt: nowStr
+        });
+      }
+
+      // 3. Persist the pre-romaneios
+      await PreRomaneioRepository.putMany(newPreRomaneios);
+
+      // 4. Update state to show summary modal, clear current selections, show success toast
+      setGeneratedPreRomaneios(newPreRomaneios);
+      clearSelection();
+
+      setToastMessage(`📦 Gerados ${newPreRomaneios.length} pré-romaneios com sucesso!`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err) {
+      console.error('[Roteirizacao] Erro ao gerar pré-romaneios de separação:', err);
+      setToastMessage('⚠️ Erro ao gerar pré-romaneios');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
   // Group selection toggle dispatcher
   const handleToggleGroupSelection = (groupIds: string[]) => {
     const allChecked = groupIds.every((id) => selectedIds.includes(id));
@@ -424,6 +503,9 @@ export default function RoteirizacaoView({
         setActiveTacticalFilter={setActiveTacticalFilter}
         selectedEligibility={selectedEligibility}
         setSelectedEligibility={setSelectedEligibility}
+        selectedOccurrenceSectors={selectedOccurrenceSectors}
+        setSelectedOccurrenceSectors={setSelectedOccurrenceSectors}
+        availableSectors={availableSectors}
         uniqueSectors={uniqueSectors}
         totalCtrcsCount={unassignedCtrcs.length}
         filteredCtrcsCount={filteredCtrcs.length}
@@ -480,6 +562,7 @@ export default function RoteirizacaoView({
         onOpenConsolidacao={() => setIsDrawerOpen(true)}
         onClearSelection={clearSelection}
         densityMode={densityMode}
+        onGeneratePreRomaneio={handleGeneratePreRomaneio}
       />
 
       {/* Slide-over Consolidation & Fleet Alocation Drawer */}
@@ -499,6 +582,73 @@ export default function RoteirizacaoView({
         onUnassignCarga={unassignCarga}
         onClearVehicleDraft={clearVehicleDraft}
       />
+
+      {/* Pre-Romaneio Summary Modal */}
+      {generatedPreRomaneios && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/85 backdrop-blur-xs z-[100] transition-all duration-200" 
+            onClick={() => setGeneratedPreRomaneios(null)} 
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#080d1a] border border-emerald-500/45 rounded-2xl shadow-2xl z-[110] overflow-hidden flex flex-col p-5 font-sans">
+            <div className="flex items-center gap-3 border-b border-[#1b2b4d] pb-3 mb-4 shrink-0 select-none">
+              <span className="text-2xl">📦</span>
+              <div>
+                <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider leading-none">Pré-Romaneio de Separação</h3>
+                <p className="text-[10px] text-emerald-400 font-bold uppercase font-mono mt-1">Carga Dividida por Portão Físico</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed uppercase font-mono mb-3">
+              As faturas foram agrupadas por suas rotas de destino e direcionadas aos respectivos portões de separação na filial:
+            </p>
+
+            <div className="flex-1 overflow-y-auto max-h-[280px] flex flex-col gap-3 pr-1 scrollbar-thin">
+              {generatedPreRomaneios.map((pr) => (
+                <div key={pr.id} className="bg-[#0f1a30] border border-emerald-500/20 rounded-xl p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🚚</span> {pr.route}
+                    </span>
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold font-mono px-2 py-0.5 rounded uppercase">
+                      ⚓ {pr.gate}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10.5px] font-mono text-slate-300 pt-1 border-t border-[#1b2b4d]/40">
+                    <div>
+                      📑 CTRCs: <span className="text-white font-bold">{pr.ctrcIds.length}</span>
+                    </div>
+                    <div>
+                      ⚖️ Peso: <span className="text-emerald-400 font-bold">{pr.totalWeight >= 1000 ? `${(pr.totalWeight / 1000).toFixed(2)}t` : `${pr.totalWeight} kg`}</span>
+                    </div>
+                    <div>
+                      📦 Volumes: <span className="text-yellow-450 font-bold">{pr.totalVolumes}</span>
+                    </div>
+                    <div>
+                      💰 Frete: <span className="text-sky-400 font-bold">R$ {pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 pt-1 border-t border-[#1b2b4d]/20">
+                    <span>STATUS: EM SEPARAÇÃO</span>
+                    <span>DATA: {pr.planningDate}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-[#1b2b4d] flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setGeneratedPreRomaneios(null)}
+                className="w-full bg-emerald-650 hover:bg-emerald-600 border border-emerald-550 text-white font-black uppercase text-xs tracking-wider py-2.5 rounded-lg transition-all duration-150 cursor-pointer text-center"
+              >
+                Concordar e Enviar às Docas de Separação
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
