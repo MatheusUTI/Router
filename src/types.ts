@@ -167,6 +167,18 @@ export type DensityMode = 'compact' | 'default' | 'comfortable';
 
 export type OccurrenceSectorFilter = string[];
 
+export type RoteirizacaoSortField =
+  | 'prev_ent'
+  | 'remetente'
+  | 'destinatario'
+  | 'cidade'
+  | 'peso'
+  | 'volumes'
+  | 'valor'
+  | 'frete';
+
+export type SortDirection = 'asc' | 'desc';
+
 export interface RoteirizacaoPreferences {
   densityMode: DensityMode;
   groupingMode?: string;
@@ -177,6 +189,8 @@ export interface RoteirizacaoPreferences {
   showFinancialValues?: boolean;
   compactHeader?: boolean;
   selectedOccurrenceSectors?: string[];
+  sortField?: RoteirizacaoSortField;
+  sortDirection?: SortDirection;
 }
 
 export interface UserPreferencesPayload {

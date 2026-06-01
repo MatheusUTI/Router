@@ -95,7 +95,7 @@ export default function CargaGroup({
           {/* Arrow */}
           <button
             onClick={onToggleCollapse}
-            className="w-4.5 h-4.5 flex items-center justify-center text-slate-350 hover:text-white rounded bg-[#1a2641]/50 hover:bg-[#202f50] border border-indigo-950/40 transition-colors cursor-pointer text-[9px] shrink-0 font-extrabold"
+            className="w-5 h-5 flex items-center justify-center text-slate-350 hover:text-white rounded bg-[#1a2641]/50 hover:bg-[#202f50] border border-indigo-950/40 transition-colors cursor-pointer text-[11px] shrink-0 font-extrabold"
           >
             {isExpanded ? '▼' : '▶'}
           </button>
@@ -109,36 +109,36 @@ export default function CargaGroup({
           />
 
           <div className="flex items-center gap-2 min-w-0 flex-wrap py-0.5 leading-none">
-            <span className="font-extrabold text-[#f8fafc] uppercase tracking-wide text-[12.5px] truncate">
+            <span className="font-extrabold text-[#f8fafc] uppercase tracking-wide text-[14.5px] truncate">
               {groupKey}
               {subRouteLabel && groupKey !== subRouteLabel && (
-                <span className="text-indigo-400 font-semibold text-[11px] ml-1.5 font-mono">
+                <span className="text-indigo-400 font-semibold text-[13px] ml-1.5 font-mono">
                   • {subRouteLabel}
                 </span>
               )}
             </span>
             
-            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            <span className="text-slate-600 font-sans text-[11px] font-bold select-none">•</span>
             
-            <span className="text-slate-350 font-bold font-mono text-[10.5px] shrink-0">
+            <span className="text-slate-350 font-bold font-mono text-[12.5px] shrink-0">
               {items.length} {items.length === 1 ? 'carga' : 'cargas'}
             </span>
             
-            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            <span className="text-slate-600 font-sans text-[11px] font-bold select-none">•</span>
             
-            <span className="text-emerald-400 font-black font-mono text-[10.5px] shrink-0">
+            <span className="text-emerald-400 font-black font-mono text-[12.5px] shrink-0">
               {totalWeightTons}
             </span>
             
-            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            <span className="text-slate-600 font-sans text-[11px] font-bold select-none">•</span>
             
-            <span className="text-yellow-450 font-black font-mono text-[10.5px] shrink-0">
+            <span className="text-yellow-450 font-black font-mono text-[12.5px] shrink-0">
               {totalVolume} {totalVolume === 1 ? 'vol' : 'vols'}
             </span>
             
-            <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
+            <span className="text-slate-600 font-sans text-[11px] font-bold select-none">•</span>
             
-            <span className="text-indigo-300 font-bold font-mono text-[10.5px] shrink-0">
+            <span className="text-indigo-300 font-bold font-mono text-[12.5px] shrink-0">
               R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
             </span>
 
@@ -147,8 +147,8 @@ export default function CargaGroup({
               if (attentionCount > 0) {
                 return (
                   <>
-                    <span className="text-slate-600 font-sans text-[10px] font-bold select-none">•</span>
-                    <span className="text-red-400 font-black font-mono text-[10.5px] shrink-0 flex items-center gap-1">
+                    <span className="text-slate-600 font-sans text-[11px] font-bold select-none">•</span>
+                    <span className="text-red-400 font-black font-mono text-[12.5px] shrink-0 flex items-center gap-1">
                       ⚠️ {attentionCount} {attentionCount === 1 ? 'atenção' : 'atenções'}
                     </span>
                   </>

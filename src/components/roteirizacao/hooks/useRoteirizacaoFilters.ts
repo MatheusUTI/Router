@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { RoteirizacaoItem, AppUser } from '../../../types';
+import { RoteirizacaoItem, AppUser, RoteirizacaoSortField, SortDirection } from '../../../types';
 
 export const DEFAULT_ROUTE_SECTORS = [
   'Agendamento',
@@ -15,6 +15,84 @@ export interface UseRoteirizacaoFiltersProps {
   adminUser: AppUser;
 }
 
+function parseDDMMYYYY(dateStr?: string): number {
+  if (!dateStr) return 0;
+  const DateStrClean = dateStr.trim();
+  const parts = DateStrClean.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    return new Date(year, month, day).getTime();
+  }
+  return 0;
+}
+
+export function sortRoteirizacaoItems(
+  items: RoteirizacaoItem[],
+  sortField: RoteirizacaoSortField,
+  sortDirection: SortDirection
+): RoteirizacaoItem[] {
+  return [...items].sort((a, b) => {
+    let result = 0;
+
+    switch (sortField) {
+      case 'prev_ent': {
+        const timeA = parseDDMMYYYY(a.prev_ent);
+        const timeB = parseDDMMYYYY(b.prev_ent);
+        result = timeA - timeB;
+        break;
+      }
+      case 'remetente': {
+        const textA = (a.remetente || '').toUpperCase().trim();
+        const textB = (b.remetente || '').toUpperCase().trim();
+        result = textA.localeCompare(textB, 'pt-BR');
+        break;
+      }
+      case 'destinatario': {
+        const textA = (a.destinatario || '').toUpperCase().trim();
+        const textB = (b.destinatario || '').toUpperCase().trim();
+        result = textA.localeCompare(textB, 'pt-BR');
+        break;
+      }
+      case 'cidade': {
+        const textA = (a.normCidade || a.cidade || '').toUpperCase().trim();
+        const textB = (b.normCidade || b.cidade || '').toUpperCase().trim();
+        result = textA.localeCompare(textB, 'pt-BR');
+        break;
+      }
+      case 'peso': {
+        const valA = a.peso_r ?? a.weight ?? 0;
+        const valB = b.peso_r ?? b.weight ?? 0;
+        result = valA - valB;
+        break;
+      }
+      case 'volumes': {
+        const valA = a.volume ?? 0;
+        const valB = b.volume ?? 0;
+        result = valA - valB;
+        break;
+      }
+      case 'valor': {
+        const valA = a.valor ?? 0;
+        const valB = b.valor ?? 0;
+        result = valA - valB;
+        break;
+      }
+      case 'frete': {
+        const valA = a.frete ?? 0;
+        const valB = b.frete ?? 0;
+        result = valA - valB;
+        break;
+      }
+      default:
+        result = 0;
+    }
+
+    return sortDirection === 'asc' ? result : -result;
+  });
+}
+
 export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFiltersProps) {
   // Unit select filter
   const [selectedUnit, setSelectedUnit] = useState<string>(() => {
@@ -27,15 +105,17 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // Sector selected filter
   const [selectedSector, setSelectedSector] = useState<string>('all');
 
-  // New location filter ('all' | 'na_base' | 'outra_base' | 'rota' | 'sem_loc' | 'box')
+  // Unified Excel sorting controls
+  const [sortField, setSortField] = useState<RoteirizacaoSortField>('prev_ent');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Legacy filters states (kept for backward compatibility and to prevent breakage, but not applied in active filtered results)
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('all');
+  const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
+  const [selectedEligibility, setSelectedEligibility] = useState<'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS'>('ROTEIRIZAVEL');
 
   // Search query text input
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Tactical operational filters
-  // 'all' | 'delayed' | 'curva' | 'heavy' | 'priority' | 'retained' | 'missingbox'
-  const [activeTacticalFilter, setActiveTacticalFilter] = useState<string>('all');
 
   // Multi-select Occurrence Sectors filter
   const [selectedOccurrenceSectors, setSelectedOccurrenceSectors] = useState<string[]>(DEFAULT_ROUTE_SECTORS);
@@ -60,9 +140,6 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     return combined.sort();
   }, [ctrcs]);
 
-  // Eligibility filter ('ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS')
-  const [selectedEligibility, setSelectedEligibility] = useState<'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS'>('ROTEIRIZAVEL');
-
   // Unique list of sectors based on selected unit (filtered by effectiveRoute or normRota)
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
@@ -80,9 +157,9 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     return Array.from(new Set(list)).sort() as string[];
   }, [ctrcs, selectedUnit, adminUser]);
 
-  // Apply sequential filtering logic
+  // Apply sequential filtering and sorting logic
   const filteredCtrcs = useMemo(() => {
-    return ctrcs.filter((ctrc) => {
+    const filteredList = ctrcs.filter((ctrc) => {
       const currentUnid = (ctrc.unid || '').toUpperCase();
       // 1. Filial target check
       if (!adminUser.is_master) {
@@ -95,34 +172,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       // 2. Sector/Route filtering (based on effectiveRoute or normRota)
       if (selectedSector !== 'all' && (ctrc.effectiveRoute || ctrc.normRota) !== selectedSector) return false;
 
-      // 3. Tactical Focus Category matching (aligned 1-to-1 with SPEC guidelines)
-      if (activeTacticalFilter === 'urgent') {
-        const isUrgent = ctrc.planningStatus === 'URGENTE' || ctrc.manualPriority === 'URGENTE';
-        if (!isUrgent) return false;
-      } else if (activeTacticalFilter === 'priority') {
-        const isPri = ctrc.planningStatus === 'PRIORIDADE' || ctrc.manualPriority === 'PRIORIDADE';
-        if (!isPri) return false;
-      } else if (activeTacticalFilter === 'hold') {
-        const isHold = ctrc.planningStatus === 'SEGURAR' || ctrc.manualPriority === 'SEGURAR';
-        if (!isHold) return false;
-      } else if (activeTacticalFilter === 'delayed_today') {
-        const isNso = ctrc.planningStatus === 'NAO_SAI_HOJE' || ctrc.manualPriority === 'NAO_SAI_HOJE';
-        if (!isNso) return false;
-      } else if (activeTacticalFilter === 'scheduled') {
-        const isSched = ctrc.status === 'Agendamento' || ctrc.planningStatus === 'AGENDADO' || ctrc.manualPriority === 'AGENDADO';
-        if (!isSched) return false;
-      } else if (activeTacticalFilter === 'retained') {
-        if (ctrc.availabilityStatus !== 'retido' && ctrc.availabilityStatus !== 'problema') return false;
-      } else if (activeTacticalFilter === 'no_location') {
-        const hasNoLoc = !ctrc.localizacao || ctrc.localizacao.trim() === '' || (ctrc.locationLabel || '').toUpperCase().includes('SEM BOX');
-        if (!hasNoLoc) return false;
-      } else if (activeTacticalFilter === 'curva_a') {
-        if (!ctrc.isCurvaA) return false;
-      } else if (activeTacticalFilter === 'fob') {
-        if (!ctrc.isFob) return false;
-      }
-
-      // 4. Case-insensitive unified query search (CTRC, NF, remetente, destinatário, cidade, rota/effectiveRoute, localização, observação operacional)
+      // 3. Case-insensitive unified query search (CTRC, NF, remetente, destinatário, cidade, rota/effectiveRoute, localização, observação operacional)
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase().trim();
         const mId = (ctrc.id || '').toLowerCase().includes(query);
@@ -138,55 +188,26 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         if (!mId && !mDest && !mRem && !mCid && !mNf && !mSetor && !mLoc && !mRoute && !mNote) return false;
       }
 
-      // 5. Situation/Location physical filter
-      if (selectedLocationFilter !== 'all') {
-        const activeUnit = (selectedUnit === 'TODAS' ? (adminUser.unid || 'SPO') : selectedUnit).toUpperCase();
-        const locRaw = (ctrc.localizacao || '').toUpperCase();
-        const locLabel = (ctrc.locationLabel || '').toUpperCase();
-        const statusRaw = (ctrc.status || '').toLowerCase();
-        const availStatus = (ctrc.availabilityStatus || '').toLowerCase();
-
-        if (selectedLocationFilter === 'na_base') {
-          // Physical location contains activeUnit and doesn't say "OUTRA"
-          const isAtMyBase = locRaw !== '' && locRaw.includes(activeUnit) && !locRaw.includes('OUTRA') && !locLabel.includes('OUTRA');
-          if (!isAtMyBase) return false;
-        } else if (selectedLocationFilter === 'outra_base') {
-          // Physical location is present but doesn't include activeUnit, or explicitly says "OUTRA"
-          const isAtOtherBase = (locRaw !== '' && !locRaw.includes(activeUnit)) || locRaw.includes('OUTRA') || locLabel.includes('OUTRA');
-          if (!isAtOtherBase) return false;
-        } else if (selectedLocationFilter === 'rota') {
-          // Em Rota / Transferência
-          const isAtRoute = statusRaw === 'transferência' || statusRaw === 'em rota' ||
-                            availStatus === 'transferência' || availStatus === 'em rota' ||
-                            locRaw.includes('ROTA') || locRaw.includes('TRANSFER') ||
-                            locLabel.includes('ROTA') || locLabel.includes('TRANSFER');
-          if (!isAtRoute) return false;
-        } else if (selectedLocationFilter === 'sem_loc') {
-          // Sem localização
-          const hasNoLoc = !ctrc.localizacao || ctrc.localizacao.trim() === '' || locLabel.includes('SEM BOX');
-          if (!hasNoLoc) return false;
-        } else if (selectedLocationFilter === 'box') {
-          // Aguardando box
-          const isWaitingBox = availStatus === 'aguardando' || ctrc.availabilityLabel === 'SEM BOX' || locLabel.includes('SEM BOX') || locRaw.includes('AGUARDANDO');
-          if (!isWaitingBox) return false;
-        }
-      }
-
-      // 6. Setor Ocorrência Filter (multi-select)
+      // 4. Setor Ocorrência Filter (multi-select)
       const sector = ctrc.occurrenceSector || 'Sem setor';
       if (!selectedOccurrenceSectors.includes(sector)) return false;
 
       return true;
     });
-  }, [ctrcs, adminUser, selectedUnit, selectedSector, activeTacticalFilter, searchQuery, selectedLocationFilter, selectedOccurrenceSectors]);
+
+    // Apply sorting *after* filters
+    return sortRoteirizacaoItems(filteredList, sortField, sortDirection);
+  }, [ctrcs, adminUser, selectedUnit, selectedSector, searchQuery, selectedOccurrenceSectors, sortField, sortDirection]);
 
   // Reset function
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedSector('all');
-    setActiveTacticalFilter('all');
     setSelectedLocationFilter('all');
+    setActiveTacticalFilter('all');
     setSelectedOccurrenceSectors(DEFAULT_ROUTE_SECTORS);
+    setSortField('prev_ent');
+    setSortDirection('asc');
     if (adminUser.is_master) {
       setSelectedUnit('TODAS');
     }
@@ -207,6 +228,10 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setSelectedEligibility,
     selectedOccurrenceSectors,
     setSelectedOccurrenceSectors,
+    sortField,
+    setSortField,
+    sortDirection,
+    setSortDirection,
     availableSectors,
     uniqueSectors,
     filteredCtrcs,

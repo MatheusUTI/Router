@@ -120,15 +120,15 @@ export default function ConsolidacaoDrawer({
       />
 
       {/* Drawer Body Sliding-in */}
-      <div className="fixed top-0 right-0 h-full w-[430px] max-w-full bg-[#080c14] border-l border-[#1a2440] shadow-2xl z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
+      <div className="fixed top-0 right-0 h-full w-[460px] max-w-full bg-[#080c14] border-l border-[#1a2440] shadow-2xl z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
         
         {/* Header Section */}
         <div className="bg-[#0b1322] px-4 py-3 border-b border-[#1a2440] flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-2">
             <span className="text-base">🚛</span>
             <div>
-              <h2 className="text-xs font-black text-slate-100 uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
-              <p className="text-[9px] text-indigo-400 font-bold uppercase font-mono mt-0.5">ALOCAÇÃO DE VEÍCULO EM PÁTIO</p>
+              <h2 className="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
+              <p className="text-[10px] text-indigo-400 font-bold uppercase font-mono mt-0.5">ALOCAÇÃO DE VEÍCULO EM PÁTIO</p>
             </div>
           </div>
           <button 
@@ -145,13 +145,13 @@ export default function ConsolidacaoDrawer({
           {selectedIds.length > 0 ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-indigo-300 font-black uppercase text-[10px] tracking-wider">Carga Consolidada Pronta:</span>
-                <span className="bg-indigo-650 text-white font-black px-1.5 py-0.3 rounded text-[10px]">
+                <span className="text-indigo-300 font-black uppercase text-[12px] tracking-wider">Carga Consolidada Pronta:</span>
+                <span className="bg-indigo-650 text-white font-black px-1.5 py-0.3 rounded text-[11px]">
                   {selectedIds.length} CTRCs
                 </span>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono border-t border-indigo-950/40 pt-1.5 text-slate-300">
+              <div className="grid grid-cols-2 gap-2 text-[12.5px] font-mono border-t border-indigo-950/40 pt-1.5 text-slate-300">
                 <div>
                   PESO: <span className="text-emerald-400 font-bold">{selectedWeight >= 1000 ? `${(selectedWeight / 1000).toFixed(2)}t` : `${selectedWeight} kg`}</span>
                 </div>
@@ -167,7 +167,7 @@ export default function ConsolidacaoDrawer({
               </div>
 
               {recommendedVehicleId && (
-                <div className="mt-1 bg-amber-500/10 border border-amber-500/25 rounded p-1.5 text-[10px] text-amber-300 flex items-start gap-1 font-sans leading-relaxed">
+                <div className="mt-1 bg-amber-500/10 border border-amber-500/25 rounded p-1.5 text-[11.5px] text-amber-300 flex items-start gap-1 font-sans leading-relaxed">
                   <span>💡</span>
                   <p className="font-bold">
                     Veículo <span className="font-mono bg-amber-500/10 px-1 rounded">{recommendedVehicleId}</span> é recomendado para este lote por eficiência de aproveitamento de carga.
@@ -177,8 +177,8 @@ export default function ConsolidacaoDrawer({
             </div>
           ) : (
             <div className="flex flex-col gap-1 text-center py-1">
-              <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Nenhum CTRC selecionado à parte</span>
-              <p className="text-[9.5px] text-slate-400 font-medium">Você está gerenciando rascunhos de carga e Romaneios existentes para cada veículo disponível no pátio.</p>
+              <span className="text-slate-500 text-[11.5px] uppercase font-bold tracking-wider">Nenhum CTRC selecionado à parte</span>
+              <p className="text-[11px] text-slate-400 font-medium leading-normal">Você está gerenciando rascunhos de carga e Romaneios existentes para cada veículo disponível no pátio.</p>
             </div>
           )}
         </div>

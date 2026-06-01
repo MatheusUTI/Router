@@ -62,7 +62,7 @@ src/
 │       │   └── isClienteCurvaA.ts      # Classificação de prioridades comerciais
 │       ├── hooks/                   # Custom Hooks isolando lógica de estado de UI e filtros
 │       │   ├── useCargaSelection.ts    # Seleção de CTRCs
-│       │   ├── useRoteirizacaoFilters.ts # Fluxo de filtros de foco tático e texto unificados
+│       │   ├── useRoteirizacaoFilters.ts # Lógica unificada de filtros com Setor de Ocorrência e ordenação Excel
 │       │   ├── useRoteirizacaoGrouping.ts # Agrupadores dinâmicos (Cidade, Setor, Rota)
 │       │   └── useVehicleAllocation.ts # Logística de rascunhos de carga e compatibilidade
 │       ├── services/                # Camada de serviços de lógica de negócios enriquecida
@@ -98,6 +98,9 @@ src/
 O Router expandiu seu arcabouço de persistência local para garantir governança logística total, dividindo seus domínios de escopo de forma clara.
 
 ### Módulos Já Operacionais
+- **Simplificação e Agilidade Visual**: Cabeçalho condensado extremamente limpo contendo apenas filtros de Filial, Rota, Setor de Ocorrência com múltipla escolha e Ordenação operacional sem quebras visuais sob zoom de navegador.
+- **Setor de Ocorrência e Ordenação Excel**: Fluxo operacional inspirado na planilha Excel para marcar/desmarcar múltiplos setores simultaneamente e ordenar toda a carga em tempo real (Ex: por data de entrega crescente/decrescente, remetente, valor, peso etc.).
+- **Elegibilidade Interna de Segurança**: O campo `routingEligibility` opera silenciosamente como guardião de risco no motor de negócios, sinalizando perigo nas listagens inferiores e interrompendo consolidações de faturas que estejam em trânsito ou finalizadas.
 - **Enriquecimento Operacional**: Conversão assíncrona de CTRC bruto importado em um objeto de negócios enriquecido de dados normalizados de rotas, classes comerciais, restrições e SLAs.
 - **RoteirizacaoView / Dashboard**: Vista contendo duas colunas (Cargas x Veículos), priorizando rascunhos em tempo real com controle de payload restante e sugestão automatizada de veículo.
 - **Importação ERP (Mapeadores)**: Mapeador de carga flexível capaz de traduzir metadados brutos originados de sistemas ERP em payloads válidos.

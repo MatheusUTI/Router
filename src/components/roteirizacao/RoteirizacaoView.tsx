@@ -206,6 +206,10 @@ export default function RoteirizacaoView({
     setSelectedEligibility,
     selectedOccurrenceSectors,
     setSelectedOccurrenceSectors,
+    sortField,
+    setSortField,
+    sortDirection,
+    setSortDirection,
     availableSectors,
     uniqueSectors,
     filteredCtrcs,
@@ -295,6 +299,12 @@ export default function RoteirizacaoView({
           if (rotPref.selectedOccurrenceSectors) {
             setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
           }
+          if (rotPref.sortField) {
+            setSortField(rotPref.sortField);
+          }
+          if (rotPref.sortDirection) {
+            setSortDirection(rotPref.sortDirection);
+          }
         }
         setIsPrefLoaded(true);
 
@@ -326,6 +336,12 @@ export default function RoteirizacaoView({
           if (rotPref.selectedOccurrenceSectors) {
             setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
           }
+          if (rotPref.sortField) {
+            setSortField(rotPref.sortField);
+          }
+          if (rotPref.sortDirection) {
+            setSortDirection(rotPref.sortDirection);
+          }
         }
       } catch (err) {
         console.error('[Roteirizacao] Erro no carregamento/sincronia das preferências do usuário:', err);
@@ -348,9 +364,11 @@ export default function RoteirizacaoView({
       selectedSector,
       selectedLocationFilter,
       activeTacticalFilter,
-      selectedOccurrenceSectors
+      selectedOccurrenceSectors,
+      sortField,
+      sortDirection
     });
-  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, isPrefLoaded, isNormalizing]);
+  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, isPrefLoaded, isNormalizing]);
 
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
@@ -505,6 +523,10 @@ export default function RoteirizacaoView({
         setSelectedEligibility={setSelectedEligibility}
         selectedOccurrenceSectors={selectedOccurrenceSectors}
         setSelectedOccurrenceSectors={setSelectedOccurrenceSectors}
+        sortField={sortField}
+        setSortField={setSortField}
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
         availableSectors={availableSectors}
         uniqueSectors={uniqueSectors}
         totalCtrcsCount={unassignedCtrcs.length}

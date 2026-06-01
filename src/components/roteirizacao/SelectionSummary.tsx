@@ -73,63 +73,55 @@ export default function SelectionSummary({
   const barClass = `fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-6xl bg-[#111929]/95 backdrop-blur-md border border-indigo-500/40 z-40 shrink-0 shadow-[0_10px_35px_rgba(0,0,0,0.85)] animate-[slideUp_150ms_ease-out] flex flex-wrap gap-2 items-center justify-between ${
     isCompact 
       ? 'bottom-2 min-h-[46px] py-1 px-3.5 rounded-lg' 
-      : isComfortable 
-      ? 'bottom-4 min-h-[66px] py-3 px-5 rounded-2xl' 
-      : 'bottom-3 min-h-[58px] py-2 px-4 rounded-xl'
+      : 'bottom-4 min-h-[66px] py-3 px-5 rounded-2xl'
   }`;
 
   // Badges and text class sizes
   const metricsOuterClass = `flex flex-wrap items-center text-slate-200 ${
-    isCompact ? 'gap-2 text-[10.5px]' : isComfortable ? 'gap-4 text-[13px]' : 'gap-3 md:gap-3.5 text-xs'
+    isCompact ? 'gap-2 text-[10.5px]' : 'gap-4.5 text-[13.5px]'
   }`;
 
   const boldCountClass = `bg-indigo-600 text-white font-black text-center shadow-md ${
     isCompact 
       ? 'px-1.5 py-0.2 text-[10px] min-w-[18px] rounded' 
-      : isComfortable 
-      ? 'px-2.5 py-1 text-[12px] min-w-[26px] rounded-lg' 
-      : 'px-2 py-0.5 text-[11px] min-w-[22px] rounded-md'
+      : 'px-2.5 py-1 text-[13px] min-w-[26px] rounded-lg'
   }`;
 
   const countLabelClass = `text-slate-300 font-extrabold uppercase tracking-wide shrink-0 ${
-    isCompact ? 'text-[9px]' : isComfortable ? 'text-[11px]' : 'text-[10px]'
+    isCompact ? 'text-[9px]' : 'text-[12px]'
   }`;
 
-  const sepClass = `w-px bg-[#1e2d4e] ${isCompact ? 'h-4' : isComfortable ? 'h-6' : 'h-5'}`;
+  const sepClass = `w-px bg-[#1e2d4e] ${isCompact ? 'h-4' : 'h-6'}`;
 
   // Individual parameters fonts
   const fontAndSizeClass = `font-mono text-slate-300 font-bold shrink-0 ${
-    isCompact ? 'text-[10px]' : isComfortable ? 'text-[12px]' : 'text-[11px]'
+    isCompact ? 'text-[10px]' : 'text-[13px]'
   }`;
 
   // Custom alert badges
   const alertBadgeClass = `font-bold font-mono ${
-    isCompact ? 'text-[8px] px-1 py-0.2 rounded' : isComfortable ? 'text-[10px] px-2 py-0.5 rounded border' : 'text-[9px] px-1.5 py-0.2 rounded border'
+    isCompact ? 'text-[8px] px-1 py-0.2 rounded' : 'text-[11px] px-2 py-0.5 rounded border'
   }`;
 
   // Right section sizing
   const actionWrapperClass = `flex items-center shrink-0 ${
-    isCompact ? 'gap-2' : isComfortable ? 'gap-4' : 'gap-3'
+    isCompact ? 'gap-2' : 'gap-4'
   }`;
 
   const warningLabelClass = `border border-red-500/45 text-red-00 font-extrabold uppercase tracking-wide bg-red-650/20 text-red-400 rounded animate-pulse select-none max-w-xs truncate ${
-    isCompact ? 'text-[8.5px] px-1.5 py-0.5' : isComfortable ? 'text-[11px] px-2.5 py-1.5' : 'text-[10px] px-2 py-1'
+    isCompact ? 'text-[8.5px] px-1.5 py-0.5' : 'text-[12px] px-2.5 py-1.5'
   }`;
 
   const btnClearClass = `text-slate-400 hover:text-white uppercase font-black tracking-wider transition-all duration-150 cursor-pointer select-none leading-none ${
     isCompact 
       ? 'text-[9.5px] px-2 py-1' 
-      : isComfortable 
-      ? 'text-[11.5px] px-3.5 py-2.5 hover:bg-slate-800/40 rounded-xl' 
-      : 'text-[10.5px] px-2.5 py-1.5 hover:bg-slate-800/40 rounded-lg'
+      : 'text-[12px] px-3.5 py-2.5 hover:bg-slate-800/40 rounded-xl'
   }`;
 
   const btnConsolidatorClass = `font-black uppercase tracking-wider transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg leading-none ${
     isCompact 
       ? 'text-[10px] px-3 py-2 rounded-md' 
-      : isComfortable 
-      ? 'text-[12px] px-5 py-3 rounded-xl' 
-      : 'text-[11px] px-4.5 py-2.5 rounded-lg'
+      : 'text-[13px] px-5 py-3 rounded-xl'
   } ${
     hasSpecialAlert
       ? 'bg-amber-600 hover:bg-amber-550 border border-amber-500/50 text-white'
@@ -139,9 +131,7 @@ export default function SelectionSummary({
   const btnPreRomaneioClass = `font-black uppercase tracking-wider transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg leading-none ${
     isCompact 
       ? 'text-[10px] px-3 py-2 rounded-md' 
-      : isComfortable 
-      ? 'text-[12px] px-5 py-3 rounded-xl' 
-      : 'text-[11px] px-4.5 py-2.5 rounded-lg'
+      : 'text-[13px] px-5 py-3 rounded-xl'
   } bg-emerald-650 hover:bg-emerald-600 border border-emerald-550 text-white`;
 
   return (

@@ -91,20 +91,20 @@ export default function VehicleCard({
     const s = (statusStr || '').toLowerCase();
     if (s.includes('dispon') || s.includes('patio')) {
       return (
-        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/15 text-[8.5px] px-1 rounded-sm font-bold uppercase tracking-tight">
+        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/15 text-[10.5px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-tight">
           PÁTIO
         </span>
       );
     }
     return (
-      <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/15 text-[8.5px] px-1 rounded-sm font-bold uppercase tracking-tight">
+      <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/15 text-[10.5px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-tight">
         {statusStr.toUpperCase()}
       </span>
     );
   };
 
   return (
-    <div className={`rounded-xl p-2.5 flex flex-col gap-1.5 transition-all duration-150 select-none relative ${containerClasses}`}>
+    <div className={`rounded-xl p-3 flex flex-col gap-2 transition-all duration-150 select-none relative ${containerClasses}`}>
       
       {/* ----------------------------------------------------
           LINHA 1: PLACA • TIPO • STATUS (+ RECOMMENDATION BADGE)
@@ -112,10 +112,10 @@ export default function VehicleCard({
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5">
           {/* Placa Badge */}
-          <span className="bg-[#1e293b] text-slate-100 font-mono text-[11px] font-black tracking-widest px-1.5 py-0.3 rounded border border-slate-700 shadow-xs">
+          <span className="bg-[#1e293b] text-slate-100 font-mono text-[13px] font-black tracking-widest px-2 py-0.5 rounded border border-slate-700 shadow-xs">
             {vehicle.id}
           </span>
-          <span className="text-slate-400 text-[10px] font-bold uppercase">
+          <span className="text-slate-400 text-[11.5px] font-bold uppercase">
             {vehicle.type}
           </span>
           <span className="text-slate-650 font-sans">•</span>
@@ -124,7 +124,7 @@ export default function VehicleCard({
 
         {/* Recommended Tag (Point 6) */}
         {isRecommended && isSelectedActive && !isSelectionTooHeavy && (
-          <span className="bg-amber-500/25 text-amber-300 border border-amber-500/35 text-[9px] font-black uppercase px-2 py-0.3 rounded tracking-wider animate-[pulse_2s_infinite]">
+          <span className="bg-amber-500/25 text-amber-300 border border-amber-500/35 text-[11px] font-black uppercase px-2 py-0.5 rounded tracking-wider animate-[pulse_2s_infinite]">
             ⭐ RECOMENDADO
           </span>
         )}
@@ -133,11 +133,11 @@ export default function VehicleCard({
       {/* ----------------------------------------------------
           LINHA 2: MOTORISTA
           ---------------------------------------------------- */}
-      <div className="flex items-center justify-between text-[11px]">
+      <div className="flex items-center justify-between text-[13px]">
         <span className="text-slate-200 font-bold uppercase truncate max-w-[200px]" title={vehicle.driverName}>
           👤 {vehicle.driverName || 'NÃO DESIGNADO'}
         </span>
-        <span className="text-slate-400 font-mono text-[9.5px]">
+        <span className="text-slate-400 font-mono text-[11.5px]">
           Capacidade: <span className="text-slate-200 font-bold">{vehicle.capacity}</span>
         </span>
       </div>
@@ -145,9 +145,9 @@ export default function VehicleCard({
       {/* ----------------------------------------------------
           LINHA 3: BARRA COMPACTA + PESO/VOLUME
           ---------------------------------------------------- */}
-      <div className="w-full flex flex-col gap-0.5 font-mono">
+      <div className="w-full flex flex-col gap-1 font-mono">
         {/* Occupancy state details */}
-        <div className="flex justify-between items-center text-[10px] text-slate-400 leading-none">
+        <div className="flex justify-between items-center text-[12.5px] text-slate-400 leading-none">
           <div>
             <span className="text-slate-200 font-extrabold">{allocatedWeight.toLocaleString('pt-BR')} kg</span>
             <span className="text-slate-600 font-bold"> / </span>
@@ -170,7 +170,7 @@ export default function VehicleCard({
 
         {/* Overflow alert */}
         {allocatedWeight > capacityMax && (
-          <p className="text-[9.5px] text-red-400 font-bold uppercase leading-none mt-0.5">
+          <p className="text-[11.5px] text-red-400 font-bold uppercase leading-none mt-0.5">
             ⚠️ EXCESSO DE CARGA (+{(allocatedWeight - capacityMax).toLocaleString('pt-BR')} kg)
           </p>
         )}
@@ -178,7 +178,7 @@ export default function VehicleCard({
 
       {/* Selected highlights context (Slices space beautifully if selected) */}
       {isSelectedActive && !isSelectionTooHeavy && (
-        <div className="p-1.5 rounded bg-indigo-950/20 border border-indigo-900/40 text-[10.5px] grid grid-cols-2 gap-x-2 gap-y-0.5 font-mono mt-0.5">
+        <div className="p-2 rounded bg-indigo-950/20 border border-indigo-900/40 text-[12.5px] grid grid-cols-2 gap-x-2 gap-y-0.5 font-mono mt-0.5">
           <div className="text-slate-400">
             A alocar: <span className="font-bold text-white">{selectedWeight.toLocaleString('pt-BR')} kg</span>
           </div>
@@ -190,25 +190,25 @@ export default function VehicleCard({
 
       {/* Draft elements inside accordion drawer - Keep it super tight! */}
       {draftCtrcs.length > 0 && (
-        <div className="bg-[#05080f]/90 rounded-lg border border-[#16223f] p-1 flex flex-col gap-0.5 max-h-16 overflow-y-auto mt-0.5 scrollbar-none font-sans text-[9px]">
-          <div className="flex items-center justify-between text-slate-500 font-bold uppercase text-[8px] px-1 border-b border-[#16223f]/60 pb-0.5 shrink-0 select-none">
+        <div className="bg-[#05080f]/90 rounded-lg border border-[#16223f] p-2 flex flex-col gap-1 max-h-24 overflow-y-auto mt-0.5 scrollbar-none font-sans text-[11px]">
+          <div className="flex items-center justify-between text-slate-505 font-bold uppercase text-[11px] px-1 border-b border-[#16223f]/60 pb-1 shrink-0 select-none">
             <span>Fila de Rascunho ({draftCtrcs.length})</span>
-            <button onClick={onClearDraft} className="text-red-400 hover:text-red-300 cursor-pointer">
+            <button onClick={onClearDraft} className="text-red-400 hover:text-red-300 cursor-pointer text-[10px]">
               LIMPAR
             </button>
           </div>
           <div className="divide-y divide-[#16223f]/30">
             {draftCtrcs.map((c) => (
-              <div key={c.id} className="flex justify-between items-center py-0.5 px-1 leading-none">
+              <div key={c.id} className="flex justify-between items-center py-1 px-1 leading-none">
                 <span className="truncate max-w-[140px] text-slate-350 uppercase">
                   {c.id} · {c.destinatario}
                 </span>
-                <div className="flex items-center gap-1 font-mono">
+                <div className="flex items-center gap-1.5 font-mono">
                   <span className="text-slate-405 font-medium">{(c.peso_r || c.weight || 0)}kg</span>
                   <button
-                    onClick={() => onUnassignCarga(c.id)}
-                    className="text-slate-505 hover:text-red-400 text-[11px] font-bold p-0 leading-none cursor-pointer"
-                    title="Excluir do rascunho"
+                     onClick={() => onUnassignCarga(c.id)}
+                     className="text-slate-505 hover:text-red-400 text-[13px] font-bold p-0 leading-none cursor-pointer"
+                     title="Excluir do rascunho"
                   >
                     &times;
                   </button>
@@ -226,7 +226,7 @@ export default function VehicleCard({
         <button
           onClick={onAllocateSelected}
           disabled={selectedWeight === 0 || isSelectionTooHeavy}
-          className={`text-[10px] py-1 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
+          className={`text-[12.5px] py-1.5 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
             selectedWeight > 0 && !isSelectionTooHeavy
               ? 'bg-indigo-650 hover:bg-indigo-550 text-white shadow-xs font-black'
               : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed font-medium'
@@ -238,7 +238,7 @@ export default function VehicleCard({
         <button
           onClick={onEmitRomaneio}
           disabled={draftCtrcs.length === 0}
-          className={`text-[10px] py-1 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
+          className={`text-[12.5px] py-1.5 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
             draftCtrcs.length > 0
               ? 'bg-emerald-650 hover:bg-emerald-555 text-white shadow-xs font-bold'
               : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed font-medium'

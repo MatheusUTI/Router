@@ -332,7 +332,7 @@ export default function CurvaAView({
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30 leading-normal">
-              {filteredClients.map((client) => {
+              {filteredClients.map((client, idx) => {
                 const getBadgeColors = (bracket: string) => {
                   if (bracket === 'A+') return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
                   if (bracket === 'A') return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
@@ -340,7 +340,7 @@ export default function CurvaAView({
                 };
 
                 return (
-                  <tr key={client.cnpj_remetente} className="hover:bg-slate-850/30 border-b border-outline-variant/30 transition-colors">
+                  <tr key={`${client.cnpj_remetente}_${idx}`} className="hover:bg-slate-850/30 border-b border-outline-variant/30 transition-colors">
                     <td className="px-5 py-3.5 font-mono text-[#dae2fd] font-semibold text-[11.5px]">{client.cnpj_remetente}</td>
                     <td className="px-5 py-3.5 text-white font-sans font-medium uppercase">{client.cliente_remetente}</td>
                     <td className="px-5 py-3.5 text-center">

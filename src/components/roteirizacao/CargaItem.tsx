@@ -153,7 +153,7 @@ export default function CargaItem({
           onToggle(item.id);
         }
       }}
-      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(140px,0.85fr)_minmax(250px,1.4fr)_minmax(310px,1.55fr)_minmax(110px,0.45fr)_36px] items-stretch select-none transition-all duration-150 cursor-pointer ${
+      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(155px,0.9fr)_minmax(250px,1.4fr)_minmax(320px,1.6fr)_minmax(120px,0.45fr)_36px] items-stretch select-none transition-all duration-150 cursor-pointer ${
         isSelected 
           ? 'bg-indigo-650/[0.07] shadow-[inset_2px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.03)]' 
           : pStyle.cardBg
@@ -189,23 +189,23 @@ export default function CargaItem({
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight`}>
-        <span className="text-white hover:text-indigo-200 font-extrabold text-[12px] uppercase tracking-wide truncate block" title={item.normCidade}>
+        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade}>
           {item.normCidade || 'LOCALIDADE IND'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
           {/* Main Directing Route */}
-          <div className="flex items-center gap-1 flex-wrap text-[10px]">
-            <span className="text-indigo-400 font-black uppercase">
+          <div className="flex items-center gap-1 flex-wrap text-[12px]">
+            <span className="text-indigo-400 font-black uppercase text-[14px]">
               {item.effectiveRoute || 'SEM ROTA'}
             </span>
             {item.isManualRoute && (
-              <span className="text-orange-400 font-extrabold uppercase text-[8px] tracking-tight shrink-0 select-none">
+              <span className="text-orange-400 font-extrabold uppercase text-[10px] tracking-tight shrink-0 select-none">
                 • MANUAL
               </span>
             )}
             {item.planningStatus === 'SEGURAR' && (
-              <span className="text-red-400 font-extrabold uppercase text-[8px] tracking-tight shrink-0 select-none">
+              <span className="text-red-400 font-extrabold uppercase text-[10px] tracking-tight shrink-0 select-none">
                 • SEGURAR
               </span>
             )}
@@ -213,7 +213,7 @@ export default function CargaItem({
 
           {/* Suggested route if Manual overwrite is active */}
           {item.isManualRoute && item.suggestedRoute && (
-            <span className="text-slate-500 font-bold font-mono text-[8.5px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
+            <span className="text-slate-500 font-bold font-mono text-[11px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
               Sug.: {item.suggestedRoute}
             </span>
           )}
@@ -223,16 +223,16 @@ export default function CargaItem({
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[#131f38]/15`}>
         <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-4a5 font-black select-none shrink-0 text-[8.5px] tracking-tight">DEST:</span>
-          <span className="text-slate-100 font-semibold truncate block uppercase text-[10.5px] tracking-wide" title={item.destinatario}>
+          <span className="text-slate-4a5 font-black select-none shrink-0 text-[11px] tracking-tight">DEST:</span>
+          <span className="text-slate-100 font-semibold truncate block uppercase text-[12px] tracking-wide" title={item.destinatario}>
             {item.destinatario}
           </span>
         </div>
 
         <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-4a5 font-black select-none shrink-0 text-[8.5px] tracking-tight">REM:</span>
+          <span className="text-slate-4a5 font-black select-none shrink-0 text-[11px] tracking-tight">REM:</span>
           <span 
-            className={`font-semibold truncate block uppercase text-[10.5px] tracking-wide ${
+            className={`font-semibold truncate block uppercase text-[12px] tracking-wide ${
               item.isCurvaA 
                 ? 'text-purple-300 bg-purple-500/12 px-1 py-0.2 rounded border border-purple-500/20' 
                 : 'text-slate-350'
@@ -240,16 +240,16 @@ export default function CargaItem({
             title={item.remetente}
           >
             {item.remetente || 'REMETENTE VAGO'}
-            {item.isCurvaA && <span className="text-[8px] font-black text-purple-400 ml-1 select-none">[★ CURVA A]</span>}
+            {item.isCurvaA && <span className="text-[10px] font-black text-purple-400 ml-1 select-none">[★ CURVA A]</span>}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[9px] font-mono select-text font-black mt-0.5 leading-none text-indigo-350">
+        <div className="flex items-center gap-1.5 text-[12px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
           <span>CTRC: {item.id}</span>
           <span>•</span>
           <span>NF: {item.nf || 'S/N'}</span>
           {item.isFob && (
-            <span className="bg-amber-500/10 text-amber-400 font-bold text-[7.5px] px-1 py-0.2 rounded border border-amber-500/20 shrink-0 select-none leading-none">
+            <span className="bg-amber-500/10 text-amber-400 font-bold text-[10px] px-1 py-0.2 rounded border border-amber-500/20 shrink-0 select-none leading-none">
               FOB
             </span>
           )}
@@ -260,92 +260,92 @@ export default function CargaItem({
       <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[#131f38]/15`}>
         
         {/* Line 1: SLA and date parameters */}
-        <div className="flex items-center gap-1.5 text-[9px] font-bold font-mono text-slate-400 leading-none">
+        <div className="flex items-center gap-1.5 text-[11.5px] font-bold font-mono text-slate-400 leading-none">
           <span>PREV: {item.prev_ent ? item.prev_ent.slice(0, 5) : 'S/P'}</span>
           <span>•</span>
-          <span className={`font-black rounded-sm border px-1 py-0.2 text-[8px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/25'}`}>
+          <span className={`font-black rounded-sm border px-1 py-0.2 text-[10px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/25'}`}>
             {item.slaStatus?.label || 'D+0'}
             {item.slaStatus?.daysDiff !== undefined && item.slaStatus.daysDiff > 0 && ` +${item.slaStatus.daysDiff}D`}
             {item.slaStatus?.isDelayed && ` ATRASADO`}
           </span>
           {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
-            <span className="font-extrabold text-[#00f2fe] bg-cyan-950/20 px-1 rounded-sm border border-cyan-800/15 text-[7.5px] leading-none whitespace-nowrap">
+            <span className="font-extrabold text-[#00f2fe] bg-cyan-950/20 px-1 rounded-sm border border-cyan-800/15 text-[9.5px] leading-none whitespace-nowrap">
               AGENDA
             </span>
           )}
           {item.occurrenceSector && (
-            <span className="font-extrabold text-indigo-300 bg-indigo-950/30 px-1 rounded-sm border border-indigo-800/20 text-[7.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+            <span className="font-extrabold text-indigo-300 bg-indigo-950/30 px-1 rounded-sm border border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
               {item.occurrenceSector}
             </span>
           )}
         </div>
 
         {/* Line 2: Occurrence Code and Description */}
-        <div className="min-w-0 text-[10px] leading-none select-text">
+        <div className="min-w-0 text-[12px] leading-none select-text">
           {item.occurrenceCode ? (
             item.occurrenceDescription === 'Ocorrência não mapeada' ? (
-              <span className="text-slate-400 font-bold block truncate text-[9px]">
+              <span className="text-slate-400 font-bold block truncate text-[11px]">
                 ⚠️ OC {item.occurrenceCode} • não mapeada
               </span>
             ) : item.occurrenceCriticality === 'CRÍTICA' ? (
-              <span className="text-red-400 font-extrabold block truncate text-[9px]" title={item.occurrenceDescription}>
+              <span className="text-red-400 font-extrabold block truncate text-[11px]" title={item.occurrenceDescription}>
                 🚨 OC {item.occurrenceCode} • {item.occurrenceDescription}
               </span>
             ) : item.occurrenceCriticality === 'MÉDIA' ? (
-              <span className="text-amber-400 font-bold block truncate text-[9px]" title={item.occurrenceDescription}>
+              <span className="text-amber-400 font-bold block truncate text-[11px]" title={item.occurrenceDescription}>
                 ⚠️ OC {item.occurrenceCode} • {item.occurrenceDescription}
               </span>
             ) : (
-              <span className="text-indigo-405 font-bold block truncate text-[9px]" title={item.occurrenceDescription}>
+              <span className="text-indigo-405 font-bold block truncate text-[11px]" title={item.occurrenceDescription}>
                 ℹ️ OC {item.occurrenceCode} • {item.occurrenceDescription}
               </span>
             )
           ) : (
-            <span className="text-emerald-550 font-bold uppercase text-[9px] tracking-tight">
+            <span className="text-emerald-550 font-bold uppercase text-[11px] tracking-tight">
               🟢 SEM OCORRÊNCIA
             </span>
           )}
         </div>
 
         {/* Line 3: Operational Availability Status and Physical Warehouse Location */}
-        <div className="flex items-center gap-1.5 text-[9px] leading-none w-full min-w-0">
+        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0">
           {(() => {
             const displayStatus = (item.availabilityLabel || item.status || 'DISPONÍVEL').toUpperCase();
             const colors = resolveStatusColor(displayStatus);
             return (
-              <span className={`font-mono font-black uppercase px-1 py-0.2 rounded-sm border text-[8px] shrink-0 leading-none ${colors.bg} ${colors.text} ${colors.border}`}>
+              <span className={`font-mono font-black uppercase px-1 py-0.2 rounded-sm border text-[10px] shrink-0 leading-none ${colors.bg} ${colors.text} ${colors.border}`}>
                 {displayStatus}
               </span>
             );
           })()}
 
           {item.locationLabel && (
-            <span className="text-teal-400 font-mono text-[8.5px] truncate max-w-[190px]" title={item.locationLabel}>
-              LOC: <span className="font-extrabold uppercase text-slate-200">{item.locationLabel.replace(/📍/g, '').trim()}</span>
+            <span className="text-teal-400 font-mono text-[11px] truncate max-w-[190px]" title={item.locationLabel}>
+              LOC: <span className="font-extrabold uppercase text-slate-200 text-[11px]">{item.locationLabel.replace(/📍/g, '').trim()}</span>
             </span>
           )}
         </div>
 
         {/* Micro operational note banner */}
         {item.operationalNote && (
-          <div className="text-[8.5px] font-medium text-amber-305 italic truncate" title={item.operationalNote}>
+          <div className="text-[11px] font-medium text-amber-305 italic truncate" title={item.operationalNote}>
             Obs: {item.operationalNote}
           </div>
         )}
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[9.5px] font-mono border-l border-[#131f38]/15 bg-[#070c14]/15`}>
-        <span className="text-slate-105 font-black text-[12px] leading-none">
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-[#131f38]/15 bg-[#070c14]/15`}>
+        <span className="text-slate-105 font-black text-[13px] leading-none">
           {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
         </span>
-        <span className="text-amber-455 font-bold text-[9px] leading-none">
+        <span className="text-amber-455 font-bold text-[12px] leading-none mt-1">
           {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
         </span>
-        <span className="text-slate-400 text-[8.5px]">
+        <span className="text-slate-400 text-[12px] mt-1">
           R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
-        <span className="text-indigo-350 text-[8px] mt-0.5">
+        <span className="text-indigo-350 text-[11px] mt-1">
           Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
       </div>

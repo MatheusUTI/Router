@@ -41,7 +41,7 @@ export default function CargaList({
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#080c14] border border-[#16223f] rounded-xl overflow-hidden relative">
       {/* List Sub-header with Master Selection and Grouping Triggers */}
-      <div className="bg-[#0b1322] px-3 py-1.5 flex flex-wrap gap-2 items-center justify-between border-b border-[#1a2440] shrink-0 text-slate-300">
+      <div className="bg-[#0b1322] px-3 py-2 flex flex-wrap gap-2 items-center justify-between border-b border-[#1a2440] shrink-0 text-slate-300">
         
         {/* Master Checkbox */}
         <div className="flex items-center gap-2 select-none">
@@ -50,51 +50,22 @@ export default function CargaList({
             id="master-cargo-checkbox"
             checked={allVisibleChecked}
             onChange={() => onSelectAllVisible(visibleIds)}
-            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer"
+            className="w-4 h-4 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer"
           />
-          <label htmlFor="master-cargo-checkbox" className="text-[11px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer">
+          <label htmlFor="master-cargo-checkbox" className="text-[13px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white">
             Selecionar Todos ({filteredCtrcs.length})
           </label>
         </div>
 
-        {/* Right side controls (Density + Grouping) */}
+        {/* Right side controls (Grouping) */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Density Selector */}
-          <div className="flex items-center gap-1 bg-[#070c14] p-1 rounded border border-[#16223f] select-none scale-95 origin-right">
-            <span className="text-[9.5px] text-slate-500 font-bold uppercase px-1 py-0.2">Visual:</span>
-            <button
-              onClick={() => onUpdateDensity?.('compact')}
-              className={`px-1.5 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
-                densityMode === 'compact' ? 'bg-indigo-600 text-white font-extrabold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Compacto
-            </button>
-            <button
-              onClick={() => onUpdateDensity?.('default')}
-              className={`px-1.5 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
-                densityMode === 'default' ? 'bg-indigo-600 text-white font-extrabold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Padrão
-            </button>
-            <button
-              onClick={() => onUpdateDensity?.('comfortable')}
-              className={`px-1.5 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
-                densityMode === 'comfortable' ? 'bg-indigo-600 text-white font-extrabold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Conforto
-            </button>
-          </div>
-
           {/* Group Selector Pills */}
-          <div className="flex flex-wrap items-center gap-1 bg-[#070c14] p-1 rounded border border-[#16223f] select-none scale-95 origin-right">
-            <span className="text-[9.5px] text-slate-500 font-bold uppercase px-1 py-0.2">Agrupar:</span>
+          <div className="flex flex-wrap items-center gap-1.5 bg-[#070c14] p-1 rounded border border-[#16223f] select-none">
+            <span className="text-[12px] text-slate-500 font-extrabold uppercase px-1.5 py-0.5">Agrupar:</span>
             <button
               id="group-by-sector-btn"
               onClick={() => setGroupingMode('sector')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'sector' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -103,7 +74,7 @@ export default function CargaList({
             <button
               id="group-by-city-btn"
               onClick={() => setGroupingMode('city')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'city' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -112,7 +83,7 @@ export default function CargaList({
             <button
               id="group-by-destinatario-btn"
               onClick={() => setGroupingMode('destinatario')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'destinatario' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -121,7 +92,7 @@ export default function CargaList({
             <button
               id="group-by-previsao-btn"
               onClick={() => setGroupingMode('previsao')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'previsao' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -130,7 +101,7 @@ export default function CargaList({
             <button
               id="group-by-priority-btn"
               onClick={() => setGroupingMode('priority')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'priority' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -139,7 +110,7 @@ export default function CargaList({
             <button
               id="group-by-status-btn"
               onClick={() => setGroupingMode('status')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'status' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -148,7 +119,7 @@ export default function CargaList({
             <button
               id="group-by-location-btn"
               onClick={() => setGroupingMode('location')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'location' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -157,7 +128,7 @@ export default function CargaList({
             <button
               id="group-by-none-btn"
               onClick={() => setGroupingMode('none')}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
                 groupingMode === 'none' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >

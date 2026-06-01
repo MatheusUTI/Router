@@ -332,3 +332,25 @@ Cada importação de arquivo SSW preserva a integridade cronológica de moviment
 
 Essa arquitetura garante que nenhum CTRC histórico seja deletado ou descartado, mantendo a Central de CTRCs/Ocorrências perfeitamente munida de registros validados de devoluções, sinistros, reentregas e atrasos para auditorias gerenciais de SLA.
 
+### 13.4 Simplificação do Cabeçalho e Ordenação Excel Operacional
+
+A interface principal da Mesa de Roteirização foi simplificada de forma pragmática para priorizar a eficiência operacional do usuário:
+
+1. **Simplificação Visual Reduzida**:
+   - Foram ocultados/removidos do cabeçalho principal os controles redundantes de densidade visual, de eligibility técnica e de ocupação/localização física.
+   - O foco rápido com excesso de chips foi unificado no fluxo operacional, removendo poluição visual e garantindo um layout limpo ideal para operar com zoom do navegador (100%, 110%, 125%) sem scroll horizontal ou quebra de layout.
+   - **Tipografia Operacional Confortável**: Em vez de múltiplos modos de densidade visual ou de seletores adicionais, a Mesa de Roteirização utiliza uma escala tipográfica única, unificada e altamente legível. As letras principais foram ampliadas de 2px a 5px (ex: cidades/rotas em torno de 14-16px, CTRC/NFs e valores entre 12-13px, e badges em 10-11px). O layout foi otimizado com line-heights robustos (leading-tight/leading-snug) e truncagens inteligentes para comportar perfeitamente telas 1366x768 e zoom nativo do navegador em 100%, 110% e 125% de forma limpa e sem perdas de informações ou quebras de linha indesejadas.
+
+2. **Ordenação Uniformizada Estilo Excel**:
+   - Introdução de seletor compacto de ordenação operacional. Os CTRCs filtrados podem ser ordenados instantaneamente de forma crescente ou decrescente usando critérios chaves:
+     - **Previsão de entrega mais antiga** (padrão de abertura da mesa);
+     - **Previsão de entrega mais nova**;
+     - **Remetente** (A-Z ou Z-A);
+     - **Destinatário** (A-Z ou Z-A);
+     - **Cidade** (A-Z ou Z-A);
+     - **Peso** (Mais pesado ou mais leve);
+     - **Volumes** (Mais volumes ou menos volumes);
+     - **Valor de faturamento** (Mais valorizado ou menos valorizado);
+     - **Frete** (Mais caro ou mais barato).
+   - A ordenação é aplicada dinamicamente no resultado filtrado de forma limpa, persistindo as preferências selecionadas do usuário no banco local e na cloud para sessões futuras. Se houver agrupamento ativo por cidade ou rota, as cargas em cada grupo são ordenadas individualmente conforme a regra ativa.
+
