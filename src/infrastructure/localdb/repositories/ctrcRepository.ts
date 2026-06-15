@@ -18,6 +18,10 @@ export const CtrcRepository = {
     return db.ctrcs.get(id);
   },
 
+  async getByIds(ids: string[]): Promise<Ctrc[]> {
+    return db.ctrcs.where('id').anyOf(ids).toArray();
+  },
+
   async put(ctrc: Ctrc, skipSync = false): Promise<string> {
     await db.ctrcs.put(ctrc);
     if (!skipSync) {

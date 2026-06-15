@@ -8,6 +8,8 @@ import {
   initialCidadesRotas,
   initialCurvaAClients
 } from '../../../data';
+import { initialFeriadosMG_TXT } from '../../../data/initialFeriadosMG';
+import { OperationalCalendarRepository } from '../repositories/operationalCalendarRepository';
 
 /**
  * Adapter responsável por migrar de forma incremental e segura 
@@ -129,6 +131,13 @@ export async function runCompatibilityMigration(): Promise<{
           updated_at: new Date().toISOString()
         });
       }
+    }
+
+    // 8. Seeding de Calendário Operacional (Se vazio)
+    const calendarEventsCount = await db.operational_calendar_events.count();
+    if (calendarEventsCount === 0) {
+      const count = await OperationalCalendarRepository.importAndSaveTxt(initialFeriadosMG_TXT);
+      console.log(`[Adapter] Semeados ${count} eventos de feriados municipais no calendário operacional.`);
     }
 
     console.log('[Adapter] Migração e Semeamento inteligente concluídos:', result);

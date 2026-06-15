@@ -319,20 +319,75 @@ export default function App() {
   // IMPORTAÇÃO DE CTRC
   // ---------------------------------------------------------
   const handleAddCtrcs = async (newCtrcs: Ctrc[]) => {
-    // 1. Maintain current state memory & persistence intact
-    setAvailableCtrcs((prev) => {
-      // De-duplicate in memory based on ID so new records overwrite/append gracefully
-      const filtered = prev.filter(p => !newCtrcs.some(n => n.id === p.id));
-      return [...filtered, ...newCtrcs];
+    // 1. Load existing CTRCs from the offline database to perform a safe merge
+    const ids = newCtrcs.map(c => c.id);
+    const existingCtrcs = await CtrcRepository.getByIds(ids);
+    const existingMap = new Map<string, Ctrc>(existingCtrcs.map(c => [c.id, c]));
+
+    // 2. Perform safe merge: keep new raw SSW fields but preserve existing local decisions/states
+    const mergedCtrcs = newCtrcs.map((newCtrc) => {
+      const existing = existingMap.get(newCtrc.id);
+      if (!existing) {
+        return newCtrc;
+      }
+
+      const merged = { ...newCtrc };
+
+      // Preserving local decision fields if they exist
+      const fieldsToPreserve = [
+        'operationalRoute',
+        'manualPriority',
+        'planningStatus',
+        'operationalNote',
+        'isManualRoute',
+        'preRomaneioId',
+        'romaneioId',
+        'routePlanningId',
+      ];
+
+      fieldsToPreserve.forEach((field) => {
+        if ((existing as any)[field] !== undefined) {
+          (merged as any)[field] = (existing as any)[field];
+        }
+      });
+
+      // Preserve existing operational status (e.g. 'Disponível', 'Em Rota', 'Entregue', etc.)
+      if (existing.status) {
+        merged.status = existing.status;
+      }
+
+      return merged;
     });
-    await CtrcRepository.putMany(newCtrcs);
+
+    // 3. Update memory react state safely partitioning by their previous state/status
+    setAvailableCtrcs((prev) => {
+      const filtered = prev.filter(p => !mergedCtrcs.some(n => n.id === p.id));
+      // Only append brand-new CTRCs or existing available CTRCs ('Disponível')
+      const toAvailable = mergedCtrcs.filter((c) => {
+        const existing = existingMap.get(c.id);
+        if (!existing) return true; // Brand-new goes to available list
+        return existing.status === 'Disponível';
+      });
+      return [...filtered, ...toAvailable];
+    });
+
+    setLinkedCtrcs((prev) => {
+      // Merge updated raw fields for items already inside the linked list
+      return prev.map((item) => {
+        const merged = mergedCtrcs.find((m) => m.id === item.id);
+        return merged ? merged : item;
+      });
+    });
+
+    // 4. Batch persist to local IndexedDB
+    await CtrcRepository.putMany(mergedCtrcs);
 
     // 2. Incremental historical occurrence capture to IndexedDB
     try {
       const nowStr = new Date().toISOString();
       const historyItemsToSave: CtrcOccurrenceHistoryItem[] = [];
 
-      for (const ctrc of newCtrcs) {
+      for (const ctrc of mergedCtrcs) {
         // Query current historic logs for this single CTRC
         const history = await CtrcOccurrenceHistoryRepository.getByCtrcId(ctrc.id);
         const sortedHistory = history.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -567,6 +622,7 @@ export default function App() {
             onConsolidateRomaneio={handleConsolidateRomaneio}
             adminUser={adminProfile}
             curvaAClients={curvaAClients}
+            criticClients={clients}
           />
         );
       case 'finalizacao':

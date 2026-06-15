@@ -195,43 +195,172 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     };
 
     extractedHeaders.forEach((h) => {
-      const lower = h.toLowerCase();
-      if (lower.includes('ctrc') || lower.includes('numero') || lower.includes('número')) {
-        newMappings.id = h;
-      } else if (lower.includes('destinatario') || lower.includes('recebedor') || lower.includes('cliente destinatario')) {
-        if (!newMappings.destinatario || lower.includes('destinatario')) {
-          newMappings.destinatario = h;
-        }
-      } else if (lower.includes('cidade de entrega') || lower.includes('cidade do destinatario') || lower.includes('cidade') || lower.includes('praca') || lower.includes('praça')) {
-        if (!newMappings.cidade || lower.includes('entrega')) {
-          newMappings.cidade = h;
-        }
-      } else if (lower.includes('peso') || lower.includes('weight') || lower.includes('kg')) {
-        newMappings.weight = h;
-      } else if (lower.includes('volume') || lower.includes('qtde') || lower.includes('volumes')) {
-        newMappings.volume = h;
-      } else if (lower.includes('setor') || lower.includes('rota')) {
-        newMappings.setor = h;
-      } else if (lower.includes('previsao') || lower.includes('prev_ent') || lower.includes('entrega programada') || lower.includes('previsão')) {
-        newMappings.prev_ent = h;
-      } else if (lower.includes('remetente')) {
-        newMappings.remetente = h;
-      } else if (lower.includes('pagador')) {
-        newMappings.pagador = h;
-      } else if (lower.includes('nota fiscal') || lower.includes('nf ')) {
-        newMappings.nf = h;
-      } else if (lower.includes('valor da mercadoria') || lower.includes('valor mercadoria')) {
-        newMappings.valor = h;
-      } else if (lower.includes('valor do frete') || lower.includes('frete')) {
-        newMappings.frete = h;
-      } else if (lower.includes('unidade receptora') || lower.includes('unid')) {
-        newMappings.unid = h;
-      } else if (lower.includes('codigo da ultima ocorrencia') || lower.includes('ocorrencia')) {
+      const lower = h.toLowerCase().trim().replace(/_/g, ' ').replace(/\s+/g, ' ');
+
+      // 1. CÓDIGO OCORRÊNCIA
+      if (
+        lower === 'cod ocorr' || 
+        lower === 'codigo ocorrencia' || 
+        lower === 'código de ocorrência' || 
+        lower === 'ocorrencia' || 
+        lower === 'ocorrência' || 
+        lower.includes('cod ocorr') || 
+        lower.includes('codigo da ultima ocorrencia')
+      ) {
         newMappings.ocorrencia = h;
-      } else if (lower.includes('descricao da ultima ocorrencia') || lower.includes('descricao_ocorr') || lower.includes('descrição')) {
+      }
+      // 2. DESCRIÇÃO OCORRÊNCIA
+      else if (
+        lower === 'descricao ocorrencia' || 
+        lower === 'descrição de ocorrência' || 
+        lower === 'motivo' || 
+        lower.includes('descricao da ultima ocorrencia') || 
+        lower.includes('descricao oco') || 
+        lower.includes('descrição')
+      ) {
         newMappings.descricao_ocorr = h;
-      } else if (lower.includes('localizacao') || lower.includes('localização')) {
+      }
+      // 3. PREVISÃO ENTREGA
+      else if (
+        lower === 'prev entrega' || 
+        lower === 'previsão entrega' || 
+        lower === 'previsao entrega' || 
+        lower === 'prev ent' || 
+        lower === 'prev_entrega' || 
+        lower === 'previsao_entrega' || 
+        lower.includes('previsao') || 
+        lower.includes('previsão') || 
+        lower.includes('entrega programada')
+      ) {
+        newMappings.prev_ent = h;
+      }
+      // 4. CIDADE DE ENTREGA
+      else if (
+        lower === 'cidade entrega' || 
+        lower === 'cidade de entrega' || 
+        lower === 'cidade ent' || 
+        lower === 'cidade_ent' || 
+        lower === 'cidade destino' || 
+        lower === 'cidade do destinatario' || 
+        lower === 'cidade_entrega' || 
+        lower.includes('cidade') || 
+        lower.includes('praca') || 
+        lower.includes('praça')
+      ) {
+        newMappings.cidade = h;
+      }
+      // 5. DESTINATÁRIO
+      else if (
+        lower === 'destinatario' || 
+        lower === 'destinatário' || 
+        lower === 'cliente destino' || 
+        lower === 'cliente destinatario' || 
+        lower.includes('destinatario') || 
+        lower.includes('destinatário') || 
+        lower.includes('recebedor')
+      ) {
+        newMappings.destinatario = h;
+      }
+      // 6. CTRC / DOCUMENTO / CTE
+      else if (
+        lower === 'ctrc' || 
+        lower === 'cte' || 
+        lower === 'documento' || 
+        lower.includes('ctrc') || 
+        lower.includes('numero') || 
+        lower.includes('número')
+      ) {
+        newMappings.id = h;
+      }
+      // 7. REMETENTE
+      else if (
+        lower === 'remetente' || 
+        lower === 'cliente remetente' || 
+        lower.includes('remetente')
+      ) {
+        newMappings.remetente = h;
+      }
+      // 8. SETOR / ROTA
+      else if (
+        lower === 'setor' || 
+        lower === 'setor destino' || 
+        lower === 'rota' || 
+        lower.includes('setor') || 
+        lower.includes('rota')
+      ) {
+        newMappings.setor = h;
+      }
+      // 9. PESO
+      else if (
+        lower === 'peso' || 
+        lower === 'peso real' || 
+        lower === 'peso_r' || 
+        lower.includes('peso') || 
+        lower.includes('weight') || 
+        lower.includes('kg')
+      ) {
+        newMappings.weight = h;
+      }
+      // 10. VOLUMES
+      else if (
+        lower === 'volumes' || 
+        lower === 'qtde volumes' || 
+        lower === 'quantidade de volumes' || 
+        lower.includes('volume') || 
+        lower.includes('qtde')
+      ) {
+        newMappings.volume = h;
+      }
+      // 11. VALOR
+      else if (
+        lower === 'valor' || 
+        lower === 'valor mercadoria' || 
+        lower === 'valor_mercadoria' || 
+        lower.includes('valor da mercadoria') || 
+        lower.includes('valor mercadoria')
+      ) {
+        newMappings.valor = h;
+      }
+      // 12. FRETE
+      else if (
+        lower === 'frete' || 
+        lower === 'valor frete' || 
+        lower.includes('valor do frete') || 
+        lower.includes('frete')
+      ) {
+        newMappings.frete = h;
+      }
+      // 13. LOCALIZAÇÃO
+      else if (
+        lower === 'localizacao' || 
+        lower === 'localização' || 
+        lower === 'posicao' || 
+        lower === 'posição' || 
+        lower.includes('localizacao') || 
+        lower.includes('localização') || 
+        lower.includes('posicao') || 
+        lower.includes('posição')
+      ) {
         newMappings.localizacao = h;
+      }
+      // 14. PAGADOR
+      else if (
+        lower === 'pagador' || 
+        lower === 'cliente pagador' || 
+        lower.includes('pagador')
+      ) {
+        newMappings.pagador = h;
+      }
+      // 15. UNIDADE
+      else if (
+        lower === 'unidade' || 
+        lower === 'unid' || 
+        lower === 'unid entrega' || 
+        lower === 'unid_entrega' || 
+        lower.includes('unidade') || 
+        lower.includes('unid')
+      ) {
+        newMappings.unid = h;
       }
     });
 
@@ -262,9 +391,55 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     localStorage.removeItem('rota_operational_saved_layout_mapping');
   };
 
-  const parsePtBrFloat = (val: string): number => {
-    if (!val) return 0;
-    const clean = val.replace(/\./g, '').replace(',', '.');
+  const parsePtBrFloat = (val: string | null | undefined): number => {
+    if (val === null || val === undefined) return 0;
+    
+    let clean = String(val).trim();
+    if (!clean) return 0;
+    
+    // Remove currency prefixes/suffixes and spaces
+    clean = clean.replace(/(?:R\$|USD|\$|\s)/gi, '');
+    
+    // Keep only digits, negative signs, dots, and commas
+    clean = clean.replace(/[^0-9.,-]/g, '');
+    
+    if (!clean) return 0;
+    
+    // Identify separators
+    const lastComma = clean.lastIndexOf(',');
+    const lastDot = clean.lastIndexOf('.');
+    
+    if (lastComma !== -1 && lastDot !== -1) {
+      if (lastComma > lastDot) {
+        // Comma is decimal separator (e.g., 1.234,56)
+        clean = clean.replace(/\./g, '').replace(',', '.');
+      } else {
+        // Dot is decimal separator (e.g., 1,234.56)
+        clean = clean.replace(/,/g, '');
+      }
+    } else if (lastComma !== -1) {
+      // Single/multiple commas only
+      const commasCount = (clean.match(/,/g) || []).length;
+      if (commasCount === 1) {
+        clean = clean.replace(',', '.');
+      } else {
+        clean = clean.replace(/,/g, '');
+      }
+    } else if (lastDot !== -1) {
+      // Single/multiple dots only
+      const dotsCount = (clean.match(/\./g) || []).length;
+      if (dotsCount === 1) {
+        const parts = clean.split('.');
+        const decimalPart = parts[1] || '';
+        // If exactly 3 digits after dot, treat as thousands separator (e.g., "1.200" kg/R$)
+        if (decimalPart.length === 3) {
+          clean = clean.replace(/\./g, '');
+        }
+      } else {
+        clean = clean.replace(/\./g, '');
+      }
+    }
+    
     const parsed = parseFloat(clean);
     return isNaN(parsed) ? 0 : parsed;
   };
@@ -328,6 +503,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         id: idVal ? idVal : `CTRC #${90400 + idx}`,
         destinatario: destVal || 'Destinatário Desconhecido',
         cidade: cityVal || 'Ponto de Distribuição',
+        cidade_ent: cityVal || undefined,
         weight: weightVal || 150,
         volume: volumesVal || 2,
         type: (weightVal > 1000) ? 'CURVA A' : 'NORMAL',

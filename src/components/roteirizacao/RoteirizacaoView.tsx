@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
@@ -15,6 +15,7 @@ import RoteirizacaoHeader from './RoteirizacaoHeader';
 import CargaList from './CargaList';
 import ConsolidacaoDrawer from './ConsolidacaoDrawer';
 import SelectionSummary from './SelectionSummary';
+import OperationalNoticesBanner from './OperationalNoticesBanner';
 
 // Custom Hooks
 import { useRoteirizacaoFilters } from './hooks/useRoteirizacaoFilters';
@@ -29,6 +30,7 @@ interface RoteirizacaoViewProps {
   onConsolidateRomaneio: (vehicleId: string, assignedCtrcs: Ctrc[]) => void;
   adminUser: AppUser;
   curvaAClients?: CurvaAClient[];
+  criticClients?: CriticClient[];
 }
 
 export default function RoteirizacaoView({
@@ -38,6 +40,7 @@ export default function RoteirizacaoView({
   onConsolidateRomaneio,
   adminUser,
   curvaAClients = [],
+  criticClients = [],
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -158,9 +161,11 @@ export default function RoteirizacaoView({
       vehicles,
       [], // drivers score if not retrieved yet
       helpers,
-      routePlanningItems
+      routePlanningItems,
+      planningDate,
+      criticClients
     );
-  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems]);
+  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients]);
 
   // Temporary allocations triggers
   const {
@@ -537,6 +542,11 @@ export default function RoteirizacaoView({
         draftCount={Object.keys(draftAssignments).length}
         planningDate={planningDate}
         densityMode={densityMode}
+      />
+
+      <OperationalNoticesBanner
+        planningDate={planningDate}
+        availableCtrcs={availableCtrcs}
       />
 
       {/* Main Containers: Left List (Full Width) */}

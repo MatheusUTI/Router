@@ -1,3 +1,5 @@
+import { normalizeOccurrenceCodeForLookup } from './normalizeOccurrenceCodeForLookup';
+
 /**
  * Helper to translate occurrence codes, locations and status to delivery availability badges
  */
@@ -40,10 +42,13 @@ export function getOcorrenciaStatus(
   }
 
   if (codigo && codigo.trim() !== '') {
-    const code = codigo.trim().toUpperCase();
+    const lookupCodes = normalizeOccurrenceCodeForLookup(codigo).map(c => c.toUpperCase());
     
-    // Specific restricted codes representing retention or refusal
-    if (['01', '12', '03', '04', '05', '14', 'RECUSA', 'AVARIA'].includes(code)) {
+    // Specific restricted codes representing retention or refusal (numeric or literal name)
+    const restrictedBases = ['1', '01', '12', '3', '03', '4', '04', '5', '05', '14', 'RECUSA', 'AVARIA'];
+    const isRestricted = lookupCodes.some(c => restrictedBases.includes(c));
+    
+    if (isRestricted) {
       return {
         status: 'retido',
         label: 'RETIDO',
@@ -52,7 +57,10 @@ export function getOcorrenciaStatus(
     }
 
     // Problematic occurrences
-    if (['REENTREGA', 'DEVOLUÇÃO', 'EXTRAVIADO', 'OCORRÊNCIA'].includes(code)) {
+    const problemBases = ['REENTREGA', 'DEVOLUÇÃO', 'EXTRAVIADO', 'OCORRÊNCIA'];
+    const isProblem = lookupCodes.some(c => problemBases.includes(c));
+    
+    if (isProblem) {
       return {
         status: 'problema',
         label: 'PROBLEMA',

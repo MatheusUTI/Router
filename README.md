@@ -98,6 +98,7 @@ src/
 O Router expandiu seu arcabouço de persistência local para garantir governança logística total, dividindo seus domínios de escopo de forma clara.
 
 ### Módulos Já Operacionais
+- **Calendário Operacional (Avisos de Feriados)**: Base local semeadora contendo feriados de Minas Gerais para 2026. Parser inteligente e banner superior no cockpit alertando sobre suspensões e recessos iminentes nos próximos 5 dias, com link direto às rotas ativas exibidas na mesa.
 - **Simplificação e Agilidade Visual**: Cabeçalho condensado extremamente limpo contendo apenas filtros de Filial, Rota, Setor de Ocorrência com múltipla escolha e Ordenação operacional sem quebras visuais sob zoom de navegador.
 - **Setor de Ocorrência e Ordenação Excel**: Fluxo operacional inspirado na planilha Excel para marcar/desmarcar múltiplos setores simultaneamente e ordenar toda a carga em tempo real (Ex: por data de entrega crescente/decrescente, remetente, valor, peso etc.).
 - **Elegibilidade Interna de Segurança**: O campo `routingEligibility` opera silenciosamente como guardião de risco no motor de negócios, sinalizando perigo nas listagens inferiores e interrompendo consolidações de faturas que estejam em trânsito ou finalizadas.
@@ -124,37 +125,43 @@ O Router expandiu seu arcabouço de persistência local para garantir governanç
 
 O processamento das cargas e o planejamento logístico diário obedecem a um fluxo operacional rígido e sequencial. No Router, **a roteirização tática e a consolidação de cargas acontecem primeiro**, ficando a alocação técnica de veículos e motoristas restrita exclusivamente ao momento de fechamento operacional. O veículo nunca atua como protagonista inicial no planejamento da carga.
 
+### Arquitetura de Camadas de Dados (Integridade de Fluxo)
+
+Para blindar o sistema contra inconsistências comuns originadas em bancos de dados legados ou ERPs externos, dividimos o ciclo de vida dos dados na Mesa de Roteirização em três camadas independentes:
+
+1. **Dados Brutos (Raw Layers)**: Preservados totalmente intocados na importação de arquivos CSV ou SSW. Guardam as informações exatas recebidas do faturamento do ERP (como o destinatário original, remetente, cidade declarada na nota fiscal fiscalmente, peso e código numérico da última ocorrência).
+2. **Dados Normalizados (Normalized Layers)**: Eliminam ruídos sintáticos e variações das strings (como abreviações de cidades, prefixos ou sufixos de estado como `/SP` ou `- MG`, e setores com nomes vazios) convertendo-os em chaves unificadas e padronizadas (`normCidade`, `normRota`, `normSetor`) baseadas nos dicionários de rotas oficiais da operação.
+3. **Dados Enriquecidos (Enriched Layers)**: Camada que calcula regras e metas operacionais reativas (como `effectiveRoute`, `routingEligibility` para retenção automática de faturas inconsistentes ou retidas, SLA calculado do prazo em dias `slaStatus`, classificação por faixas de peso, setores de ocorrências de transporte `occurrenceSector`, e indicador de cliente VIP Curva A).
+
 ```
-[Importação de Cargas do ERP / CSV]
+[Importação de Cargas do ERP / CSV (Raw Data)]
                      │
                      ▼
-       [Normalização de Endereço] ────────► Busca no dicionário local 'cidades_rotas'
-                     │                      (Resolve Cidade, Setor Comercial, Rota e Prazo Padrão)
+     [Camada de Normalização (Normalized Data)] ──► Busca no dicionário local 'cidades_rotas'
+                     │                              (Corrige e limpa Cidade, Setor Comercial, Rota e Prazos)
                      ▼
-         [Planejamento do Dia] ───────────► Cruzamento com históricos operacionais locais e
-                     │                      persistência na Mesa de Roteirização rápida
+     [Camada de Enriquecimento (Enriched Data)] ──► Avalia e classifica: Peso Status, SLA da Carga,
+                     │                              Curva VIP, Portifólio FOB e Elegibilidade de Roteirização
                      ▼
-      [Enriquecimento Operacional] ───────► Classifica: Peso (Leve, Médio, Pesado, Crítico)
-                     │                      Determina: SLA de Entrega (Atrasado, No Prazo, Hoje)
-                     │                      Resolve: Ocorrências Ativas e Criticidade
-                     │                      Mapeia comercialmente: Curva A e Modalidade FOB/CIF
-                     ▼
-      [Ajustes de Rota / Prioridade] ─────► Correções manuais do Operador na Mesa de Roteirização
-                     │                      (Muda rota tática, define prioridades manuais, retém faturas)
-                     ▼
-         [Consolidação de Rota] ──────────► Agrupamentos por rota, conferência de lotes e volumes totais
+          [Planejamento do Dia] ──────────────────► Exibição em tempo de execução na Mesa de Roteirização
                      │
                      ▼
-      [Escolha de Veículo & Equipe] ──────► Distribui equipes (ajudantes e motoristas) e sugere frotas
-                     │                      adequadas por limite técnico de peso e cubagem de payload
+      [Ajustes de Rota / Prioridade] ─────────────► Correções manuais do Operador na Mesa de Roteirização
+                     │                              (Muda rota tática, define prioridades manuais, retém faturas)
+                     ▼
+         [Consolidação de Rota] ──────────────────► Agrupamentos por rota, conferência de lotes e volumes totais
+                     │
+                     ▼
+      [Escolha de Veículo & Equipe] ──────────────► Distribui equipes (ajudantes e motoristas) e sugere frotas
+                     │                              adequadas por limite técnico de peso e cubagem de payload
                      ▼
       [Faturando Romaneios / Draft]
                      │
                      ▼
-    [Gravação síncrona em IndexedDB] ─────► Persistência na planilha local ('savedRomaneios') e
-                     │                      enfileiramento sequencial de eventos na 'sync_queue'
+    [Gravação síncrona em IndexedDB] ─────────────► Persistência na planilha local ('savedRomaneios') e
+                     │                              enfileiramento sequencial de eventos na 'sync_queue'
                      ▼
-   [Sync Queue / Provedor Cloud] ─────────► Sincronização em lotes assíncronos junto ao Supabase Cloud
+   [Sync Queue / Provedor Cloud] ─────────────────► Sincronização em lotes assíncronos junto ao Supabase Cloud
 ```
 
 ---

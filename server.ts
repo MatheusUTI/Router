@@ -99,13 +99,22 @@ async function startServer() {
         
         console.log(`[BACKEND] Autenticando com Supabase Auth para: ${email}`);
         
-        // Try standard Supabase Auth
-        const { data: authData, error: authError } = await activeSupabase.auth.signInWithPassword({
-          email,
-          password: cleanPass
-        });
+        // Try standard Supabase Auth inside a safe try/catch
+        let authData: any = null;
+        let authError: any = null;
+        try {
+          const authRes = await activeSupabase.auth.signInWithPassword({
+            email,
+            password: cleanPass
+          });
+          authData = authRes.data;
+          authError = authRes.error;
+        } catch (fetchErr: any) {
+          console.warn("[BACKEND] Falha de rede/conexão direta com Supabase Auth:", fetchErr?.message || fetchErr);
+          authError = { message: fetchErr?.message || "fetch failed" };
+        }
 
-        if (!authError && authData.user) {
+        if (!authError && authData?.user) {
           console.log(`[BACKEND] Autenticação Supabase Auth bem sucedida para: ${email}`);
           const meta = authData.user.user_metadata || {};
           const mappedUser = {
@@ -125,8 +134,8 @@ async function startServer() {
               role: mappedUser.role,
               is_master: mappedUser.is_master
             });
-          } catch (syncErr) {
-            console.warn("[BACKEND] Erro ao sincronizar perfil na tabela app_users pós-login:", syncErr);
+          } catch (syncErr: any) {
+            console.warn("[BACKEND] Erro ao sincronizar perfil na tabela app_users pós-login:", syncErr?.message || syncErr);
           }
 
           return res.json({
@@ -134,13 +143,22 @@ async function startServer() {
             user: mappedUser
           });
         } else {
-          console.log(`[BACKEND] Autenticação direta com Supabase Auth falhou: ${authError?.message}. Verificando tabela app_users como fallback...`);
+          console.log(`[BACKEND] Autenticação direta com Supabase Auth indisponível ou falhou: ${authError?.message}. Verificando tabela app_users como fallback...`);
           
           try {
-            const { data: dbData, error: dbError } = await activeSupabase
-              .from("app_users")
-              .select("*")
-              .eq("username", cleanUser);
+            let dbData: any = null;
+            let dbError: any = null;
+            try {
+              const dbRes = await activeSupabase
+                .from("app_users")
+                .select("*")
+                .eq("username", cleanUser);
+              dbData = dbRes.data;
+              dbError = dbRes.error;
+            } catch (fetchErr: any) {
+              console.warn("[BACKEND] Falha ao conectar ao banco de dados Supabase na busca fallback:", fetchErr?.message || fetchErr);
+              dbError = { message: fetchErr?.message || "fetch failed" };
+            }
 
             if (!dbError && dbData && dbData.length > 0) {
               const dbUser = dbData[0];
@@ -159,7 +177,7 @@ async function startServer() {
                 });
               }
             } else if (dbError) {
-              console.warn("[BACKEND] Erro ao consultar tabela app_users no login fallback:", dbError.message);
+              console.warn("[BACKEND] Erro/Aviso ao consultar tabela app_users no login fallback:", dbError.message);
             }
           } catch (dbQueryErr: any) {
             console.warn("[BACKEND] Exceção ao consultar tabela app_users no login fallback:", dbQueryErr.message || dbQueryErr);
@@ -173,26 +191,39 @@ async function startServer() {
           
           if (fallbackMatch) {
             console.log(`[BACKEND] Provisionando conta padrão '${cleanUser}' no Supabase Auth.`);
-            // Try standard signUp
-            await activeSupabase.auth.signUp({
-              email,
-              password: cleanPass,
-              options: {
-                data: {
-                  name: fallbackMatch.name,
-                  role: fallbackMatch.role,
-                  is_master: fallbackMatch.is_master
+            
+            // Try standard signUp inside safe try/catch
+            try {
+              await activeSupabase.auth.signUp({
+                email,
+                password: cleanPass,
+                options: {
+                  data: {
+                    name: fallbackMatch.name,
+                    role: fallbackMatch.role,
+                    is_master: fallbackMatch.is_master
+                  }
                 }
-              }
-            });
+              });
+            } catch (signUpErr: any) {
+              console.warn("[BACKEND] Erro ao registrar conta padrão no Supabase Auth:", signUpErr?.message || signUpErr);
+            }
 
             // Re-attempt sign-in
-            const { data: authRetryData, error: authRetryError } = await activeSupabase.auth.signInWithPassword({
-              email,
-              password: cleanPass
-            });
+            let authRetryData: any = null;
+            let authRetryError: any = null;
+            try {
+              const retryRes = await activeSupabase.auth.signInWithPassword({
+                email,
+                password: cleanPass
+              });
+              authRetryData = retryRes.data;
+              authRetryError = retryRes.error;
+            } catch (retryFetchErr: any) {
+              authRetryError = { message: retryFetchErr?.message || "fetch failed" };
+            }
 
-            if (!authRetryError && authRetryData.user) {
+            if (!authRetryError && authRetryData?.user) {
               try {
                 await activeSupabase.from("app_users").upsert({
                   username: cleanUser,
@@ -201,8 +232,8 @@ async function startServer() {
                   role: fallbackMatch.role,
                   is_master: fallbackMatch.is_master
                 });
-              } catch (dbErr) {
-                console.warn("[BACKEND] Erro de DB ao upsertar usuario fallback provisório:", dbErr);
+              } catch (dbErr: any) {
+                console.warn("[BACKEND] Erro de DB ao upsertar usuario fallback provisório:", dbErr?.message || dbErr);
               }
 
               return res.json({
@@ -216,8 +247,8 @@ async function startServer() {
                 }
               });
             } else {
-              // If email confirmation is enabled, signInWithPassword might fail. Let the master log in offline/local fallback!
-              console.warn("[BACKEND] Falha no login do recém provisionado (provavelmente confirmação de e-mail ativa). Usando fallback local.");
+              // If email confirmation is enabled or network is offline, signInWithPassword might fail. Let the master log in offline/local fallback!
+              console.warn("[BACKEND] Falha no login do recém provisionado (provavelmente confirmação de e-mail ativa ou offline). Usando fallback local.");
               return res.json({
                 success: true,
                 user: {
@@ -225,7 +256,7 @@ async function startServer() {
                   name: fallbackMatch.name,
                   role: fallbackMatch.role,
                   is_master: fallbackMatch.is_master,
-                  warning: "Confirmação de e-mail Supabase pendente."
+                  warning: "Confirmação de e-mail Supabase pendente ou offline."
                 }
               });
             }
@@ -233,7 +264,7 @@ async function startServer() {
         }
       }
     } catch (dbErr: any) {
-      console.error("[BACKEND] Exceção na autenticação do Supabase:", dbErr);
+      console.error("[BACKEND] Exceção na autenticação do Supabase:", dbErr?.message || dbErr);
     }
 
     // Try in-memory or fallback matching for seeds (including 'master')

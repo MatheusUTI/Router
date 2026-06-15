@@ -1,0 +1,6 @@
+{
+  "name": "RotaOperational",
+  "description": "Plataforma de controle logístico para emissão de manifestos, mapeamento de arquivos CSV, roteirização de rotas, monitoramento de frota e análise de desempenho.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

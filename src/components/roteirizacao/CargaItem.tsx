@@ -157,7 +157,7 @@ export default function CargaItem({
         isSelected 
           ? 'bg-indigo-650/[0.07] shadow-[inset_2px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.03)]' 
           : pStyle.cardBg
-      } hover:shadow-[0_1px_4px_rgba(0,0,0,0.25)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'}`}
+      } hover:shadow-[0_1px_4px_rgba(0,0,0,0.25)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''}`}
     >
       {/* Block 1: [FAIXA LATERAL COMPACTA] (24px) */}
       <div 
@@ -248,6 +248,14 @@ export default function CargaItem({
           <span>CTRC: {item.id}</span>
           <span>•</span>
           <span>NF: {item.nf || 'S/N'}</span>
+          {item.isCriticClient && (
+            <span 
+              className="bg-violet-500/15 text-violet-300 font-extrabold text-[9.5px] px-1.5 py-0.5 rounded border border-violet-500/35 shrink-0 select-none leading-none animate-pulse flex items-center gap-1"
+              title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
+            >
+              👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
+            </span>
+          )}
           {item.isFob && (
             <span className="bg-amber-500/10 text-amber-400 font-bold text-[10px] px-1 py-0.2 rounded border border-amber-500/20 shrink-0 select-none leading-none">
               FOB
@@ -261,7 +269,7 @@ export default function CargaItem({
         
         {/* Line 1: SLA and date parameters */}
         <div className="flex items-center gap-1.5 text-[11.5px] font-bold font-mono text-slate-400 leading-none">
-          <span>PREV: {item.prev_ent ? item.prev_ent.slice(0, 5) : 'S/P'}</span>
+          <span>PREV: {item.prev_ent || 'S/P'}</span>
           <span>•</span>
           <span className={`font-black rounded-sm border px-1 py-0.2 text-[10px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/25'}`}>
             {item.slaStatus?.label || 'D+0'}
@@ -319,11 +327,15 @@ export default function CargaItem({
             );
           })()}
 
-          {item.locationLabel && (
-            <span className="text-teal-400 font-mono text-[11px] truncate max-w-[190px]" title={item.locationLabel}>
-              LOC: <span className="font-extrabold uppercase text-slate-200 text-[11px]">{item.locationLabel.replace(/📍/g, '').trim()}</span>
-            </span>
-          )}
+          {(() => {
+            const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').trim() : '';
+            const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'NÃO INFORMADO' : normLoc;
+            return (
+              <span className="text-teal-400 font-mono text-[11px] truncate max-w-[190px]" title={item.locationLabel || 'NÃO INFORMADO'}>
+                BOX: <span className="font-extrabold uppercase text-slate-200 text-[11px]">{displayLoc}</span>
+              </span>
+            );
+          })()}
         </div>
 
         {/* Micro operational note banner */}

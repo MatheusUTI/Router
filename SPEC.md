@@ -339,7 +339,7 @@ A interface principal da Mesa de Roteirização foi simplificada de forma pragm�
 1. **Simplificação Visual Reduzida**:
    - Foram ocultados/removidos do cabeçalho principal os controles redundantes de densidade visual, de eligibility técnica e de ocupação/localização física.
    - O foco rápido com excesso de chips foi unificado no fluxo operacional, removendo poluição visual e garantindo um layout limpo ideal para operar com zoom do navegador (100%, 110%, 125%) sem scroll horizontal ou quebra de layout.
-   - **Tipografia Operacional Confortável**: Em vez de múltiplos modos de densidade visual ou de seletores adicionais, a Mesa de Roteirização utiliza uma escala tipográfica única, unificada e altamente legível. As letras principais foram ampliadas de 2px a 5px (ex: cidades/rotas em torno de 14-16px, CTRC/NFs e valores entre 12-13px, e badges em 10-11px). O layout foi otimizado com line-heights robustos (leading-tight/leading-snug) e truncagens inteligentes para comportar perfeitamente telas 1366x768 e zoom nativo do navegador em 100%, 110% e 125% de forma limpa e sem perdas de informações ou quebras de linha indesejadas.
+   - **Tipografia Operacional Confortável**: Em vez de múltiplos modos de densidade visual ou de seletores adicionais, a Mesa de Roteirização utiliza uma escala tipográfica única, unificada e altamente legível. As letras principais foram ampliadas de 2px a 5px (ex: cidades/rotas em torno de 14-16px, CTRC/NFs e valores entre 12-13px, e badges em 10-11px). O layout foi otimizado com line-heights robustos (leading-tight/leading-snug) and truncagens inteligentes para comportar perfeitamente telas 1366x768 e zoom nativo do navegador em 100%, 110% e 125% de forma limpa e sem perdas de informações ou quebras de linha indesejadas.
 
 2. **Ordenação Uniformizada Estilo Excel**:
    - Introdução de seletor compacto de ordenação operacional. Os CTRCs filtrados podem ser ordenados instantaneamente de forma crescente ou decrescente usando critérios chaves:
@@ -353,4 +353,125 @@ A interface principal da Mesa de Roteirização foi simplificada de forma pragm�
      - **Valor de faturamento** (Mais valorizado ou menos valorizado);
      - **Frete** (Mais caro ou mais barato).
    - A ordenação é aplicada dinamicamente no resultado filtrado de forma limpa, persistindo as preferências selecionadas do usuário no banco local e na cloud para sessões futuras. Se houver agrupamento ativo por cidade ou rota, as cargas em cada grupo são ordenadas individualmente conforme a regra ativa.
+
+### 13.5 Integridade de Dados da Mesa de Roteirização
+
+Para garantir que a Mesa de Roteirização opere como uma ferramenta confiável e transparente para tomadas de decisão gerencial e logística, as seguintes diretrizes de integridade e processamento de dados foram consolidadas:
+
+1. **Separação de Camadas (Raw -> Normalizado -> Enriquecido)**:
+   - **Camada Bruta (Raw)**: Preserva os dados originais importados via arquivos CSV ou SSW sem modificações destrutivas. Informações como destinatário, remetente, cidade de destino, peso, ocorrência e número da nota fiscal são mantidas intactas.
+   - **Camada Normalizada (Normalized)**: Corrige variações de sintaxe e inconsistências (ex: abreviações, sufixos de Unidade Federativa como "- MG" ou "/SP", strings vazias ou nulas) transformando campos em representações seguras (`normCidade`, `normRota`, `normSetor`).
+   - **Camada de Enriquecimento (Enriched)**: Combina regras de negócios operacionais e tabelas auxiliares para gerar campos derivados necessários à tomada de decisões (ex: `effectiveRoute`, `routingEligibility`, `occurrenceSector`, `slaStatus`).
+
+2. **Garantia de Mapeamento Direto Unidirecional (Single Source of Truth)**:
+   - **Destinatário (`destinatario`)**: Mapeado exclusivamente a partir da coluna correspondente do destinatário no arquivo SSW. É terminantemente proibido preencher ou sobrescrever este campo com dados de cidade, ocorrências, ou localização.
+   - **Remetente (`remetente`)**: Extraído diretamente da coluna de remetente original. Serve como o único canal de detecção de clientes VIP e Curva A.
+   - **Previsão de Entrega (`prev_ent`)**: Processada com suporte total a strings de data e hora do ERP. Slices que corrompem a exibição amigável do ano ou hora de agendamento na interface de usuário são proibidos.
+
+3. **Resolução de Ocorrências e Tratativas de Roteirização**:
+   - Os status logísticos (`availabilityStatus`, `availabilityLabel`) e a elegibilidade (`routingEligibility`) são atualizados de forma reativa a partir de códigos de ocorrência normalizados internamente (removendo zeros à esquerda para ocorrências no banco de dados, sem alterar a representação exibida ao usuário final).
+   - Bloqueios logísticos e restrições operacionais são gerados de forma centralizada e explicados ao operador de maneira legível, evitando redescobrir ou recalcular regras de negócio diretamente no componente de visualização.
+
+---
+
+## 14. Módulo de Calendário Operacional e Avisos Operacionais
+
+Para mitigar o risco de faturamento impróprio ou falhas na montagem de cargas que coincidem com recessos, feriados regionais ou suspensões de expediente municipais na malha de atendimento da filial de Varginha, implementou-se um módulo independente para alertas do Calendário Operacional.
+
+### 14.1 Arquitetura de Dados ("Local-First")
+
+Este módulo expande a persistência resiliente local com o banco de dados IndexedDB e duas novas entidades tipadas:
+
+1. **`OperationalCalendarEvent`**:
+   - Representa os feriados, padroeiros, recessos corporativos e suspensões decretadas.
+   - **Campos chaves**: `id` (UUID ou hash incremental), `date` (data base `YYYY-MM-DD`), `dayMonth` (`DD/MM`), `year` (especificidade do ano para datas móveis), `city` (cidade ou `'GERAL'`), `uf` (`'MG'`), `description` (anotações textuais), `eventType` (`'HOLIDAY' | 'CULTURAL' | 'OPERATIONAL_CLOSURE'`), `recurrenceType` (`'FIXED_YEARLY' | 'YEAR_SPECIFIC'`), `active` (booleano), `severity` (`'INFO' | 'WARNING' | 'CRITICAL'`).
+
+2. **`OperationalNotice`**:
+   - Alerta gerado em tempo de execução para consumo do cockpit.
+   - **Campos**: `id`, `date`, `city`, `route` (rota cruzada ativa), `title`, `message`, `severity`, `daysUntil`, `sourceEventId`.
+
+### 14.2 Seeding e Parser Inteligente para MG 2026
+
+- **Fonte de Entrada**: Dataset bruto de feriados municipais de Minas Gerais 2026 (`initialFeriadosMG.ts`), estruturado no padrão de leituras rápidas:
+  ```text
+  DATE
+  Cidade - Descrição
+  ```
+- **Parsing Automático (Idempotente)**:
+  - Preserva acentuações nativas e remove espaçamentos impróprios.
+  - Normaliza as cidades mapeadas de acordo com as chaves do dicionário `cidades_rotas`.
+  - Diferencia datas fixas recorrentes (como recesso do servidor público, Nossa Senhora da Conceição, aniversários municipais) de feriados móveis vinculados estritamente ao ano atual (Carnaval, Corpus Christi, Sexta-feira da Paixão).
+- **Processamento de Inoculação**: Ao subir a aplicação, se a tabela `operational_calendar_events` estiver zerada, o adaptador local invoca o parser e popula as registros de forma totalmente transparente e isolada.
+
+### 14.3 Visualização Dinâmica (Top-level Banner)
+
+O cockpit de decisões táticas renderiza os alertas através do componente reativo `<OperationalNoticesBanner />` no topo do painel principal (posicionado logo após o cabeçalho de filtros):
+
+1. **Horizonte de Avaliação**: O banner avalia os próximos **5 dias** de operação em relação à data selecionada no painel de planejamento (`planningDate`).
+2. **Integração Cruzada de Cargas**:
+   - O algoritmo cruza dados do calendário com as cidades-destino e rotas ativas atualmente exibidas na Mesa de Roteirização.
+   - Se uma cidade em holiday listado possui carga na fila, o banner exibe uma badge contendo o código da rota ativa afetada (ex: `ROTA 06`).
+3. **Escala de Crise**:
+   - `CRITICAL` (Vermelho): Bloqueios completos, fins de expediente nacionais e feriados da sede de expedição.
+   - `WARNING` (Amarelo): Feriados municipais específicos, aniversários de cidades que geram potencial atraso.
+   - `INFO` (Azul/Slate): Festividades regionais de alerta consultivo.
+4. **Comportamento Limpo**: Se não houver nenhum evento operacional no intervalo dos próximos 5 dias aplicável ao lote atual, o banner permanece ocultado para poupar espaço vertical absoluto. Permite expansão opcional para listar individualmente os eventos com contagem de dias restantes dinâmicos.
+
+---
+
+## 15. Importação segura por reprocessamento
+
+Com o objetivo de permitir que o usuário re-importe arquivos CSV/SSW contendo correções de faturamento, pesos, valores ou novas ocorrências físicas registradas no galpão, o Router adota um mecanismo de mesclagem idempotente e não destrutiva para proteger decisões humanas tomadas localmente:
+
+1. **Cruzamento por ID**: Os registros de CTRC importados são pareados com a base de IndexedDB através do identificador operacional único (`id`/`ctrcId`).
+2. **Separação de Atributos**:
+   - **Dados Brutos ERP (Atualizáveis)**: Campos vindos do SSW como peso, volumes, valor de nota fiscal, valor de frete, última ocorrência, descrição da ocorrência e localização física são atualizados com os valores mais recentes do arquivo.
+   - **Campos Locais Protegidos (Imutáveis na Importação)**: Decisões tomadas diretamente na Mesa de Roteirização são preservadas e blindadas contra re-escrita indesejada. Os seguintes campos locais são mantidos intactos caso já existam:
+     - `operationalRoute` (Rota de intervenção manual)
+     - `manualPriority` (Prioridade em nível de carregamento)
+     - `planningStatus` (Status de consolidação/fluxo da carga)
+     - `operationalNote` (Anotações logísticas de doca)
+     - `isManualRoute` (Sinalizador de rota operacional divergente)
+     - `preRomaneioId` (Relação com ordens de carregamento prévio)
+     - `romaneioId` / `convertedRomaneioId` (Relação com romaneios emitidos)
+     - `routePlanningId` (Identificação de batch tático)
+3. **Preservação de Trânsito / Status Operacional**: O estado geral da carga no cockpit (Ex: `'Disponível'`, `'Em Rota'`, `'Entregue'`, `'Recusado'`, `'Agendamento'`, `'Transferência'`) é preservado para blindar faturas em andamento contra regressões ao estado inicial pendente.
+4. **Particionamento em Memória Estável**: Na re-importação reativa, os records mesclados são distribuídos adequadamente entre a fila de pendências (`availableCtrcs`) e as listas de faturamento em trânsito/fechamento (`linkedCtrcs`) para prevenir duplicidade visual na IU.
+
+---
+
+## 16. SLA baseado na data ativa de planejamento
+
+Com o objetivo de sincronizar o monitoramento visual de atrasos e prazos de faturamento com a agenda operacional ativa planejada, o Router calcula o status de SLA do CTRC utilizando a própria data de planejamento da Mesa:
+
+1. **Definição da Referência**: O status de SLA (D+0, D+1, Atrasado, etc.) é computado comparando a data de previsão de entrega (`prev_ent` do CTRC) com a Data Operacional Ativa selecionada pelo planejador no cockpit (`planningDate`).
+2. **Eliminação de Referências Fixas**: A dependência de datas estáticas (como o fallback legado de '2026-05-25') é superada por completo. Fica garantido o fallback dinâmico baseado na data atual do sistema (`YYYY-MM-DD`) para casos de faturamento disperso ou chamadas retrocompatíveis de segundo plano.
+3. **Propagação Reativa**: Quando o operador logística altera a data ativa no painel da Mesa de Roteirização, o `RoteirizacaoEnrichmentService` re-computa e recalcula o SLA de faturamento de todas as faturas visíveis em tempo real (< 5ms).
+
+---
+
+## 17. Clientes Diretoria / Especiais
+
+Com a finalidade de blindar a operação contra atrasos e fricções de atendimento críticos, a Mesa de Roteirização destaca de forma proeminente todos os CTRCs associados a clientes VIP monitorados:
+
+1. **Reconhecimento Flexível**: Os destinatários, remetentes ou pagadores dos CTRCs importados são correlacionados com a base de `CriticClient` de forma resiliente, empregando normalização de texto (remoção de acentos, pontuações e espaçamento vago) e correspondência de sub-strings.
+2. **Priorização e Destaque Visual**:
+   - Os registros ganham uma borda nobre de destaque em cor violeta (`border-l-violet-500`) com background tonalizado sutil.
+   - Um badge visual pulsante (`👑 DIRETORIA` ou `👑 ESPECIAL`, baseado no prefixo `CD` ou outro respectivamente) é exibido diretamente ao lado dos dados identificadores do CTRC.
+   - Esta formatação visual se sobrepõe à estilização de Curva A e faturas FOB, destacando que os prazos e tratativas desses clientes são de alta prioridade.
+   - Informações complementares e o motivo do alerta (como janelas de entrega ou restrições de descarga) ficam disponíveis em tooltips responsivas.
+
+---
+
+## 18. Parser numérico resiliente na importação
+
+Com o objetivo de evitar a inflação acidental ou perda de valores críticos nas planilhas importadas de diferentes sistemas de ERP e transportadoras brasileiras / norte-americanas (como formato SSW CSV, Excel exports), o Router emprega um parser numérico universal unificado:
+
+1. **Separação Decimal Inteligente**: Identifica de forma proativa o separador decimal correto (seja vírgula `,` ou ponto `.`) medindo as quantidades e posições relativas dos caracteres de separação.
+2. **Saneamento e Formatação**:
+   - Descarta símbolos monetários (`R$`, `$`, `USD`) e espaçamentos redundantes automaticamente antes da conversão.
+   - Trata adequadamente números com formato misto (ex: milhar em ponto e decimal em vírgula, ou apenas vírgula como decimal).
+   - Suporta fallbacks amigáveis para campos vazios, nulos ou indefinidos, garantindo o valor padrão `0` com robusta tolerância a falhas (NaN safety).
+
+
 

@@ -1,9 +1,11 @@
-import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem, RoutingEligibility } from '../../../types';
+import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem, RoutingEligibility, CriticClient } from '../../../types';
 import { initialDeliveryOccurrences } from '../../../data';
 import { getSlaStatus } from '../helpers/getSlaStatus';
 import { getPesoStatus } from '../helpers/getPesoStatus';
 import { getOcorrenciaStatus } from '../helpers/getOcorrenciaStatus';
 import { isClienteCurvaA } from '../helpers/isClienteCurvaA';
+import { isClienteCritico } from '../helpers/isClienteCritico';
+import { normalizeOccurrenceCodeForLookup } from '../helpers/normalizeOccurrenceCodeForLookup';
 
 export interface RoutingEligibilityInfo {
   routingEligibility: RoutingEligibility;
@@ -15,14 +17,26 @@ export function resolveRoutingEligibility(
   ctrc: Ctrc,
   occurrence: DeliveryOccurrence | undefined
 ): RoutingEligibilityInfo {
-  const code = (ctrc.ocorrencia || '').trim().toUpperCase();
+  const lookupCodes = normalizeOccurrenceCodeForLookup(ctrc.ocorrencia);
+  const isFinalizerCode = lookupCodes.some(c => ['1', '01', '81', '82', '3', '03'].includes(c));
   
-  // Se código 3:
-  if (code === '3' || code === '03' || code === '003') {
+  if (isFinalizerCode) {
+    const isCode3 = lookupCodes.some(c => c === '3' || c === '03');
     return {
       routingEligibility: 'NAO_ROTEIRIZAVEL',
-      routingBlockReason: 'Entrega realizada com comprovante retido',
-      routingEligibilitySource: 'REGRA_CODIGO_3'
+      routingBlockReason: isCode3 
+        ? 'Desvio severo ou cancelamento (Código 03)' 
+        : `Comprovante retido ou entrega definitiva (Código ${ctrc.ocorrencia || 'comprovante'})`,
+      routingEligibilitySource: isCode3 ? 'REGRA_CODIGO_3' : 'REGRA_CODIGO_FINALIZADOR'
+    };
+  }
+
+  const statusStr = (ctrc.status || '').toUpperCase().trim();
+  if (statusStr === 'TRANSFERÊNCIA' || statusStr === 'TRANSFERENCIA') {
+    return {
+      routingEligibility: 'NAO_ROTEIRIZAVEL',
+      routingBlockReason: 'Status de transferência ativo',
+      routingEligibilitySource: 'STATUS_INCONSISTENCIA_TRANSFERENCIA'
     };
   }
 
@@ -68,7 +82,6 @@ export function resolveRoutingEligibility(
   }
 
   // Se inconsistência
-  const statusStr = (ctrc.status || '').toUpperCase().trim();
   if (statusStr === 'ENTREGUE') {
     return {
       routingEligibility: 'NAO_ROTEIRIZAVEL',
@@ -118,7 +131,9 @@ export const RoteirizacaoEnrichmentService = {
     vehicles: Vehicle[] = [],
     drivers: DriverScore[] = [],
     helpers: Helper[] = [],
-    routePlanningItems: RoutePlanningItem[] = []
+    routePlanningItems: RoutePlanningItem[] = [],
+    planningDate?: string,
+    criticClients: CriticClient[] = []
   ): RoteirizacaoItem[] {
     // Build maps for efficient lookup
     const occMap = new Map<string, DeliveryOccurrence>();
@@ -158,7 +173,7 @@ export const RoteirizacaoEnrichmentService = {
           return `ROTA ${num < 10 ? '0' + num : num}`;
         }
 
-        return clean;
+        return 'ROTA NÃO MAPEADA';
       };
 
       const setorBruto = String(ctrc.setor || '').trim();
@@ -166,29 +181,51 @@ export const RoteirizacaoEnrichmentService = {
                    setorBruto.toUpperCase().replace(/\s/g, '').includes('ROTA99') || 
                    setorBruto.toUpperCase().trim() === 'ROTA 99';
 
-      const cityInput = (ctrc.cidade_ent || ctrc.cidade || '').toUpperCase().trim();
-      // Remove common state suffixes/prefixes (e.g. "VARGINHA - MG" -> "VARGINHA" or "ALFENAS/MG" -> "ALFENAS")
-      const cleanedCityInput = cityInput.split(/[-/]/)[0].trim();
+      // Determine cityInput using the priority of origins
+      let cityInput = '';
+      if (ctrc.cidade_ent && ctrc.cidade_ent.trim() !== '') {
+        cityInput = ctrc.cidade_ent.trim();
+      } else if (ctrc.cidade && ctrc.cidade.trim() !== '') {
+        cityInput = ctrc.cidade.trim();
+      } else {
+        cityInput = 'CIDADE NÃO INFORMADA';
+      }
 
-      let normCidade = cityInput;
+      // Safeguard against invalid cities containing route or numeric or status noise
+      const cityInputUpper = cityInput.toUpperCase().trim();
+      let validCity = cityInputUpper;
+      if (
+        validCity.includes('ROTA') || 
+        validCity.includes('SETOR') || 
+        /^\d+$/.test(validCity) || 
+        validCity === 'SEM ROTA' || 
+        validCity === 'SEM SETOR'
+      ) {
+        validCity = 'CIDADE NÃO INFORMADA';
+      }
+
+      // Remove common state suffixes/prefixes (e.g. "VARGINHA - MG" -> "VARGINHA" or "ALFENAS/MG" -> "ALFENAS")
+      const cleanedCityInput = validCity.split(/[-/]/)[0].trim();
+
+      let normCidade = validCity;
       let normSetor = '';
       let normRota = '';
       let normPrazo: number | undefined = undefined;
       let normPriority: string | undefined = 'NORMAL';
 
       if (is99) {
-        normCidade = cityInput || 'CIDADE NÃO INFORMADA';
+        normCidade = validCity;
         normRota = 'ROTA 99';
         normSetor = 'ROTA 99';
       } else {
         const matchRoute = cidadesRotas.find((cr) => {
           const routeCity = cr.cidade.toUpperCase().trim();
           const cleanRouteCity = routeCity.split(/[-/]/)[0].trim();
-          if (routeCity === cityInput || cleanRouteCity === cleanedCityInput) return true;
+          if (routeCity === validCity || cleanRouteCity === cleanedCityInput) return true;
           if (cr.alias) {
             const aliases = cr.alias.toUpperCase().split(',').map((s) => s.trim());
             const cleanedAliases = aliases.map(a => a.split(/[-/]/)[0].trim());
-            if (aliases.includes(cityInput) || 
+            if (aliases.includes(validCity) || 
                 aliases.includes(cleanedCityInput) || 
                 cleanedAliases.includes(cleanedCityInput)) {
               return true;
@@ -204,14 +241,14 @@ export const RoteirizacaoEnrichmentService = {
           normPrazo = matchRoute.prazo_padrao;
           normPriority = matchRoute.prioridade_operacional;
         } else {
-          normCidade = cityInput || 'CIDADE NÃO INFORMADA';
+          normCidade = validCity;
           normRota = normalizeRouteLabel(setorBruto);
           normSetor = normalizeRouteLabel(setorBruto);
         }
       }
 
       // 2. SLA calculations
-      const sla = getSlaStatus(ctrc.prev_ent);
+      const sla = getSlaStatus(ctrc.prev_ent, planningDate);
 
       // 3. Occurrence code & description
       const occurrenceCode = ctrc.ocorrencia ? ctrc.ocorrencia.trim() : undefined;
@@ -220,16 +257,29 @@ export const RoteirizacaoEnrichmentService = {
       let foundOcc: DeliveryOccurrence | undefined = undefined;
 
       if (occurrenceCode) {
-        const codeUpper = occurrenceCode.toUpperCase();
-        foundOcc = occMap.get(codeUpper);
+        const lookupCandidates = normalizeOccurrenceCodeForLookup(occurrenceCode);
+        for (const candidate of lookupCandidates) {
+          const match = occMap.get(candidate.toUpperCase());
+          if (match) {
+            foundOcc = match;
+            break;
+          }
+        }
         if (foundOcc) {
           occurrenceDescription = foundOcc.descricao;
         }
 
-        // Determine criticality
-        if (['01', '12', '03', '04', '05', '14', 'RECUSA', 'AVARIA'].includes(codeUpper)) {
+        // Determine criticality using lookup candidates
+        const lookupUpper = lookupCandidates.map(c => c.toUpperCase());
+        const criticalBases = ['01', '1', '12', '03', '3', '04', '4', '05', '5', '14', 'RECUSA', 'AVARIA'];
+        const isCritical = lookupUpper.some(c => criticalBases.includes(c));
+
+        const mediumBases = ['REENTREGA', 'DEVOLUÇÃO', 'EXTRAVIADO', 'OCORRÊNCIA'];
+        const isMedium = lookupUpper.some(c => mediumBases.includes(c));
+
+        if (isCritical) {
           occurrenceCriticality = 'CRÍTICA';
-        } else if (['REENTREGA', 'DEVOLUÇÃO', 'EXTRAVIADO', 'OCORRÊNCIA'].includes(codeUpper)) {
+        } else if (isMedium) {
           occurrenceCriticality = 'MÉDIA';
         } else {
           occurrenceCriticality = 'SUAVE';
@@ -287,6 +337,10 @@ export const RoteirizacaoEnrichmentService = {
       const isCurvaA = curvaInfo.isCurvaA;
       const curvaAClass = curvaInfo.classification;
 
+      // 7.5. Critic Client Detection
+      const criticInfo = isClienteCritico(ctrc, criticClients);
+      const isCritic = criticInfo.isCriticClient;
+
       // 8. FOB Detection
       const isFob = !!(ctrc.pagador && ctrc.pagador.toUpperCase().trim() === ctrc.destinatario.toUpperCase().trim());
 
@@ -294,7 +348,9 @@ export const RoteirizacaoEnrichmentService = {
       let statusClass = ocoStatus.badgeClass;
       let rowClass = 'border-l-[3px] border-l-transparent';
       
-      if (isCurvaA) {
+      if (isCritic) {
+        rowClass = 'border-l-[4px] border-l-violet-500 bg-violet-950/[0.015] shadow-[0_0_8px_rgba(139,92,246,0.04)]';
+      } else if (isCurvaA) {
         rowClass = 'border-l-[3px] border-l-red-500/65 shadow-[0_0_6px_rgba(239,68,68,0.03)] bg-red-950/[0.01]';
       } else if (isFob) {
         rowClass = 'border-l-[3px] border-l-amber-500/50 bg-amber-950/[0.01]';
@@ -340,6 +396,11 @@ export const RoteirizacaoEnrichmentService = {
         isCurvaA,
         curvaAClass,
         isFob,
+        isCriticClient: isCritic,
+        criticClientName: criticInfo.criticClientName,
+        criticClientPrefix: criticInfo.criticClientPrefix,
+        criticClientScore: criticInfo.criticClientScore,
+        criticClientReason: criticInfo.criticClientReason,
         visualFlags: {
           isCurvaA,
           isFob,

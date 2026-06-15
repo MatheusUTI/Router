@@ -11,7 +11,7 @@ export interface SlaStatus {
   isTomorrow: boolean;
 }
 
-export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = '2026-05-25'): SlaStatus {
+export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = new Date().toISOString().split('T')[0]): SlaStatus {
   if (!prevEnt) {
     return {
       label: 'S/ PRAZO',

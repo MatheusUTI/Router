@@ -278,6 +278,11 @@ export interface RoteirizacaoItem extends Ctrc {
   isCurvaA: boolean;
   curvaAClass?: string;
   isFob: boolean;
+  isCriticClient?: boolean;
+  criticClientName?: string;
+  criticClientPrefix?: string;
+  criticClientScore?: number;
+  criticClientReason?: string;
   visualFlags: {
     isCurvaA: boolean;
     isFob: boolean;
@@ -355,6 +360,37 @@ export interface PreRomaneio {
   convertedRomaneioId?: string;
   notes?: string;
 }
+
+export interface OperationalCalendarEvent {
+  id: string;
+  date: string; // YYYY-MM-DD
+  dayMonth: string; // DD/MM
+  year?: number; // e.g. 2026
+  city: string; // 'GERAL' or city name
+  uf?: string; // 'MG'
+  description: string;
+  eventType: string; // e.g. 'FERIADO', 'ANIVERSARIO', 'SUSPENSAO', etc.
+  recurrenceType: 'FIXED_YEARLY' | 'YEAR_SPECIFIC';
+  active: boolean;
+  source: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OperationalNotice {
+  id: string;
+  date: string; // YYYY-MM-DD
+  city: string; // 'GERAL' or city name
+  route?: string;
+  title: string;
+  message: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  daysUntil: number;
+  sourceEventId: string;
+}
+
 
 
 
