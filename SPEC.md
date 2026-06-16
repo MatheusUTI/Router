@@ -592,6 +592,14 @@ Com o fim de evitar inconsistências de cache no Vercel ou preferências persist
    - Um botão interativo integrado de **Limpar filtros** é fornecido para o operador resetar todos os filtros de ocorrências correntes, devolvendo a legibilidade total das faturas do depósito instantaneamente.
 
 4. **Painel de Diagnóstico de Gargalos (Homologação e Suporte)**:
+
+5. **Classificação `availableCtrcs` vs `linkedCtrcs`**:
+   - **`availableCtrcs`**: Representa os CTRCs candidatos ativos à Mesa de Roteirização.
+   - **`linkedCtrcs`**: Representa os CTRCs já planejados ou vinculados a um pré-romaneio/romaneio/fase posterior.
+   - **Importação Bruta**: A simples importação do faturamento bruto no IndexedDB (com status inicial 'Pendente') **não** torna o CTRC vinculado; ele deve figurar como candidato na Mesa de Roteirização (`availableCtrcs`).
+   - **Critérios de Vínculo**: O CTRC vai para `linkedCtrcs` apenas se estiver em fases de execução: `"Separando"`, `"Programado"`, `"Romaneio"`, `"Em Rota"`, `"Entregue"`, `"Finalizado"`, `"Cancelado"`, possuir campos `preRomaneioId`/`romaneioId` ativos, ou se o seu ID estiver associado a algum Pré-Romaneio ativo não-cancelado. Any other status (`"Pendente"`, `"Aguardando"`, ausente) permanece em `availableCtrcs`.
+
+6. **Painel de Diagnóstico de Gargalos (Homologação e Suporte)**:
    - Um painel lateral especializado e seguro chamado **Painel de Diagnósticos da Mesa** (`RoteirizacaoDiagnosticsPanel`) serve como ferramenta de suporte técnico e homologação para diagnosticar em qual etapa do fluxo de filtragem sequencial as faturas "somem".
    - **Garantia de Não-Destrutividade**: O painel **nunca altera nenhum dado transacional ou mestre** do banco IndexedDB ou do Supabase. Ele realiza um cálculo puramente dedutivo e em tempo real sobre os vetores de faturas carregados.
    - **Pipeline de Filtragem Rastreável**: Mostra a evolução quantitativa das faturas de ponta a ponta:

@@ -54,6 +54,65 @@ import OcorrenciasView from './components/OcorrenciasView';
 import CurvaAView from './components/CurvaAView';
 import CidadesRotasView from './components/CidadesRotasView';
 
+// Helper to determine if a status is "available"
+export const notAvailableStatuses = new Set<string>([
+  'Separando',
+  'Programado',
+  'Romaneio',
+  'Em Rota',
+  'Entregue',
+  'Finalizado',
+  'Cancelado'
+]);
+
+export function isStatusAvailable(status?: string | null): boolean {
+  if (!status) return true;
+  return !notAvailableStatuses.has(status);
+}
+
+// Function to partition CTRCs based on their operational phase and pre-romaneio links
+export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: Ctrc[]; linked: Ctrc[] }> {
+  let activePreRomaneioCtrcIds = new Set<string>();
+  try {
+    const preRomaneios = await PreRomaneioRepository.getAll();
+    preRomaneios.forEach((pr) => {
+      if (pr.status !== 'CANCELADO') {
+        pr.ctrcIds?.forEach((id) => {
+          activePreRomaneioCtrcIds.add(id);
+        });
+      }
+    });
+  } catch (err) {
+    console.error('[partitionCtrcs] Failed to retrieve pre-romaneios:', err);
+  }
+
+  const available: Ctrc[] = [];
+  const linked: Ctrc[] = [];
+
+  for (const ctrc of localCtrcs) {
+    const isLinkedByPreRomaneio = activePreRomaneioCtrcIds.has(ctrc.id);
+    const hasPreRomaneioId = !!(ctrc as any).preRomaneioId;
+    const hasRomaneioId = !!(ctrc as any).romaneioId;
+    const isSelectedPermanently = !!(ctrc as any).selectedForRoute;
+
+    const hasLinkedStatus = ctrc.status && notAvailableStatuses.has(ctrc.status);
+
+    if (
+      hasLinkedStatus ||
+      isLinkedByPreRomaneio ||
+      hasPreRomaneioId ||
+      hasRomaneioId ||
+      isSelectedPermanently
+    ) {
+      linked.push(ctrc);
+    } else {
+      available.push(ctrc);
+    }
+  }
+
+  return { available, linked };
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('login');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -198,8 +257,7 @@ export default function App() {
 
         const localCtrcs = await CtrcRepository.getAll();
         if (localCtrcs.length > 0) {
-          const available = localCtrcs.filter((c) => c.status === 'Disponível');
-          const linked = localCtrcs.filter((c) => c.status !== 'Disponível');
+          const { available, linked } = await partitionCtrcs(localCtrcs);
 
           // Diagnostics block for App.tsx mount
           const statusCounts: Record<string, number> = {};
@@ -400,11 +458,11 @@ export default function App() {
     // 3. Update memory react state safely partitioning by their previous state/status
     setAvailableCtrcs((prev) => {
       const filtered = prev.filter(p => !mergedCtrcs.some(n => n.id === p.id));
-      // Only append brand-new CTRCs or existing available CTRCs ('Disponível')
+      // Only append brand-new CTRCs or existing available CTRCs
       const toAvailable = mergedCtrcs.filter((c) => {
         const existing = existingMap.get(c.id);
         if (!existing) return true; // Brand-new goes to available list
-        return existing.status === 'Disponível';
+        return isStatusAvailable(existing.status);
       });
       return [...filtered, ...toAvailable];
     });
@@ -472,8 +530,7 @@ export default function App() {
     try {
       const allLocalCtres = await CtrcRepository.getAll();
       if (allLocalCtres.length > 0) {
-        const available = allLocalCtres.filter((c) => c.status === 'Disponível');
-        const linked = allLocalCtres.filter((c) => c.status !== 'Disponível');
+        const { available, linked } = await partitionCtrcs(allLocalCtres);
 
         // Diagnostics block for App.tsx handleAddCtrcs rehydration
         const statusCounts: Record<string, number> = {};
@@ -698,8 +755,7 @@ export default function App() {
 
       const localCtrcs = await CtrcRepository.getAll();
       if (localCtrcs.length > 0) {
-        const available = localCtrcs.filter((c) => c.status === 'Disponível');
-        const linked = localCtrcs.filter((c) => c.status !== 'Disponível');
+        const { available, linked } = await partitionCtrcs(localCtrcs);
         setAvailableCtrcs(available);
         setLinkedCtrcs(linked);
       } else {
