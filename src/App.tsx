@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio } from './types';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import { IS_DEMO_MODE } from './constants/runtimeMode';
 import {
@@ -477,7 +477,33 @@ export default function App() {
     // Persiste no IndexedDB em segundo plano
     await CtrcRepository.putMany(updatedCtrcs);
 
+    // Define standard starting tab on finalization screen
+    localStorage.setItem('finalizacao_initial_tab', 'active');
+
     // Go to finalization page!
+    setCurrentView('finalizacao');
+  };
+
+  const handleGeneratePreRomaneioSuccess = async (preRomaneios: PreRomaneio[], originalCtrcs: Ctrc[]) => {
+    const preSeparatingIds = originalCtrcs.map((c) => c.id);
+    
+    // 1. Update in CtrcRepository to 'Separando' on DB level
+    const updatedCtrcs = originalCtrcs.map((c) => ({ ...c, status: 'Separando' as const }));
+    await CtrcRepository.putMany(updatedCtrcs);
+
+    // 2. Clear from available in-memory set
+    setAvailableCtrcs((prev) => prev.filter((c) => !preSeparatingIds.includes(c.id)));
+
+    // 3. Insert into linked sets in-memory
+    setLinkedCtrcs((prev) => {
+      const filtered = prev.filter((c) => !preSeparatingIds.includes(c.id));
+      return [...filtered, ...updatedCtrcs];
+    });
+
+    // 4. Force state direction to pre-romaneio list
+    localStorage.setItem('finalizacao_initial_tab', 'preromaneio');
+
+    // 5. Navigate
     setCurrentView('finalizacao');
   };
 
@@ -673,6 +699,7 @@ export default function App() {
             adminUser={adminProfile}
             curvaAClients={curvaAClients}
             criticClients={clients}
+            onGeneratePreRomaneioSuccess={handleGeneratePreRomaneioSuccess}
           />
         );
       case 'finalizacao':

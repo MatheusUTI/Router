@@ -33,6 +33,8 @@ interface RoteirizacaoHeaderProps {
   selectedEligibility?: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS';
   setSelectedEligibility?: (eligibility: 'ROTEIRIZAVEL' | 'REVISAR' | 'NAO_ROTEIRIZAVEL' | 'TODAS') => void;
   densityMode?: 'compact' | 'default' | 'comfortable';
+  showOtherUnits?: boolean;
+  setShowOtherUnits?: (show: boolean) => void;
 }
 
 export default function RoteirizacaoHeader({
@@ -58,6 +60,8 @@ export default function RoteirizacaoHeader({
   onOpenFleetDrawer,
   draftCount = 0,
   planningDate,
+  showOtherUnits = false,
+  setShowOtherUnits = () => {},
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -155,6 +159,19 @@ export default function RoteirizacaoHeader({
             </span>
           )}
         </div>
+
+        {/* Toggle showOtherUnits (Mostrar outras unidades) */}
+        <label className="flex items-center gap-1.5 bg-[#070c14] border border-[#1a2440] rounded px-2 py-1 h-9 shrink-0 cursor-pointer hover:bg-slate-900 select-none text-[12px]">
+          <input
+            type="checkbox"
+            checked={showOtherUnits}
+            onChange={(e) => setShowOtherUnits(e.target.checked)}
+            className="rounded border-slate-700 text-indigo-500 bg-slate-900 focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5 accent-indigo-500"
+          />
+          <span className="font-extrabold uppercase font-mono tracking-tight text-[11px] text-slate-400 leading-none">
+            Outras Unidades
+          </span>
+        </label>
 
         {/* Route Selector (Bind to sector state) */}
         <div className={selectorWrapClass}>

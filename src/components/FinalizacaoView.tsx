@@ -48,6 +48,15 @@ export default function FinalizacaoView({
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
   const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('programacao');
 
+  // Load initial tab from localStorage if specified (e.g., coming from generate pre-romaneio or consolidate)
+  useEffect(() => {
+    const saved = localStorage.getItem('finalizacao_initial_tab');
+    if (saved === 'active' || saved === 'preromaneio' || saved === 'programacao' || saved === 'history') {
+      setActiveTab(saved);
+      localStorage.removeItem('finalizacao_initial_tab');
+    }
+  }, []);
+
   const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
     const plateUpper = vehiclePlate.toUpperCase().replace(/\s/g, '');
     const driverUpper = driverName.toUpperCase();

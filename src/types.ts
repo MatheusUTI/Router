@@ -41,7 +41,7 @@ export interface Ctrc {
   weight: number; // kg
   volume: number; // m3 (or volumes count)
   type: 'CURVA A' | 'NORMAL';
-  status: 'Pendente' | 'Entregue' | 'Recusado' | 'Disponível' | 'Em Rota' | 'Transferência' | 'Agendamento';
+  status: 'Pendente' | 'Entregue' | 'Recusado' | 'Disponível' | 'Em Rota' | 'Transferência' | 'Agendamento' | 'Separando';
   cidade_ent?: string;
   setor?: string;
   prev_ent?: string;
@@ -191,6 +191,7 @@ export interface RoteirizacaoPreferences {
   selectedOccurrenceSectors?: string[];
   sortField?: RoteirizacaoSortField;
   sortDirection?: SortDirection;
+  showOtherUnits?: boolean;
 }
 
 export interface UserPreferencesPayload {

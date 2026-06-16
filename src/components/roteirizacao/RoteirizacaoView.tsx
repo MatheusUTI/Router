@@ -31,6 +31,7 @@ interface RoteirizacaoViewProps {
   adminUser: AppUser;
   curvaAClients?: CurvaAClient[];
   criticClients?: CriticClient[];
+  onGeneratePreRomaneioSuccess?: (preRomaneios: PreRomaneio[], originalCtrcs: Ctrc[]) => void;
 }
 
 export default function RoteirizacaoView({
@@ -41,6 +42,7 @@ export default function RoteirizacaoView({
   adminUser,
   curvaAClients = [],
   criticClients = [],
+  onGeneratePreRomaneioSuccess,
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -205,6 +207,8 @@ export default function RoteirizacaoView({
     setSelectedLocationFilter,
     searchQuery,
     setSearchQuery,
+    showOtherUnits,
+    setShowOtherUnits,
     activeTacticalFilter,
     setActiveTacticalFilter,
     selectedEligibility,
@@ -310,6 +314,9 @@ export default function RoteirizacaoView({
           if (rotPref.sortDirection) {
             setSortDirection(rotPref.sortDirection);
           }
+          if (rotPref.showOtherUnits !== undefined) {
+            setShowOtherUnits(rotPref.showOtherUnits);
+          }
         }
         setIsPrefLoaded(true);
 
@@ -347,6 +354,9 @@ export default function RoteirizacaoView({
           if (rotPref.sortDirection) {
             setSortDirection(rotPref.sortDirection);
           }
+          if (rotPref.showOtherUnits !== undefined) {
+            setShowOtherUnits(rotPref.showOtherUnits);
+          }
         }
       } catch (err) {
         console.error('[Roteirizacao] Erro no carregamento/sincronia das preferências do usuário:', err);
@@ -371,9 +381,10 @@ export default function RoteirizacaoView({
       activeTacticalFilter,
       selectedOccurrenceSectors,
       sortField,
-      sortDirection
+      sortDirection,
+      showOtherUnits
     });
-  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, isPrefLoaded, isNormalizing]);
+  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, showOtherUnits, isPrefLoaded, isNormalizing]);
 
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
@@ -490,6 +501,11 @@ export default function RoteirizacaoView({
 
       setToastMessage(`📦 Gerados ${newPreRomaneios.length} pré-romaneios com sucesso!`);
       setTimeout(() => setToastMessage(null), 3000);
+
+      // Call parent success callback to handle state update and route redirection
+      if (onGeneratePreRomaneioSuccess) {
+        onGeneratePreRomaneioSuccess(newPreRomaneios, selectedCtrcs);
+      }
     } catch (err) {
       console.error('[Roteirizacao] Erro ao gerar pré-romaneios de separação:', err);
       setToastMessage('⚠️ Erro ao gerar pré-romaneios');
@@ -542,6 +558,8 @@ export default function RoteirizacaoView({
         draftCount={Object.keys(draftAssignments).length}
         planningDate={planningDate}
         densityMode={densityMode}
+        showOtherUnits={showOtherUnits}
+        setShowOtherUnits={setShowOtherUnits}
       />
 
       <OperationalNoticesBanner

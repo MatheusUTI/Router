@@ -147,7 +147,7 @@ export default function CargaList({
           </div>
         ) : groupingMode === 'none' ? (
           // Direct List Mode
-          <div className="divide-y divide-[#14203a]">
+          <div className="divide-y divide-[#14203a] pb-36">
             {filteredCtrcs.map((item) => (
               <CargaItem
                 key={item.id}
@@ -161,7 +161,7 @@ export default function CargaList({
           </div>
         ) : (
           // Grouped modes with beautiful collapsible segment headers
-          <div className="flex flex-col select-none">
+          <div className="flex flex-col select-none pb-36">
             {Object.keys(groupedData).map((groupKey) => {
               const groupCtrcs = groupedData[groupKey] || [];
               const isExpanded = expandedGroups[groupKey] !== false;

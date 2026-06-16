@@ -94,6 +94,52 @@ export function sortRoteirizacaoItems(
   });
 }
 
+export function isLogisticallyCompatible(
+  ctrcLocalizacao: string,
+  ctrcUnid: string,
+  selectedUnit: string
+): boolean {
+  const locUpper = (ctrcLocalizacao || '').toUpperCase();
+  const unitUpper = (selectedUnit || '').toUpperCase();
+  
+  if (unitUpper === 'TODAS') return true;
+
+  // Se a localização atual do CTRC estiver vazia, assumimos como compatível com a própria unidade declarada no CTRC (ctrc.unid)
+  if (!locUpper) {
+    return (ctrcUnid || '').toUpperCase() === unitUpper;
+  }
+
+  // Mapeamento de sinonimos e siglas de unidades operacionais conhecidas
+  const unitMapping: Record<string, string[]> = {
+    VGA: ['VARGINHA', 'VGA'],
+    JDF: ['JUIZ DE FORA', 'JDF', 'JF', 'JUIZ DE FORA/PORTARIA'],
+    PPY: ['POUSO ALEGRE', 'PPY', 'PA'],
+    BHS: ['BELO HORIZONTE', 'BHS', 'BH'],
+    SPO: ['SÃO PAULO', 'SAO PAULO', 'SPO', 'MATRIZ'],
+    RIO: ['RIO DE JANEIRO', 'RIO', 'RJ'],
+  };
+
+  // Se o CTRC disser "EM TRANSITO COM DESTINO" ou similar para outra unidade
+  for (const [key, names] of Object.entries(unitMapping)) {
+    if (key !== unitUpper) {
+      const hasOtherUnitInLoc = names.some(name => 
+        locUpper.includes(`DESTINO A UNIDADE ${name}`) || 
+        locUpper.includes(`DESTINO AN UNIDADE ${name}`) ||
+        locUpper.includes(`DESTINO: ${name}`) ||
+        locUpper.includes(`DESTINO: MG/${name}`) ||
+        (locUpper.includes('EM TRANSITO') && locUpper.startsWith(`${name}`)) ||
+        (locUpper.includes('EM TRÂNSI') && locUpper.startsWith(`${name}`))
+      );
+      
+      if (hasOtherUnitInLoc) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFiltersProps) {
   // Unit select filter
   const [selectedUnit, setSelectedUnit] = useState<string>(() => {
@@ -117,6 +163,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
 
   // Search query text input
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showOtherUnits, setShowOtherUnits] = useState<boolean>(false);
 
   // Multi-select Occurrence Sectors filter
   const [selectedOccurrenceSectors, setSelectedOccurrenceSectors] = useState<string[]>(DEFAULT_ROUTE_SECTORS);
@@ -170,6 +217,17 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
       }
 
+      // 1b. Logistics Compatibility Check (Default: show only compatible with target unit unless showOtherUnits is checked)
+      if (!showOtherUnits) {
+        const targetUnit = adminUser.is_master 
+          ? (selectedUnit === 'TODAS' ? 'TODAS' : selectedUnit)
+          : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT);
+        
+        if (!isLogisticallyCompatible(ctrc.locationLabel || ctrc.localizacao || '', ctrc.unid || '', targetUnit)) {
+          return false;
+        }
+      }
+
       // 2. Sector/Route filtering (based on effectiveRoute or normRota)
       if (selectedSector !== 'all' && (ctrc.effectiveRoute || ctrc.normRota) !== selectedSector) return false;
 
@@ -200,11 +258,12 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
 
     // Apply sorting *after* filters
     return sortRoteirizacaoItems(filteredList, sortField, sortDirection);
-  }, [ctrcs, adminUser, selectedUnit, selectedSector, searchQuery, selectedOccurrenceSectors, sortField, sortDirection]);
+  }, [ctrcs, adminUser, selectedUnit, selectedSector, searchQuery, showOtherUnits, selectedOccurrenceSectors, sortField, sortDirection]);
 
   // Reset function
   const clearFilters = () => {
     setSearchQuery('');
+    setShowOtherUnits(false);
     setSelectedSector('all');
     setSelectedLocationFilter('all');
     setActiveTacticalFilter('all');
@@ -225,6 +284,8 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     setSelectedLocationFilter,
     searchQuery,
     setSearchQuery,
+    showOtherUnits,
+    setShowOtherUnits,
     activeTacticalFilter,
     setActiveTacticalFilter,
     selectedEligibility,
