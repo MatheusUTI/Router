@@ -200,6 +200,23 @@ export default function App() {
         if (localCtrcs.length > 0) {
           const available = localCtrcs.filter((c) => c.status === 'Disponível');
           const linked = localCtrcs.filter((c) => c.status !== 'Disponível');
+
+          // Diagnostics block for App.tsx mount
+          const statusCounts: Record<string, number> = {};
+          const unidCounts: Record<string, number> = {};
+          localCtrcs.forEach((c) => {
+            statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
+            const u = (c.unid || 'sem filial').toUpperCase();
+            unidCounts[u] = (unidCounts[u] || 0) + 1;
+          });
+          console.log('[DIAG_APP_MOUNT] Reidratação de Inicialização:', {
+            totalCtrcsFromDb: localCtrcs.length,
+            availableCount: available.length,
+            linkedCount: linked.length,
+            byStatus: statusCounts,
+            byUnid: unidCounts,
+          });
+
           setAvailableCtrcs(available);
           setLinkedCtrcs(linked);
         }
@@ -457,6 +474,23 @@ export default function App() {
       if (allLocalCtres.length > 0) {
         const available = allLocalCtres.filter((c) => c.status === 'Disponível');
         const linked = allLocalCtres.filter((c) => c.status !== 'Disponível');
+
+        // Diagnostics block for App.tsx handleAddCtrcs rehydration
+        const statusCounts: Record<string, number> = {};
+        const unidCounts: Record<string, number> = {};
+        allLocalCtres.forEach((c) => {
+          statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
+          const u = (c.unid || 'sem filial').toUpperCase();
+          unidCounts[u] = (unidCounts[u] || 0) + 1;
+        });
+        console.log('[DIAG_APP_REHYDRATE] Reidratação Pós-Importação:', {
+          totalCtrcsFromDb: allLocalCtres.length,
+          availableCount: available.length,
+          linkedCount: linked.length,
+          byStatus: statusCounts,
+          byUnid: unidCounts,
+        });
+
         setAvailableCtrcs(available);
         setLinkedCtrcs(linked);
       } else {
@@ -728,6 +762,7 @@ export default function App() {
             curvaAClients={curvaAClients}
             criticClients={clients}
             onGeneratePreRomaneioSuccess={handleGeneratePreRomaneioSuccess}
+            linkedCtrcs={linkedCtrcs}
           />
         );
       case 'finalizacao':

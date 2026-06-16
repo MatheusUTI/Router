@@ -588,8 +588,29 @@ Com o fim de evitar inconsistências de cache no Vercel ou preferências persist
    - Logo após o processamento e salvamento bem-sucedido de novos CTRCs importados (via arquivo SSW CSV) nas coleções offline do IndexedDB, o sistema força dinamicamente um reload síncrono integral e re-hidratação direta dos estados em memória (`setAvailableCtrcs`). Isso evita quaisquer atrasos de atualização ou problemas de concorrência reativa no pátio.
 
 3. **Diagnóstico Seguro de Visibilidade na Mesa**:
-   - Caso o pátio operacional contenha CTRCs pendentes no IndexedDB (ou carregados em memória local, ou seja, `totalCtrcsCount > 0`) mas o grid da Mesa de Roteirização permaneça completamente vazio devido ao conjunto de filtros e termos de pesquisa ativos no pátio, um banner sutil de diagnóstico é embutido no centro do cartão informando a existência de registros ocultos: "**Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?**".
+   - Caso o pátio operacional contenha CTRCs pendentes no IndexedDB (ou carregados em memória local) mas o grid da Mesa de Roteirização permaneça completamente vazio devido ao conjunto de filtros e termos de pesquisa ativos no pátio, um banner sutil de diagnóstico é embutido no centro do cartão informando a existência de registros ocultos: "**Há CTRCs carregados, mas poucos aparecem na Mesa. Verifique filtros, unidade, ocorrência ou compatibilidade logística.**".
    - Um botão interativo integrado de **Limpar filtros** é fornecido para o operador resetar todos os filtros de ocorrências correntes, devolvendo a legibilidade total das faturas do depósito instantaneamente.
+
+4. **Painel de Diagnóstico de Gargalos (Homologação e Suporte)**:
+   - Um painel lateral especializado e seguro chamado **Painel de Diagnósticos da Mesa** (`RoteirizacaoDiagnosticsPanel`) serve como ferramenta de suporte técnico e homologação para diagnosticar em qual etapa do fluxo de filtragem sequencial as faturas "somem".
+   - **Garantia de Não-Destrutividade**: O painel **nunca altera nenhum dado transacional ou mestre** do banco IndexedDB ou do Supabase. Ele realiza um cálculo puramente dedutivo e em tempo real sobre os vetores de faturas carregados.
+   - **Pipeline de Filtragem Rastreável**: Mostra a evolução quantitativa das faturas de ponta a ponta:
+     1. Total gravado no IndexedDB
+     2. Total disponível para roteirização em memória (`availableCtrcs`)
+     3. Total rejeitado por status de vinculação/planejamentos ativos
+     4. Quantidade de entrada no Enriquecimento
+     5. Quantidade após regras síncronas de geolocalização e malha
+     6. Quantidade após filtro operacional de Filial (Unidade corrente)
+     7. Quantidade após filtro geográfico da Rota principal
+     8. Quantidade após filtro do Setor de Ocorrência corrente
+     9. Quantidade após busca por texto de NF/Contrato/Emitente
+     10. Quantidade após regra de Compatibilidade Logística de filiais secundárias
+     11. Quantidade após filtro de status operacional específico
+     12. Total final visível na Mesa
+   - **Identificação do Principal Gargalo (Bottleneck)**: Identifica automaticamente qual das etapas de filtragem foi responsável pela maior retenção de registros (maior perda percentual ou absoluta).
+   - **Distribuição Detalhada de Metadados**: Apresenta contagens e agrupamentos com base no lote inicial de faturas para Filiais, Status Operacional, Setor de Ocorrência SSW e Elegibilidade de Roteiro.
+   - **Exportação de Logs**: Provê um botão para copiar o relatório técnico formatado de diagnóstico em formato Markdown/JSON para a área de transferência do operador, otimizando o suporte administrativo de homologação.
+   - **Logs de Engenharia**: Ao abrir o painel de diagnósticos na Mesa, o sistema imprime tabelas completas (`console.table`) com os contadores de cada etapa de transição, a fim de agilizar testes por desenvolvedores no ambiente de homologação.
 
 
 

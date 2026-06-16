@@ -35,6 +35,7 @@ interface RoteirizacaoHeaderProps {
   densityMode?: 'compact' | 'default' | 'comfortable';
   showOtherUnits?: boolean;
   setShowOtherUnits?: (show: boolean) => void;
+  onOpenDiagnostics?: () => void;
 }
 
 export default function RoteirizacaoHeader({
@@ -62,6 +63,7 @@ export default function RoteirizacaoHeader({
   planningDate,
   showOtherUnits = false,
   setShowOtherUnits = () => {},
+  onOpenDiagnostics,
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -334,6 +336,17 @@ export default function RoteirizacaoHeader({
                 {draftCount}
               </span>
             )}
+          </button>
+        )}
+
+        {/* Diagnóstico button */}
+        {onOpenDiagnostics && (
+          <button
+            onClick={onOpenDiagnostics}
+            className="bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/40 text-indigo-400 hover:text-indigo-300 rounded font-extrabold text-[12px] px-2.5 py-1 h-9 transition-all cursor-pointer select-none leading-none flex items-center gap-1 shrink-0"
+            title="Diagnóstico de Visibilidade da Mesa"
+          >
+            📊 Diagnóstico
           </button>
         )}
 

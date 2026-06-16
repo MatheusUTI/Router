@@ -207,32 +207,34 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   }, [ctrcs, selectedUnit, adminUser]);
 
   // Apply sequential filtering and sorting logic
-  const filteredCtrcs = useMemo(() => {
-    const filteredList = ctrcs.filter((ctrc) => {
+  const { filteredCtrcs, filterCounts } = useMemo(() => {
+    // Step 1: Filial target check
+    const afterUnit = ctrcs.filter((ctrc) => {
       const currentUnid = (ctrc.unid || '').toUpperCase();
-      // 1. Filial target check
       if (!adminUser.is_master) {
         const profileUnid = (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
-        if (currentUnid !== profileUnid) return false;
+        return currentUnid === profileUnid;
       } else {
         if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
       }
+      return true;
+    });
 
-      // 1b. Logistics Compatibility Check (Default: show only compatible with target unit unless showOtherUnits is checked)
-      if (!showOtherUnits) {
-        const targetUnit = adminUser.is_master 
-          ? (selectedUnit === 'TODAS' ? 'TODAS' : selectedUnit)
-          : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT);
-        
-        if (!isLogisticallyCompatible(ctrc.locationLabel || ctrc.localizacao || '', ctrc.unid || '', targetUnit)) {
-          return false;
-        }
-      }
-
-      // 2. Sector/Route filtering (based on effectiveRoute or normRota)
+    // Step 2: Route/Sector filtering (based on effectiveRoute or normRota)
+    const afterRoute = afterUnit.filter((ctrc) => {
       if (selectedSector !== 'all' && (ctrc.effectiveRoute || ctrc.normRota) !== selectedSector) return false;
+      return true;
+    });
 
-      // 3. Case-insensitive unified query search (CTRC, NF, remetente, destinatário, cidade, rota/effectiveRoute, localização, observação operacional, ocorrência)
+    // Step 3: Setor Ocorrência Filter (multi-select)
+    const afterOccurrence = afterRoute.filter((ctrc) => {
+      const sector = ctrc.occurrenceSector || 'Sem setor';
+      if (selectedOccurrenceSectors.length > 0 && !selectedOccurrenceSectors.includes(sector)) return false;
+      return true;
+    });
+
+    // Step 4: Case-insensitive unified query search
+    const afterSearch = afterOccurrence.filter((ctrc) => {
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase().trim();
         const mId = (ctrc.id || '').toLowerCase().includes(query);
@@ -247,18 +249,40 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         const mOcorrCode = (ctrc.occurrenceCode || '').toLowerCase().includes(query) || (ctrc.ocorrencia || '').toLowerCase().includes(query);
         const mOcorrDesc = (ctrc.occurrenceDescription || '').toLowerCase().includes(query) || (ctrc.descricao_ocorr || '').toLowerCase().includes(query);
         
-        if (!mId && !mDest && !mRem && !mCid && !mNf && !mSetor && !mLoc && !mRoute && !mNote && !mOcorrCode && !mOcorrDesc) return false;
+        return (mId || mDest || mRem || mCid || mNf || mSetor || mLoc || mRoute || mNote || mOcorrCode || mOcorrDesc);
       }
-
-      // 4. Setor Ocorrência Filter (multi-select)
-      const sector = ctrc.occurrenceSector || 'Sem setor';
-      if (selectedOccurrenceSectors.length > 0 && !selectedOccurrenceSectors.includes(sector)) return false;
-
       return true;
     });
 
-    // Apply sorting *after* filters
-    return sortRoteirizacaoItems(filteredList, sortField, sortDirection);
+    // Step 5: Logistics Compatibility Check
+    const afterLogistic = afterSearch.filter((ctrc) => {
+      if (!showOtherUnits) {
+        const targetUnit = adminUser.is_master 
+          ? (selectedUnit === 'TODAS' ? 'TODAS' : selectedUnit)
+          : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT);
+        
+        return isLogisticallyCompatible(ctrc.locationLabel || ctrc.localizacao || '', ctrc.unid || '', targetUnit);
+      }
+      return true;
+    });
+
+    // Step 6: Status/Fase Check (unfiltered at this stage)
+    const afterStatus = afterLogistic;
+
+    const sortedList = sortRoteirizacaoItems(afterStatus, sortField, sortDirection);
+
+    return {
+      filteredCtrcs: sortedList,
+      filterCounts: {
+        totalAfterUnitFilter: afterUnit.length,
+        totalAfterRouteFilter: afterRoute.length,
+        totalAfterOccurrenceFilter: afterOccurrence.length,
+        totalAfterSearchFilter: afterSearch.length,
+        totalAfterLogisticFilter: afterLogistic.length,
+        totalAfterStatusFilter: afterStatus.length,
+        totalFinalVisible: sortedList.length,
+      }
+    };
   }, [ctrcs, adminUser, selectedUnit, selectedSector, searchQuery, showOtherUnits, selectedOccurrenceSectors, sortField, sortDirection]);
 
   // Reset function
@@ -300,6 +324,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     availableSectors,
     uniqueSectors,
     filteredCtrcs,
+    filterCounts,
     clearFilters
   };
 }

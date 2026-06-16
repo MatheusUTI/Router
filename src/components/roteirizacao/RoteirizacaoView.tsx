@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient, RoteirizacaoDiagnostics } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
@@ -16,9 +16,10 @@ import CargaList from './CargaList';
 import ConsolidacaoDrawer from './ConsolidacaoDrawer';
 import SelectionSummary from './SelectionSummary';
 import OperationalNoticesBanner from './OperationalNoticesBanner';
+import RoteirizacaoDiagnosticsPanel from './RoteirizacaoDiagnosticsPanel';
 
 // Custom Hooks
-import { useRoteirizacaoFilters } from './hooks/useRoteirizacaoFilters';
+import { useRoteirizacaoFilters, isLogisticallyCompatible } from './hooks/useRoteirizacaoFilters';
 import { useCargaSelection } from './hooks/useCargaSelection';
 import { useRoteirizacaoGrouping } from './hooks/useRoteirizacaoGrouping';
 import { useVehicleAllocation } from './hooks/useVehicleAllocation';
@@ -32,6 +33,7 @@ interface RoteirizacaoViewProps {
   curvaAClients?: CurvaAClient[];
   criticClients?: CriticClient[];
   onGeneratePreRomaneioSuccess?: (preRomaneios: PreRomaneio[], originalCtrcs: Ctrc[]) => void;
+  linkedCtrcs?: Ctrc[];
 }
 
 export default function RoteirizacaoView({
@@ -43,6 +45,7 @@ export default function RoteirizacaoView({
   curvaAClients = [],
   criticClients = [],
   onGeneratePreRomaneioSuccess,
+  linkedCtrcs = [],
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -53,6 +56,9 @@ export default function RoteirizacaoView({
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [generatedPreRomaneios, setGeneratedPreRomaneios] = useState<PreRomaneio[] | null>(null);
+  
+  // Operational Diagnostics Panel open state
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
 
   // User Preferences sync and visual density management
   const [densityMode, setDensityMode] = useState<DensityMode>('default');
@@ -155,7 +161,16 @@ export default function RoteirizacaoView({
   // Dynamic enrichment output mapping to RoteirizacaoItem list
   const enrichedCtrcsList = useMemo(() => {
     if (isNormalizing) return [] as RoteirizacaoItem[];
-    return RoteirizacaoEnrichmentService.enrichCargas(
+
+    // LOG BEFORE ENRICHMENT
+    console.log('[DIAG_ROTEIRIZACAO_BEFORE] Configurações de Entrada:', {
+      availableCtrcsLength: availableCtrcs.length,
+      planningDate,
+      adminUnid: adminUser?.unid,
+      adminIsMaster: adminUser?.is_master,
+    });
+
+    const res = RoteirizacaoEnrichmentService.enrichCargas(
       availableCtrcs,
       cidadesRotas,
       dbOccurrencesList,
@@ -167,7 +182,55 @@ export default function RoteirizacaoView({
       planningDate,
       criticClients
     );
-  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients]);
+
+    // LOG AFTER ENRICHMENT
+    const occurrenceSectorCounts: Record<string, number> = {};
+    const routingEligibilityCounts: Record<string, number> = {};
+    const statusCounts: Record<string, number> = {};
+    const unidCounts: Record<string, number> = {};
+    const logisticCompatibilityCounts = {
+      compatible: 0,
+      incompatible: 0,
+    };
+
+    const targetUnit = adminUser?.is_master ? 'TODAS' : (adminUser?.unid || 'SPO');
+
+    res.forEach((item) => {
+      const sec = item.occurrenceSector || 'Sem setor';
+      occurrenceSectorCounts[sec] = (occurrenceSectorCounts[sec] || 0) + 1;
+
+      const elig = item.routingEligibility || 'Sem elegibilidade';
+      routingEligibilityCounts[elig] = (routingEligibilityCounts[elig] || 0) + 1;
+
+      const st = item.status || 'sem status';
+      statusCounts[st] = (statusCounts[st] || 0) + 1;
+
+      const u = (item.unid || 'sem filial').toUpperCase();
+      unidCounts[u] = (unidCounts[u] || 0) + 1;
+
+      const comp = isLogisticallyCompatible(
+        item.locationLabel || item.localizacao || '',
+        item.unid || '',
+        targetUnit
+      );
+      if (comp) {
+        logisticCompatibilityCounts.compatible++;
+      } else {
+        logisticCompatibilityCounts.incompatible++;
+      }
+    });
+
+    console.log('[DIAG_ROTEIRIZACAO_AFTER] Estatísticas Pós-Enrichment:', {
+      enrichedItemsLength: res.length,
+      bySector: occurrenceSectorCounts,
+      byEligibility: routingEligibilityCounts,
+      byStatus: statusCounts,
+      byUnid: unidCounts,
+      byCompatibility: logisticCompatibilityCounts,
+    });
+
+    return res;
+  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients, adminUser]);
 
   // Temporary allocations triggers
   const {
@@ -222,11 +285,173 @@ export default function RoteirizacaoView({
     availableSectors,
     uniqueSectors,
     filteredCtrcs,
+    filterCounts,
     clearFilters,
   } = useRoteirizacaoFilters({
     ctrcs: unassignedCtrcs,
     adminUser,
   });
+
+  // Operational Diagnostics calculation
+  const diagnostics: RoteirizacaoDiagnostics = useMemo(() => {
+    const totalIndexedDb = (availableCtrcs?.length || 0) + (linkedCtrcs?.length || 0);
+    const totalAppAvailable = availableCtrcs?.length || 0;
+    const totalAppLinked = linkedCtrcs?.length || 0;
+    const totalBeforeEnrichment = availableCtrcs?.length || 0;
+    const totalAfterEnrichment = enrichedCtrcsList?.length || 0;
+
+    // Filter step counts from the useRoteirizacaoFilters hook
+    const totalAfterUnitFilter = filterCounts?.totalAfterUnitFilter ?? 0;
+    const totalAfterRouteFilter = filterCounts?.totalAfterRouteFilter ?? 0;
+    const totalAfterOccurrenceFilter = filterCounts?.totalAfterOccurrenceFilter ?? 0;
+    const totalAfterSearchFilter = filterCounts?.totalAfterSearchFilter ?? 0;
+    const totalAfterLogisticFilter = filterCounts?.totalAfterLogisticFilter ?? 0;
+    const totalAfterStatusFilter = filterCounts?.totalAfterStatusFilter ?? 0;
+    const totalFinalVisible = filterCounts?.totalFinalVisible ?? 0;
+
+    // Distributions based on the input set (unassignedCtrcs)
+    const byStatus: Record<string, number> = {};
+    const byUnit: Record<string, number> = {};
+    const byOccurrenceSector: Record<string, number> = {};
+    const byRoutingEligibility: Record<string, number> = {};
+    const byLogisticCompatibility: Record<string, number> = { compatible: 0, incompatible: 0 };
+
+    const targetUnit = adminUser?.is_master ? 'TODAS' : (adminUser?.unid || 'SPO');
+
+    unassignedCtrcs.forEach((item) => {
+      // status
+      const st = item.status || 'Sem status';
+      byStatus[st] = (byStatus[st] || 0) + 1;
+
+      // unit
+      const u = (item.unid || 'Sem filial').toUpperCase();
+      byUnit[u] = (byUnit[u] || 0) + 1;
+
+      // occurrence sector
+      const sec = item.occurrenceSector || 'Sem setor';
+      byOccurrenceSector[sec] = (byOccurrenceSector[sec] || 0) + 1;
+
+      // eligibility
+      const elig = item.routingEligibility || 'Sem elegibilidade';
+      byRoutingEligibility[elig] = (byRoutingEligibility[elig] || 0) + 1;
+
+      // compatibility
+      const comp = isLogisticallyCompatible(
+        item.locationLabel || item.localizacao || '',
+        item.unid || '',
+        targetUnit
+      );
+      if (comp) {
+        byLogisticCompatibility.compatible++;
+      } else {
+        byLogisticCompatibility.incompatible++;
+      }
+    });
+
+    // Create Warning array
+    const warnings: string[] = [];
+
+    if (totalIndexedDb > 0 && totalAppAvailable === 0) {
+      warnings.push(
+        `Existem ${totalIndexedDb} faturas salvas no IndexedDB local, mas nenhuma com o status "Disponível". Faturas em outras fases (Separando, No Pátio, Em Rota, Entregue) foram ocultas temporariamente para evitar duplo planejamento.`
+      );
+    }
+
+    if (totalAppAvailable > 0 && totalAfterEnrichment === 0) {
+      warnings.push(
+        "Faturas disponíveis falharam no processo de enriquecimento síncrono. Certifique-se de que os cadastros de cidades, rotas e ocorrências estão hidratados."
+      );
+    }
+
+    if (totalAfterEnrichment > 0 && totalAfterUnitFilter === 0) {
+      warnings.push(
+        `Filtro de Filial/Unidade reteve 100% das faturas enriquecidas. Sua unidade operacional é "${adminUser?.unid || 'SPO'}", e as faturas disponíveis são de outras filiais.`
+      );
+    }
+
+    if (totalAfterUnitFilter > 0 && totalAfterRouteFilter === 0) {
+      warnings.push(
+        "Filtro de Rota/Setor ativo reteve todas as faturas da unidade. Limpe as pesquisas e selecione 'Todas as rotas' na Mesa."
+      );
+    }
+
+    if (totalAfterRouteFilter > 0 && totalAfterOccurrenceFilter === 0) {
+      warnings.push(
+        "O multi-select de Setor Ocorrência (Agendamento, Disponível, Solução, etc.) está ocultando 100% das faturas elegíveis."
+      );
+    }
+
+    if (totalAfterOccurrenceFilter > 0 && totalAfterSearchFilter === 0) {
+      warnings.push(
+        "A caixa de busca textual por NF, Contrato, Emitente ou Localização não retornou nenhuma correspondência ativa."
+      );
+    }
+
+    if (totalAfterSearchFilter > 0 && totalAfterLogisticFilter === 0) {
+      const incCount = byLogisticCompatibility.incompatible;
+      warnings.push(
+        `Regra de Compatibilidade Logística reteve ${incCount} faturas porque constam como em trânsito ou no depósito de outra filial. Habilite 'Outras unidades' para visualizar.`
+      );
+    }
+
+    return {
+      totalIndexedDb,
+      totalAppAvailable,
+      totalAppLinked,
+      totalBeforeEnrichment,
+      totalAfterEnrichment,
+      totalAfterUnitFilter,
+      totalAfterRouteFilter,
+      totalAfterOccurrenceFilter,
+      totalAfterSearchFilter,
+      totalAfterLogisticFilter,
+      totalAfterStatusFilter,
+      totalFinalVisible,
+      byStatus,
+      byUnit,
+      byOccurrenceSector,
+      byRoutingEligibility,
+      byLogisticCompatibility,
+      warnings,
+    };
+  }, [availableCtrcs, linkedCtrcs, enrichedCtrcsList, unassignedCtrcs, filterCounts, adminUser]);
+
+  // Trigger console table logs when diagnostics open
+  useEffect(() => {
+    if (isDiagnosticsOpen) {
+      console.log('=== [DIAG_LOGS_MESA] INÍCIO DO RELATÓRIO DE DIAGNÓSTICO ===');
+      console.table({
+        '1. Total em Banco (IndexedDB)': diagnostics.totalIndexedDb,
+        '2. Disponível p/ Roteiro': diagnostics.totalAppAvailable,
+        '3. Vinculado/Oculte': diagnostics.totalAppLinked,
+        '4. Entrada Enriquecimento': diagnostics.totalBeforeEnrichment,
+        '5. Pós-Enriquecimento': diagnostics.totalAfterEnrichment,
+        '6. Pós-Filtro Filial': diagnostics.totalAfterUnitFilter,
+        '7. Pós-Filtro Rota': diagnostics.totalAfterRouteFilter,
+        '8. Pós-Filtro Setor Ocorrência': diagnostics.totalAfterOccurrenceFilter,
+        '9. Pós-Busca Textual': diagnostics.totalAfterSearchFilter,
+        '10. Pós-Compatibilidade': diagnostics.totalAfterLogisticFilter,
+        '11. Pós-Status': diagnostics.totalAfterStatusFilter,
+        '12. Visível na Mesa': diagnostics.totalFinalVisible,
+      });
+
+      console.log('--- Distribuição de Filiais das Cargas ---');
+      console.table(diagnostics.byUnit);
+
+      console.log('--- Distribuição de Status Operacional ---');
+      console.table(diagnostics.byStatus);
+
+      console.log('--- Distribuição de Setor de Ocorrência ---');
+      console.table(diagnostics.byOccurrenceSector);
+
+      console.log('--- Distribuição de Elegibilidade de Roteiro ---');
+      console.table(diagnostics.byRoutingEligibility);
+      
+      console.log('--- Alertas Operacionais Ativos ---');
+      console.log(diagnostics.warnings);
+      console.log('=== [DIAG_LOGS_MESA] FIM DO RELATÓRIO ===');
+    }
+  }, [isDiagnosticsOpen, diagnostics]);
 
   // Checklist multi-select state management
   const {
@@ -525,6 +750,11 @@ export default function RoteirizacaoView({
     }
   };
 
+  const handleClearFilters = () => {
+    clearFilters();
+    setGroupingMode('none');
+  };
+
   return (
     <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-[#080c14] border border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-200 select-none">
       {/* Prime Header Block */}
@@ -552,7 +782,7 @@ export default function RoteirizacaoView({
         uniqueSectors={uniqueSectors}
         totalCtrcsCount={unassignedCtrcs.length}
         filteredCtrcsCount={filteredCtrcs.length}
-        onClearFilters={clearFilters}
+        onClearFilters={handleClearFilters}
         currentTime={currentTime}
         onOpenFleetDrawer={() => setIsDrawerOpen(true)}
         draftCount={Object.keys(draftAssignments).length}
@@ -560,12 +790,39 @@ export default function RoteirizacaoView({
         densityMode={densityMode}
         showOtherUnits={showOtherUnits}
         setShowOtherUnits={setShowOtherUnits}
+        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
       />
 
       <OperationalNoticesBanner
         planningDate={planningDate}
         availableCtrcs={availableCtrcs}
       />
+
+      {/* Discretionary Smart Alert display if CTRCs are loaded but filtered out */}
+      {diagnostics.totalAfterEnrichment > 0 && (diagnostics.totalFinalVisible === 0 || (diagnostics.totalFinalVisible / diagnostics.totalAfterEnrichment) < 0.05) && (
+        <div id="smart-diagnostics-alert" className="mx-3 mt-2 bg-amber-950/40 border border-amber-900/60 p-3 rounded-xl flex flex-wrap gap-2 items-center justify-between text-amber-300 text-xs select-none">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">⚠️</span>
+            <span>
+              Há CTRCs carregados, mas poucos aparecem na Mesa. Verifique filtros, unidade, ocorrência ou compatibilidade logística.
+            </span>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setIsDiagnosticsOpen(true)}
+              className="bg-amber-900/40 hover:bg-amber-900/60 border border-amber-800/45 text-amber-200 px-2.5 py-1 rounded font-bold uppercase text-[10px] tracking-wide cursor-pointer transition-colors"
+            >
+              🔎 Analisar Gargalo
+            </button>
+            <button
+              onClick={handleClearFilters}
+              className="bg-indigo-650 hover:bg-indigo-600 border border-indigo-500/30 text-white px-2.5 py-1 rounded font-bold uppercase text-[10px] tracking-wide cursor-pointer transition-colors"
+            >
+              🧹 Resetar Filtros
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Containers: Left List (Full Width) */}
       <div className="flex-1 flex gap-3 p-3 min-h-0 relative">
@@ -591,7 +848,7 @@ export default function RoteirizacaoView({
             densityMode={densityMode}
             onUpdateDensity={(density) => setDensityMode(density)}
             totalCtrcsCount={unassignedCtrcs.length}
-            onClearFilters={clearFilters}
+            onClearFilters={handleClearFilters}
           />
         )}
       </div>
@@ -633,6 +890,14 @@ export default function RoteirizacaoView({
         onEmitRomaneio={handleEmitRomaneio}
         onUnassignCarga={unassignCarga}
         onClearVehicleDraft={clearVehicleDraft}
+      />
+
+      {/* Roteirizacao Diagnostics Panel Drawer Component */}
+      <RoteirizacaoDiagnosticsPanel
+        diagnostics={diagnostics}
+        isOpen={isDiagnosticsOpen}
+        onClose={() => setIsDiagnosticsOpen(false)}
+        onClearFilters={handleClearFilters}
       />
 
       {/* Pre-Romaneio Summary Modal */}

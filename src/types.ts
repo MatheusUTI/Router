@@ -404,6 +404,27 @@ export interface OperationalUnit {
   updatedAt?: string;
 }
 
+export interface RoteirizacaoDiagnostics {
+  totalIndexedDb?: number;
+  totalAppAvailable?: number;
+  totalAppLinked?: number;
+  totalBeforeEnrichment: number;
+  totalAfterEnrichment: number;
+  totalAfterUnitFilter: number;
+  totalAfterRouteFilter: number;
+  totalAfterOccurrenceFilter: number;
+  totalAfterSearchFilter: number;
+  totalAfterLogisticFilter: number;
+  totalAfterStatusFilter: number;
+  totalFinalVisible: number;
+  byStatus: Record<string, number>;
+  byUnit: Record<string, number>;
+  byOccurrenceSector: Record<string, number>;
+  byRoutingEligibility: Record<string, number>;
+  byLogisticCompatibility: Record<string, number>;
+  warnings: string[];
+}
+
 
 
 
