@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Ctrc, Vehicle, AppUser } from '../types';
+import { Ctrc, Vehicle, AppUser, PreRomaneio } from '../types';
+import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
+import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
 import {
   Printer,
   ArrowLeft,
@@ -42,8 +44,8 @@ export default function FinalizacaoView({
   onDeleteRomaneio,
   adminUser,
 }: FinalizacaoViewProps) {
-  // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic) or 'history' (Saved routes list & reprint)
-  const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history'>('programacao');
+  // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
+  const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('programacao');
 
   const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
     const plateUpper = vehiclePlate.toUpperCase().replace(/\s/g, '');
@@ -106,6 +108,69 @@ export default function FinalizacaoView({
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  const handlePrintPreRomaneio = (pr: PreRomaneio) => {
+    setPrintPreRomaneios([pr]);
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
+
+  const handlePrintAllPreRomaneios = () => {
+    setPrintPreRomaneios([]);
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
+
+  const [preRomaneios, setPreRomaneios] = useState<PreRomaneio[]>([]);
+  const [resolvedCtrcsMap, setResolvedCtrcsMap] = useState<Record<string, Ctrc>>({});
+  const [loadingPreRomaneios, setLoadingPreRomaneios] = useState<boolean>(false);
+  const [printPreRomaneios, setPrintPreRomaneios] = useState<PreRomaneio[]>([]);
+
+  const convertManifestDateToPlanningDate = (mDate: string): string => {
+    const parts = mDate.split('/');
+    if (parts.length === 3) {
+      const day = parts[0];
+      const month = parts[1];
+      let year = parts[2];
+      if (year.length === 2) {
+        year = '20' + year;
+      }
+      return `${year}-${month}-${day}`;
+    }
+    return mDate;
+  };
+
+  const loadPreRomaneiosData = async () => {
+    setLoadingPreRomaneios(true);
+    try {
+      const targetDate = convertManifestDateToPlanningDate(manifestDate);
+      let prs = await PreRomaneioRepository.getByDate(targetDate);
+      if (!prs || prs.length === 0) {
+        prs = await PreRomaneioRepository.getAll();
+      }
+      
+      const allCtrcIds = Array.from(new Set(prs.flatMap(p => p.ctrcIds || [])));
+      if (allCtrcIds.length > 0) {
+        const ctrcs = await CtrcRepository.getByIds(allCtrcIds);
+        const map: Record<string, Ctrc> = {};
+        ctrcs.forEach(c => {
+          map[c.id] = c;
+        });
+        setResolvedCtrcsMap(map);
+      }
+      setPreRomaneios(prs);
+    } catch (err) {
+      console.error('Error loading Re-Romaneios/Pre-Romaneios:', err);
+    } finally {
+      setLoadingPreRomaneios(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPreRomaneiosData();
+  }, [manifestDate, activeTab]);
 
   const programacaoRows: any[] = [];
 
@@ -406,8 +471,13 @@ export default function FinalizacaoView({
             border-color: #333333 !important;
           }
 
+          .page-break {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+
           @page {
-            size: ${activeTab === 'programacao' ? 'A4 landscape' : 'A4 portrait'} !important;
+            size: ${(activeTab === 'programacao' || activeTab === 'preromaneio') ? 'A4 landscape' : 'A4 portrait'} !important;
             margin: 8mm !important;
           }
         }
@@ -485,6 +555,21 @@ export default function FinalizacaoView({
           >
             <History className="w-3.5 h-3.5" />
             Rotas Prontas ({savedRomaneios.length})
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('preromaneio');
+              setPreviewRomaneio(null);
+            }}
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'preromaneio'
+                ? 'bg-primary text-on-primary shadow-md'
+                : 'text-on-surface-variant hover:text-white'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            Pré-Romaneios
           </button>
         </div>
       </div>
@@ -1340,6 +1425,143 @@ export default function FinalizacaoView({
         )
       }
 
+      {/* ========================================================= */}
+      {/* CASE 3: PREROMANEIO SCREEN LIST AND STATUS MANAGEMENT AREA */}
+      {/* ========================================================= */}
+      {activeTab === 'preromaneio' && (
+        <div className="space-y-6 no-print text-left">
+          {/* Header Action Card */}
+          <div className="bg-surface-container border border-outline-variant rounded-2xl p-6 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 border border-primary/20 text-primary rounded-xl shrink-0">
+                <ClipboardList className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-black text-white tracking-tight uppercase">Pré-Romaneios de Separação</h1>
+                  <span className="px-2 py-0.5 bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono font-bold text-[9px] uppercase rounded">
+                    Docas de Separação
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Lista de pré-romaneios ativos por rota e portão para conferência física e carregamento.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 self-stretch md:self-auto">
+              <button
+                onClick={loadPreRomaneiosData}
+                className="flex-1 md:flex-none px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                🔄 Atualizar Lista
+              </button>
+              
+              <button
+                onClick={handlePrintAllPreRomaneios}
+                disabled={preRomaneios.length === 0}
+                className="flex-1 md:flex-none px-4 py-2 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md bg-emerald-600"
+              >
+                <Printer className="w-4 h-4" />
+                🖨 Imprimir Todos ({preRomaneios.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Info Alerts */}
+          {preRomaneios.length === 0 ? (
+            <div className="text-center py-16 text-on-surface-variant/40 bg-surface-container/50 rounded-2xl border border-dashed border-outline-variant/60">
+              <div className="max-w-md mx-auto space-y-3">
+                <ClipboardList className="w-12 h-12 mx-auto text-on-surface-variant/30" />
+                <h3 className="text-base font-bold text-white">Nenhum pré-romaneio localizado</h3>
+                <p className="text-xs text-center leading-relaxed">
+                  Não foram encontrados pré-romaneios para o dia de planejamento ativo <span className="font-mono font-bold text-white">{manifestDate}</span>. Vá para a <span className="font-semibold text-primary">Mesa de Roteirização</span> para gerar pré-romaneios de separação.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {preRomaneios.map((pr) => {
+                const totalW = pr.totalWeight || 0;
+                const totalVol = pr.totalVolumes || 0;
+                
+                // Get pre_romaneio status color
+                let statusBg = 'bg-slate-500/10 border-slate-500/20 text-slate-400';
+                if (pr.status === 'EM_SEPARACAO') statusBg = 'bg-amber-500/10 border-amber-500/20 text-amber-500';
+                if (pr.status === 'SEPARADO') statusBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+                if (pr.status === 'COM_DIVERGENCIA') statusBg = 'bg-rose-500/10 border-rose-500/20 text-rose-450';
+                if (pr.status === 'CANCELADO') statusBg = 'bg-red-500/10 border-red-500/20 text-red-500';
+                if (pr.status === 'CONVERTIDO_ROMANEIO') statusBg = 'bg-blue-500/10 border-blue-500/20 text-blue-400';
+
+                return (
+                  <div key={pr.id} className="bg-surface-container border border-outline-variant/70 rounded-2xl p-5 hover:border-outline-variant transition-all flex flex-col justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono text-on-surface-variant block uppercase tracking-wider">ROTA / DESTINO</span>
+                          <span className="text-base font-black text-white uppercase tracking-tight">{pr.route}</span>
+                        </div>
+                        <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded border ${statusBg}`}>
+                          {pr.status.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 bg-surface/40 p-3 rounded-xl border border-outline-variant/30 font-mono text-xs">
+                        <div>
+                          <span className="text-[9px] text-on-surface-variant uppercase block">Portão / Doca</span>
+                          <span className="text-white font-bold">{pr.gate || 'Não Definido'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-on-surface-variant uppercase block">Data Planejada</span>
+                          <span className="text-white font-bold">{pr.planningDate}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-on-surface-variant uppercase block">CTRCs / NFS</span>
+                          <span className="text-white font-bold">{pr.ctrcIds.length} Itens</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-on-surface-variant uppercase block">Peso / Volume</span>
+                          <span className="text-white font-bold">{totalW.toLocaleString('pt-BR')} kg / {totalVol} vol</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        onClick={() => handlePrintPreRomaneio(pr)}
+                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-555 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                      >
+                        <Printer className="w-4 h-4" />
+                        Imprimir Doca
+                      </button>
+
+                      {/* Status select quick-switcher */}
+                      <select
+                        value={pr.status}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value as any;
+                          await PreRomaneioRepository.updateStatus(pr.id, newStatus);
+                          triggerToast(`Status do pré-romaneio ${pr.route} atualizado.`);
+                          loadPreRomaneiosData();
+                        }}
+                        className="bg-slate-900 border border-outline-variant/50 hover:border-outline-variant rounded-lg px-2 py-2 text-xs text-white font-mono cursor-pointer focus:outline-none"
+                      >
+                        <option value="RASCUNHO">Rascunho</option>
+                        <option value="EM_SEPARACAO">Separando</option>
+                        <option value="SEPARADO">Separado</option>
+                        <option value="COM_DIVERGENCIA">Divergência</option>
+                        <option value="CANCELADO">Cancelado</option>
+                        <option value="CONVERTIDO_ROMANEIO">Convertido</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* --------------------------------------------------------- */}
       {/* PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
       {/* --------------------------------------------------------- */}
@@ -1468,6 +1690,147 @@ export default function FinalizacaoView({
               <span>Supervisor de Pátio / Operação</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------- */}
+      {/* CASE 3 PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
+      {/* --------------------------------------------------------- */}
+      {activeTab === 'preromaneio' && (
+        <div className="hidden print:block text-black bg-white w-full text-left font-sans p-2">
+          {(printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).map((pr, pIdx) => {
+            const isLast = pIdx === (printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).length - 1;
+            return (
+              <div key={pr.id} className={`w-full min-h-screen ${isLast ? '' : 'page-break'} pb-8`}>
+                <div className="border-b-2 border-black pb-3 mb-4 flex justify-between items-end">
+                  <div>
+                    <h1 className="text-xl font-bold uppercase tracking-tight">PRÉ-ROMANEIO DE SEPARAÇÃO</h1>
+                    <p className="text-[10px] text-gray-500 uppercase font-bold">FILIAL VARGINHA | CONFERÊNCIA E SEPARAÇÃO DE CARGA</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[10px] text-gray-400 font-bold uppercase">Data de Planejamento</span>
+                    <span className="text-sm font-mono font-bold">{pr.planningDate}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 border border-gray-400 rounded-lg mb-4 text-xs">
+                  <div>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Rota de Entrega</span>
+                    <span className="font-bold text-sm text-black uppercase">{pr.route}</span>
+                  </div>
+                  <div>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Portão / Doca</span>
+                    <span className="font-bold text-sm text-black uppercase">{pr.gate || 'Não Definido'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Status Operacional</span>
+                    <span className="font-bold text-sm text-black uppercase">{pr.status}</span>
+                  </div>
+                  <div>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Indicadores Totais</span>
+                    <span className="font-mono text-sm text-black block font-bold">
+                      {pr.ctrcIds.length} CTRCs | {pr.totalWeight.toLocaleString('pt-BR')} kg | {pr.totalVolumes} vol.
+                    </span>
+                  </div>
+                </div>
+
+                <table className="w-full text-[10px] text-left border-collapse border border-gray-400">
+                  <thead>
+                    <tr className="bg-gray-100 uppercase font-bold text-[9px]">
+                      <th className="border border-gray-400 px-1 py-1 text-center w-[4%]">CHK</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[12%]">CTRC</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[8%]">NF</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[22%]">Destinatário</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[18%]">Remetente</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[12%]">Cidade</th>
+                      <th className="border border-gray-400 px-1 py-1 text-center w-[5%]">Vol</th>
+                      <th className="border border-gray-400 px-2 py-1 text-right w-[8%]">Peso</th>
+                      <th className="border border-gray-400 px-2 py-1 w-[11%]">Localização</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pr.ctrcIds.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="border border-gray-400 px-3 py-6 text-center text-gray-405 italic">
+                          Nenhum documento eletrônico vinculado a este pré-romaneio.
+                        </td>
+                      </tr>
+                    ) : (
+                      pr.ctrcIds.map((id, index) => {
+                        const ctrc = resolvedCtrcsMap[id];
+                        if (!ctrc) {
+                          return (
+                            <tr key={index} className="text-gray-500">
+                              <td className="border border-gray-400 px-1 py-1.5 text-center">
+                                <div className="w-3.5 h-3.5 border border-black mx-auto rounded-sm"></div>
+                              </td>
+                              <td className="border border-gray-400 px-2 py-1.5 font-mono font-bold text-red-650">{id}</td>
+                              <td colSpan={7} className="border border-gray-400 px-2 py-1.5 text-red-500 font-bold italic">
+                                CTRC não localizado no banco (ou dados limpos temporariamente)
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        const weight = (ctrc.peso_r || ctrc.weight || 0);
+                        const vols = ctrc.volume || 0;
+                        const loc = ctrc.localizacao || 'Doca';
+
+                        return (
+                          <tr key={ctrc.id || index} className="font-medium text-[10px] text-black">
+                            <td className="border border-gray-400 px-1 py-1.5 text-center">
+                              <div className="w-3.5 h-3.5 border border-black mx-auto rounded-sm"></div>
+                            </td>
+                            <td className="border border-gray-400 px-2 py-1.5 font-mono font-bold leading-none">{ctrc.id}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 font-mono leading-none">{ctrc.nf || 'N/A'}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 uppercase font-mono leading-tight">{ctrc.destinatario}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 uppercase text-gray-600 leading-tight">{ctrc.remetente || 'N/A'}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 truncate uppercase">{ctrc.cidade_ent || ctrc.cidade}</td>
+                            <td className="border border-gray-400 px-1 py-1.5 text-center font-mono font-bold">{vols}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 text-right font-mono">{weight.toLocaleString('pt-BR')} kg</td>
+                            <td className="border border-gray-400 px-2 py-1.5 uppercase font-mono font-semibold">{loc}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+
+                {/* Separation Checklist Signature Blocks & Manual Input Fields Card */}
+                <div className="border border-gray-400 rounded-lg p-3 mt-4 bg-gray-50/50">
+                  <h3 className="text-[10px] font-bold text-gray-700 uppercase mb-2 border-b border-gray-300 pb-1">CAMPOS CONFIRMAÇÃO MANUAL (FÍSICO):</h3>
+                  <div className="grid grid-cols-4 gap-4 text-[10px]">
+                    <div>
+                      <span className="text-gray-500 uppercase font-semibold">Separador (Nome):</span>
+                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 uppercase font-semibold">Conferente (Nome):</span>
+                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 uppercase font-semibold">Motorista (Assinatura):</span>
+                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-gray-500 uppercase font-semibold">Horário Início:</span>
+                        <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 uppercase font-semibold">Horário Fim:</span>
+                        <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-gray-500 font-semibold uppercase block">Observações / Divergências de Separação Encontradas:</span>
+                    <div className="border border-gray-300 rounded h-16 mt-1 w-full bg-white"></div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

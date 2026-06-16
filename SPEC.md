@@ -493,5 +493,22 @@ Com o objetivo de reproduzir fielmente o fluxo operacional diário utilizado pel
    - **Impressão A4 Horizontal**: Formata as tabelas com folhas landscape de alto contraste para pátio e docas.
    - **Excel Direct Exporting**: Gera arquivos do tipo planilha perfeitamente modelados legíveis por Microsoft Excel ou Google Planilhas.
 
+---
+
+## 20. Impressão dos Pré-Romaneios de Separação
+
+Com o objetivo de criar uma área operacional robusta para que a equipe de galpão separe e carregue as cargas de forma física organizada por portão e doca, o Router disponibiliza a funcionalidade de listagem e impressão dedicada de Pré-Romaneios:
+
+1. **Localização e Navegação**:
+   - Integrado diretamente à tela `FinalizacaoView` como a aba **Pré-Romaneios**, listando todos os rascunhos de planejamento de carga gerados na Mesa de Roteirização para a data de planejamento selecionada, com fallback dinâmico para listar todos os itens na ausência de filtro de data ativo.
+2. **Dados e Métricas em Tela**:
+   - Cada Pré-Romaneio exibe seu respectivo portão/doca, rota de atendimento, status de separação, contagem consolidada de CTRCs/Notas Fiscais vinculadas, peso total (kg), cubagem/volumes e um seletor rápido para atualizar seu status físico diretamente do pátio.
+3. **Impressão Operacional Limpa**:
+   - Permite a impressão individual ou em lote de múltiplos pré-romaneios gerados.
+   - O visual de impressão utiliza regras estritas de contraste física (fundo branco, bordas pretas densas, texto escuro em alta legibilidade).
+   - Apresenta colunas unificadas apropriadas: caixa de marcação física (CHK), CTRC ID, número da Nota Fiscal, destinatário, remetente, cidade, volume e localização específica de galpão.
+   - Incorpora uma ficha de controle manual em rodapé para preenchimento manuscrito de horários, nomes dos separadores, conferentes e assinaturas, servindo como documento de prestação de contas operacionais.
+
+
 
 
