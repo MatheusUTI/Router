@@ -28,7 +28,7 @@ export default function Header({
       case 'roteirizacao':
         return { title: 'Roteirização Inteligente', placeholder: 'Buscar CTRCs disponíveis...' };
       case 'finalizacao':
-        return { title: 'Finalização de Romaneio', placeholder: 'Buscar CTRC vinculado...' };
+        return { title: 'Programação do Dia', placeholder: 'Buscar CTRC vinculado...' };
       case 'desempenho':
         return { title: 'Relatório de Desempenho', placeholder: 'Buscar motorista...' };
       case 'solucao':

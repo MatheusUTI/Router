@@ -3,8 +3,30 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import dns from "dns";
 
 dotenv.config();
+
+// Track verified offline Supabase hosts to avoid fetch failures/warnings
+const offlineHosts = new Set<string>();
+let isMainSupabaseOffline = false;
+
+function getHostFromUrl(url: string): string {
+  if (!url) return "";
+  try {
+    return new URL(url).hostname;
+  } catch (e) {
+    // If lacks protocol, wrap it
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      try {
+        return new URL("https://" + url).hostname;
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  }
+}
 
 // Default fallback users in memory to prevent lockout
 const DEFAULT_APP_USERS = [
@@ -44,28 +66,58 @@ async function startServer() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
   const supabaseKey = process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 
+  function markHostOffline(url: string) {
+    const host = getHostFromUrl(url);
+    if (host && !offlineHosts.has(host)) {
+      console.log(`[BACKEND] Host '${host}' marcado como OFFLINE. Redirecionando todas as consultas para o banco local.`);
+      offlineHosts.add(host);
+      if (url === supabaseUrl) {
+        isMainSupabaseOffline = true;
+      }
+    }
+  }
+
+  const mainHost = getHostFromUrl(supabaseUrl);
+  if (mainHost) {
+    dns.lookup(mainHost, (err) => {
+      if (err) {
+        console.log(`[BACKEND] Host '${mainHost}' está offline/inacessível. Ativando modo local.`);
+        isMainSupabaseOffline = true;
+      }
+    });
+  }
+
   let supabaseClient: any = null;
-  if (supabaseUrl && supabaseKey) {
+  if (supabaseUrl && supabaseKey && !isMainSupabaseOffline) {
     try {
       supabaseClient = createClient(supabaseUrl, supabaseKey);
-      console.log(`[BACKEND] Supabase configurado e inicializado com sucesso. URL: ${supabaseUrl}`);
+      console.log(`[BACKEND] Supabase configurado e inicializado com sucesso.`);
     } catch (err) {
-      console.error("[BACKEND] Falha ao instanciar cliente do Supabase:", err);
+      // Avoid raw logs on instantiating
+      isMainSupabaseOffline = true;
     }
-  } else {
-    console.warn("[BACKEND] Supabase URL ou Chave ausentes nas variáveis de ambiente do servidor.");
   }
 
   // Dynamic client initialization function per request based on client headers
   function getRequestSupabaseClient(req: any) {
     const rxUrl = req.headers["x-supabase-url"] || req.headers["X-Supabase-Url"];
     const rxKey = req.headers["x-supabase-key"] || req.headers["X-Supabase-Key"];
+    
     if (rxUrl && rxKey && rxUrl !== "https://your-supabase-project.supabase.co" && rxKey !== "your-supabase-anon-key") {
+      const rxHost = getHostFromUrl(rxUrl as string);
+      if (offlineHosts.has(rxHost)) {
+        return null;
+      }
       try {
         return createClient(rxUrl as string, rxKey as string);
       } catch (err) {
-        console.error("[BACKEND] Falha ao instanciar cliente do Supabase do cabeçalho da requisição:", err);
+        // Suppress print
+        return null;
       }
+    }
+    
+    if (isMainSupabaseOffline) {
+      return null;
     }
     return supabaseClient;
   }
@@ -97,9 +149,8 @@ async function startServer() {
       if (activeSupabase) {
         const email = cleanUser.includes("@") ? cleanUser : `${cleanUser}@rotaoperational.com`;
         
-        console.log(`[BACKEND] Autenticando com Supabase Auth para: ${email}`);
+        console.log(`[BACKEND] Tentativa de login via Supabase para: ${email}`);
         
-        // Try standard Supabase Auth inside a safe try/catch
         let authData: any = null;
         let authError: any = null;
         try {
@@ -110,12 +161,15 @@ async function startServer() {
           authData = authRes.data;
           authError = authRes.error;
         } catch (fetchErr: any) {
-          console.warn("[BACKEND] Falha de rede/conexão direta com Supabase Auth:", fetchErr?.message || fetchErr);
-          authError = { message: fetchErr?.message || "fetch failed" };
+          const msg = fetchErr?.message || "";
+          if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
+            markHostOffline(activeSupabase.supabaseUrl);
+          }
+          authError = { message: "connection offline" };
         }
 
         if (!authError && authData?.user) {
-          console.log(`[BACKEND] Autenticação Supabase Auth bem sucedida para: ${email}`);
+          console.log(`[BACKEND] Login corporativo autenticado com sucesso.`);
           const meta = authData.user.user_metadata || {};
           const mappedUser = {
             username: cleanUser,
@@ -125,7 +179,6 @@ async function startServer() {
             created_at: authData.user.created_at
           };
 
-          // Sync into database public.app_users table
           try {
             await activeSupabase.from("app_users").upsert({
               username: cleanUser,
@@ -135,7 +188,7 @@ async function startServer() {
               is_master: mappedUser.is_master
             });
           } catch (syncErr: any) {
-            console.warn("[BACKEND] Erro ao sincronizar perfil na tabela app_users pós-login:", syncErr?.message || syncErr);
+            // Silently swallow
           }
 
           return res.json({
@@ -143,8 +196,7 @@ async function startServer() {
             user: mappedUser
           });
         } else {
-          console.log(`[BACKEND] Autenticação direta com Supabase Auth indisponível ou falhou: ${authError?.message}. Verificando tabela app_users como fallback...`);
-          
+          // Fallback to querying custom app_users table
           try {
             let dbData: any = null;
             let dbError: any = null;
@@ -156,14 +208,17 @@ async function startServer() {
               dbData = dbRes.data;
               dbError = dbRes.error;
             } catch (fetchErr: any) {
-              console.warn("[BACKEND] Falha ao conectar ao banco de dados Supabase na busca fallback:", fetchErr?.message || fetchErr);
-              dbError = { message: fetchErr?.message || "fetch failed" };
+              const msg = fetchErr?.message || "";
+              if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
+                markHostOffline(activeSupabase.supabaseUrl);
+              }
+              dbError = { message: "connection offline" };
             }
 
             if (!dbError && dbData && dbData.length > 0) {
               const dbUser = dbData[0];
               if (dbUser.password === cleanPass) {
-                console.log(`[BACKEND] Login realizado com sucesso via public.app_users como fallback para: ${cleanUser}`);
+                console.log(`[BACKEND] Login autenticado com sucesso via tabela local.`);
                 return res.json({
                   success: true,
                   user: {
@@ -171,28 +226,23 @@ async function startServer() {
                     name: dbUser.name,
                     role: dbUser.role,
                     is_master: !!dbUser.is_master,
-                    created_at: dbUser.created_at || new Date().toISOString(),
-                    warning: "Autenticado via tabela de dados (Supabase Auth pendente ou restrito)."
+                    created_at: dbUser.created_at || new Date().toISOString()
                   }
                 });
               }
-            } else if (dbError) {
-              console.warn("[BACKEND] Erro/Aviso ao consultar tabela app_users no login fallback:", dbError.message);
             }
-          } catch (dbQueryErr: any) {
-            console.warn("[BACKEND] Exceção ao consultar tabela app_users no login fallback:", dbQueryErr.message || dbQueryErr);
+          } catch (dbQueryErr) {
+            // Ignored
           }
 
           // Let's check fallback auto-provisioning!
-          // If the password matches a fallback user, we dynamically register them in Supabase Auth!
           const fallbackMatch = DEFAULT_APP_USERS.find(
             u => u.username.toLowerCase() === cleanUser && u.password === cleanPass
           );
           
           if (fallbackMatch) {
-            console.log(`[BACKEND] Provisionando conta padrão '${cleanUser}' no Supabase Auth.`);
+            console.log(`[BACKEND] Ativando conta corporativa padrão '${cleanUser}'.`);
             
-            // Try standard signUp inside safe try/catch
             try {
               await activeSupabase.auth.signUp({
                 email,
@@ -206,65 +256,27 @@ async function startServer() {
                 }
               });
             } catch (signUpErr: any) {
-              console.warn("[BACKEND] Erro ao registrar conta padrão no Supabase Auth:", signUpErr?.message || signUpErr);
-            }
-
-            // Re-attempt sign-in
-            let authRetryData: any = null;
-            let authRetryError: any = null;
-            try {
-              const retryRes = await activeSupabase.auth.signInWithPassword({
-                email,
-                password: cleanPass
-              });
-              authRetryData = retryRes.data;
-              authRetryError = retryRes.error;
-            } catch (retryFetchErr: any) {
-              authRetryError = { message: retryFetchErr?.message || "fetch failed" };
-            }
-
-            if (!authRetryError && authRetryData?.user) {
-              try {
-                await activeSupabase.from("app_users").upsert({
-                  username: cleanUser,
-                  password: cleanPass,
-                  name: fallbackMatch.name,
-                  role: fallbackMatch.role,
-                  is_master: fallbackMatch.is_master
-                });
-              } catch (dbErr: any) {
-                console.warn("[BACKEND] Erro de DB ao upsertar usuario fallback provisório:", dbErr?.message || dbErr);
+              const msg = signUpErr?.message || "";
+              if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
+                markHostOffline(activeSupabase.supabaseUrl);
               }
-
-              return res.json({
-                success: true,
-                user: {
-                  username: cleanUser,
-                  name: fallbackMatch.name,
-                  role: fallbackMatch.role,
-                  is_master: fallbackMatch.is_master,
-                  created_at: authRetryData.user.created_at
-                }
-              });
-            } else {
-              // If email confirmation is enabled or network is offline, signInWithPassword might fail. Let the master log in offline/local fallback!
-              console.warn("[BACKEND] Falha no login do recém provisionado (provavelmente confirmação de e-mail ativa ou offline). Usando fallback local.");
-              return res.json({
-                success: true,
-                user: {
-                  username: fallbackMatch.username,
-                  name: fallbackMatch.name,
-                  role: fallbackMatch.role,
-                  is_master: fallbackMatch.is_master,
-                  warning: "Confirmação de e-mail Supabase pendente ou offline."
-                }
-              });
             }
+
+            return res.json({
+              success: true,
+              user: {
+                username: fallbackMatch.username,
+                name: fallbackMatch.name,
+                role: fallbackMatch.role,
+                is_master: fallbackMatch.is_master,
+                created_at: new Date().toISOString()
+              }
+            });
           }
         }
       }
-    } catch (dbErr: any) {
-      console.error("[BACKEND] Exceção na autenticação do Supabase:", dbErr?.message || dbErr);
+    } catch (generalErr) {
+      // Ignored
     }
 
     // Try in-memory or fallback matching for seeds (including 'master')

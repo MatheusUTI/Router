@@ -24,7 +24,7 @@ export default function Sidebar({
     { view: 'dashboard' as ViewType, label: 'Painel Central', icon: 'dashboard', fillIcon: true },
     { view: 'importacao' as ViewType, label: 'Importação CSV', icon: 'upload_file', fillIcon: true },
     { view: 'roteirizacao' as ViewType, label: 'Roteirização', icon: 'route', fillIcon: false },
-    { view: 'finalizacao' as ViewType, label: 'Romaneio & Separação', icon: 'assignment', fillIcon: false },
+    { view: 'finalizacao' as ViewType, label: 'Programação do Dia', icon: 'assignment', fillIcon: false },
   ];
 
   const adminItems = [

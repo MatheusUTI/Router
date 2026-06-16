@@ -473,5 +473,25 @@ Com o objetivo de evitar a inflação acidental ou perda de valores críticos na
    - Trata adequadamente números com formato misto (ex: milhar em ponto e decimal em vírgula, ou apenas vírgula como decimal).
    - Suporta fallbacks amigáveis para campos vazios, nulos ou indefinidos, garantindo o valor padrão `0` com robusta tolerância a falhas (NaN safety).
 
+---
+
+## 19. Programação do Dia
+
+Com o objetivo de reproduzir fielmente o fluxo operacional diário utilizado pela filial de Varginha e eliminar o uso de planilhas paralelas de expedição, o sistema integra o painel de fechamento unificado "Programação do Dia":
+
+1. **Agrupamento Automático e Estrutural**:
+   - Classifica e divide as faturas consolidadas em dois grandes blocos:
+     - **FROTA**: Veículos estáveis da própria frota operacional.
+     - **AGREGADOS**: Veículos de apoio contratados (identificados programaticamente através do padrão de placas `BWZ4186`, `GUE3786`, `CSF5246`, `GQZ3157` ou nomenclatura descritiva).
+2. **Campos Operacionais Críticos**:
+   - **PLACA**: Veículo de designação.
+   - **MOTORISTA** / **AJUDANTE**: Pessoal operacional vinculado no lote de separação corrente ou no manifesto gravado retrospectivo.
+   - **SETOR**: Rota técnica operacional integrada (derivação cumulativa).
+   - **CIDADES**: Cidades atendidas saneadas sem redundâncias.
+   - **QT NF** (CTRCs), **PESO** (kg) e **QT VOL**: Indicadores volumétricos unificados por veículo calculados em tempo real de forma idempotente.
+3. **Controle Físico e Exportabilidade**:
+   - **Impressão A4 Horizontal**: Formata as tabelas com folhas landscape de alto contraste para pátio e docas.
+   - **Excel Direct Exporting**: Gera arquivos do tipo planilha perfeitamente modelados legíveis por Microsoft Excel ou Google Planilhas.
+
 
 

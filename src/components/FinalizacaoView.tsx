@@ -42,10 +42,25 @@ export default function FinalizacaoView({
   onDeleteRomaneio,
   adminUser,
 }: FinalizacaoViewProps) {
-  // Navigation tab state: 'active' (Current separation logic) or 'history' (Saved routes list & reprint)
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>(() => {
-    return linkedCtrcs.length > 0 ? 'active' : 'history';
-  });
+  // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic) or 'history' (Saved routes list & reprint)
+  const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history'>('programacao');
+
+  const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
+    const plateUpper = vehiclePlate.toUpperCase().replace(/\s/g, '');
+    const driverUpper = driverName.toUpperCase();
+    
+    // Spec.md aggregate plates & drivers
+    const aggregatePlates = ['BWZ4186', 'GUE3786', 'CSF5246', 'GQZ3157'];
+    if (aggregatePlates.some(ap => plateUpper.includes(ap))) {
+      return true;
+    }
+    
+    if (plateUpper.includes('AGR') || driverUpper.includes('AGREGADO') || driverUpper.includes('AGR')) {
+      return true;
+    }
+    
+    return false;
+  };
 
   // Search filter for historical routes
   const [historySearch, setHistorySearch] = useState<string>('');
@@ -90,6 +105,146 @@ export default function FinalizacaoView({
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const programacaoRows: any[] = [];
+
+  // 1. Process active draft if there is one
+  if (linkedCtrcs && linkedCtrcs.length > 0 && activeVehicle) {
+    programacaoRows.push({
+      id: manifestId || 'ACTIVE_DRAFT',
+      vehiclePlate: activeVehicle.id,
+      driverName: activeVehicle.driverName || 'Não designado',
+      helperName: helperName || 'Não Informado',
+      ctrcs: linkedCtrcs,
+      isDraft: true,
+      observations: observations || '',
+      date: manifestDate
+    });
+  }
+
+  // 2. Process all saved romaneios
+  savedRomaneios.forEach((rom) => {
+    if (activeVehicle && rom.vehiclePlate === activeVehicle.id && linkedCtrcs && linkedCtrcs.length > 0) {
+      return;
+    }
+    programacaoRows.push({
+      id: rom.id,
+      vehiclePlate: rom.vehiclePlate || rom.vehicleId || 'S/P',
+      driverName: rom.driverName || 'Não Informado',
+      helperName: rom.helperName || 'Não Informado',
+      ctrcs: rom.ctrcs || [],
+      isDraft: false,
+      observations: rom.observations || '',
+      date: rom.date || manifestDate
+    });
+  });
+
+  const frotaRows = programacaoRows.filter(row => !isAgregadoVehicle(row.vehiclePlate, row.driverName));
+  const agregadoRows = programacaoRows.filter(row => isAgregadoVehicle(row.vehiclePlate, row.driverName));
+
+  const exportToExcel = () => {
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th { background-color: #f3f4f6; border: 1px solid #d1d5db; font-weight: bold; padding: 8px; text-align: left; }
+          td { border: 1px solid #e5e7eb; padding: 6px 8px; }
+          .group-header { background-color: #e0e7ff; font-weight: bold; padding: 8px; }
+          .footer-total { background-color: #f3f4f6; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <h2>ROTA OPERATIONAL - PROGRAMAÇÃO DO DIA (${manifestDate})</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>PLACA</th>
+              <th>MOTORISTA</th>
+              <th>AJUDANTE</th>
+              <th>SETOR</th>
+              <th>CIDADES</th>
+              <th>QT NF</th>
+              <th>PESO (kg)</th>
+              <th>QT VOL</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    html += `<tr class="group-header"><td colspan="8">FROTA</td></tr>`;
+    frotaRows.forEach(row => {
+      const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+      const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+      const qtNf = row.ctrcs.length;
+      const peso = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+      const qtVol = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+
+      html += `
+        <tr>
+          <td>${row.vehiclePlate}</td>
+          <td>${row.driverName}</td>
+          <td>${row.helperName}</td>
+          <td>${s}</td>
+          <td>${cits}</td>
+          <td>${qtNf}</td>
+          <td>${peso.toFixed(2)}</td>
+          <td>${qtVol}</td>
+        </tr>
+      `;
+    });
+
+    html += `<tr class="group-header"><td colspan="8">AGREGADOS</td></tr>`;
+    agregadoRows.forEach(row => {
+      const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+      const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+      const qtNf = row.ctrcs.length;
+      const peso = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+      const qtVol = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+
+      html += `
+        <tr>
+          <td>${row.vehiclePlate}</td>
+          <td>${row.driverName}</td>
+          <td>${row.helperName}</td>
+          <td>${s}</td>
+          <td>${cits}</td>
+          <td>${qtNf}</td>
+          <td>${peso.toFixed(2)}</td>
+          <td>${qtVol}</td>
+        </tr>
+      `;
+    });
+
+    const totalVehiclesCount = programacaoRows.length;
+    const totalCtrcsCount = programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0);
+    const totalPesoSum = programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0);
+    const totalVolSum = programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0);
+
+    html += `
+          <tr class="footer-total">
+            <td colspan="5">TOTAIS DOS VEÍCULOS (${totalVehiclesCount})</td>
+            <td>${totalCtrcsCount}</td>
+            <td>${totalPesoSum.toFixed(2)}</td>
+            <td>${totalVolSum}</td>
+          </tr>
+        </tbody>
+      </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Programacao_do_Dia_${manifestDate.replace(/\//g, '-')}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast('Programação do Dia exportada para o Excel com sucesso.');
   };
 
   // Toggle checklist status
@@ -248,12 +403,12 @@ export default function FinalizacaoView({
             color: #111827 !important;
           }
           .print-border {
-            border-color: #7f8c8d !important;
+            border-color: #333333 !important;
           }
 
           @page {
-            size: A4 portrait;
-            margin: 12mm 10mm 12mm 10mm;
+            size: ${activeTab === 'programacao' ? 'A4 landscape' : 'A4 portrait'} !important;
+            margin: 8mm !important;
           }
         }
       `}} />
@@ -283,7 +438,25 @@ export default function FinalizacaoView({
         {/* Action Toggle Switch */}
         <div className="flex items-center bg-surface-container-low p-1 rounded-xl border border-outline-variant/40 self-stretch md:self-auto tab-bar">
           <button
-            onClick={() => setActiveTab('active')}
+            onClick={() => {
+              setActiveTab('programacao');
+              setPreviewRomaneio(null);
+            }}
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'programacao'
+                ? 'bg-primary text-on-primary shadow-md'
+                : 'text-on-surface-variant hover:text-white'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            Programação do Dia
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('active');
+              setPreviewRomaneio(null);
+            }}
             className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'active'
                 ? 'bg-primary text-on-primary shadow-md'
@@ -315,6 +488,209 @@ export default function FinalizacaoView({
           </button>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* CASE 0: PROGRAMAÇÃO DO DIA MASTER OPERATIONAL DASHBOARD */}
+      {/* ========================================================= */}
+      {activeTab === 'programacao' && (
+        <div className="space-y-6 no-print text-left">
+          
+          {/* Header Action Card */}
+          <div className="bg-surface-container border border-outline-variant rounded-2xl p-6 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 border border-primary/20 text-primary rounded-xl shrink-0">
+                <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-black text-white tracking-tight uppercase">PROGRAMAÇÃO DO DIA</h1>
+                  <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-mono font-bold text-[9px] uppercase rounded">
+                    Varginha Filial
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Data ativa do planejamento: <span className="font-mono font-bold text-white bg-slate-900 border border-white/10 px-2 py-0.5 rounded ml-1">{manifestDate}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 self-stretch md:self-auto">
+              <button
+                onClick={exportToExcel}
+                className="flex-1 md:flex-none px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                📊 Exportar Excel
+              </button>
+              
+              <button
+                onClick={handlePrint}
+                className="flex-1 md:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+              >
+                <Printer className="w-4 h-4" />
+                🖨 Imprimir A4 Landscape
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics stats ribbon */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
+              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Total Veículos</span>
+              <div className="text-2xl font-black text-white font-mono">{programacaoRows.length}</div>
+            </div>
+            
+            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
+              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Total CTRCs / NF</span>
+              <div className="text-2xl font-black text-white font-mono">
+                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}
+              </div>
+            </div>
+
+            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
+              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Peso Consolidado</span>
+              <div className="text-2xl font-black text-white font-mono">
+                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} KG
+              </div>
+            </div>
+
+            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
+              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Volume Movimentado</span>
+              <div className="text-2xl font-black text-white font-mono">
+                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)} VOL
+              </div>
+            </div>
+          </div>
+
+          {/* Core Table Grid layout */}
+          <div className="bg-surface-container border border-outline-variant p-6 rounded-2xl space-y-6">
+            
+            {/* 1. FROTA SECTION */}
+            <div>
+              <div className="flex items-center justify-between border-b border-outline-variant/50 pb-2 mb-4">
+                <h2 className="text-xs font-black text-sky-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-sky-400" />
+                  Frota Própria Estável
+                </h2>
+                <span className="text-[10px] text-on-surface-variant font-mono">
+                  Veículos em rota: {frotaRows.length}
+                </span>
+              </div>
+
+              {frotaRows.length === 0 ? (
+                <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-surface/30 rounded-xl border border-dashed border-outline-variant/40">
+                  Nenhum veículo próprio alocado para hoje nesta central.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-on-surface-variant uppercase font-mono text-[10px] tracking-wider border-b border-outline-variant/40 bg-surface/40">
+                        <th className="p-3">PLACA</th>
+                        <th className="p-3">MOTORISTA</th>
+                        <th className="p-3">AJUDANTE</th>
+                        <th className="p-3">SETOR</th>
+                        <th className="p-3">CIDADES</th>
+                        <th className="p-3 text-center">QT NF</th>
+                        <th className="p-3 text-right">PESO (kg)</th>
+                        <th className="p-3 text-right">QT VOL</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/30">
+                      {frotaRows.map((row, rIdx) => {
+                        const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+                        const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+                        const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+                        const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+                        return (
+                          <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
+                            <td className="p-3 font-mono font-bold text-primary">{row.vehiclePlate}</td>
+                            <td className="p-3 text-white">{row.driverName}</td>
+                            <td className="p-3 text-on-surface-variant">{row.helperName}</td>
+                            <td className="p-3 font-mono text-on-surface-variant">{s}</td>
+                            <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
+                            <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
+                            <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
+                            <td className="p-3 text-right font-mono text-white">{volSum}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* 2. AGREGADOS SECTION */}
+            <div>
+              <div className="flex items-center justify-between border-b border-outline-variant/50 pb-2 mb-4 pt-4">
+                <h2 className="text-xs font-black text-amber-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  Frota de Apoio (Agregados)
+                </h2>
+                <span className="text-[10px] text-on-surface-variant font-mono">
+                  Veículos em rota: {agregadoRows.length}
+                </span>
+              </div>
+
+              {agregadoRows.length === 0 ? (
+                <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-surface/30 rounded-xl border border-dashed border-outline-variant/40">
+                  Nenhum veículo agregado/apoio alocado para hoje nesta central.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-on-surface-variant uppercase font-mono text-[10px] tracking-wider border-b border-outline-variant/40 bg-surface/40">
+                        <th className="p-3">PLACA</th>
+                        <th className="p-3">MOTORISTA</th>
+                        <th className="p-3">AJUDANTE</th>
+                        <th className="p-3">SETOR</th>
+                        <th className="p-3">CIDADES</th>
+                        <th className="p-3 text-center">QT NF</th>
+                        <th className="p-3 text-right">PESO (kg)</th>
+                        <th className="p-3 text-right">QT VOL</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/30">
+                      {agregadoRows.map((row, rIdx) => {
+                        const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+                        const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+                        const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+                        const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+                        return (
+                          <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
+                            <td className="p-3 font-mono font-bold text-primary">{row.vehiclePlate}</td>
+                            <td className="p-3 text-white">{row.driverName}</td>
+                            <td className="p-3 text-on-surface-variant">{row.helperName}</td>
+                            <td className="p-3 font-mono text-on-surface-variant">{s}</td>
+                            <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
+                            <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
+                            <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
+                            <td className="p-3 text-right font-mono text-white">{volSum}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Sub footer totals row inside screen table */}
+            <div className="pt-4 mt-6 border-t border-outline-variant/50 flex flex-wrap gap-4 items-center justify-between font-mono font-semibold text-xs text-on-surface-variant">
+              <div>VEÍCULOS PROGRAMADOS: <span className="text-white font-bold ml-1">{programacaoRows.length}</span></div>
+              <div>CTRCs / NOTAS TOTAIS: <span className="text-white font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</span></div>
+              <div>CUBAGEM DE PESO INTEGRADA: <span className="text-emerald-400 font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} kg</span></div>
+              <div>VOLUMETRIA TOTAL: <span className="text-sky-400 font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)} vol.</span></div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* CASE 1: ACTIVE SEPARATION DRAFTING BOARD */}
@@ -963,6 +1339,137 @@ export default function FinalizacaoView({
           )
         )
       }
+
+      {/* --------------------------------------------------------- */}
+      {/* PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
+      {/* --------------------------------------------------------- */}
+      {activeTab === 'programacao' && (
+        <div className="hidden print:block text-black bg-white w-full text-left font-sans p-2">
+          <div className="border-b-2 border-black pb-3 mb-4 flex justify-between items-end">
+            <div>
+              <h1 className="text-xl font-bold uppercase tracking-tight">PROGRAMAÇÃO DO DIA</h1>
+              <p className="text-[10px] text-gray-500 uppercase font-bold">FILIAL VARGINHA | RESUMO DE TRANSPORTE E EXPEDIÇÃO</p>
+            </div>
+            <div className="text-right">
+              <span className="block text-[10px] text-gray-400 font-bold uppercase">Data de Planejamento</span>
+              <span className="text-sm font-mono font-bold">{manifestDate}</span>
+            </div>
+          </div>
+
+          {/* FROTA */}
+          <div className="mb-6">
+            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">FROTA PRÓPRIA</h2>
+            <table className="w-full text-xs text-left border-collapse border border-gray-400">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">PLACA</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">MOTORISTA</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">AJUDANTE</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">SETOR</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">CIDADES</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-center">QT NF</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-right">PESO (kg)</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-right">QT VOL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {frotaRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="border border-gray-400 px-3 py-4 text-center text-gray-400 italic">
+                      Nenhum veículo próprio alocado nesta data.
+                    </td>
+                  </tr>
+                ) : (
+                  frotaRows.map((row, idx) => {
+                    const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+                    const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+                    const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+                    const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+                    return (
+                      <tr key={idx} className="font-medium text-[11px]">
+                        <td className="border border-gray-400 px-3 py-1.5 font-mono font-bold">{row.vehiclePlate}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{row.driverName}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{row.helperName}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{s}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 max-w-[200px] truncate">{cits}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-center font-mono">{row.ctrcs.length}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-right font-mono">{weightSum.toLocaleString('pt-BR')} kg</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-right font-mono">{volSum}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* AGREGADOS */}
+          <div className="mb-6">
+            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">FROTA DE APOIO (AGREGADOS)</h2>
+            <table className="w-full text-xs text-left border-collapse border border-gray-400">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">PLACA</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">MOTORISTA</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">AJUDANTE</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">SETOR</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold">CIDADES</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-center">QT NF</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-right">PESO (kg)</th>
+                  <th className="border border-gray-400 px-3 py-1.5 font-bold text-right">QT VOL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {agregadoRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="border border-gray-400 px-3 py-4 text-center text-gray-400 italic">
+                      Nenhum veículo de apoio (agregado) alocado nesta data.
+                    </td>
+                  </tr>
+                ) : (
+                  agregadoRows.map((row, idx) => {
+                    const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
+                    const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
+                    const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+                    const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+                    return (
+                      <tr key={idx} className="font-medium text-[11px]">
+                        <td className="border border-gray-400 px-3 py-1.5 font-mono font-bold">{row.vehiclePlate}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{row.driverName}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{row.helperName}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">{s}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 max-w-[200px] truncate">{cits}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-center font-mono">{row.ctrcs.length}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-right font-mono">{weightSum.toLocaleString('pt-BR')} kg</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-right font-mono">{volSum}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* FOOTER TOTALS FOR PRINT */}
+          <div className="border border-black bg-gray-50 p-3 flex justify-between items-center text-xs font-bold font-mono">
+            <div>TOTAL VEÍCULOS: {programacaoRows.length}</div>
+            <div>TOTAL CTRCS/NF: {programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</div>
+            <div>PESO ACUMULADO: {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} kg</div>
+            <div>VOLUME TOTAL: {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)} vol.</div>
+          </div>
+
+          <div className="pt-8 mt-12 grid grid-cols-2 gap-6 text-[11px] font-bold text-gray-500 text-center">
+            <div>
+              <div className="border-b border-gray-400 h-5 mb-1 mx-4"></div>
+              <span>Responsável pelo Planejamento (Expedição)</span>
+            </div>
+            <div>
+              <div className="border-b border-gray-400 h-5 mb-1 mx-4"></div>
+              <span>Supervisor de Pátio / Operação</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
