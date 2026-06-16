@@ -590,6 +590,8 @@ export default function RoteirizacaoView({
             onUpdatePlanning={handleUpdatePlanning}
             densityMode={densityMode}
             onUpdateDensity={(density) => setDensityMode(density)}
+            totalCtrcsCount={unassignedCtrcs.length}
+            onClearFilters={clearFilters}
           />
         )}
       </div>

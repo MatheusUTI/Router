@@ -573,6 +573,25 @@ Para apoiar a colaboração e permitir que múltiplos computadores continuem a r
    - **Baixar operação da nuvem (Pull/Import)**: Consulta as tabelas remotas, mescla-as de forma segura com o IndexedDB e executa o disparo do trigger de reidratação em tempo de execução para os componentes visuais reagirem.
    - **Sincronizar operação agora (Bidirecional)**: Realiza uma mesclagem de duas vias segura (baixando o que há de mais atual para a máquina local e disparando o estado integrado finalizado resultante de volta para o Supabase).
 
+---
+
+## 24. Controle de Versão Pós-Deploy e Reset Seguro de Filtros
+
+Com o fim de evitar inconsistências de cache no Vercel ou preferências persistidas antigas ocultando novos CTRCs importados e apresentando o grid da Mesa de Roteirização vazio, o sistema implementa um controle ativo de reidratação e versão:
+
+1. **Gestão de Versão no Browser (`APP_VERSION = "1.0.1"`)**:
+   - A constante centralizada de versão reside em `src/constants/appVersion.ts`.
+   - Ao iniciar a aplicação, se o valor lido em `localStorage.getItem("router_app_version")` for diferente da versão do pacote atual (`APP_VERSION`), o sistema realiza um expurgo estratégico automático das preferências de views do operador (`UserPreferenceRepository.clearAll()`).
+   - Isso garante que filtros, sorting e groupings de visualizações voláteis voltem aos padrões de fábrica, desobstruindo todas as possíveis regras de visibilidade restritivas sem jamais tocar ou apagar os dados do usuário (CTRCs, Romaneios, rotas e motoristas permanecem 100% intocados).
+
+2. **Reidratação de Estados pós-Importação de CTRC**:
+   - Logo após o processamento e salvamento bem-sucedido de novos CTRCs importados (via arquivo SSW CSV) nas coleções offline do IndexedDB, o sistema força dinamicamente um reload síncrono integral e re-hidratação direta dos estados em memória (`setAvailableCtrcs`). Isso evita quaisquer atrasos de atualização ou problemas de concorrência reativa no pátio.
+
+3. **Diagnóstico Seguro de Visibilidade na Mesa**:
+   - Caso o pátio operacional contenha CTRCs pendentes no IndexedDB (ou carregados em memória local, ou seja, `totalCtrcsCount > 0`) mas o grid da Mesa de Roteirização permaneça completamente vazio devido ao conjunto de filtros e termos de pesquisa ativos no pátio, um banner sutil de diagnóstico é embutido no centro do cartão informando a existência de registros ocultos: "**Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?**".
+   - Um botão interativo integrado de **Limpar filtros** é fornecido para o operador resetar todos os filtros de ocorrências correntes, devolvendo a legibilidade total das faturas do depósito instantaneamente.
+
+
 
 
 

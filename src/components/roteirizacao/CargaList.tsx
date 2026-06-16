@@ -17,6 +17,8 @@ interface CargaListProps {
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
   densityMode?: DensityMode;
   onUpdateDensity?: (density: DensityMode) => void;
+  totalCtrcsCount?: number;
+  onClearFilters?: () => void;
 }
 
 export default function CargaList({
@@ -33,6 +35,8 @@ export default function CargaList({
   onUpdatePlanning,
   densityMode = 'default',
   onUpdateDensity,
+  totalCtrcsCount = 0,
+  onClearFilters,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -141,9 +145,22 @@ export default function CargaList({
       {/* Main Items View Area */}
       <div className="flex-1 overflow-x-hidden overflow-y-auto divide-y divide-[#14203a] scrollbar-thin scrollbar-track-[#080c14] scrollbar-thumb-indigo-550 scroll-smooth">
         {filteredCtrcs.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-2">
+          <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-3 px-4 text-center">
             <span className="text-3xl">📦</span>
             <p className="text-xs font-bold uppercase font-mono">Nenhuma carga pendente corresponde ao filtro selecionado</p>
+            {totalCtrcsCount > 0 && onClearFilters && (
+              <div className="mt-2 bg-[#0e1726]/80 border border-[#1e2e4f] rounded-lg p-3 max-w-sm animate-pulse">
+                <p className="text-xs text-indigo-300 font-sans leading-relaxed mb-2">
+                  Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?
+                </p>
+                <button
+                  onClick={onClearFilters}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-[11px] uppercase tracking-wider px-3.5 py-1.5 rounded shadow-lg transition-all active:scale-95 cursor-pointer"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            )}
           </div>
         ) : groupingMode === 'none' ? (
           // Direct List Mode

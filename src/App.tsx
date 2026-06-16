@@ -34,6 +34,8 @@ import { OccurrenceRepository } from './infrastructure/localdb/repositories/occu
 import { CtrcOccurrenceHistoryRepository } from './infrastructure/localdb/repositories/ctrcOccurrenceHistoryRepository';
 import { RouteGateRepository } from './infrastructure/localdb/repositories/routeGateRepository';
 import { PreRomaneioRepository } from './infrastructure/localdb/repositories/preRomaneioRepository';
+import { UserPreferenceRepository } from './infrastructure/localdb/repositories/userPreferenceRepository';
+import { APP_VERSION } from './constants/appVersion';
 
 // Import Views
 import Sidebar from './components/Sidebar';
@@ -159,6 +161,15 @@ export default function App() {
   useEffect(() => {
     async function initLocalDB() {
       try {
+        // Controle de versão pós-deploy e reset seguro de filtros voláteis da Mesa
+        const oldVersion = localStorage.getItem("router_app_version");
+        if (oldVersion !== APP_VERSION) {
+          console.log(`[Version Bump] Migrando de ${oldVersion || "vazio"} para ${APP_VERSION}.`);
+          // Limpa apenas preferências de filtros da Mesa sem deletar dados operacionais
+          await UserPreferenceRepository.clearAll();
+          localStorage.setItem("router_app_version", APP_VERSION);
+        }
+
         // Executa compatibilidade de localStorage legado e seeding estruturado para o IndexedDB
         await runCompatibilityMigration();
         await RouteGateRepository.seedDefaultGates();
@@ -438,6 +449,23 @@ export default function App() {
       }
     } catch (err) {
       console.error('[Importacao] Erro durante o salvamento do histórico de ocorrências do CTRC:', err);
+    }
+
+    // Garantir recarga explícita pós-importação bem-sucedida direto do IndexedDB para o estado React
+    try {
+      const allLocalCtres = await CtrcRepository.getAll();
+      if (allLocalCtres.length > 0) {
+        const available = allLocalCtres.filter((c) => c.status === 'Disponível');
+        const linked = allLocalCtres.filter((c) => c.status !== 'Disponível');
+        setAvailableCtrcs(available);
+        setLinkedCtrcs(linked);
+      } else {
+        setAvailableCtrcs([]);
+        setLinkedCtrcs([]);
+      }
+      console.log(`[Importacao] Memória reidratada explicitamente com ${allLocalCtres.length} CTRCs do banco.`);
+    } catch (rehydrateErr) {
+      console.error('[Importacao] Falha na recarga explícita pós-importação:', rehydrateErr);
     }
   };
 

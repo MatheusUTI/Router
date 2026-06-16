@@ -8,6 +8,7 @@ export const DEFAULT_ROUTE_SECTORS = [
   'Disponível Cobrança',
   'Disponível Pendência',
   'Disponível Transferência',
+  'Sem setor',
   'Solução'
 ];
 
@@ -251,7 +252,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
 
       // 4. Setor Ocorrência Filter (multi-select)
       const sector = ctrc.occurrenceSector || 'Sem setor';
-      if (!selectedOccurrenceSectors.includes(sector)) return false;
+      if (selectedOccurrenceSectors.length > 0 && !selectedOccurrenceSectors.includes(sector)) return false;
 
       return true;
     });
