@@ -46,7 +46,7 @@ export default function FinalizacaoView({
   adminUser,
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
-  const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('programacao');
+  const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('preromaneio');
 
   // Load initial tab from localStorage if specified (e.g., coming from generate pre-romaneio or consolidate)
   useEffect(() => {
@@ -184,34 +184,27 @@ export default function FinalizacaoView({
 
   const programacaoRows: any[] = [];
 
-  // 1. Process active draft if there is one
-  if (linkedCtrcs && linkedCtrcs.length > 0 && activeVehicle) {
-    programacaoRows.push({
-      id: manifestId || 'ACTIVE_DRAFT',
-      vehiclePlate: activeVehicle.id,
-      driverName: activeVehicle.driverName || 'Não designado',
-      helperName: helperName || 'Não Informado',
-      ctrcs: linkedCtrcs,
-      isDraft: true,
-      observations: observations || '',
-      date: manifestDate
-    });
-  }
+  // Filter and map preRomaneios that have either vehiclePlate or driverName filled
+  const preRomaneiosToShip = preRomaneios.filter(
+    (pr) => (pr.vehiclePlate && pr.vehiclePlate.trim() !== '') || (pr.driverName && pr.driverName.trim() !== '')
+  );
 
-  // 2. Process all saved romaneios
-  savedRomaneios.forEach((rom) => {
-    if (activeVehicle && rom.vehiclePlate === activeVehicle.id && linkedCtrcs && linkedCtrcs.length > 0) {
-      return;
-    }
+  preRomaneiosToShip.forEach((pr) => {
+    const matchingCtrcs = (pr.ctrcIds || [])
+      .map((id) => resolvedCtrcsMap[id])
+      .filter(Boolean);
+
     programacaoRows.push({
-      id: rom.id,
-      vehiclePlate: rom.vehiclePlate || rom.vehicleId || 'S/P',
-      driverName: rom.driverName || 'Não Informado',
-      helperName: rom.helperName || 'Não Informado',
-      ctrcs: rom.ctrcs || [],
+      id: pr.id,
+      vehiclePlate: pr.vehiclePlate || 'S/P',
+      driverName: pr.driverName || 'Não Informado',
+      helperName: pr.helperName || 'Não Informado',
+      ctrcs: matchingCtrcs,
       isDraft: false,
-      observations: rom.observations || '',
-      date: rom.date || manifestDate
+      observations: pr.observations || pr.notes || '',
+      date: pr.planningDate,
+      route: pr.route,
+      gate: pr.gate
     });
   });
 
@@ -519,6 +512,21 @@ export default function FinalizacaoView({
         <div className="flex items-center bg-surface-container-low p-1 rounded-xl border border-outline-variant/40 self-stretch md:self-auto tab-bar">
           <button
             onClick={() => {
+              setActiveTab('preromaneio');
+              setPreviewRomaneio(null);
+            }}
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'preromaneio'
+                ? 'bg-primary text-on-primary shadow-md'
+                : 'text-on-surface-variant hover:text-white'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            Pré-Romaneios
+          </button>
+
+          <button
+            onClick={() => {
               setActiveTab('programacao');
               setPreviewRomaneio(null);
             }}
@@ -534,26 +542,6 @@ export default function FinalizacaoView({
 
           <button
             onClick={() => {
-              setActiveTab('active');
-              setPreviewRomaneio(null);
-            }}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'active'
-                ? 'bg-primary text-on-primary shadow-md'
-                : 'text-on-surface-variant hover:text-white'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            Separação Corrente
-            {linkedCtrcs.length > 0 && (
-              <span className="ml-1 bg-rose-500 text-white text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-mono animate-bounce">
-                {linkedCtrcs.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
               setActiveTab('history');
               setPreviewRomaneio(null); // Clear preview when shifting back
             }}
@@ -565,21 +553,6 @@ export default function FinalizacaoView({
           >
             <History className="w-3.5 h-3.5" />
             Rotas Prontas ({savedRomaneios.length})
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('preromaneio');
-              setPreviewRomaneio(null);
-            }}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'preromaneio'
-                ? 'bg-primary text-on-primary shadow-md'
-                : 'text-on-surface-variant hover:text-white'
-            }`}
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            Pré-Romaneios
           </button>
         </div>
       </div>
@@ -1534,6 +1507,70 @@ export default function FinalizacaoView({
                           <span className="text-white font-bold">{totalW.toLocaleString('pt-BR')} kg / {totalVol} vol</span>
                         </div>
                       </div>
+
+                      {/* Vehicle & Operational Assignment (V1) */}
+                      <div className="border-t border-outline-variant/30 pt-3 mt-1 space-y-2 text-left">
+                        <span className="text-[10px] font-mono font-bold text-indigo-400 block uppercase tracking-wider">Distribuição Operacional (V1)</span>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Veículo Placa</label>
+                            <input
+                              type="text"
+                              value={pr.vehiclePlate || ''}
+                              onChange={async (e) => {
+                                const val = e.target.value.toUpperCase();
+                                // Update local list state so it registers immediately
+                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, vehiclePlate: val } : item));
+                                await PreRomaneioRepository.updateAssignment(pr.id, { vehiclePlate: val });
+                              }}
+                              placeholder="Placa (ex: ABC1234)"
+                              className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 font-mono focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Motorista</label>
+                            <input
+                              type="text"
+                              value={pr.driverName || ''}
+                              onChange={async (e) => {
+                                const val = e.target.value;
+                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, driverName: val } : item));
+                                await PreRomaneioRepository.updateAssignment(pr.id, { driverName: val });
+                              }}
+                              placeholder="Nome Motorista"
+                              className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Ajudante</label>
+                            <input
+                              type="text"
+                              value={pr.helperName || ''}
+                              onChange={async (e) => {
+                                const val = e.target.value;
+                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, helperName: val } : item));
+                                await PreRomaneioRepository.updateAssignment(pr.id, { helperName: val });
+                              }}
+                              placeholder="Nome Ajudante"
+                              className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Observações</label>
+                            <input
+                              type="text"
+                              value={pr.observations || ''}
+                              onChange={async (e) => {
+                                const val = e.target.value;
+                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, observations: val } : item));
+                                await PreRomaneioRepository.updateAssignment(pr.id, { observations: val });
+                              }}
+                              placeholder="Obs/Instruções"
+                              className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 mt-2">
@@ -1576,7 +1613,7 @@ export default function FinalizacaoView({
       {/* PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
       {/* --------------------------------------------------------- */}
       {activeTab === 'programacao' && (
-        <div className="hidden print:block text-black bg-white w-full text-left font-sans p-2">
+        <div className="hidden print:block print-area text-black bg-white w-full text-left font-sans p-2">
           <div className="border-b-2 border-black pb-3 mb-4 flex justify-between items-end">
             <div>
               <h1 className="text-xl font-bold uppercase tracking-tight">PROGRAMAÇÃO DO DIA</h1>
@@ -1707,7 +1744,7 @@ export default function FinalizacaoView({
       {/* CASE 3 PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
       {/* --------------------------------------------------------- */}
       {activeTab === 'preromaneio' && (
-        <div className="hidden print:block text-black bg-white w-full text-left font-sans p-2">
+        <div className="hidden print:block print-area text-black bg-white w-full text-left font-sans p-2">
           {(printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).map((pr, pIdx) => {
             const isLast = pIdx === (printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).length - 1;
             return (
@@ -1725,20 +1762,24 @@ export default function FinalizacaoView({
 
                 <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 border border-gray-400 rounded-lg mb-4 text-xs">
                   <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Rota de Entrega</span>
-                    <span className="font-bold text-sm text-black uppercase">{pr.route}</span>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Rota / Doca</span>
+                    <span className="font-bold text-sm text-black uppercase">{pr.route} (Doca: {pr.gate || 'N/D'})</span>
                   </div>
                   <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Portão / Doca</span>
-                    <span className="font-bold text-sm text-black uppercase">{pr.gate || 'Não Definido'}</span>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Placa / Motorista</span>
+                    <span className="font-bold text-sm text-black uppercase">
+                      {pr.vehiclePlate ? `${pr.vehiclePlate} | ${pr.driverName || 'Não Informado'}` : 'Não Atribuído'}
+                    </span>
                   </div>
                   <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Status Operacional</span>
-                    <span className="font-bold text-sm text-black uppercase">{pr.status}</span>
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Ajudante / Obs</span>
+                    <span className="font-bold text-xs text-black block truncate">
+                      {pr.helperName || 'Não Informado'} {pr.observations ? `(${pr.observations})` : ''}
+                    </span>
                   </div>
                   <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Indicadores Totais</span>
-                    <span className="font-mono text-sm text-black block font-bold">
+                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Totais</span>
+                    <span className="font-mono text-sm text-black block font-bold leading-tight">
                       {pr.ctrcIds.length} CTRCs | {pr.totalWeight.toLocaleString('pt-BR')} kg | {pr.totalVolumes} vol.
                     </span>
                   </div>

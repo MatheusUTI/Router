@@ -360,6 +360,10 @@ export interface PreRomaneio {
   updatedAt: string;
   convertedRomaneioId?: string;
   notes?: string;
+  vehiclePlate?: string;
+  driverName?: string;
+  helperName?: string;
+  observations?: string;
 }
 
 export interface OperationalCalendarEvent {

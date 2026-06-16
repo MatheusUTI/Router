@@ -479,35 +479,40 @@ Com o objetivo de evitar a inflação acidental ou perda de valores críticos na
 
 Com o objetivo de reproduzir fielmente o fluxo operacional diário utilizado pela filial de Varginha e eliminar o uso de planilhas paralelas de expedição, o sistema integra o painel de fechamento unificado "Programação do Dia":
 
-1. **Agrupamento Automático e Estrutural**:
-   - Classifica e divide as faturas consolidadas em dois grandes blocos:
+1. **Base de Dados Unificada (V1)**:
+   - A Programação do Dia é gerada de forma 100% reativa a partir dos Pré-Romaneios cadastrados que possuem Placa (`vehiclePlate`) ou Motorista (`driverName`) devidamente informados.
+2. **Agrupamento Automático e Estrutural**:
+   - Classifica e divide as faturas consolidadas desses Pré-Romaneios ativos em dois grandes blocos:
      - **FROTA**: Veículos estáveis da própria frota operacional.
      - **AGREGADOS**: Veículos de apoio contratados (identificados programaticamente através do padrão de placas `BWZ4186`, `GUE3786`, `CSF5246`, `GQZ3157` ou nomenclatura descritiva).
-2. **Campos Operacionais Críticos**:
+3. **Campos Operacionais Críticos**:
    - **PLACA**: Veículo de designação.
-   - **MOTORISTA** / **AJUDANTE**: Pessoal operacional vinculado no lote de separação corrente ou no manifesto gravado retrospectivo.
+   - **MOTORISTA** / **AJUDANTE**: Pessoal operacional vinculado no próprio registro do Pré-Romaneio.
    - **SETOR**: Rota técnica operacional integrada (derivação cumulativa).
    - **CIDADES**: Cidades atendidas saneadas sem redundâncias.
    - **QT NF** (CTRCs), **PESO** (kg) e **QT VOL**: Indicadores volumétricos unificados por veículo calculados em tempo real de forma idempotente.
-3. **Controle Físico e Exportabilidade**:
+4. **Controle Físico e Exportabilidade**:
    - **Impressão A4 Horizontal**: Formata as tabelas com folhas landscape de alto contraste para pátio e docas.
    - **Excel Direct Exporting**: Gera arquivos do tipo planilha perfeitamente modelados legíveis por Microsoft Excel ou Google Planilhas.
 
 ---
 
-## 20. Impressão dos Pré-Romaneios de Separação
+## 20. Impressão e Gestão de Pré-Romaneios de Separação
 
-Com o objetivo de criar uma área operacional robusta para que a equipe de galpão separe e carregue as cargas de forma física organizada por portão e doca, o Router disponibiliza a funcionalidade de listagem e impressão dedicada de Pré-Romaneios:
+Com o objetivo de criar uma área operacional robusta para que a equipe de galpão separe e carregue as cargas de forma física organizada por portão e doca, o Router disponibiliza o painel unificado de Pré-Romaneios na V1:
 
-1. **Localização e Navegação**:
-   - Integrado diretamente à tela `FinalizacaoView` como a aba **Pré-Romaneios**, listando todos os rascunhos de planejamento de carga gerados na Mesa de Roteirização para a data de planejamento selecionada, com fallback dinâmico para listar todos os itens na ausência de filtro de data ativo.
-2. **Dados e Métricas em Tela**:
-   - Cada Pré-Romaneio exibe seu respectivo portão/doca, rota de atendimento, status de separação, contagem consolidada de CTRCs/Notas Fiscais vinculadas, peso total (kg), cubagem/volumes e um seletor rápido para atualizar seu status físico diretamente do pátio.
-3. **Impressão Operacional Limpa**:
-   - Permite a impressão individual ou em lote de múltiplos pré-romaneios gerados.
-   - O visual de impressão utiliza regras estritas de contraste física (fundo branco, bordas pretas densas, texto escuro em alta legibilidade).
-   - Apresenta colunas unificadas apropriadas: caixa de marcação física (CHK), CTRC ID, número da Nota Fiscal, destinatário, remetente, cidade, volume e localização específica de galpão.
-   - Incorpora uma ficha de controle manual em rodapé para preenchimento manuscrito de horários, nomes dos separadores, conferentes e assinaturas, servindo como documento de prestação de contas operacionais.
+1. **Localização e Fluxo Principal**:
+   - Integrado diretamente à tela `FinalizacaoView` como a aba **Pré-Romaneios**, sendo a rota de redirecionamento automático pós-Mesa de Roteirização.
+   - O operador logística seleciona CTRCs, clica em "Pré-Separar" e vai diretamente para esta aba.
+2. **Atribuição Operacional Descentralizada**:
+   - A Placa do Veículo, Nome do Motorista, Nome do Ajudante e Observações de expedição são configurados e editados diretamente em inputs embutidos no próprio cartão de cada Pré-Romaneio.
+   - Cada alteração é persistida reativamente no IndexedDB local de forma imediata via `updateAssignment`.
+3. **Dados e Métricas em Tela**:
+   - Cada Pré-Romaneio exibe seu respectivo portão/doca, rota de faturamento, status de separação, campos de atribuição, contagem consolidada de CTRCs/Notas Fiscais vinculadas, peso total (kg), cubagem/volumes e um seletor de status para controle do pátio.
+4. **Impressão Operacional Limpa**:
+   - Permite a impressão individual ou em lote de múltiplos pré-romaneios.
+   - O documento impresso exibe as atribuições de veículo, motorista, ajudante e observações, além de colunas de conferência física (CHK, CTRC ID, Nota Fiscal, destinatário, remetente, cidade, volumes e localização de pátio).
+   - Incorpora uma ficha de controle de rodapé para preenchimento de horários e assinaturas dos operadores de pátio.
 
 ---
 

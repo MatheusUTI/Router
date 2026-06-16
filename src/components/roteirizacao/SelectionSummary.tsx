@@ -239,15 +239,6 @@ export default function SelectionSummary({
             <span>📦 Pré-Separar</span>
           </button>
         )}
-
-        {/* Consolidar Rota trigger */}
-        <button
-          onClick={onOpenConsolidacao}
-          className={btnConsolidatorClass}
-        >
-          <span>Consolidar Rota</span>
-          <span>→</span>
-        </button>
       </div>
 
     </div>

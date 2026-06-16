@@ -42,6 +42,16 @@ export const PreRomaneioRepository = {
     });
   },
 
+  async updateAssignment(id: string, data: Partial<PreRomaneio>): Promise<void> {
+    const existing = await db.pre_romaneios.get(id);
+    if (!existing) return;
+
+    await db.pre_romaneios.update(id, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+  },
+
   async cancel(id: string): Promise<void> {
     await this.updateStatus(id, 'CANCELADO');
   },
