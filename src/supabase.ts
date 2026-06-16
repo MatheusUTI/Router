@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, RoutePlanningItem, PreRomaneio } from './types';
+import { RomaneioSave } from './infrastructure/localdb/db';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 
 // Global configurations query hierarchy (Simplified)
@@ -894,6 +895,435 @@ export async function importStateFromSupabase(): Promise<{
   }
 }
 
+// ==========================================================
+// SYNC OPERACIONAL SUPABASE V1 (CONTINUAR EM OUTRO PC)
+// ==========================================================
+
+export async function exportOperationalStateToSupabase(data: {
+  ctrcs: Ctrc[];
+  routePlanningItems: RoutePlanningItem[];
+  preRomaneios: PreRomaneio[];
+  savedRomaneios: RomaneioSave[];
+}): Promise<{ success: boolean; results: string[] }> {
+  if (!supabase) throw new Error('Supabase client is not configured.');
+
+  const results: string[] = [];
+  let hasErrors = false;
+
+  // 1. CTRCs
+  try {
+    if (data.ctrcs.length > 0) {
+      const formattedCtrcs = data.ctrcs.map(c => ({
+        id: c.id,
+        destinatario: c.destinatario,
+        cidade: c.cidade,
+        weight: c.weight,
+        volume: c.volume,
+        type: c.type,
+        status: c.status,
+        cidade_ent: c.cidade_ent || null,
+        setor: c.setor || null,
+        prev_ent: c.prev_ent || null,
+        remetente: c.remetente || null,
+        ocorrencia: c.ocorrencia || null,
+        data_ocorr: c.data_ocorr || null,
+        nf: c.nf || null,
+        valor: c.valor || null,
+        frete: c.frete || null,
+        unid: c.unid || null,
+        pagador: c.pagador || null,
+        cod: c.cod || null,
+        descricao_ocorr: c.descricao_ocorr || null,
+        data_ocorrencia: c.data_ocorrencia || null,
+        peso_r: c.peso_r || null,
+        obs: c.obs || null,
+        disponibilidade: c.disponibilidade || null,
+        localizacao: c.localizacao || null
+      }));
+      const uniqueCtrcs = deduplicateById(formattedCtrcs);
+      const { error } = await supabase.from('ctrcs').upsert(uniqueCtrcs);
+      if (error) throw error;
+      results.push(`✓ ${uniqueCtrcs.length} CTRCs exportados.`);
+    } else {
+      results.push(`✓ Sem CTRCs para exportar.`);
+    }
+  } catch (err: any) {
+    hasErrors = true;
+    results.push(`❌ CTRCs: ${err.message || err}`);
+  }
+
+  // 2. Route Planning Items
+  try {
+    if (data.routePlanningItems.length > 0) {
+      const formattedPlanning = data.routePlanningItems.map(p => ({
+        id: p.id,
+        ctrc_id: p.ctrcId,
+        planning_date: p.planningDate,
+        suggested_route: p.suggestedRoute,
+        operational_route: p.operationalRoute || null,
+        manual_priority: p.manualPriority || null,
+        planning_status: p.planningStatus,
+        operational_note: p.operationalNote || null,
+        locked_by_user: p.lockedByUser ? String(p.lockedByUser) : null,
+        payload: { ...p },
+        created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+        updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString()
+      }));
+      const uniquePlanning = deduplicateById(formattedPlanning);
+      const { error } = await supabase.from('route_planning_items').upsert(uniquePlanning);
+      if (error) throw error;
+      results.push(`✓ ${uniquePlanning.length} itens de planejamento exportados.`);
+    } else {
+      results.push(`✓ Sem itens de planejamento para exportar.`);
+    }
+  } catch (err: any) {
+    hasErrors = true;
+    results.push(`❌ Planejamento: ${err.message || err}`);
+  }
+
+  // 3. Pre Romaneios
+  try {
+    if (data.preRomaneios.length > 0) {
+      const formattedPre = data.preRomaneios.map(p => ({
+        id: p.id,
+        planning_date: p.planningDate,
+        route: p.route,
+        gate: p.gate,
+        status: p.status,
+        converted_romaneio_id: p.convertedRomaneioId || null,
+        ctrc_ids: p.ctrcIds || [],
+        payload: { ...p },
+        created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+        updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString()
+      }));
+      const uniquePre = deduplicateById(formattedPre);
+      const { error } = await supabase.from('pre_romaneios').upsert(uniquePre);
+      if (error) throw error;
+      results.push(`✓ ${uniquePre.length} pré-romaneios exportados.`);
+    } else {
+      results.push(`✓ Sem pré-romaneios para exportar.`);
+    }
+  } catch (err: any) {
+    hasErrors = true;
+    results.push(`❌ Pré-romaneios: ${err.message || err}`);
+  }
+
+  // 4. Saved Romaneios
+  try {
+    if (data.savedRomaneios.length > 0) {
+      const formattedSaved = data.savedRomaneios.map(r => {
+        const payloadData = r as any;
+        const createdVal = r.ctrcs?.[0]?.data_ocorrencia || payloadData.createdAt || payloadData.created_at || new Date().toISOString();
+        const updatedVal = payloadData.updatedAt || payloadData.updated_at || new Date().toISOString();
+
+        return {
+          id: r.id,
+          date: r.date,
+          vehicle_id: r.vehicleId,
+          vehicle_plate: r.vehiclePlate,
+          driver_name: r.driverName,
+          helper_name: r.helperName,
+          ctrc_ids: r.ctrcs ? r.ctrcs.map(c => c.id) : [],
+          payload: { ...r },
+          created_at: new Date(createdVal).toISOString(),
+          updated_at: new Date(updatedVal).toISOString()
+        };
+      });
+      const uniqueSaved = deduplicateById(formattedSaved);
+      const { error } = await supabase.from('saved_romaneios').upsert(uniqueSaved);
+      if (error) throw error;
+      results.push(`✓ ${uniqueSaved.length} romaneios salvos exportados.`);
+    } else {
+      results.push(`✓ Sem romaneios salvos para exportar.`);
+    }
+  } catch (err: any) {
+    hasErrors = true;
+    results.push(`❌ Romaneios salvos: ${err.message || err}`);
+  }
+
+  return { success: !hasErrors, results };
+}
+
+export async function importOperationalStateFromSupabase(): Promise<{
+  success: boolean;
+  message: string;
+  data?: {
+    ctrcs: Ctrc[];
+    routePlanningItems: RoutePlanningItem[];
+    preRomaneios: PreRomaneio[];
+    savedRomaneios: RomaneioSave[];
+  };
+}> {
+  if (!supabase) throw new Error('Supabase client is not configured.');
+
+  try {
+    // 1. Fetch CTRCs
+    const { data: ctrcsRaw, error: ctrcsError } = await supabase.from('ctrcs').select('*');
+    if (ctrcsError) throw ctrcsError;
+
+    // 2. Fetch Route Planning Items
+    const { data: planningRaw, error: planningError } = await supabase.from('route_planning_items').select('*');
+    if (planningError) throw planningError;
+
+    // 3. Fetch Pre Romaneios
+    const { data: preRaw, error: preError } = await supabase.from('pre_romaneios').select('*');
+    if (preError) throw preError;
+
+    // 4. Fetch Saved Romaneios
+    const { data: savedRaw, error: savedError } = await supabase.from('saved_romaneios').select('*');
+    if (savedError) throw savedError;
+
+    // Parse CTRCs
+    const ctrcs: Ctrc[] = (ctrcsRaw || []).map(c => ({
+      id: c.id,
+      destinatario: c.destinatario,
+      cidade: c.cidade,
+      weight: Number(c.weight),
+      volume: Number(c.volume),
+      type: c.type,
+      status: c.status,
+      cidade_ent: c.cidade_ent || '',
+      setor: c.setor || '',
+      prev_ent: c.prev_ent || '',
+      remetente: c.remetente || '',
+      ocorrencia: c.ocorrencia || '',
+      data_ocorr: c.data_ocorr || '',
+      nf: c.nf || '',
+      valor: c.valor ? Number(c.valor) : undefined,
+      frete: c.frete ? Number(c.frete) : undefined,
+      unid: c.unid || '',
+      pagador: c.pagador || '',
+      cod: c.cod || '',
+      descricao_ocorr: c.descricao_ocorr || '',
+      data_ocorrencia: c.data_ocorrencia || '',
+      peso_r: c.peso_r ? Number(c.peso_r) : undefined,
+      obs: c.obs || '',
+      disponibilidade: c.disponibilidade || '',
+      localizacao: c.localizacao || ''
+    }));
+
+    // Parse Route Planning Items
+    const routePlanningItems: RoutePlanningItem[] = (planningRaw || []).map(p => {
+      let item: RoutePlanningItem;
+      if (p.payload && typeof p.payload === 'object' && p.payload.id) {
+        item = { ...(p.payload as RoutePlanningItem) };
+      } else {
+        item = {
+          id: p.id,
+          ctrcId: p.ctrc_id,
+          planningDate: p.planning_date,
+          suggestedRoute: p.suggested_route,
+          operationalRoute: p.operational_route || undefined,
+          manualPriority: p.manual_priority || undefined,
+          planningStatus: p.planning_status,
+          operationalNote: p.operational_note || undefined,
+          lockedByUser: p.locked_by_user === 'true' || p.locked_by_user === true,
+          updatedAt: p.updated_at || new Date().toISOString(),
+          createdAt: p.created_at || new Date().toISOString()
+        };
+      }
+      return item;
+    });
+
+    // Parse Pre Romaneios
+    const preRomaneios: PreRomaneio[] = (preRaw || []).map(p => {
+      let item: PreRomaneio;
+      if (p.payload && typeof p.payload === 'object' && p.payload.id) {
+        item = { ...(p.payload as PreRomaneio) };
+      } else {
+        item = {
+          id: p.id,
+          planningDate: p.planning_date,
+          route: p.route,
+          gate: p.gate,
+          status: p.status,
+          convertedRomaneioId: p.converted_romaneio_id || undefined,
+          ctrcIds: Array.isArray(p.ctrc_ids) ? p.ctrc_ids : [],
+          totalWeight: p.payload?.totalWeight || 0,
+          totalVolumes: p.payload?.totalVolumes || 0,
+          totalValue: p.payload?.totalValue || 0,
+          totalFrete: p.payload?.totalFrete || 0,
+          createdAt: p.created_at || new Date().toISOString(),
+          updatedAt: p.updated_at || new Date().toISOString()
+        };
+      }
+      return item;
+    });
+
+    // Parse Saved Romaneios
+    const savedRomaneios: RomaneioSave[] = (savedRaw || []).map(r => {
+      let item: RomaneioSave;
+      if (r.payload && typeof r.payload === 'object' && r.payload.id) {
+        item = { ...(r.payload as RomaneioSave) };
+      } else {
+        item = {
+          id: r.id,
+          date: r.date,
+          vehicleId: r.vehicle_id,
+          vehiclePlate: r.vehicle_plate,
+          driverName: r.driver_name,
+          helperName: r.helper_name,
+          ctrcs: r.payload?.ctrcs || [],
+          observations: r.payload?.observations,
+          isSyncedWithCloud: true
+        };
+      }
+      return item;
+    });
+
+    return {
+      success: true,
+      message: 'Dados operacionais importados com sucesso do Supabase!',
+      data: { ctrcs, routePlanningItems, preRomaneios, savedRomaneios }
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || 'Erro inesperado ao buscar dados operacionais do Supabase.'
+    };
+  }
+}
+
+// Generic merge helper for Safe Merge
+export function mergeGeneric<T>(
+  local: T[],
+  remote: T[],
+  getId: (x: T) => string,
+  getUpdatedAt: (x: T) => string | undefined,
+  entityName: string
+): T[] {
+  const mergedMap = new Map<string, T>();
+
+  // Use local items first
+  for (const item of local) {
+    mergedMap.set(getId(item), item);
+  }
+
+  // Iterate remote items and compare
+  for (const rItem of remote) {
+    const rId = getId(rItem);
+    if (!mergedMap.has(rId)) {
+      // Exist only remotely, download
+      mergedMap.set(rId, rItem);
+    } else {
+      // Exists in both
+      const lItem = mergedMap.get(rId)!;
+      const lTimeStr = getUpdatedAt(lItem);
+      const rTimeStr = getUpdatedAt(rItem);
+
+      if (!lTimeStr || !rTimeStr) {
+        console.warn(`[Sync] Registro ${rId} da entidade ${entityName} sem timestamp. Preservando versão local.`);
+        // Already has lItem, keep it
+      } else {
+        const lTime = new Date(lTimeStr).getTime();
+        const rTime = new Date(rTimeStr).getTime();
+
+        if (isNaN(lTime) || isNaN(rTime)) {
+          console.warn(`[Sync] Registro ${rId} da entidade ${entityName} inválido ou com timestamp malformado (L: ${lTimeStr}, R: ${rTimeStr}). Preservando versão local.`);
+        } else if (rTime > lTime) {
+          // Remote is newer, replace local
+          mergedMap.set(rId, rItem);
+        }
+      }
+    }
+  }
+
+  return Array.from(mergedMap.values());
+}
+
+export async function syncOperationalStateWithSupabase(localState: {
+  ctrcs: Ctrc[];
+  routePlanningItems: RoutePlanningItem[];
+  preRomaneios: PreRomaneio[];
+  savedRomaneios: RomaneioSave[];
+}): Promise<{
+  success: boolean;
+  message: string;
+  mergedData?: {
+    ctrcs: Ctrc[];
+    routePlanningItems: RoutePlanningItem[];
+    preRomaneios: PreRomaneio[];
+    savedRomaneios: RomaneioSave[];
+  };
+  results: string[];
+}> {
+  if (!supabase) throw new Error('Supabase client is not configured.');
+
+  const results: string[] = [];
+  try {
+    const importRes = await importOperationalStateFromSupabase();
+    if (!importRes.success || !importRes.data) {
+      throw new Error(importRes.message || 'Falha ao importar estado remoto para mesclagem.');
+    }
+
+    const {
+      ctrcs: remoteCtrcs,
+      routePlanningItems: remotePlanning,
+      preRomaneios: remotePre,
+      savedRomaneios: remoteSaved
+    } = importRes.data;
+
+    // Merge CTRCs (without timestamps - fallback to local warning and local preservation)
+    const mergedCtrcs = mergeGeneric(
+      localState.ctrcs,
+      remoteCtrcs,
+      (c) => c.id,
+      (c) => (c as any).updatedAt || (c as any).updated_at,
+      'ctrcs'
+    );
+    results.push(`✓ CTRCs mesclados com sucesso: total de ${mergedCtrcs.length} (Locais: ${localState.ctrcs.length}, Remotos: ${remoteCtrcs.length})`);
+
+    // Merge Route Planning Items (has timestamps)
+    const mergedPlanning = mergeGeneric(
+      localState.routePlanningItems,
+      remotePlanning,
+      (p) => p.id,
+      (p) => p.updatedAt,
+      'route_planning_items'
+    );
+    results.push(`✓ Itens de planejamento mesclados com sucesso: total de ${mergedPlanning.length} (Locais: ${localState.routePlanningItems.length}, Remotos: ${remotePlanning.length})`);
+
+    // Merge Pre Romaneios (has timestamps)
+    const mergedPre = mergeGeneric(
+      localState.preRomaneios,
+      remotePre,
+      (p) => p.id,
+      (p) => p.updatedAt,
+      'pre_romaneios'
+    );
+    results.push(`✓ Pré-romaneios mesclados com sucesso: total de ${mergedPre.length} (Locais: ${localState.preRomaneios.length}, Remotos: ${remotePre.length})`);
+
+    // Merge Saved Romaneios (fallback to payload or custom)
+    const mergedSaved = mergeGeneric(
+      localState.savedRomaneios,
+      remoteSaved,
+      (s) => s.id,
+      (s) => (s as any).updatedAt || (s as any).updated_at || (s as any).payload?.updatedAt || (s as any).payload?.updated_at,
+      'saved_romaneios'
+    );
+    results.push(`✓ Romaneios salvos mesclados com sucesso: total de ${mergedSaved.length} (Locais: ${localState.savedRomaneios.length}, Remotos: ${remoteSaved.length})`);
+
+    return {
+      success: true,
+      message: 'Sincronização / Mesclagem segura concluída com sucesso!',
+      mergedData: {
+        ctrcs: mergedCtrcs,
+        routePlanningItems: mergedPlanning,
+        preRomaneios: mergedPre,
+        savedRomaneios: mergedSaved
+      },
+      results
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || 'Erro inesperado durante a fase de mesclagem estruturada.',
+      results: [ `❌ Erro: ${err.message || err}` ]
+    };
+  }
+}
+
+
 // Table schema helpers which provide SQL setup instructions for Supabase
 export const SUPABASE_SQL_SCHEMA = `-- Copie e cole este script SQL no SQL Editor do seu painel do Supabase
 -- para criar as tabelas compatíveis com o RotaOperational.
@@ -1014,6 +1444,50 @@ CREATE TABLE IF NOT EXISTS public.curva_a_clients (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 9. Planejamento de Rota (Route Planning Items)
+CREATE TABLE IF NOT EXISTS public.route_planning_items (
+  id TEXT PRIMARY KEY,
+  ctrc_id TEXT,
+  planning_date TEXT,
+  suggested_route TEXT,
+  operational_route TEXT,
+  manual_priority TEXT,
+  planning_status TEXT,
+  operational_note TEXT,
+  locked_by_user TEXT,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
+-- 10. Pré-Romaneios
+CREATE TABLE IF NOT EXISTS public.pre_romaneios (
+  id TEXT PRIMARY KEY,
+  planning_date TEXT,
+  route TEXT,
+  gate TEXT,
+  status TEXT,
+  converted_romaneio_id TEXT,
+  ctrc_ids JSONB,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
+-- 11. Romaneio Salvos (savedRomaneios)
+CREATE TABLE IF NOT EXISTS public.saved_romaneios (
+  id TEXT PRIMARY KEY,
+  date TEXT,
+  vehicle_id TEXT,
+  vehicle_plate TEXT,
+  driver_name TEXT,
+  helper_name TEXT,
+  ctrc_ids JSONB,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
 -- ==========================================
 -- IMPORTANTE: Para que o sistema sincronize livremente sem erros de política (RLS),
 -- execute estes comandos para liberar o acesso público de leitura e escrita:
@@ -1025,4 +1499,7 @@ ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.occurrences DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.route_planning_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pre_romaneios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.saved_romaneios DISABLE ROW LEVEL SECURITY;
 `;

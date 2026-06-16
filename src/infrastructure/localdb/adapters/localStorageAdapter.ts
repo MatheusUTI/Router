@@ -10,6 +10,7 @@ import {
 } from '../../../data';
 import { initialFeriadosMG_TXT } from '../../../data/initialFeriadosMG';
 import { OperationalCalendarRepository } from '../repositories/operationalCalendarRepository';
+import { ALLOW_DEMO_TRANSACTIONAL_SEEDS } from '../../../constants/runtimeMode';
 
 /**
  * Adapter responsável por migrar de forma incremental e segura 
@@ -67,27 +68,27 @@ export async function runCompatibilityMigration(): Promise<{
       localStorage.setItem(migratedKey, 'true');
     }
 
-    // 2. Seeding de Frota / Veículos (Se vazio)
+    // 2. Seeding de Frota / Veículos (Se vazio e permitido)
     const vehiclesCount = await db.vehicles.count();
-    if (vehiclesCount === 0) {
+    if (vehiclesCount === 0 && ALLOW_DEMO_TRANSACTIONAL_SEEDS) {
       for (const v of initialVehicles) {
         await db.vehicles.put(v);
         result.seededVehicles++;
       }
     }
 
-    // 3. Seeding de Motoristas (Se vazio)
+    // 3. Seeding de Motoristas (Se vazio e permitido)
     const driversCount = await db.drivers.count();
-    if (driversCount === 0) {
+    if (driversCount === 0 && ALLOW_DEMO_TRANSACTIONAL_SEEDS) {
       for (const d of initialDrivers) {
         await db.drivers.put(d);
         result.seededDrivers++;
       }
     }
 
-    // 4. Seeding de CTRCs iniciais (Disponíveis e Roteirizados ativos, Se vazio)
+    // 4. Seeding de CTRCs iniciais (Disponíveis e Roteirizados ativos, Se vazio e permitido)
     const ctrcsCount = await db.ctrcs.count();
-    if (ctrcsCount === 0) {
+    if (ctrcsCount === 0 && ALLOW_DEMO_TRANSACTIONAL_SEEDS) {
       // Unir CTRCs pendentes e associadas padrão para termos massa inicial offline consistente
       const allSeedCtrcs = [...initialAvailableCtrcs, ...initialLinkedCtrcs];
       for (const c of allSeedCtrcs) {

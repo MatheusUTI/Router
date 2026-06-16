@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem } from './types';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
+import { IS_DEMO_MODE } from './constants/runtimeMode';
 import {
   initialVehicles,
   initialDrivers,
@@ -65,10 +66,10 @@ export default function App() {
   });
 
   // Global Operational Databases State
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
-  const [drivers, setDrivers] = useState<DriverScore[]>(initialDrivers);
-  const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(initialAvailableCtrcs);
-  const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(initialLinkedCtrcs);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(IS_DEMO_MODE ? initialVehicles : []);
+  const [drivers, setDrivers] = useState<DriverScore[]>(IS_DEMO_MODE ? initialDrivers : []);
+  const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialAvailableCtrcs : []);
+  const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialLinkedCtrcs : []);
   const [savedRomaneios, setSavedRomaneios] = useState<any[]>(() => {
     const saved = localStorage.getItem('saved_romaneios');
     if (saved) {
@@ -77,6 +78,9 @@ export default function App() {
       } catch (e) {
         return [];
       }
+    }
+    if (!IS_DEMO_MODE) {
+      return [];
     }
     // Static initial romaneio representing a realistic preloaded historical routing check
     return [
@@ -117,9 +121,9 @@ export default function App() {
       }
     ];
   });
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
-  const [clients, setClients] = useState<CriticClient[]>(initialCriticalClients);
+  const [expenses, setExpenses] = useState<Expense[]>(IS_DEMO_MODE ? initialExpenses : []);
+  const [tickets, setTickets] = useState<Ticket[]>(IS_DEMO_MODE ? initialTickets : []);
+  const [clients, setClients] = useState<CriticClient[]>(IS_DEMO_MODE ? initialCriticalClients : []);
   const [occurrences, setOccurrences] = useState<DeliveryOccurrence[]>(initialDeliveryOccurrences);
   const [curvaAClients, setCurvaAClients] = useState<CurvaAClient[]>(initialCurvaAClients);
 
@@ -564,19 +568,59 @@ export default function App() {
   // SYSTEM RESETS (GOVERNANÇA)
   // ---------------------------------------------------------
   const handleResetOP01 = () => {
-    setVehicles(initialVehicles);
-    setDrivers(initialDrivers);
+    setVehicles(IS_DEMO_MODE ? initialVehicles : []);
+    setDrivers(IS_DEMO_MODE ? initialDrivers : []);
   };
 
   const handleResetOP02 = () => {
-    setAvailableCtrcs(initialAvailableCtrcs);
-    setTickets(initialTickets);
+    setAvailableCtrcs(IS_DEMO_MODE ? initialAvailableCtrcs : []);
+    setTickets(IS_DEMO_MODE ? initialTickets : []);
   };
 
   const handleResetOP03 = () => {
-    setClients(initialCriticalClients);
+    setClients(IS_DEMO_MODE ? initialCriticalClients : []);
     setOccurrences(initialDeliveryOccurrences);
     setCurvaAClients(initialCurvaAClients);
+  };
+
+  const handleRefreshAllLocalData = async () => {
+    try {
+      const localVehicles = await VehicleRepository.getAll();
+      if (localVehicles.length > 0) {
+        setVehicles(localVehicles);
+      }
+
+      const localDrivers = await DriverRepository.getAll();
+      if (localDrivers.length > 0) {
+        setDrivers(localDrivers);
+      }
+
+      const localOccurrences = await OccurrenceRepository.getAll();
+      if (localOccurrences.length > 0) {
+        setOccurrences(localOccurrences);
+      }
+
+      const localRomaneios = await TripRepository.getAll();
+      if (localRomaneios.length > 0) {
+        const sorted = [...localRomaneios].sort((a, b) => b.id.localeCompare(a.id));
+        setSavedRomaneios(sorted);
+      } else {
+        setSavedRomaneios([]);
+      }
+
+      const localCtrcs = await CtrcRepository.getAll();
+      if (localCtrcs.length > 0) {
+        const available = localCtrcs.filter((c) => c.status === 'Disponível');
+        const linked = localCtrcs.filter((c) => c.status !== 'Disponível');
+        setAvailableCtrcs(available);
+        setLinkedCtrcs(linked);
+      } else {
+        setAvailableCtrcs([]);
+        setLinkedCtrcs([]);
+      }
+    } catch (err) {
+      console.error('[App] Erro ao reidratar memória local do IndexedDB:', err);
+    }
   };
 
   // Resolve counts for notifications indicator
@@ -715,6 +759,7 @@ export default function App() {
               if (data.occurrences) setOccurrences(data.occurrences);
               if (data.curvaAClients) setCurvaAClients(data.curvaAClients);
             }}
+            onRefreshAllLocalData={handleRefreshAllLocalData}
           />
         );
       default:

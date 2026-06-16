@@ -94,13 +94,92 @@ CREATE TABLE IF NOT EXISTS public.app_users (
   name TEXT NOT NULL,
   role TEXT NOT NULL,
   is_master BOOLEAN DEFAULT FALSE,
+  unid TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. Dicionário de Ocorrências Operacionais
+CREATE TABLE IF NOT EXISTS public.occurrences (
+  codigo TEXT PRIMARY KEY,
+  descricao TEXT NOT NULL,
+  responsabilidade TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  setor_ocorr TEXT NOT NULL,
+  retorno_rota TEXT NOT NULL,
+  tratativa_solucao TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. Clientes Curva A (Base de Dados)
+CREATE TABLE IF NOT EXISTS public.curva_a_clients (
+  cnpj_remetente TEXT PRIMARY KEY,
+  curva_a TEXT NOT NULL,
+  cliente_remetente TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. Planejamento de Rota (Route Planning Items)
+CREATE TABLE IF NOT EXISTS public.route_planning_items (
+  id TEXT PRIMARY KEY,
+  ctrc_id TEXT,
+  planning_date TEXT,
+  suggested_route TEXT,
+  operational_route TEXT,
+  manual_priority TEXT,
+  planning_status TEXT,
+  operational_note TEXT,
+  locked_by_user TEXT,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
+-- 10. Pré-Romaneios
+CREATE TABLE IF NOT EXISTS public.pre_romaneios (
+  id TEXT PRIMARY KEY,
+  planning_date TEXT,
+  route TEXT,
+  gate TEXT,
+  status TEXT,
+  converted_romaneio_id TEXT,
+  ctrc_ids JSONB,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
+-- 11. Romaneio Salvos (savedRomaneios)
+CREATE TABLE IF NOT EXISTS public.saved_romaneios (
+  id TEXT PRIMARY KEY,
+  date TEXT,
+  vehicle_id TEXT,
+  vehicle_plate TEXT,
+  driver_name TEXT,
+  helper_name TEXT,
+  ctrc_ids JSONB,
+  payload JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+
+-- Desabilitar políticas RLS para permitir comunicação pública simplificada de demonstração e sync
+ALTER TABLE public.vehicles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.drivers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ctrcs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tickets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.occurrences DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.route_planning_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pre_romaneios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.saved_romaneios DISABLE ROW LEVEL SECURITY;
+
 -- Inserir usuários iniciais padrões (Seeds) para evitar bloqueio no primeiro acesso
-INSERT INTO public.app_users (username, password, name, role, is_master)
+INSERT INTO public.app_users (username, password, name, role, is_master, unid)
 VALUES 
-  ('master', '123', 'Anderson M. (Master)', 'Superintendente de Logística', TRUE),
-  ('operador', '123', 'João Silva', 'Operador de Despacho', FALSE),
-  ('auditor', '123', 'Maria Costa', 'Auditor de Contratos', FALSE)
+  ('master', '123', 'Anderson M. (Master)', 'Superintendente de Logística', TRUE, 'MOC-01'),
+  ('operador', '123', 'João Silva', 'Operador de Despacho', FALSE, 'MOC-01'),
+  ('auditor', '123', 'Maria Costa', 'Auditor de Contratos', FALSE, 'MOC-01')
 ON CONFLICT (username) DO NOTHING;
+

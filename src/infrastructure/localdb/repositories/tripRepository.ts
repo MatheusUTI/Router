@@ -18,6 +18,10 @@ export const TripRepository = {
     return romaneio.id;
   },
 
+  async bulkPut(items: RomaneioSave[]): Promise<void> {
+    await db.savedRomaneios.bulkPut(items);
+  },
+
   async delete(id: string, skipSync = false): Promise<void> {
     const existing = await db.savedRomaneios.get(id);
     await db.savedRomaneios.delete(id);

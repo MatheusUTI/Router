@@ -1,7 +1,11 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, OperationalUnit } from '../types';
-import { db } from '../infrastructure/localdb/db';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, OperationalUnit, RoutePlanningItem, PreRomaneio } from '../types';
+import { db, RomaneioSave } from '../infrastructure/localdb/db';
 import { SyncQueueRepository } from '../infrastructure/localdb/repositories/syncQueueRepository';
+import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
+import { RoutePlanningRepository } from '../infrastructure/localdb/repositories/routePlanningRepository';
+import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
+import { TripRepository } from '../infrastructure/localdb/repositories/tripRepository';
 import { DEFAULT_OPERATIONAL_UNIT, OPERATIONAL_UNITS, getOperationalUnits, saveOperationalUnits } from '../constants/operationalUnits';
 import { 
   isSupabaseConfigured, 
@@ -13,8 +17,21 @@ import {
   updateActiveSupabaseClient,
   getAppUsers,
   saveAppUser,
-  deleteAppUser
+  deleteAppUser,
+  exportOperationalStateToSupabase,
+  importOperationalStateFromSupabase,
+  syncOperationalStateWithSupabase,
+  mergeGeneric
 } from '../supabase';
+import { IS_DEMO_MODE } from '../constants/runtimeMode';
+import {
+  initialVehicles,
+  initialDrivers,
+  initialAvailableCtrcs,
+  initialLinkedCtrcs,
+  initialTickets,
+  initialCriticalClients
+} from '../data';
 
 interface ConfiguracoesViewProps {
   onResetOP01: () => void;
@@ -38,6 +55,7 @@ interface ConfiguracoesViewProps {
     occurrences?: DeliveryOccurrence[];
     curvaAClients?: CurvaAClient[];
   }) => void;
+  onRefreshAllLocalData?: () => void;
 }
 
 export default function ConfiguracoesView({
@@ -54,7 +72,258 @@ export default function ConfiguracoesView({
   occurrences,
   curvaAClients,
   onSyncFromSupabase,
+  onRefreshAllLocalData,
 }: ConfiguracoesViewProps) {
+  // --- States for Sincronização Operacional V1 ---
+  const [isOperationalSyncing, setIsOperationalSyncing] = useState(false);
+  const [operationalSyncMessage, setOperationalSyncMessage] = useState<string | null>(null);
+  const [operationalSyncStatus, setOperationalSyncStatus] = useState<'success' | 'error' | null>(null);
+  const [operationalSyncDetails, setOperationalSyncDetails] = useState<string[]>([]);
+  const [lastOperationalSyncTime, setLastOperationalSyncTime] = useState<string | null>(() => {
+    return localStorage.getItem('last_operational_sync_time');
+  });
+
+  const handleExportOperationalState = async () => {
+    setIsOperationalSyncing(true);
+    setOperationalSyncMessage(null);
+    setOperationalSyncStatus(null);
+    setOperationalSyncDetails([]);
+    try {
+      if (!isSupabaseConfigured) {
+        throw new Error('Supabase não está configurado. Por favor, especifique a URL e a Anon Key abaixo.');
+      }
+      
+      const ctrcs = await CtrcRepository.getAll();
+      const routePlanningItems = await RoutePlanningRepository.getAll();
+      const preRomaneios = await PreRomaneioRepository.getAll();
+      const savedRomaneios = await TripRepository.getAll();
+
+      const res = await exportOperationalStateToSupabase({
+        ctrcs,
+        routePlanningItems,
+        preRomaneios,
+        savedRomaneios
+      });
+
+      setOperationalSyncDetails(res.results);
+      if (res.success) {
+        setOperationalSyncMessage('Dados operacionais exportados com sucesso para a nuvem!');
+        setOperationalSyncStatus('success');
+      } else {
+        setOperationalSyncMessage('Erro parcial ao exportar alguns dados operacionais.');
+        setOperationalSyncStatus('error');
+      }
+    } catch (err: any) {
+      setOperationalSyncMessage(err.message || 'Erro ao sincronizar dados operacionais.');
+      setOperationalSyncStatus('error');
+    } finally {
+      setIsOperationalSyncing(false);
+    }
+  };
+
+  const handleImportOperationalState = async () => {
+    setIsOperationalSyncing(true);
+    setOperationalSyncMessage(null);
+    setOperationalSyncStatus(null);
+    setOperationalSyncDetails([]);
+    try {
+      if (!isSupabaseConfigured) {
+        throw new Error('Supabase não está configurado. Por favor, especifique a URL e a Anon Key abaixo.');
+      }
+
+      const res = await importOperationalStateFromSupabase();
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Falha ao importar dados remotos.');
+      }
+
+      const remote = res.data;
+
+      const localCtrcs = await CtrcRepository.getAll();
+      const localPlanning = await RoutePlanningRepository.getAll();
+      const localPre = await PreRomaneioRepository.getAll();
+      const localSaved = await TripRepository.getAll();
+
+      const mergedCtrcs = mergeGeneric(localCtrcs, remote.ctrcs, c => c.id, c => (c as any).updatedAt || (c as any).updated_at, 'ctrc');
+      const mergedPlanning = mergeGeneric(localPlanning, remote.routePlanningItems, p => p.id, p => p.updatedAt, 'planning');
+      const mergedPre = mergeGeneric(localPre, remote.preRomaneios, p => p.id, p => p.updatedAt, 'pre');
+      const mergedSaved = mergeGeneric(localSaved, remote.savedRomaneios, s => s.id, s => (s as any).updatedAt || (s as any).updated_at, 'saved');
+
+      if (mergedCtrcs.length > 0) await CtrcRepository.putMany(mergedCtrcs);
+      if (mergedPlanning.length > 0) await RoutePlanningRepository.putMany(mergedPlanning);
+      if (mergedPre.length > 0) await PreRomaneioRepository.putMany(mergedPre);
+      if (mergedSaved.length > 0) await TripRepository.bulkPut(mergedSaved);
+
+      if (onRefreshAllLocalData) {
+        await onRefreshAllLocalData();
+      }
+
+      setOperationalSyncMessage('Dados operacionais baixados e mesclados com sucesso da nuvem!');
+      setOperationalSyncStatus('success');
+      setOperationalSyncDetails([
+        `✓ ${mergedCtrcs.length} CTRCs resolvidos.`,
+        `✓ ${mergedPlanning.length} itens de planejamento resolvidos.`,
+        `✓ ${mergedPre.length} pré-romaneios resolvidos.`,
+        `✓ ${mergedSaved.length} romaneios salvos resolvidos.`
+      ]);
+
+      const nowStr = new Date().toLocaleString('pt-BR');
+      setLastOperationalSyncTime(nowStr);
+      localStorage.setItem('last_operational_sync_time', nowStr);
+    } catch (err: any) {
+      setOperationalSyncMessage(err.message || 'Erro ao importar dados operacionais.');
+      setOperationalSyncStatus('error');
+    } finally {
+      setIsOperationalSyncing(false);
+    }
+  };
+
+  const handleSyncOperationalState = async () => {
+    setIsOperationalSyncing(true);
+    setOperationalSyncMessage(null);
+    setOperationalSyncStatus(null);
+    setOperationalSyncDetails([]);
+    try {
+      if (!isSupabaseConfigured) {
+        throw new Error('Supabase não está configurado. Por favor, especifique a URL e a Anon Key abaixo.');
+      }
+
+      const localCtrcs = await CtrcRepository.getAll();
+      const localPlanning = await RoutePlanningRepository.getAll();
+      const localPre = await PreRomaneioRepository.getAll();
+      const localSaved = await TripRepository.getAll();
+
+      const mergeRes = await syncOperationalStateWithSupabase({
+        ctrcs: localCtrcs,
+        routePlanningItems: localPlanning,
+        preRomaneios: localPre,
+        savedRomaneios: localSaved
+      });
+
+      if (!mergeRes.success || !mergeRes.mergedData) {
+        throw new Error(mergeRes.message || 'Falha ao sincronizar e mesclar os dados.');
+      }
+
+      const merged = mergeRes.mergedData;
+
+      if (merged.ctrcs.length > 0) await CtrcRepository.putMany(merged.ctrcs);
+      if (merged.routePlanningItems.length > 0) await RoutePlanningRepository.putMany(merged.routePlanningItems);
+      if (merged.preRomaneios.length > 0) await PreRomaneioRepository.putMany(merged.preRomaneios);
+      if (merged.savedRomaneios.length > 0) await TripRepository.bulkPut(merged.savedRomaneios);
+
+      const exportRes = await exportOperationalStateToSupabase(merged);
+
+      if (onRefreshAllLocalData) {
+        await onRefreshAllLocalData();
+      }
+
+      setOperationalSyncDetails([
+        ...mergeRes.results,
+        ...exportRes.results
+      ]);
+
+      if (exportRes.success) {
+        setOperationalSyncMessage('Sincronização bidirecional e mesclagem concluída com sucesso!');
+        setOperationalSyncStatus('success');
+      } else {
+        setOperationalSyncMessage('A mesclagem local foi feita, mas falhou ao reenviar o estado fundido para o Supabase.');
+        setOperationalSyncStatus('error');
+      }
+
+      const nowStr = new Date().toLocaleString('pt-BR');
+      setLastOperationalSyncTime(nowStr);
+      localStorage.setItem('last_operational_sync_time', nowStr);
+    } catch (err: any) {
+      setOperationalSyncMessage(err.message || 'Erro inesperado durante a sincronização bidirecional.');
+      setOperationalSyncStatus('error');
+    } finally {
+      setIsOperationalSyncing(false);
+    }
+  };
+
+  // Clean Demo Data States
+  const [demoCleaningInput, setDemoCleaningInput] = useState('');
+  const [demoCleaningMessage, setDemoCleaningMessage] = useState<string | null>(null);
+  const [demoCleaningStatus, setDemoCleaningStatus] = useState<'success' | 'error' | null>(null);
+  const [isCleaningDemo, setIsCleaningDemo] = useState(false);
+
+  const handleClearDemoData = async () => {
+    if (demoCleaningInput !== 'LIMPAR DEMO') {
+      setDemoCleaningStatus('error');
+      setDemoCleaningMessage('Confirmação inválida! Digite exatamente "LIMPAR DEMO" para prosseguir.');
+      return;
+    }
+
+    setIsCleaningDemo(true);
+    setDemoCleaningMessage(null);
+    setDemoCleaningStatus(null);
+
+    try {
+      // 1. Compile mock lists
+      const mockVehicleIds = new Set(initialVehicles.map(v => v.id));
+      const mockDriverIds = new Set(initialDrivers.map(d => d.id));
+      const mockCtrcIds = new Set([
+        ...initialAvailableCtrcs.map(c => c.id),
+        ...initialLinkedCtrcs.map(c => c.id)
+      ]);
+      const mockTicketIds = new Set(initialTickets.map(t => t.id));
+      const mockClientIds = new Set(initialCriticalClients.map(c => c.id));
+
+      // 2. Check if there are actually any mock/demo items to clean up
+      const anyVehicleDemo = vehicles.some(v => mockVehicleIds.has(v.id)) || (await db.vehicles.where('id').anyOf([...mockVehicleIds]).count()) > 0;
+      const anyDriverDemo = drivers.some(d => mockDriverIds.has(d.id)) || (await db.drivers.where('id').anyOf([...mockDriverIds]).count()) > 0;
+      const anyCtrcDemo = availableCtrcs.some(c => mockCtrcIds.has(c.id)) || (await db.ctrcs.where('id').anyOf([...mockCtrcIds]).count()) > 0;
+      const anyRomaneioDemo = (await db.savedRomaneios.get('2981')) !== undefined;
+
+      if (!anyVehicleDemo && !anyDriverDemo && !anyCtrcDemo && !anyRomaneioDemo) {
+        setDemoCleaningStatus('error');
+        setDemoCleaningMessage('Não foi possível identificar dados de demonstração com segurança ou eles já foram limpos.');
+        setIsCleaningDemo(false);
+        return;
+      }
+
+      // 3. Purge from IndexedDB
+      await db.transaction('rw', [db.vehicles, db.drivers, db.ctrcs, db.savedRomaneios], async () => {
+        // Vehicles
+        for (const vId of mockVehicleIds) {
+          await db.vehicles.delete(vId);
+        }
+        // Drivers
+        for (const dId of mockDriverIds) {
+          await db.drivers.delete(dId);
+        }
+        // CTRCs
+        for (const cId of mockCtrcIds) {
+          await db.ctrcs.delete(cId);
+        }
+        // Romaneio 2981
+        await db.savedRomaneios.delete('2981');
+      });
+
+      // 4. Remove fake legacy localStorage saved_romaneios
+      localStorage.removeItem('saved_romaneios');
+
+      // 5. Filter state variables & propagate changes up
+      onSyncFromSupabase({
+        vehicles: vehicles.filter(v => !mockVehicleIds.has(v.id)),
+        drivers: drivers.filter(d => !mockDriverIds.has(d.id)),
+        ctrcs: availableCtrcs.filter(c => !mockCtrcIds.has(c.id)),
+        tickets: tickets.filter(t => !mockTicketIds.has(t.id)),
+        clients: clients.filter(c => !mockClientIds.has(c.id))
+      });
+
+      setDemoCleaningStatus('success');
+      setDemoCleaningMessage('Massa de teste/dados de demonstração removidos com sucesso do IndexedDB e do estado de sessão!');
+      setDemoCleaningInput('');
+      await loadDbStats();
+    } catch (err: any) {
+      console.error('[Purge] Erro ao limpar dados de demonstração:', err);
+      setDemoCleaningStatus('error');
+      setDemoCleaningMessage(`Falha ao remover dados: ${err.message || err}`);
+    } finally {
+      setIsCleaningDemo(false);
+    }
+  };
+
   // IndexedDB Table statistics states
   const [dbStats, setDbStats] = useState({
     ctrcs: 0,
@@ -1123,6 +1392,109 @@ export default function ConfiguracoesView({
         </div>
       </div>
 
+      {/* Ambiente de Produção e Limpeza de Demonstração Card */}
+      <div id="ambiente_producao_panel" className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-4 text-left relative overflow-hidden">
+        
+        {/* Locking overlay shield on standard user levels */}
+        {!adminUser.is_master && (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md rounded-xl flex flex-col items-center justify-center p-6 text-center z-20 animate-fadeIn">
+            <div className="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center text-error border border-error/20 mb-3.5 shadow-lg">
+              <span className="material-symbols-outlined text-[30px]" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+            </div>
+            <h3 className="text-sm font-bold text-on-surface">Ambiente de Produção Restrito</h3>
+            <p className="text-xs text-on-surface-variant max-w-md mt-1 mb-4 leading-relaxed">
+              Apenas usuários <strong className="text-error uppercase">Master</strong> podem limpar os dados de demonstração e preparar o ambiente para produção.
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+              Ambiente de Produção e Limpeza do Mock
+            </h3>
+            <p className="text-xs text-on-surface-variant">
+              Utilize esta ferramenta para expurgar de forma irreversível os registros padrão de testes / demonstração instalados offline.
+            </p>
+          </div>
+          <div>
+            <span className={`px-2.5 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${IS_DEMO_MODE ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' : 'bg-success/10 text-success border border-success/30'}`}>
+              {IS_DEMO_MODE ? 'Modo Demo Ativo' : 'Modo de Produção Puro'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          {/* Status e Estatísticas de Teste */}
+          <div className="bg-surface rounded-lg border border-outline-variant/40 p-4 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Registros de Demonstração Identificáveis</h4>
+            <ul className="text-xs space-y-2 font-mono text-on-surface-variant">
+              <li className="flex justify-between">
+                <span>Veículos Padrão:</span>
+                <span className="text-white font-bold">{vehicles.filter(v => ['RTA3G45', 'OPR1B22', 'LOG9H88', 'FLT8M55', 'TRK4X90'].includes(v.id || '')).length} detectados</span>
+              </li>
+              <li className="flex justify-between">
+                <span>Motoristas Padrão:</span>
+                <span className="text-white font-bold">{drivers.filter(d => ['MOT-8842', 'MOT-1109', 'MOT-2911', 'MOT-5590'].includes(d.id || '')).length} detectados</span>
+              </li>
+              <li className="flex justify-between">
+                <span>CTRCs Fictícios:</span>
+                <span className="text-white font-bold">
+                  {availableCtrcs.filter(c => ['SPO683412-2', 'BHS040163-3', 'SPO683890-1'].some(id => c.id?.startsWith(id.substring(0, 9)))).length} detectados
+                </span>
+              </li>
+              <li className="flex justify-between">
+                <span>Romaneios Mock (Ex: 2981):</span>
+                <span className="text-white font-bold">
+                  {(dbStats.romaneios > 0 || localStorage.getItem('saved_romaneios')) ? 'Massa Existente de Exemplo' : 'Limpo / Ausente'}
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Form de Ação */}
+          <div className="space-y-3 flex flex-col justify-center">
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Para validar a exclusão segura e orientada, digite <strong className="text-on-surface">LIMPAR DEMO</strong> no campo abaixo e clique para limpar a base de testes offline local do IndexedDB.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={demoCleaningInput}
+                onChange={(e) => setDemoCleaningInput(e.target.value)}
+                placeholder="LIMPAR DEMO"
+                className="bg-surface border border-outline-variant/65 rounded-lg px-3 py-2 text-xs text-on-surface flex-1 focus:outline-none focus:border-primary/80 uppercase font-bold animate-none"
+              />
+              <button
+                id="btn_clear_demo_data"
+                onClick={handleClearDemoData}
+                disabled={isCleaningDemo || demoCleaningInput !== 'LIMPAR DEMO'}
+                className="bg-error hover:bg-error/80 disabled:bg-surface-variant/40 hover:text-white text-on-error px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isCleaningDemo ? (
+                  <>
+                    <span className="animate-spin w-3 h-3 border-2 border-on-error border-t-transparent rounded-full" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[15px]">cleaning_services</span>
+                    Limpar Demonstração
+                  </>
+                )}
+              </button>
+            </div>
+
+            {demoCleaningMessage && (
+              <div id="demo_cleaning_msg" className={`p-3 rounded-lg text-xs leading-relaxed animate-fadeIn ${demoCleaningStatus === 'success' ? 'bg-success/10 text-success border border-success/30' : 'bg-error/10 text-error border border-error/20'}`}>
+                {demoCleaningMessage}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Supabase Database Integration Panel */}
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-6 text-left relative overflow-hidden">
         
@@ -1355,6 +1727,129 @@ export default function ConfiguracoesView({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Sincronização Operacional Supabase V1 Panel */}
+      <div id="sync_operacional_v1_panel" className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-6 text-left relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#efb810] text-[18px]">sync_alt</span>
+              Sync Operacional Supabase V1 (Multi-PC)
+            </h3>
+            <p className="text-xs text-on-surface-variant">
+              Sincronize os dados da sua operação atual (CTRCs, planejamento, pré-romaneios e romaneios salvos) para poder continuar o trabalho em outra máquina.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:items-end gap-1.5 font-mono text-xs">
+            {lastOperationalSyncTime ? (
+              <span className="text-left sm:text-right text-on-surface-variant text-[11px] block">
+                Último Sync: <strong className="text-white">{lastOperationalSyncTime}</strong>
+              </span>
+            ) : (
+              <span className="text-left sm:text-right text-on-surface-variant text-[11px] block text-amber-500/80">
+                Nenhuma sincronização recente realizada.
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Informações de fluxo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface p-4 rounded-xl border border-outline-variant/60">
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-primary text-[16px]">info</span>
+              Como Funciona a Sincronização?
+            </h4>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Diferente da sincronização estruturada de cadastros básicos, a sincronização operacional permite mover o estado dinâmico da sua roteirização atual de e para a nuvem.
+            </p>
+            <ul className="text-[11px] text-on-surface-variant list-disc pl-4 space-y-1 leading-relaxed">
+              <li>Use <strong>Enviar operação para nuvem</strong> para fazer o upload do seu progresso local.</li>
+              <li>Use <strong>Baixar operação da nuvem</strong> para obter e mesclar os dados operacionais remotos nesta máquina.</li>
+              <li>Use <strong>Sincronizar operação agora</strong> para realizar uma mesclagem segura de duas vias (bidirecional baseada em data de atualização) sem duplicar CTRCs ou perder seus romaneios mais novos.</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col justify-center space-y-3">
+            <h4 className="text-xs font-bold text-[#efb810] flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">shield</span>
+              Regras Importantes de Segurança
+            </h4>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              • A comparação é inteligente e realizada registro por registro. Caso um registro exista tanto local quanto remotamente, a versão local mais recente (<strong className="text-white">Last Write Wins</strong>) é sempre preservada e nunca sobrescrita por versões remotas mais antigas.
+              <br />• O processo é totalmente tolerante a falhas e não deleta dados locais de forma destrutiva.
+            </p>
+          </div>
+        </div>
+
+        {/* Database Sync Controls (Buttons container) */}
+        <div className="space-y-3">
+          <h4 className="text-xs font-bold text-on-surface flex items-center gap-1 pb-1">
+            <span className="material-symbols-outlined text-[16px] text-primary">touch_app</span>
+            Ações Rápidas de Sincronização
+          </h4>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleExportOperationalState}
+              disabled={isOperationalSyncing}
+              className={`px-4 py-2.5 bg-[#efb810] text-[#1E1B1B] hover:bg-[#efb810]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+            >
+              <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
+              {isOperationalSyncing ? 'Enviando...' : 'Enviar operação para nuvem'}
+            </button>
+
+            <button
+              onClick={handleImportOperationalState}
+              disabled={isOperationalSyncing}
+              className={`px-4 py-2.5 bg-primary text-on-primary hover:bg-primary-fixed text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+            >
+              <span className="material-symbols-outlined text-[15px]">arrow_downward</span>
+              {isOperationalSyncing ? 'Baixando...' : 'Baixar operação da nuvem'}
+            </button>
+
+            <button
+              onClick={handleSyncOperationalState}
+              disabled={isOperationalSyncing}
+              className={`px-4 py-2.5 bg-[#4d8eff] text-black hover:bg-[#4d8eff]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+            >
+              <span className="material-symbols-outlined text-[15px]">sync</span>
+              {isOperationalSyncing ? 'Sincronizando...' : 'Sincronizar operação agora'}
+            </button>
+          </div>
+        </div>
+
+        {/* Live response message container */}
+        {operationalSyncMessage && (
+          <div className={`p-4 rounded-xl text-xs flex gap-3 leading-relaxed animate-fadeIn ${operationalSyncStatus === 'success' ? 'bg-success/10 text-success border border-success/30' : 'bg-error/10 text-error border border-error/20'}`}>
+            <span className="material-symbols-outlined text-[18px]">
+              {operationalSyncStatus === 'success' ? 'task_alt' : 'warning'}
+            </span>
+            <div className="space-y-1">
+              <p className="font-bold">{operationalSyncStatus === 'success' ? 'Operação Concluída com Sucesso:' : 'Erro detectado:'}</p>
+              <p className="text-on-surface-variant font-medium">{operationalSyncMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Sync logs output console */}
+        {operationalSyncDetails.length > 0 && (
+          <div className="bg-surface p-4 rounded-lg border border-outline-variant">
+            <h4 className="text-xs font-bold text-on-surface mb-2 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#efb810]"></span>
+              Console de Sincronização Operacional:
+            </h4>
+            <div className="space-y-1 font-mono text-[10px] max-h-40 overflow-y-auto">
+              {operationalSyncDetails.map((log, i) => (
+                <div key={i} className={log.startsWith('❌') ? 'text-error font-semibold' : 'text-on-surface-variant'}>
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* IndexedDB Local Persistence Governance Board */}

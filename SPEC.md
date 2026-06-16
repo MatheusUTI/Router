@@ -527,6 +527,47 @@ Com o objetivo de disciplinar as operações e garantir que cada operador atue d
 
 ---
 
+## 22. Modo Produção e Dados de Demonstração
+
+Para preparar o RotaOperational para sua primeira operação em ambiente real e garantir que nenhuma massa de dados transacionais fictícia polua as faturas e romaneios legítimos, o sistema implementa as seguintes regras de controle de ciclo de vida de dados:
+
+1. **Flag Central de Modo de Dados**:
+   - O arquivo central de ambiente `src/constants/runtimeMode.ts` expõe duas chaves: `IS_DEMO_MODE` e `ALLOW_DEMO_TRANSACTIONAL_SEEDS`.
+   - Em produção puro, ambos são definidos como `false`.
+
+2. **Diferenciação entre Dados Mestres e Transacionais**:
+   - **Dados Transacionais (Iniciam vazios em Produção)**: Veículos (`vehicles`), Motoristas (`drivers`), CTRCs (`ctrcs` e `linkedCtrcs`), Romaneios salvos (`savedRomaneios`), despesas e faturas/tickets de ocorrências iniciais. Esses dados devem originar exclusivamente de cadastros legítimos locais ou importações oficiais de arquivos.
+   - **Dados Mestres Parameterizados (Semeados em Produção)**: Tabelas regulatórias vitais, como Ocorrências de Entrega (`occurrences`), Cidades e Rotas (`cidades_rotas`), Cadastro de Clientes de Curva A (`curva_a_clients`), Feriados e Calendário Operacional (`operational_calendar_events`) e Gates de Roteirização. Estes bancos de referência continuam sendo semeadas se encontrados vazios.
+
+3. **Utilitário Seguro de Purga Manual para o Master**:
+   - Na visão de Configurações, o usuário **Master** tem acesso ao painel de **Ambiente de Produção e Limpeza do Mock**.
+   - O painel exibe estatísticas em tempo real sobre a quantidade de itens fictícios residuais instalados.
+   - Para executar o expurgo seguro, o administrador deve digitar exatamente a frase confirmatória **LIMPAR DEMO**. Ele remove apenas os registros correspondentes às chaves primárias e objetos do pacote demo (`initialVehicles`, `initialDrivers`, etc.), resguardando dados importados ou inseridos manualmente.
+   - Caso o banco já tenha sido purgado ou não contenha registros reconhecidos do mock de demonstração, o sistema emite um alerta seguro informando que não foi possível identificar dados de demonstração adicionais.
+
+---
+
+## 23. Sincronização Operacional Supabase V1 (Multi-PC)
+
+Para apoiar a colaboração e permitir que múltiplos computadores continuem a roteirização de cargas a partir do estado em que outras máquinas pararam, o RotaOperational estende a integração Supabase para incluir as tabelas transacionais e planejamentos operacionais em sua versão 1:
+
+1. **Escopo de Tabelas Sincronizadas**:
+   - **CTRCs** (`ctrcs`): Registro expandido de fretes e notas fiscais com status corrente na nuvem.
+   - **Roteirização e Priorizações** (`route_planning_items`): Registro sob-demanda contendo as rotas sugeridas versus as operacionais definidas manualmente pelo planejador, tags de status de planejamento e de bloqueio.
+   - **Pré-romaneios** (`pre_romaneios`): Os portões físicos, status de separações e listas de CTRCs designadas ao galpão para carregamento de pátio física.
+   - **Histórico e Romaneios Salvos** (`saved_romaneios`): Romaneios consolidados de expedições já com motoristas, ajudantes, CTRCs faturados e observações integradas à auditoria.
+
+2. **Diretrizes e Algoritmos de Conflito ("Safe Merge")**:
+   - **Last Write Wins (LWW)**: Para todas as tabelas operacionais que dispõem de carimbos de tempo de modificação (`updatedAt` ou `updated_at`), registros que colidem com correspondentes locais e remotos são comparados de forma individualizadora. A versão que contiver o timestamp cronológico mais recente é preservada, garantindo conformidade.
+   - **Registro por Registro**: Registros que existem apenas na nuvem são baixados de forma automática. Registros que residem exclusivamente na máquina local são mantidos intocados.
+   - **Sem Exclusão Destrutiva**: Em concordância com os princípios de resiliência, o sincronizador operacional nunca executa ações de delete físico na máquina local simplesmente por ausência de dados na nuvem, garantindo tolerância máxima contra perdas acidentais de internet ou erros de banco de dados.
+
+3. **Painel de Interface e Ações do Operador**:
+   - Localizado em Configurações, o painel de **Sync Operacional Supabase V1** exibe logs de console informando as etapas processadas no banco, o total de registros mesclados e o horário de finalização do sync mais recente.
+   - **Enviar operação para nuvem (Export)**: Coleta todo o estado dinâmico local corrente do IndexedDB e realiza um upsert na infraestrutura remota do Supabase.
+   - **Baixar operação da nuvem (Pull/Import)**: Consulta as tabelas remotas, mescla-as de forma segura com o IndexedDB e executa o disparo do trigger de reidratação em tempo de execução para os componentes visuais reagirem.
+   - **Sincronizar operação agora (Bidirecional)**: Realiza uma mesclagem de duas vias segura (baixando o que há de mais atual para a máquina local e disparando o estado integrado finalizado resultante de volta para o Supabase).
+
 
 
 
