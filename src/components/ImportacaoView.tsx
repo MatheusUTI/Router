@@ -1,5 +1,6 @@
 import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
 import { Ctrc, AppUser } from '../types';
+import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 
 interface ImportacaoViewProps {
   onAddCtrcs: (newCtrcs: Ctrc[]) => void;
@@ -515,7 +516,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         nf: nfVal || undefined,
         valor: valVal || undefined,
         frete: freVal || undefined,
-        unid: uniVal || adminUser?.unid || 'SPO',
+        unid: uniVal || adminUser?.unid || DEFAULT_OPERATIONAL_UNIT,
         ocorrencia: ocoVal || undefined,
         descricao_ocorr: descOcoVal || undefined,
         localizacao: locVal || undefined,
@@ -581,7 +582,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#101524] border border-primary/20 text-xs font-semibold text-primary shadow-inner">
             <span className="material-symbols-outlined text-[16px] animate-pulse">pin_drop</span>
             <span>Unidade Operativa:</span> 
-            <span className="font-mono bg-primary text-on-primary px-2 py-0.5 rounded text-xs font-bold shadow-sm">{adminUser?.unid || 'SPO'}</span>
+            <span className="font-mono bg-primary text-on-primary px-2 py-0.5 rounded text-xs font-bold shadow-sm">{adminUser?.unid || DEFAULT_OPERATIONAL_UNIT}</span>
           </div>
         </div>
       </div>

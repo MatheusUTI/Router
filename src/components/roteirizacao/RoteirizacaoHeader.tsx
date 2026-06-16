@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppUser, RoteirizacaoSortField, SortDirection } from '../../types';
+import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
 
 interface RoteirizacaoHeaderProps {
   adminUser: AppUser;
@@ -144,13 +145,13 @@ export default function RoteirizacaoHeader({
               className={selectMonoClass}
             >
               <option value="TODAS" className="bg-[#0b1322]">TODAS</option>
-              <option value="SPO" className="bg-[#0b1322]">SPO</option>
-              <option value="VGA" className="bg-[#0b1322]">VGA</option>
-              <option value="BHS" className="bg-[#0b1322]">BHS</option>
+              {getOperationalUnits().filter(u => u.active).map(u => (
+                <option key={u.code} value={u.code} className="bg-[#0b1322]">{u.code}</option>
+              ))}
             </select>
           ) : (
             <span className="text-slate-400 font-mono font-bold text-[12px] flex items-center gap-0.5 select-none leading-none">
-              🔒 {(adminUser.unid || 'SPO').toUpperCase()}
+              🔒 {(adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase()}
             </span>
           )}
         </div>

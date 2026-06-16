@@ -1,7 +1,8 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from '../types';
+import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, OperationalUnit } from '../types';
 import { db } from '../infrastructure/localdb/db';
 import { SyncQueueRepository } from '../infrastructure/localdb/repositories/syncQueueRepository';
+import { DEFAULT_OPERATIONAL_UNIT, OPERATIONAL_UNITS, getOperationalUnits, saveOperationalUnits } from '../constants/operationalUnits';
 import { 
   isSupabaseConfigured, 
   testSupabaseConnection, 
@@ -108,7 +109,7 @@ export default function ConfiguracoesView({
 
   const [tempName, setTempName] = useState(adminUser.name);
   const [tempRole, setTempRole] = useState(adminUser.role);
-  const [tempUnid, setTempUnid] = useState(adminUser.unid || (adminUser.is_master ? 'TODAS' : 'SPO'));
+  const [tempUnid, setTempUnid] = useState(adminUser.unid || (adminUser.is_master ? 'TODAS' : DEFAULT_OPERATIONAL_UNIT));
   const [message, setMessage] = useState<string | null>(null);
 
   // Users Database management states
@@ -119,7 +120,7 @@ export default function ConfiguracoesView({
   const [userFormName, setUserFormName] = useState('');
   const [userFormRole, setUserFormRole] = useState('Operador de Despacho');
   const [userFormIsMaster, setUserFormIsMaster] = useState(false);
-  const [userFormUnid, setUserFormUnid] = useState('SPO');
+  const [userFormUnid, setUserFormUnid] = useState(DEFAULT_OPERATIONAL_UNIT);
 
   // Supabase Custom Form States for Database Setup
   const [customUrl, setCustomUrl] = useState(() => {
@@ -143,6 +144,119 @@ export default function ConfiguracoesView({
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
   const [sqlCopied, setSqlCopied] = useState(false);
   const [showSql, setShowSql] = useState(false);
+
+  // Operational units states & handlers
+  const [opUnits, setOpUnits] = useState<OperationalUnit[]>(() => getOperationalUnits());
+  const [newOpCode, setNewOpCode] = useState('');
+  const [newOpName, setNewOpName] = useState('');
+  const [opError, setOpError] = useState<string | null>(null);
+  const [opSuccess, setOpSuccess] = useState<string | null>(null);
+  const [editingOpCode, setEditingOpCode] = useState<string | null>(null);
+  const [editingOpName, setEditingOpName] = useState('');
+
+  const handleAddOpUnit = (e: FormEvent) => {
+    e.preventDefault();
+    setOpError(null);
+    setOpSuccess(null);
+
+    const code = newOpCode.trim().toUpperCase();
+    const name = newOpName.trim();
+
+    if (!code || !name) {
+      setOpError("Código e nome são obrigatórios.");
+      return;
+    }
+
+    if (code.length < 2 || code.length > 5) {
+      setOpError("O código deve ter entre 2 e 5 caracteres.");
+      return;
+    }
+
+    // Check if duplicate code
+    if (opUnits.some(u => u.code === code)) {
+      setOpError(`A unidade com código '${code}' já existe.`);
+      return;
+    }
+
+    const newUnit: OperationalUnit = {
+      code,
+      name: `${code} - ${name}`,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [...opUnits, newUnit];
+    setOpUnits(updated);
+    saveOperationalUnits(updated);
+    setNewOpCode('');
+    setNewOpName('');
+    setOpSuccess(`Unidade '${code}' adicionada com sucesso.`);
+  };
+
+  const handleToggleOpUnit = (code: string) => {
+    setOpError(null);
+    setOpSuccess(null);
+
+    const target = opUnits.find(u => u.code === code);
+    if (target && target.active) {
+      const activeUnitsCount = opUnits.filter(u => u.active).length;
+      if (code === DEFAULT_OPERATIONAL_UNIT && activeUnitsCount <= 1) {
+        setOpError("Não é permitido desativar a unidade padrão 'VGA' quando ela é a única ativa.");
+        return;
+      }
+    }
+
+    const updated = opUnits.map(u => {
+      if (u.code === code) {
+        return { ...u, active: !u.active, updatedAt: new Date().toISOString() };
+      }
+      return u;
+    });
+
+    setOpUnits(updated);
+    saveOperationalUnits(updated);
+  };
+
+  const handleUpdateOpName = (code: string, newName: string) => {
+    setOpError(null);
+    setOpSuccess(null);
+
+    if (!newName.trim()) {
+      setOpError("O nome não pode ser vazio.");
+      return;
+    }
+
+    let finalName = newName.trim();
+    if (!finalName.startsWith(code)) {
+      finalName = `${code} - ${finalName}`;
+    }
+
+    const updated = opUnits.map(u => {
+      if (u.code === code) {
+        return { ...u, name: finalName, updatedAt: new Date().toISOString() };
+      }
+      return u;
+    });
+
+    setOpUnits(updated);
+    saveOperationalUnits(updated);
+    setOpSuccess("Nome da unidade atualizado com sucesso.");
+  };
+
+  const handleDeleteOpUnit = (code: string) => {
+    setOpError(null);
+    setOpSuccess(null);
+
+    if (code === DEFAULT_OPERATIONAL_UNIT) {
+      setOpError("A unidade padrão 'VGA' não pode ser excluída.");
+      return;
+    }
+
+    const updated = opUnits.filter(u => u.code !== code);
+    setOpUnits(updated);
+    saveOperationalUnits(updated);
+    setOpSuccess(`Unidade '${code}' excluída com sucesso.`);
+  };
 
   // Custom modal states to avoid Chrome/Safari security sandbox blocks inside iframe
   const [confirmModal, setConfirmModal] = useState<{
@@ -174,7 +288,7 @@ export default function ConfiguracoesView({
     // Synced profile update in case props changed
     setTempName(adminUser.name);
     setTempRole(adminUser.role);
-    setTempUnid(adminUser.unid || (adminUser.is_master ? 'TODAS' : 'SPO'));
+    setTempUnid(adminUser.unid || (adminUser.is_master ? 'TODAS' : DEFAULT_OPERATIONAL_UNIT));
   }, [adminUser]);
 
   const handleCreateOrUpdateUser = async (e: FormEvent) => {
@@ -216,7 +330,7 @@ export default function ConfiguracoesView({
     setUserFormPassword('');
     setUserFormName('');
     setUserFormIsMaster(false);
-    setUserFormUnid('SPO');
+    setUserFormUnid(DEFAULT_OPERATIONAL_UNIT);
 
     handleLoadUsers();
   };
@@ -721,10 +835,9 @@ export default function ConfiguracoesView({
                     onChange={(e) => setUserFormUnid(e.target.value)}
                     className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-bold text-[#3ecf8e]"
                   >
-                    <option value="SPO">SPO - São Paulo</option>
-                    <option value="PPY">PPY - Pouso Alegre</option>
-                    <option value="ALF">ALF - Alfenas</option>
-                    <option value="VGA">VGA - Varginha</option>
+                    {opUnits.filter(u => u.active).map(u => (
+                      <option key={u.code} value={u.code}>{u.name}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -827,6 +940,185 @@ export default function ConfiguracoesView({
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Operational Units Management Section */}
+      <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left relative overflow-hidden">
+        
+        {/* Locking warning for regular operators */}
+        {!adminUser.is_master && (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md rounded-xl flex flex-col items-center justify-center p-6 text-center z-20 animate-fadeIn">
+            <div className="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center text-error border border-error/20 mb-3.5 shadow-lg">
+              <span className="material-symbols-outlined text-[30px]" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+            </div>
+            <h3 className="text-sm font-bold text-on-surface">Gestão de Unidades Operacionais Restrita</h3>
+            <p className="text-xs text-on-surface-variant max-w-md mt-1 mb-4 leading-relaxed">
+              Sua conta atual <strong className="text-white">({adminUser.name})</strong> não possui o nível de privilégio necessário. 
+              Apenas usuários com privilégio <strong className="text-error uppercase">Master</strong> podem adicionar ou alterar unidades.
+            </p>
+          </div>
+        )}
+
+        <div>
+          <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[19px]">domain</span>
+            Gestão de Unidades Operacionais (Filiais)
+          </h3>
+          <p className="text-xs text-on-surface-variant">
+            Gerencie as filiais operacionais do RotaOperational cadastradas no sistema.
+          </p>
+        </div>
+
+        {opError && (
+          <div className="p-3 bg-error-container/10 border border-error/20 text-error rounded-lg text-xs font-semibold leading-normal">
+            {opError}
+          </div>
+        )}
+
+        {opSuccess && (
+          <div className="p-3 bg-primary-container/10 border border-primary/20 text-[#3ecf8e] rounded-lg text-xs font-semibold leading-normal">
+            {opSuccess}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Add unit form */}
+          <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 space-y-4">
+            <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5 border-b border-outline-variant/30 pb-2">
+              <span className="material-symbols-outlined text-primary text-[16px]">add_home</span>
+              Adicionar Nova Filial
+            </h4>
+
+            <form onSubmit={handleAddOpUnit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                  Código da Unidade (Ex: VGA, SPO)
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={5}
+                  value={newOpCode}
+                  onChange={(e) => setNewOpCode(e.target.value)}
+                  placeholder="Ex: LGA"
+                  className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                  Nome da Cidade/Localização
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newOpName}
+                  onChange={(e) => setNewOpName(e.target.value)}
+                  placeholder="Ex: Varginha"
+                  className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2 bg-primary hover:bg-primary-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[15px]">add</span>
+                Cadastrar Unidade
+              </button>
+            </form>
+          </div>
+
+          {/* List of units */}
+          <div className="xl:col-span-2 space-y-3">
+            <div className="bg-surface px-4 py-2.5 rounded-lg border border-outline-variant/40 flex justify-between items-center bg-surface pb-3">
+              <span className="text-xs font-bold font-mono uppercase text-on-surface-variant">Filiais Cadastradas ({opUnits.length})</span>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-outline-variant bg-surface">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-outline-variant bg-surface-container-low text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/80">
+                    <th className="p-3 font-mono">CÓDIGO</th>
+                    <th className="p-3">NOME COMPLETO</th>
+                    <th className="p-3">STATUS</th>
+                    <th className="p-3 text-right">AÇÕES</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/40 text-xs">
+                  {opUnits.map(unit => (
+                    <tr key={unit.code} className="hover:bg-surface-container-low/30 transition-colors">
+                      <td className="p-3 font-mono font-bold text-primary">{unit.code}</td>
+                      <td className="p-3">
+                        {editingOpCode === unit.code ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              value={editingOpName}
+                              onChange={(e) => setEditingOpName(e.target.value)}
+                              className="bg-surface-container border border-outline-variant rounded px-2 py-1 text-xs text-on-surface focus:outline-none"
+                            />
+                            <button
+                              onClick={() => {
+                                handleUpdateOpName(unit.code, editingOpName);
+                                setEditingOpCode(null);
+                              }}
+                              className="text-xs font-bold bg-[#3ecf8e]/10 text-[#3ecf8e] border border-[#3ecf8e]/20 px-2.5 py-1 rounded hover:bg-[#3ecf8e]/20"
+                            >
+                              Salvar
+                            </button>
+                            <button
+                              onClick={() => setEditingOpCode(null)}
+                              className="text-xs font-semibold bg-surface-container text-on-surface hover:bg-surface-container-high px-2 py-1 border border-outline-variant rounded"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="font-medium text-on-surface">{unit.name}</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => handleToggleOpUnit(unit.code)}
+                          className={`px-2 py-1 text-[10px] uppercase font-bold rounded-full border transition-all ${
+                            unit.active
+                              ? 'bg-[#3ecf8e]/10 text-[#3ecf8e] border-[#3ecf8e]/30 hover:bg-[#3ecf8e]/20'
+                              : 'bg-error-container/20 text-error border-error/30 hover:bg-error-container/35'
+                          }`}
+                        >
+                          {unit.active ? 'Ativa' : 'Inativa'}
+                        </button>
+                      </td>
+                      <td className="p-3 text-right space-x-2">
+                        {editingOpCode !== unit.code && (
+                          <button
+                            onClick={() => {
+                              setEditingOpCode(unit.code);
+                              setEditingOpName(unit.name.includes(' - ') ? unit.name.substring(unit.name.indexOf(' - ') + 3) : unit.name);
+                            }}
+                            className="p-1 text-primary hover:bg-primary/10 rounded transition-colors"
+                            title="Editar Unidade"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">edit</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteOpUnit(unit.code)}
+                          disabled={unit.code === DEFAULT_OPERATIONAL_UNIT}
+                          className={`p-1 rounded transition-colors ${unit.code === DEFAULT_OPERATIONAL_UNIT ? 'text-on-surface-variant/30 cursor-not-allowed' : 'text-error hover:bg-error/10'}`}
+                          title={unit.code === DEFAULT_OPERATIONAL_UNIT ? "Não é possível excluir a unidade padrão" : "Excluir Unidade"}
+                        >
+                          <span className="material-symbols-outlined text-[17px]">delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

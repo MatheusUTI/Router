@@ -391,6 +391,14 @@ export interface OperationalNotice {
   sourceEventId: string;
 }
 
+export interface OperationalUnit {
+  code: string;
+  name: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
 
 

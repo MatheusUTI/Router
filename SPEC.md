@@ -509,6 +509,24 @@ Com o objetivo de criar uma área operacional robusta para que a equipe de galp�
    - Apresenta colunas unificadas apropriadas: caixa de marcação física (CHK), CTRC ID, número da Nota Fiscal, destinatário, remetente, cidade, volume e localização específica de galpão.
    - Incorpora uma ficha de controle manual em rodapé para preenchimento manuscrito de horários, nomes dos separadores, conferentes e assinaturas, servindo como documento de prestação de contas operacionais.
 
+---
+
+## 21. Login e Unidade Operacional
+
+Com o objetivo de disciplinar as operações e garantir que cada operador atue de forma segura e contextualizada na sua filial, o sistema implementa as seguintes regras de governança para login e controle de Unidades Operacionais (V1):
+
+1. **Unidade Operacional Padrão**:
+   - A unidade operacional prioritária definida como padrão do sistema é **VGA** (com a nomenclatura "VGA - Varginha").
+   - O login do operador por padrão se inicia selecionando a unidade VGA.
+
+2. **Permissões, Cadastro e Edição Dinâmica**:
+   - **Controle Total pelo Master**: O usuário master administrador possui acesso completo à seção de **Gestão de Unidades Operacionais (Filiais)** localizada em Configurações. Através dela é possível listar todas as filiais configuradas, cadastrar novas unidades e/ou desativar e reativar unidades existentes.
+   - **Segurança e Fallback**: O sistema impede a exclusão ou desativação da filial padrão **VGA** caso ela seja a única unidade habilitada no momento.
+   - **Acesso Visual do Operador Comum**: Operadores comuns não possuem poder para criar ou editar as unidades. Seus formulários e filtros de filial ficam em modo leitura, exibindo e travando as escolhas de acordo com a governança outorgada.
+   - **Administrador Padrão**: O usuário master principal do cockpit é o **anderson** (senha **123**), atuando como "Supervisor Operacional" (Anderson Matheus). O usuário master antigo atua como conta técnica de suporte secundário em caso de perda de credenciais locais.
+
+---
+
 
 
 

@@ -7,7 +7,7 @@ import dns from "dns";
 
 dotenv.config();
 
-// Track verified offline Supabase hosts to avoid fetch failures/warnings
+// Tracks verified offline Supabase hosts to avoid fetch failures/warnings
 const offlineHosts = new Set<string>();
 let isMainSupabaseOffline = false;
 
@@ -31,25 +31,36 @@ function getHostFromUrl(url: string): string {
 // Default fallback users in memory to prevent lockout
 const DEFAULT_APP_USERS = [
   {
+    username: "anderson",
+    password: "123",
+    name: "Anderson Matheus",
+    role: "Supervisor Operacional",
+    is_master: true,
+    unid: "VGA"
+  },
+  {
     username: "master",
     password: "123",
     name: "Anderson M. (Master)",
     role: "Superintendente de Logística",
-    is_master: true
+    is_master: true,
+    unid: "VGA"
   },
   {
     username: "operador",
     password: "123",
     name: "João Silva",
     role: "Operador de Despacho",
-    is_master: false
+    is_master: false,
+    unid: "VGA"
   },
   {
     username: "auditor",
     password: "123",
     name: "Maria Costa",
     role: "Auditor de Contratos",
-    is_master: false
+    is_master: false,
+    unid: "VGA"
   }
 ];
 
@@ -78,13 +89,23 @@ async function startServer() {
   }
 
   const mainHost = getHostFromUrl(supabaseUrl);
+  // Aggressively check placeholders or unreachable environments
   if (mainHost) {
-    dns.lookup(mainHost, (err) => {
-      if (err) {
-        console.log(`[BACKEND] Host '${mainHost}' está offline/inacessível. Ativando modo local.`);
-        isMainSupabaseOffline = true;
-      }
-    });
+    if (mainHost.includes("pwckzqzzewiuqoqqamdo") || mainHost === "your-supabase-project.supabase.co") {
+      console.log(`[BACKEND] Host '${mainHost}' é um endereço de rascunho/placeholder. Ignorando conexão remota ativa.`);
+      isMainSupabaseOffline = true;
+      offlineHosts.add(mainHost);
+    } else {
+      dns.lookup(mainHost, (err) => {
+        if (err) {
+          console.log(`[BACKEND] Host '${mainHost}' está offline/inacessível via DNS. Ativando modo local.`);
+          isMainSupabaseOffline = true;
+          offlineHosts.add(mainHost);
+        }
+      });
+    }
+  } else {
+    isMainSupabaseOffline = true;
   }
 
   let supabaseClient: any = null;
@@ -196,43 +217,48 @@ async function startServer() {
             user: mappedUser
           });
         } else {
-          // Fallback to querying custom app_users table
-          try {
-            let dbData: any = null;
-            let dbError: any = null;
-            try {
-              const dbRes = await activeSupabase
-                .from("app_users")
-                .select("*")
-                .eq("username", cleanUser);
-              dbData = dbRes.data;
-              dbError = dbRes.error;
-            } catch (fetchErr: any) {
-              const msg = fetchErr?.message || "";
-              if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
-                markHostOffline(activeSupabase.supabaseUrl);
-              }
-              dbError = { message: "connection offline" };
-            }
+          const rxHost = getHostFromUrl(activeSupabase.supabaseUrl);
+          const isOffline = offlineHosts.has(rxHost) || (authError && authError.message === "connection offline");
 
-            if (!dbError && dbData && dbData.length > 0) {
-              const dbUser = dbData[0];
-              if (dbUser.password === cleanPass) {
-                console.log(`[BACKEND] Login autenticado com sucesso via tabela local.`);
-                return res.json({
-                  success: true,
-                  user: {
-                    username: dbUser.username,
-                    name: dbUser.name,
-                    role: dbUser.role,
-                    is_master: !!dbUser.is_master,
-                    created_at: dbUser.created_at || new Date().toISOString()
-                  }
-                });
+          if (!isOffline) {
+            // Fallback to querying custom app_users table
+            try {
+              let dbData: any = null;
+              let dbError: any = null;
+              try {
+                const dbRes = await activeSupabase
+                  .from("app_users")
+                  .select("*")
+                  .eq("username", cleanUser);
+                dbData = dbRes.data;
+                dbError = dbRes.error;
+              } catch (fetchErr: any) {
+                const msg = fetchErr?.message || "";
+                if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
+                  markHostOffline(activeSupabase.supabaseUrl);
+                }
+                dbError = { message: "connection offline" };
               }
+
+              if (!dbError && dbData && dbData.length > 0) {
+                const dbUser = dbData[0];
+                if (dbUser.password === cleanPass) {
+                  console.log(`[BACKEND] Login autenticado com sucesso via tabela local.`);
+                  return res.json({
+                    success: true,
+                    user: {
+                      username: dbUser.username,
+                      name: dbUser.name,
+                      role: dbUser.role,
+                      is_master: !!dbUser.is_master,
+                      created_at: dbUser.created_at || new Date().toISOString()
+                    }
+                  });
+                }
+              }
+            } catch (dbQueryErr) {
+              // Ignored
             }
-          } catch (dbQueryErr) {
-            // Ignored
           }
 
           // Let's check fallback auto-provisioning!
@@ -243,22 +269,24 @@ async function startServer() {
           if (fallbackMatch) {
             console.log(`[BACKEND] Ativando conta corporativa padrão '${cleanUser}'.`);
             
-            try {
-              await activeSupabase.auth.signUp({
-                email,
-                password: cleanPass,
-                options: {
-                  data: {
-                    name: fallbackMatch.name,
-                    role: fallbackMatch.role,
-                    is_master: fallbackMatch.is_master
+            if (!isOffline && !offlineHosts.has(rxHost)) {
+              try {
+                await activeSupabase.auth.signUp({
+                  email,
+                  password: cleanPass,
+                  options: {
+                    data: {
+                      name: fallbackMatch.name,
+                      role: fallbackMatch.role,
+                      is_master: fallbackMatch.is_master
+                    }
                   }
+                });
+              } catch (signUpErr: any) {
+                const msg = signUpErr?.message || "";
+                if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
+                  markHostOffline(activeSupabase.supabaseUrl);
                 }
-              });
-            } catch (signUpErr: any) {
-              const msg = signUpErr?.message || "";
-              if (msg.includes("fetch failed") || msg.includes("getaddrinfo")) {
-                markHostOffline(activeSupabase.supabaseUrl);
               }
             }
 
@@ -345,7 +373,7 @@ async function startServer() {
 
   // API Route - Save / Update / Upsert user
   app.post("/api/auth/users", async (req, res) => {
-    const { username, password, name, role, is_master } = req.body;
+    const { username, password, name, role, is_master, unid } = req.body;
     if (!username || !name || !role) {
       return res.status(400).json({ success: false, error: "Parâmetros de usuário inválidos." });
     }
@@ -356,7 +384,8 @@ async function startServer() {
       password: password || "123",
       name,
       role,
-      is_master: !!is_master
+      is_master: !!is_master,
+      unid: unid || "VGA"
     };
 
     // Update in memory cache

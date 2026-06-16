@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { RoteirizacaoItem, AppUser, RoteirizacaoSortField, SortDirection } from '../../../types';
+import { DEFAULT_OPERATIONAL_UNIT } from '../../../constants/operationalUnits';
 
 export const DEFAULT_ROUTE_SECTORS = [
   'Agendamento',
@@ -97,7 +98,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   // Unit select filter
   const [selectedUnit, setSelectedUnit] = useState<string>(() => {
     if (!adminUser.is_master) {
-      return (adminUser.unid || 'SPO').toUpperCase();
+      return (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
     }
     return 'TODAS';
   });
@@ -146,7 +147,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       .filter((c) => {
         const currentUnid = (c.unid || '').toUpperCase();
         if (!adminUser.is_master) {
-          return currentUnid === (adminUser.unid || 'SPO').toUpperCase();
+          return currentUnid === (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
         } else {
           if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
         }
@@ -163,7 +164,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       const currentUnid = (ctrc.unid || '').toUpperCase();
       // 1. Filial target check
       if (!adminUser.is_master) {
-        const profileUnid = (adminUser.unid || 'SPO').toUpperCase();
+        const profileUnid = (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
         if (currentUnid !== profileUnid) return false;
       } else {
         if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 import { Ctrc, Vehicle, AppUser, PreRomaneio } from '../types';
 import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
@@ -398,9 +399,9 @@ export default function FinalizacaoView({
   const filteredHistory = savedRomaneios.filter((rom) => {
     // 1. UNID Access Enforcement in history list
     if (adminUser && !adminUser.is_master) {
-      const userUnid = (adminUser.unid || 'SPO').toUpperCase();
+      const userUnid = (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
       const hasUnitCargos = !rom.ctrcs || rom.ctrcs.length === 0 || rom.ctrcs.some((c: Ctrc) => {
-        const ctrcUnid = (c.unid || c.id.split(/[0-9]/)[0] || 'SPO').toUpperCase();
+        const ctrcUnid = (c.unid || c.id.split(/[0-9]/)[0] || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
         return ctrcUnid === userUnid;
       });
       if (!hasUnitCargos) return false;

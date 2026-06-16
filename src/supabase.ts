@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient } from './types';
+import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 
 // Global configurations query hierarchy (Simplified)
 export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'env' | 'none' } {
@@ -107,25 +108,36 @@ function formatSupabaseError(err: any, tableName: string): string {
 // Initial default app users for local/offline testing or initial seeds
 export const DEFAULT_APP_USERS: AppUser[] = [
   {
+    username: 'anderson',
+    password: '123',
+    name: 'Anderson Matheus',
+    role: 'Supervisor Operacional',
+    is_master: true,
+    unid: 'VGA'
+  },
+  {
     username: 'master',
     password: '123',
     name: 'Anderson M. (Master)',
     role: 'Superintendente de Logística',
-    is_master: true
+    is_master: true,
+    unid: 'VGA'
   },
   {
     username: 'operador',
     password: '123',
     name: 'João Silva',
     role: 'Operador de Despacho',
-    is_master: false
+    is_master: false,
+    unid: 'VGA'
   },
   {
     username: 'auditor',
     password: '123',
     name: 'Maria Costa',
     role: 'Auditor de Contratos',
-    is_master: false
+    is_master: false,
+    unid: 'VGA'
   }
 ];
 

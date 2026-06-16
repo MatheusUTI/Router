@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem } from './types';
+import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import {
   initialVehicles,
   initialDrivers,
@@ -59,7 +60,8 @@ export default function App() {
     username: 'master',
     name: 'Anderson M. (Master)',
     role: 'Superintendente de Logística',
-    is_master: true
+    is_master: true,
+    unid: DEFAULT_OPERATIONAL_UNIT
   });
 
   // Global Operational Databases State
@@ -134,7 +136,11 @@ export default function App() {
   // LOGIN FLOW HANDLER
   // ---------------------------------------------------------
   const handleLoginSuccess = (user: AppUser) => {
-    setAdminProfile(user);
+    const finalUser = {
+      ...user,
+      unid: user.unid || DEFAULT_OPERATIONAL_UNIT
+    };
+    setAdminProfile(finalUser);
     setCurrentView('dashboard');
   };
 
