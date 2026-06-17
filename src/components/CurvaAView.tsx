@@ -8,6 +8,7 @@ interface CurvaAViewProps {
   onRemoveClient: (cnpj: string) => void;
   onBulkImportClients: (list: CurvaAClient[]) => void;
   isSyncing?: boolean;
+  isMaster?: boolean;
 }
 
 export default function CurvaAView({
@@ -16,7 +17,8 @@ export default function CurvaAView({
   onUpdateClient,
   onRemoveClient,
   onBulkImportClients,
-  isSyncing = false
+  isSyncing = false,
+  isMaster = false
 }: CurvaAViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('Todos');
@@ -114,6 +116,45 @@ export default function CurvaAView({
 09.431.250/0001-90;CRISTALIA PRODUTOS QUIMICOS CO;A`);
   };
 
+  const handleExportJson = () => {
+    const jsonStr = JSON.stringify(clients, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_curva_a_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['cnpj_remetente', 'cliente_remetente', 'curva_a'];
+    const csvRows = [headers.join(';')];
+    for (const item of clients) {
+      const values = [
+        item.cnpj_remetente || '',
+        item.cliente_remetente || '',
+        item.curva_a || ''
+      ];
+      const escapedValues = values.map(v => {
+        let str = String(v).replace(/"/g, '""');
+        if (str.includes(';') || str.includes('\n') || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      });
+      csvRows.push(escapedValues.join(';'));
+    }
+    const csvStr = csvRows.join('\n');
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_curva_a_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filteredClients = clients.filter((c) => {
     const matchesSearch =
       c.cnpj_remetente.includes(searchTerm) ||
@@ -141,32 +182,53 @@ export default function CurvaAView({
 
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              setShowImporter(!showImporter);
-              setShowForm(false);
-            }}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={handleExportJson}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">upload_file</span>
-            Importar TXT/CSV
+            📥 Exportar JSON
           </button>
-          
           <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setIsEditing(false);
-              setShowImporter(false);
-              if (!showForm) {
-                setFormCnpj('');
-                setFormName('');
-                setFormClass('A+');
-              }
-            }}
-            className="px-4 py-2 bg-primary hover:bg-[#4d8eff] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            onClick={handleExportCsv}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
-            Mapear Cliente
+            📥 Exportar CSV
           </button>
+
+          {isMaster ? (
+            <>
+              <button
+                onClick={() => {
+                  setShowImporter(!showImporter);
+                  setShowForm(false);
+                }}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                Importar TXT/CSV
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setIsEditing(false);
+                  setShowImporter(false);
+                  if (!showForm) {
+                    setFormCnpj('');
+                    setFormName('');
+                    setFormClass('A+');
+                  }
+                }}
+                className="px-4 py-1.5 bg-primary hover:bg-[#4d8eff] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+              >
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
+                Mapear Cliente
+              </button>
+            </>
+          ) : (
+            <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none flex items-center gap-1">
+              <span>🔒 Modo Consulta (Apenas Master)</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -328,7 +390,7 @@ export default function CurvaAView({
                 <th className="px-5 py-3">Razão Social do Cliente Remetente</th>
                 <th className="px-5 py-3 text-center">Classificação Curva A</th>
                 <th className="px-5 py-3 text-center">Atendimento Priorizado</th>
-                <th className="px-5 py-3 text-right">Ações</th>
+                {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -351,35 +413,37 @@ export default function CurvaAView({
                     <td className="px-5 py-3.5 text-center text-emerald-400 font-bold font-mono">
                       ⭐ SIM
                     </td>
-                    <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          onClick={() => handleEditClick(client)}
-                          className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-primary transition-colors cursor-pointer"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Remover cliente ${client.cliente_remetente} da lista Curva A?`)) {
-                              onRemoveClient(client.cnpj_remetente);
-                            }
-                          }}
-                          className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-error transition-colors cursor-pointer"
-                          title="Remover"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
-                      </div>
-                    </td>
+                    {isMaster && (
+                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEditClick(client)}
+                            className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-primary transition-colors cursor-pointer"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remover cliente ${client.cliente_remetente} da lista Curva A?`)) {
+                                onRemoveClient(client.cnpj_remetente);
+                              }
+                            }}
+                            className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-error transition-colors cursor-pointer"
+                            title="Remover"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {filteredClients.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-20 text-[#9cb4e4]">
-                    Nenhum cliente cadastrado nesta diretriz. Use o botão acima para cadastrar ou importar.
+                  <td colSpan={isMaster ? 5 : 4} className="text-center py-20 text-[#9cb4e4]">
+                    Nenhum cliente cadastrado nesta diretriz.
                   </td>
                 </tr>
               )}

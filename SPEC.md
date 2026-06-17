@@ -644,6 +644,57 @@ Com o fim de evitar inconsistências de cache no Vercel ou preferências persist
    - Isso elimina qualquer área de banner fixa que ocupava espaço vertical e reduzia a área de visualização das faturas (CTRCs).
    - O botão no cabeçalho muda dinamicamente de `📊 Diagnóstico` para `⚠️ Filtros ocultando dados` se houver perda severa de visibilidade por filtros aplicados, atuando como um indicador instantâneo de conformidade.
 
+---
+
+## 25. Consolidamento e Governança da Base de Dados Mestre
+
+Este capítulo formaliza a arquitetura dos cadastros corporativos e a governança de acesso multiusuário implementada.
+
+### 25.1 Governança Corporativa e Controle Master (`isMaster`)
+- **Premissa de Propriedade**: Las bases de dados mestres pertencem à corporação e são compartilhadas entre todas as unidades operacionais de forma unificada.
+- **Hierarquia de Acesso**:
+  - **Operador Comum (Modo Consulta)**: Visualiza todas as tabelas e dados, realiza pesquisas e filtros, mas é permanentemente impedido de realizar alterações, criar registros, modificar campos ou invocar rotinas de importação em massa. Elementos de edição (como botões e colunas de ação) são silenciados ou emitem alertas.
+  - **Usuário Master (Controle Total)**: Perfil administrativo outorgado de forma estrita (ex. Supervisor Anderson Matheus, credenciado como `anderson`). Possui controle total para criar, alterar, desativar, reativar, excluir e efetuar importação e exportação em lote de arquivos JSON e CSV de todas as abas.
+
+### 25.2 Entidade de Cidades Atendidas SSW e Normalização de Praças
+- **Objetivo**: Integrar os cadastros de praças geográficas extraídos diretamente do SSW (`BD CIDADES ATENDIDAS.csv`) sincronizando-os como fonte de controle logístico robusto.
+- **Normalização de Praça Destino (`normalizePracaDestino`)**:
+  - Toda praça de destino passa por um processo de higienização de string para mitigar inconsistências linguísticas ou operacionais.
+  - O helper converte a entrada para caixa alta, remove acentuações nativas, descarta sufixos de Unidade Federativa redundantes (como " - MG", "/SP") e expurga espaços em excesso.
+- **Estruturação Logística de Campos**:
+  - `pracaDestinoOriginal`: String literal de destino original registrada no ERP.
+  - `pracaDestinoNormalizada`: String tratada e higienizada pelo helper `normalizePracaDestino`, garantindo comparação uniforme de correspondências geográficas.
+  - `pracaHub`: Define a chave física principal logística e polo de distribuição logística para direcionar a roteirização física (ex: VGA, JDF). Substitui o destino original como chave principal logística do Router.
+- **Modelagem Tipada (`CidadeAtendidaSSW`)**:
+  ```typescript
+  export interface CidadeAtendidaSSW {
+    id: string;
+    cidade: string;
+    uf: string;
+    pracaDestinoOriginal: string;
+    pracaDestinoNormalizada: string;
+    pracaHub: string;
+    prazoGeral: number;
+    regiaoAtendimento: string;
+    isCifAtendido: boolean;
+    isFobAtendido: boolean;
+    isRestrito: boolean;
+    operacaoAtiva: boolean;
+    ultimaSincroniaSupabase?: string;
+  }
+  ```
+- **Filtros e Conversões de Tipagem Resilientes**:
+  - Símbolos booleanos como `'X'`, `'S'`, `'SIM'` (presentes na exportação do SSW) são mapeados em tempo de importação para `true` de forma resiliente.
+  - Valores de restrição ou modalidade comercial como `'CIF'`, `'FOB'`, `'RESTRITO'` são identificados com tolerância.
+
+### 25.3 Padronização Visual das Abas Corporativas
+Todas as abas da Base de Dados Mestre (*Unidades Operacionais, Ocorrências, Cidades Atendidas / Rotas, Curva A, Clientes Especiais, Feriados, Veículos, Motoristas & Ajudantes*) adotam o mesmo padrão visual e herança de interface:
+1. **Cabeçalho Compacto**: Título e subtexto explicativos de escopo estreito.
+2. **Filtros no Topo**: Campo de busca de contato unificado e filtros por unidade, status operantes e flags principais.
+3. **Área de Importação e Exportação**: Controles master para interagir em massa com fontes externas (botões explicitados de Exportar JSON e Exportar CSV unificados).
+4. **Tabela Editável**: Grid com paginação rápida e feedback visual integrado.
+5. **Bloqueio Reativo de Escrita**: Gating baseado em `isMaster` aplicado de forma uniforme nos canais de entrada e botões de triggers.
+
 
 
 

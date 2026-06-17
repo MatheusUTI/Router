@@ -11,6 +11,7 @@ interface FrotaViewProps {
   onUpdateDriver: (d: DriverScore) => void;
   onRemoveDriver: (id: string) => void;
   searchValue: string;
+  isMaster?: boolean;
 }
 
 export default function FrotaView({
@@ -23,6 +24,7 @@ export default function FrotaView({
   onUpdateDriver,
   onRemoveDriver,
   searchValue,
+  isMaster = false,
 }: FrotaViewProps) {
   const [subTab, setSubTab] = useState<'veiculos' | 'motoristas'>('veiculos');
   const [showForm, setShowForm] = useState<boolean>(false);
@@ -140,6 +142,56 @@ export default function FrotaView({
       d.bestRoute.toLowerCase().includes(searchValue.toLowerCase())
   );
 
+  const handleExportJson = () => {
+    const data = subTab === 'veiculos' ? vehicles : drivers;
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_${subTab}_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCsv = () => {
+    let csvStr = '';
+    if (subTab === 'veiculos') {
+      const headers = ['id', 'driverName', 'capacity', 'type', 'status'];
+      const csvRows = [headers.join(';')];
+      for (const item of vehicles) {
+        const values = [item.id, item.driverName, item.capacity, item.type, item.status];
+        const escaped = values.map(v => {
+          let s = String(v).replace(/"/g, '""');
+          if (s.includes(';') || s.includes('\n') || s.includes('"')) s = `"${s}"`;
+          return s;
+        });
+        csvRows.push(escaped.join(';'));
+      }
+      csvStr = csvRows.join('\n');
+    } else {
+      const headers = ['id', 'name', 'score', 'bestRoute', 'status', 'vehicle'];
+      const csvRows = [headers.join(';')];
+      for (const item of drivers) {
+        const values = [item.id, item.name, String(item.score), item.bestRoute, item.status, item.vehicle || ''];
+        const escaped = values.map(v => {
+          let s = String(v).replace(/"/g, '""');
+          if (s.includes(';') || s.includes('\n') || s.includes('"')) s = `"${s}"`;
+          return s;
+        });
+        csvRows.push(escaped.join(';'));
+      }
+      csvStr = csvRows.join('\n');
+    }
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_${subTab}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Visual Tab Selection Row */}
@@ -175,16 +227,37 @@ export default function FrotaView({
           </button>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="px-4 py-2 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold rounded-lg flex items-center gap-1.5 self-start md:self-auto shadow-md"
-        >
-          <span className="material-symbols-outlined text-[16px]">add_circle</span>
-          {subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={handleExportJson}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+          >
+            📥 Exportar JSON
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+          >
+            📥 Exportar CSV
+          </button>
+
+          {isMaster ? (
+            <button
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className="px-4 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              {subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
+            </button>
+          ) : (
+            <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none">
+              🔒 Modo Consulta
+            </div>
+          )}
+        </div>
       </div>
 
       {showForm && (
@@ -350,7 +423,7 @@ export default function FrotaView({
                   <th className="px-5 py-3">Capacidade</th>
                   <th className="px-5 py-3">Motorista Atribuído</th>
                   <th className="px-5 py-3 text-center">Status</th>
-                  <th className="px-5 py-3 text-right">Ações</th>
+                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -373,33 +446,35 @@ export default function FrotaView({
                           {veh.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            onClick={() => handleEditVehicle(veh)}
-                            className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
-                            title="Editar"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">edit</span>
-                          </button>
-                          <button
-                            disabled={veh.status === 'Em Rota'}
-                            onClick={() => {
-                              if (confirm(`Excluir o veículo ${veh.id}?`)) onRemoveVehicle(veh.id);
-                            }}
-                            className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error disabled:opacity-30 transition-colors"
-                            title={veh.status === 'Em Rota' ? 'Não permitido em rota' : 'Excluir'}
-                          >
-                            <span className="material-symbols-outlined text-[16px]">delete</span>
-                          </button>
-                        </div>
-                      </td>
+                      {isMaster && (
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEditVehicle(veh)}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              title="Editar"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                            <button
+                              disabled={veh.status === 'Em Rota'}
+                              onClick={() => {
+                                if (confirm(`Excluir o veículo ${veh.id}?`)) onRemoveVehicle(veh.id);
+                              }}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error disabled:opacity-30 transition-colors"
+                              title={veh.status === 'Em Rota' ? 'Não permitido em rota' : 'Excluir'}
+                            >
+                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
                 {filteredVehicles.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-on-surface-variant">
+                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-on-surface-variant">
                       Nenhum veículo encontrado correspondente à pesquisa.
                     </td>
                   </tr>
@@ -419,7 +494,7 @@ export default function FrotaView({
                   <th className="px-5 py-3 text-center">Status</th>
                   <th className="px-5 py-3">Melhor Rota</th>
                   <th className="px-5 py-3">Taxa de Sucesso</th>
-                  <th className="px-5 py-3 text-right">Ações</th>
+                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -474,32 +549,34 @@ export default function FrotaView({
                       </td>
                       <td className="px-5 py-3.5 text-on-surface font-semibold font-sans">{driv.bestRoute}</td>
                       <td className="px-5 py-3.5 text-on-surface-variant font-mono">{driv.successRate}%</td>
-                      <td className="px-5 py-3.5 text-right font-semibold">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            onClick={() => handleEditDriver(driv)}
-                            className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
-                            title="Editar"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">edit</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Excluir o registro de ${driv.name}?`)) onRemoveDriver(driv.id);
-                            }}
-                            className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error transition-colors"
-                            title="Excluir"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">delete</span>
-                          </button>
-                        </div>
-                      </td>
+                      {isMaster && (
+                        <td className="px-5 py-3.5 text-right font-semibold">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEditDriver(driv)}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              title="Editar"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Excluir o registro de ${driv.name}?`)) onRemoveDriver(driv.id);
+                              }}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error transition-colors"
+                              title="Excluir"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
                 {filteredDrivers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-on-surface-variant">
+                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-on-surface-variant">
                       Nenhum colaborador encontrado correspondente à pesquisa.
                     </td>
                   </tr>

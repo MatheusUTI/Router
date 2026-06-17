@@ -5,9 +5,10 @@ interface ClientesViewProps {
   clients: CriticClient[];
   onAddAuditNote: (clientId: string, note: string, author: string) => void;
   searchValue: string;
+  isMaster?: boolean;
 }
 
-export default function ClientesView({ clients, onAddAuditNote, searchValue }: ClientesViewProps) {
+export default function ClientesView({ clients, onAddAuditNote, searchValue, isMaster = false }: ClientesViewProps) {
   const [selectedClient, setSelectedClient] = useState<CriticClient>(clients[0] || {} as CriticClient);
   const [noteText, setNoteText] = useState('');
 
@@ -34,13 +35,75 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue }: C
       c.address.toLowerCase().includes(searchValue.toLowerCase())
   );
 
+  const handleExportJson = () => {
+    const jsonStr = JSON.stringify(clients, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_clientes_criticos_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['id', 'prefix', 'name', 'address', 'avgQueueTime', 'score', 'rejections30d', 'auditUser', 'auditTime', 'auditDetail'];
+    const csvRows = [headers.join(';')];
+    for (const item of clients) {
+      const values = [
+        item.id || '',
+        item.prefix || '',
+        item.name || '',
+        item.address || '',
+        item.avgQueueTime || '',
+        String(item.score || 0),
+        String(item.rejections30d || 0),
+        item.auditUser || '',
+        item.auditTime || '',
+        item.auditDetail || ''
+      ];
+      const escapedValues = values.map(v => {
+        let str = String(v).replace(/"/g, '""');
+        if (str.includes(';') || str.includes('\n') || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      });
+      csvRows.push(escapedValues.join(';'));
+    }
+    const csvStr = csvRows.join('\n');
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_clientes_criticos_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-on-surface tracking-tight">Clientes Críticos</h2>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Dossiê avançado de recebedores com gargalos operacionais crônicos, restrições físicas de frota ou devoluções sistêmicas.
-        </p>
+    <div className="space-y-6 animate-fade-in text-left">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-on-surface tracking-tight">Clientes Críticos</h2>
+          <p className="text-sm text-[#9cb4e4] mt-1">
+            Dossiê avançado de recebedores com gargalos operacionais crônicos, restrições físicas de frota ou devoluções sistêmicas.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportJson}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+          >
+            📥 Exportar JSON
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+          >
+            📥 Exportar CSV
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -181,26 +244,32 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue }: C
               </div>
 
               {/* Post Audit note input form under audit trial */}
-              <form onSubmit={handleAddNote} className="space-y-3">
-                <label className="text-xs font-bold text-on-surface block">
-                  Registrar Nova Nota de Governança
-                </label>
-                <div className="flex gap-2.5">
-                  <input
-                    type="text"
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Adicione orientações de entrega ou acordos comerciais..."
-                    className="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary placeholder-on-surface-variant/70"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold px-4 py-2 rounded-lg transition-transform active:scale-[0.98]"
-                  >
-                    Gravar Nota
-                  </button>
+              {isMaster ? (
+                <form onSubmit={handleAddNote} className="space-y-3">
+                  <label className="text-xs font-bold text-on-surface block">
+                    Registrar Nova Nota de Governança
+                  </label>
+                  <div className="flex gap-2.5">
+                    <input
+                      type="text"
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Adicione orientações de entrega ou acordos comerciais..."
+                      className="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary placeholder-on-surface-variant/70"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold px-4 py-2 rounded-lg transition-transform active:scale-[0.98]"
+                    >
+                      Gravar Nota
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none text-center">
+                  🔒 Notas de governança legadas estritamente a usuários Master.
                 </div>
-              </form>
+              )}
             </div>
           ) : (
             <div className="h-full flex flex-col justify-center items-center py-16 text-center text-on-surface-variant">

@@ -28,17 +28,13 @@ export default function Sidebar({
   ];
 
   const adminItems = [
-    { view: 'frota' as ViewType, label: 'Frota & Motoristas', icon: 'local_shipping', fillIcon: true },
+    { view: 'base_dados' as ViewType, label: 'Base de Dados', icon: 'database', fillIcon: true },
     { view: 'configuracoes' as ViewType, label: 'Sincronia / Cloud', icon: 'settings', fillIcon: false },
   ];
 
   const futureItems = [
     { view: 'desempenho' as ViewType, label: 'Desempenho Kpi', icon: 'assessment', fillIcon: false, roadmap: true },
     { view: 'solucao' as ViewType, label: 'Problemas de Rua', icon: 'report_problem', fillIcon: false, roadmap: true },
-    { view: 'clientes' as ViewType, label: 'Clientes Críticos', icon: 'gpp_bad', fillIcon: false, roadmap: true },
-    { view: 'ocorrencias' as ViewType, label: 'Ocorrências Ref', icon: 'menu_book', fillIcon: false, roadmap: true },
-    { view: 'curva_a' as ViewType, label: 'Clientes Curva A', icon: 'military_tech', fillIcon: false, roadmap: true },
-    { view: 'cidades_rotas' as ViewType, label: 'Cidades e Rotas', icon: 'map', fillIcon: false, roadmap: false },
   ];
 
   const [futureExpanded, setFutureExpanded] = useState(false);

@@ -9,6 +9,7 @@ import {
   initialCurvaAClients
 } from '../../../data';
 import { initialFeriadosMG_TXT } from '../../../data/initialFeriadosMG';
+import { initialOperationalUnitsBI } from '../../../data/initialOperationalUnitsBI';
 import { OperationalCalendarRepository } from '../repositories/operationalCalendarRepository';
 import { ALLOW_DEMO_TRANSACTIONAL_SEEDS } from '../../../constants/runtimeMode';
 
@@ -139,6 +140,19 @@ export async function runCompatibilityMigration(): Promise<{
     if (calendarEventsCount === 0) {
       const count = await OperationalCalendarRepository.importAndSaveTxt(initialFeriadosMG_TXT);
       console.log(`[Adapter] Semeados ${count} eventos de feriados municipais no calendário operacional.`);
+    }
+
+    // 9. Seeding de Unidades Operacionais BI (Se vazio)
+    const opUnitsBiCount = await db.operational_units_bi.count();
+    if (opUnitsBiCount === 0) {
+      const prepared = initialOperationalUnitsBI.map((item, idx) => ({
+        ...item,
+        id: item.id || item.unidade || `BI-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+        createdAt: item.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+      await db.operational_units_bi.bulkPut(prepared);
+      console.log(`[Adapter] Semeados ${prepared.length} registros de unidades operacionais BI.`);
     }
 
     console.log('[Adapter] Migração e Semeamento inteligente concluídos:', result);

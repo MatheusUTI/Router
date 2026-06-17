@@ -8,6 +8,7 @@ interface OcorrenciasViewProps {
   onRemoveOccurrence: (codigo: string) => void;
   onBulkImportOccurrences: (list: DeliveryOccurrence[]) => void;
   isSyncing?: boolean;
+  isMaster?: boolean;
 }
 
 export default function OcorrenciasView({
@@ -16,7 +17,8 @@ export default function OcorrenciasView({
   onUpdateOccurrence,
   onRemoveOccurrence,
   onBulkImportOccurrences,
-  isSyncing = false
+  isSyncing = false,
+  isMaster = false
 }: OcorrenciasViewProps) {
   // Main view state
   const [searchTerm, setSearchTerm] = useState('');
@@ -217,6 +219,49 @@ export default function OcorrenciasView({
     loadCsvContent(demo);
   };
 
+  const handleExportJson = () => {
+    const jsonStr = JSON.stringify(occurrences, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_ocorrencias_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['codigo', 'descricao', 'responsabilidade', 'tipo', 'setor_ocorr', 'retorno_rota', 'tratativa_solucao'];
+    const csvRows = [headers.join(';')];
+    for (const item of occurrences) {
+      const values = [
+        item.codigo || '',
+        item.descricao || '',
+        item.responsabilidade || '',
+        item.tipo || '',
+        item.setor_ocorr || '',
+        item.retorno_rota || '',
+        item.tratativa_solucao || ''
+      ];
+      const escapedValues = values.map(v => {
+        let str = String(v).replace(/"/g, '""');
+        if (str.includes(';') || str.includes('\n') || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      });
+      csvRows.push(escapedValues.join(';'));
+    }
+    const csvStr = csvRows.join('\n');
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bd_ocorrencias_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Filter logic
   const filtered = occurrences.filter((occ) => {
     const matchesSearch =
@@ -249,36 +294,57 @@ export default function OcorrenciasView({
 
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              setShowImporter(!showImporter);
-              setShowForm(false);
-            }}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={handleExportJson}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">upload_file</span>
-            Importar CSV
+            📥 Exportar JSON
           </button>
-          
           <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setIsEditing(false);
-              setShowImporter(false);
-              if (!showForm) {
-                setFormCodigo('');
-                setFormDescricao('');
-                setFormResponsabilidade('Transportador');
-                setFormTipo('Recusa');
-                setFormSetor('Comercial');
-                setFormRetorno('Não');
-                setFormTratativa('');
-              }
-            }}
-            className="px-4 py-2 bg-primary hover:bg-[#4d8eff] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            onClick={handleExportCsv}
+            className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">add_circle</span>
-            Nova Ocorrência
+            📥 Exportar CSV
           </button>
+
+          {isMaster ? (
+            <>
+              <button
+                onClick={() => {
+                  setShowImporter(!showImporter);
+                  setShowForm(false);
+                }}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                Importar CSV
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setIsEditing(false);
+                  setShowImporter(false);
+                  if (!showForm) {
+                    setFormCodigo('');
+                    setFormDescricao('');
+                    setFormResponsabilidade('Transportador');
+                    setFormTipo('Recusa');
+                    setFormSetor('Comercial');
+                    setFormRetorno('Não');
+                    setFormTratativa('');
+                  }
+                }}
+                className="px-4 py-1.5 bg-primary hover:bg-[#4d8eff] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+              >
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                Nova Ocorrência
+              </button>
+            </>
+          ) : (
+            <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none flex items-center gap-1">
+              <span>🔒 Mapeamento Restrito ao Master</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -567,7 +633,7 @@ export default function OcorrenciasView({
                 <th className="px-5 py-3 text-center">Tipo</th>
                 <th className="px-5 py-3 text-center">Retorno base?</th>
                 <th className="px-5 py-3">Tratativa de Solução</th>
-                <th className="px-5 py-3 text-right">Ações</th>
+                {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -601,35 +667,37 @@ export default function OcorrenciasView({
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-zinc-300 font-sans italic max-w-[240px] truncate">{occ.tratativa_solucao}</td>
-                    <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          onClick={() => handleEditClick(occ)}
-                          className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-primary transition-colors cursor-pointer"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Excluir a ocorrência [${occ.codigo}] - ${occ.descricao}?`)) {
-                              onRemoveOccurrence(occ.codigo);
-                            }
-                          }}
-                          className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-error transition-colors cursor-pointer"
-                          title="Excluir"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
-                      </div>
-                    </td>
+                    {isMaster && (
+                      <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEditClick(occ)}
+                            className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-primary transition-colors cursor-pointer"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Excluir a ocorrência [${occ.codigo}] - ${occ.descricao}?`)) {
+                                onRemoveOccurrence(occ.codigo);
+                              }
+                            }}
+                            className="p-1 rounded hover:bg-[#1f2945] text-[#dae2fd] hover:text-error transition-colors cursor-pointer"
+                            title="Excluir"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-20 text-[#9cb4e4]">
-                    Nenhuma ocorrência encontrada. Clique em "Nova Ocorrência" para inserir no banco.
+                   <td colSpan={isMaster ? 7 : 6} className="text-center py-20 text-[#9cb4e4]">
+                    Nenhuma ocorrência encontrada.
                   </td>
                 </tr>
               )}

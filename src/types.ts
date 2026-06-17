@@ -11,7 +11,8 @@ export type ViewType =
   | 'ocorrencias'
   | 'curva_a'
   | 'cidades_rotas'
-  | 'configuracoes';
+  | 'configuracoes'
+  | 'base_dados';
 
 export interface Vehicle {
   id: string; // Placa
@@ -404,6 +405,21 @@ export interface OperationalUnit {
   updatedAt?: string;
 }
 
+export interface OperationalUnitBI {
+  id?: string;
+  unidade: string;
+  uf: string;
+  tipo: 'Unidade' | 'Parceiro' | string;
+  responsavelOperacional?: string | null;
+  responsavelComercial?: string | null;
+  responsavel?: string | null;
+  controleParceiros?: boolean;
+  parceiroUrbano?: boolean;
+  ativo?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface RoteirizacaoDiagnostics {
   totalIndexedDb?: number;
   totalAppAvailable?: number;
@@ -424,6 +440,35 @@ export interface RoteirizacaoDiagnostics {
   byLogisticCompatibility: Record<string, number>;
   warnings: string[];
 }
+
+export interface CidadeAtendidaSSW {
+  id?: string;
+  unidadeOrigem: string;
+  ufOrigem: string;
+  cidadeOrigem: string;
+  codigoIbgeOrigem?: string;
+  ufDestino: string;
+  cidadeDestino: string;
+  pracaDestinoOriginal?: string;
+  pracaDestinoNormalizada?: string;
+  pracaHub?: string;
+  pracaDestino?: string; // preserve for compatibility
+  codigoIbgeDestino?: string;
+  distanciaKm?: number;
+  tarifa?: number;
+  prazo?: number;
+  frequencia?: string;
+  quantPedagios?: number;
+  cif?: boolean;
+  fob?: boolean;
+  restrito?: boolean;
+  tda?: boolean;
+  pracaComercial?: string;
+  ativo?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
 
 

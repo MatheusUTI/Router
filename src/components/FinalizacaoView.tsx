@@ -1595,13 +1595,21 @@ export default function FinalizacaoView({
                           if (newStatus === 'CANCELADO' && prevStatus !== 'CANCELADO') {
                             if (pr.ctrcIds && pr.ctrcIds.length > 0) {
                               const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
-                              const updated = prCtrcs.map(c => ({ ...c, status: 'Disponível' as const }));
+                              const updated = prCtrcs.map(c => ({ 
+                                ...c, 
+                                status: 'Disponível' as const,
+                                preRomaneioId: undefined 
+                              }));
                               await CtrcRepository.putMany(updated);
                             }
                           } else if (prevStatus === 'CANCELADO' && newStatus !== 'CANCELADO') {
                             if (pr.ctrcIds && pr.ctrcIds.length > 0) {
                               const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
-                              const updated = prCtrcs.map(c => ({ ...c, status: 'Separando' as const }));
+                              const updated = prCtrcs.map(c => ({ 
+                                ...c, 
+                                status: 'Separando' as const,
+                                preRomaneioId: pr.id 
+                              }));
                               await CtrcRepository.putMany(updated);
                             }
                           }

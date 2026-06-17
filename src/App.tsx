@@ -53,6 +53,7 @@ import LoginView from './components/LoginView';
 import OcorrenciasView from './components/OcorrenciasView';
 import CurvaAView from './components/CurvaAView';
 import CidadesRotasView from './components/CidadesRotasView';
+import BaseDadosView from './components/BaseDadosView';
 
 // Helper to determine if a status is "available"
 export const notAvailableStatuses = new Set<string>([
@@ -73,10 +74,12 @@ export function isStatusAvailable(status?: string | null): boolean {
 // Function to partition CTRCs based on their operational phase and pre-romaneio links
 export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: Ctrc[]; linked: Ctrc[] }> {
   let activePreRomaneioCtrcIds = new Set<string>();
+  let activePreRomaneioIds = new Set<string>();
   try {
     const preRomaneios = await PreRomaneioRepository.getAll();
     preRomaneios.forEach((pr) => {
       if (pr.status !== 'CANCELADO') {
+        activePreRomaneioIds.add(pr.id);
         pr.ctrcIds?.forEach((id) => {
           activePreRomaneioCtrcIds.add(id);
         });
@@ -91,14 +94,15 @@ export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: C
 
   for (const ctrc of localCtrcs) {
     const isLinkedByPreRomaneio = activePreRomaneioCtrcIds.has(ctrc.id);
-    const hasPreRomaneioId = !!(ctrc as any).preRomaneioId;
+    const preRomaneioId = (ctrc as any).preRomaneioId;
+    const hasPreRomaneioId = preRomaneioId && activePreRomaneioIds.has(preRomaneioId);
     const hasRomaneioId = !!(ctrc as any).romaneioId;
     const isSelectedPermanently = !!(ctrc as any).selectedForRoute;
 
     const hasLinkedStatus = ctrc.status && notAvailableStatuses.has(ctrc.status);
 
     if (
-      hasLinkedStatus ||
+      (hasLinkedStatus && ctrc.status !== 'Disponível') ||
       isLinkedByPreRomaneio ||
       hasPreRomaneioId ||
       hasRomaneioId ||
@@ -889,6 +893,33 @@ export default function App() {
       case 'cidades_rotas':
         return (
           <CidadesRotasView />
+        );
+      case 'base_dados':
+        return (
+          <BaseDadosView
+            adminUser={adminProfile}
+            vehicles={vehicles}
+            onAddVehicle={handleAddVehicle}
+            onUpdateVehicle={handleUpdateVehicle}
+            onRemoveVehicle={handleRemoveVehicle}
+            drivers={drivers}
+            onAddDriver={handleAddDriver}
+            onUpdateDriver={handleUpdateDriver}
+            onRemoveDriver={handleRemoveDriver}
+            occurrences={occurrences}
+            onAddOccurrence={handleAddOccurrence}
+            onUpdateOccurrence={handleUpdateOccurrence}
+            onRemoveOccurrence={handleRemoveOccurrence}
+            onBulkImportOccurrences={handleBulkImportOccurrences}
+            curvaAClients={curvaAClients}
+            onAddCurvaA={handleAddCurvaA}
+            onUpdateCurvaA={handleUpdateCurvaA}
+            onRemoveCurvaA={handleRemoveCurvaA}
+            onBulkImportCurvaA={handleBulkImportCurvaA}
+            criticClients={clients}
+            onAddAuditNote={(clientId, note) => handleAddAuditNote(clientId, note, adminProfile.name)}
+            searchValue={searchValue}
+          />
         );
       case 'configuracoes':
         return (

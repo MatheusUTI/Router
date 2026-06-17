@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem, RouteGateMap, PreRomaneio, OperationalCalendarEvent } from '../../types';
+import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem, RouteGateMap, PreRomaneio, OperationalCalendarEvent, OperationalUnitBI, CidadeAtendidaSSW } from '../../types';
 
 export interface SyncQueueItem {
   id?: number;
@@ -41,6 +41,8 @@ export class RotaLocalDatabase extends Dexie {
   route_gate_map!: Table<RouteGateMap, string>;
   pre_romaneios!: Table<PreRomaneio, string>;
   operational_calendar_events!: Table<OperationalCalendarEvent, string>;
+  operational_units_bi!: Table<OperationalUnitBI, string>;
+  cidades_atendidas_ssw!: Table<CidadeAtendidaSSW, string>;
 
   constructor() {
     super('RotaLocalDatabase');
@@ -73,6 +75,12 @@ export class RotaLocalDatabase extends Dexie {
     });
     this.version(7).stores({
       operational_calendar_events: 'id, date, dayMonth, city, active, severity'
+    });
+    this.version(8).stores({
+      operational_units_bi: 'id, unidade, uf, tipo, responsavelOperacional, responsavelComercial, responsavel, ativo'
+    });
+    this.version(9).stores({
+      cidades_atendidas_ssw: 'id, unidadeOrigem, ufOrigem, cidadeOrigem, ufDestino, cidadeDestino, pracaDestino, ativo'
     });
   }
 }
