@@ -637,6 +637,14 @@ Com o fim de evitar inconsistências de cache no Vercel ou preferências persist
      - A contagem de CTRCs "Disponíveis" aumenta.
      - A contagem de CTRCs "Vinculados" diminui.
 
+## Apresentação do Diagnóstico Operacional
+
+1. **Diagnóstico Operacional compacto**:
+   - O painel de Diagnósticos Operacionais e alertas inteligentes foi redesenhado como um popover colapsável de sobreposição absoluta (`absolute`), posicionado logo abaixo do botão no canto superior direito da Mesa de Roteirização.
+   - Isso elimina qualquer área de banner fixa que ocupava espaço vertical e reduzia a área de visualização das faturas (CTRCs).
+   - O botão no cabeçalho muda dinamicamente de `📊 Diagnóstico` para `⚠️ Filtros ocultando dados` se houver perda severa de visibilidade por filtros aplicados, atuando como um indicador instantâneo de conformidade.
+
+
 
 
 

@@ -791,38 +791,13 @@ export default function RoteirizacaoView({
         showOtherUnits={showOtherUnits}
         setShowOtherUnits={setShowOtherUnits}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
+        diagnostics={diagnostics}
       />
 
       <OperationalNoticesBanner
         planningDate={planningDate}
         availableCtrcs={availableCtrcs}
       />
-
-      {/* Discretionary Smart Alert display if CTRCs are loaded but filtered out */}
-      {diagnostics.totalAfterEnrichment > 0 && (diagnostics.totalFinalVisible === 0 || (diagnostics.totalFinalVisible / diagnostics.totalAfterEnrichment) < 0.05) && (
-        <div id="smart-diagnostics-alert" className="mx-3 mt-2 bg-amber-950/40 border border-amber-900/60 p-3 rounded-xl flex flex-wrap gap-2 items-center justify-between text-amber-300 text-xs select-none">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">⚠️</span>
-            <span>
-              Há CTRCs carregados, mas poucos aparecem na Mesa. Verifique filtros, unidade, ocorrência ou compatibilidade logística.
-            </span>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={() => setIsDiagnosticsOpen(true)}
-              className="bg-amber-900/40 hover:bg-amber-900/60 border border-amber-800/45 text-amber-200 px-2.5 py-1 rounded font-bold uppercase text-[10px] tracking-wide cursor-pointer transition-colors"
-            >
-              🔎 Analisar Gargalo
-            </button>
-            <button
-              onClick={handleClearFilters}
-              className="bg-indigo-650 hover:bg-indigo-600 border border-indigo-500/30 text-white px-2.5 py-1 rounded font-bold uppercase text-[10px] tracking-wide cursor-pointer transition-colors"
-            >
-              🧹 Resetar Filtros
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main Containers: Left List (Full Width) */}
       <div className="flex-1 flex gap-3 p-3 min-h-0 relative">

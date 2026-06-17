@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppUser, RoteirizacaoSortField, SortDirection } from '../../types';
+import { AppUser, RoteirizacaoSortField, SortDirection, RoteirizacaoDiagnostics } from '../../types';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
 
 interface RoteirizacaoHeaderProps {
@@ -36,6 +36,7 @@ interface RoteirizacaoHeaderProps {
   showOtherUnits?: boolean;
   setShowOtherUnits?: (show: boolean) => void;
   onOpenDiagnostics?: () => void;
+  diagnostics?: RoteirizacaoDiagnostics;
 }
 
 export default function RoteirizacaoHeader({
@@ -64,10 +65,14 @@ export default function RoteirizacaoHeader({
   showOtherUnits = false,
   setShowOtherUnits = () => {},
   onOpenDiagnostics,
+  diagnostics,
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const hasVisibilityAlert = !!(diagnostics && diagnostics.totalAfterEnrichment > 0 && (diagnostics.totalFinalVisible === 0 || (diagnostics.totalFinalVisible / diagnostics.totalAfterEnrichment) < 0.05));
+  const warningsCount = diagnostics?.warnings?.length ?? 0;
 
   const [isSectorDropdownOpen, setIsSectorDropdownOpen] = React.useState(false);
 
@@ -343,10 +348,36 @@ export default function RoteirizacaoHeader({
         {onOpenDiagnostics && (
           <button
             onClick={onOpenDiagnostics}
-            className="bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/40 text-indigo-400 hover:text-indigo-300 rounded font-extrabold text-[12px] px-2.5 py-1 h-9 transition-all cursor-pointer select-none leading-none flex items-center gap-1 shrink-0"
+            className={`rounded font-extrabold text-[12px] px-2.5 py-1 h-9 transition-all cursor-pointer select-none leading-none flex items-center gap-1.5 shrink-0 border shadow-sm ${
+              hasVisibilityAlert
+                ? 'bg-amber-600 hover:bg-amber-550 border-amber-500 text-white animate-pulse'
+                : warningsCount > 0
+                ? 'bg-amber-950/40 hover:bg-amber-900/40 border-amber-800/50 text-amber-300'
+                : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700/40 text-indigo-400 hover:text-indigo-300'
+            }`}
             title="Diagnóstico de Visibilidade da Mesa"
           >
-            📊 Diagnóstico
+            {hasVisibilityAlert ? (
+              <>
+                <span>⚠️ Filtros ocultando dados</span>
+                {warningsCount > 0 && (
+                  <span className="bg-amber-950/60 text-amber-205 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-amber-700/30">
+                    {warningsCount}
+                  </span>
+                )}
+              </>
+            ) : warningsCount > 0 ? (
+              <>
+                <span>⚠️ Diagnóstico</span>
+                <span className="bg-amber-900/50 text-amber-205 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-amber-700/30">
+                  {warningsCount}
+                </span>
+              </>
+            ) : (
+              <>
+                <span>📊 Diagnóstico</span>
+              </>
+            )}
           </button>
         )}
 

@@ -94,8 +94,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-3xl bg-[#0b1322] border border-[#1e2e4f] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="absolute top-14 right-3 z-50 w-[calc(100%-24px)] md:w-[480px] bg-[#0b1322]/98 border border-[#1e2e4f]/90 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col max-h-[80vh] animate-fade-in backdrop-blur-md">
         {/* Header */}
         <div className="px-5 py-4 border-b border-[#14203a] bg-[#0e1726] flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-indigo-400">
@@ -313,6 +312,5 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           </button>
         </div>
       </div>
-    </div>
   );
 }
