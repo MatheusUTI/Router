@@ -95,6 +95,37 @@ export function sortRoteirizacaoItems(
   });
 }
 
+export function isEligibleForUnit(ctrc: RoteirizacaoItem, targetUnit: string): boolean {
+  const unitUpper = (targetUnit || '').toUpperCase();
+  if (unitUpper === 'TODAS') return true;
+
+  const currentUnid = (ctrc.unid || '').toUpperCase();
+  // Se a unidade do CTRC bater de forma direta com a filial ativa
+  const isDirectUnit = currentUnid === unitUpper || 
+    (unitUpper === 'VGA' && currentUnid === 'VAG') ||
+    (unitUpper === 'VAG' && currentUnid === 'VGA');
+
+  if (isDirectUnit) return true;
+
+  // Se a localização atual do CTRC for no pátio ou custódia física da filial ativa
+  const locUpper = (ctrc.locationLabel || ctrc.localizacao || '').toUpperCase();
+  const isPhysicallyHere = locUpper.includes(unitUpper) ||
+    (unitUpper === 'VGA' && (locUpper.includes('VAG') || locUpper.includes('VARGINHA')));
+  
+  if (isPhysicallyHere) return true;
+
+  // Se o CTRC está sob responsabilidade de entrega (aguardando entrega pela filial ativa)
+  const hubUpper = (ctrc.pracaHub || '').toUpperCase();
+  const destUpper = (ctrc.pracaDestino || '').toUpperCase();
+  const isAwaitingDeliveryFromHere = hubUpper === unitUpper || 
+    destUpper === unitUpper ||
+    (unitUpper === 'VGA' && (hubUpper === 'VAG' || destUpper === 'VAG'));
+
+  if (isAwaitingDeliveryFromHere) return true;
+
+  return false;
+}
+
 export function isLogisticallyCompatible(
   ctrcLocalizacao: string,
   ctrcUnid: string,
@@ -107,12 +138,14 @@ export function isLogisticallyCompatible(
 
   // Se a localização atual do CTRC estiver vazia, assumimos como compatível com a própria unidade declarada no CTRC (ctrc.unid)
   if (!locUpper) {
-    return (ctrcUnid || '').toUpperCase() === unitUpper;
+    return (ctrcUnid || '').toUpperCase() === unitUpper ||
+      (unitUpper === 'VGA' && (ctrcUnid || '').toUpperCase() === 'VAG') ||
+      (unitUpper === 'VAG' && (ctrcUnid || '').toUpperCase() === 'VGA');
   }
 
   // Mapeamento de sinonimos e siglas de unidades operacionais conhecidas
   const unitMapping: Record<string, string[]> = {
-    VGA: ['VARGINHA', 'VGA'],
+    VGA: ['VARGINHA', 'VGA', 'VAG'],
     JDF: ['JUIZ DE FORA', 'JDF', 'JF', 'JUIZ DE FORA/PORTARIA'],
     PPY: ['POUSO ALEGRE', 'PPY', 'PA'],
     BHS: ['BELO HORIZONTE', 'BHS', 'BH'],
@@ -193,13 +226,10 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   const uniqueSectors = useMemo(() => {
     const list = ctrcs
       .filter((c) => {
-        const currentUnid = (c.unid || '').toUpperCase();
-        if (!adminUser.is_master) {
-          return currentUnid === (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
-        } else {
-          if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
-        }
-        return true;
+        const activeUnit = adminUser.is_master
+          ? selectedUnit
+          : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
+        return isEligibleForUnit(c, activeUnit);
       })
       .map((c) => c.effectiveRoute || c.normRota)
       .filter(Boolean);
@@ -210,14 +240,10 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   const { filteredCtrcs, filterCounts } = useMemo(() => {
     // Step 1: Filial target check
     const afterUnit = ctrcs.filter((ctrc) => {
-      const currentUnid = (ctrc.unid || '').toUpperCase();
-      if (!adminUser.is_master) {
-        const profileUnid = (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
-        return currentUnid === profileUnid;
-      } else {
-        if (selectedUnit !== 'TODAS' && currentUnid !== selectedUnit) return false;
-      }
-      return true;
+      const activeUnit = adminUser.is_master
+        ? selectedUnit
+        : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
+      return isEligibleForUnit(ctrc, activeUnit);
     });
 
     // Step 2: Route/Sector filtering (based on effectiveRoute or normRota)
