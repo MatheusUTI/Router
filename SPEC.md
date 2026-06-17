@@ -696,6 +696,31 @@ Todas as abas da Base de Dados Mestre (*Unidades Operacionais, Ocorrências, Cid
 5. **Bloqueio Reativo de Escrita**: Gating baseado em `isMaster` aplicado de forma uniforme nos canais de entrada e botões de triggers.
 
 
+## 26. Nova Arquitetura de Roteirização SSW e Hierarquia de Decisão
+
+Este capítulo define e documenta a transição da malha logística manual para a malha integrativa baseada no SSW e a governança de desvios operacionais.
+
+### 26.1 Nova Arquitetura de Roteamento Corporativo
+- **Fonte Corporativa de Cobertura**: Os limites de cobertura, as praças, os prazos e as distâncias (Km) são obtidos de maneira autoritativa da tabela `cidades_atendidas_ssw` preenchida diretamente do ERP. Isso descentraliza e automatiza a malha operacional, impedindo cadastros manuais redundantes e inconsistentes por unidade.
+- **Unified Logistical Key (`pracaHub`)**: A comparação de cobertura e compatibilidade logística utilizam prioritariamente o nó físico agregador (`pracaHub`) ao invés do nó geográfico original. Exemplo: Destinos sob as praças operacionais `VGA`, `VGAI`, `VGAP` são unificados e consolidados sob a chave consolidada logística `VGA`.
+- **Prevenção de Uso Indevido de `pracaHub`**: O nó `pracaHub` serve estritamente para compatibilidade, cruzamento estatístico, cálculo de prazos, distâncias e controle de cobertura corporativa. Ele **NÃO deve** preencher os campos operacionais de Rota (`normRota`) ou de Setor (`normSetor`), garantindo que CTRCs sem setor restem explicitamente classificados como 'ROTA NÃO MAPEADA' para tratamento via Exceção Operacional cadastrada ou Ajuste Manual.
+
+### 26.2 Nova Hierarquia de Decisão Unificada (Cinco Níveis)
+O processo de enriquecimento e direcionamento de faturas (`RoteirizacaoEnrichmentService`) consome os dados e atribui as rotas e setores de forma reativa, observando obrigatoriamente a seguinte precedência de decisão estrutural (do maior para o menor):
+
+1. **Ajuste Manual Aplicado ao CTRC**: Overrides manuais efetuados pelo operador diretamente no painel de planejamento da Mesa (propriedade `operationalRoute` na tabela `route_planning_items`).
+2. **Setor Informado no CTRC Importado**: Parâmetro bruto de setor extraído diretamente das faturas importadas do ERP (`ctrc.setor`, convertendo-se em rotas legítimas se presentes e com classificação válida).
+3. **Exceções Operacionais Cadastradas (antigo Cidades e Rotas)**: Parâmetros e overrides de correspondência de alias locais cadastrados manualmente para atuar como mitigação ou personalização ("Ajustes Operacionais").
+4. **Cobertura Encontrada no BD SSW (Sem Atribuição de Rota)**: Mapeamento das faturas contra o banco corporativo oficial de cidades atendidas (`cidades_atendidas_ssw`), enriquecendo o registro com prazos, frequências e `pracaHub` como dados auxiliares, porém mantendo os campos de rota operacional e setor como `ROTA NÃO MAPEADA` para evitar rotas fantasmas/automáticas incorretas.
+5. **Sem Definição (Fallback)**: Marcação técnica de 'ROTA NÃO MAPEADA' e 'Sem Setor' caso nenhum critério precedente seja satisfeito.
+
+### 26.3 Reposicionamento do Banco Legado
+- **Nome Conceitual**: Rebatizado de "Cidades e Rotas" para **"Exceções Operacionais (Rotas)"** ou **"Ajustes Operacionais"**.
+- **Preservação de Dados**: O esquema de tabelas IndexedDB (`cidades_rotas`) e seus registros existentes permanecem idênticos, garantindo a retrocompatibilidade.
+- **Escopo Exclusivo**: O banco legado deixa de ser a fonte principal de roteiro e assume o papel estrito de controle de aliases, sinônimos, desvios operacionais locais na ausência de diretriz da matriz de rotas do ERP, prazos regionais excepcionais, prioridades específicas de bairros e operabilidade semanal personalizada (segunda a sexta).
+
+
+
 
 
 

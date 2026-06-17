@@ -1,4 +1,4 @@
-import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem, RoutingEligibility, CriticClient } from '../../../types';
+import { Ctrc, CidadeRota, DeliveryOccurrence, CurvaAClient, Vehicle, DriverScore, Helper, RoteirizacaoItem, RoutePlanningItem, RoutingEligibility, CriticClient, CidadeAtendidaSSW } from '../../../types';
 import { initialDeliveryOccurrences } from '../../../data';
 import { getSlaStatus } from '../helpers/getSlaStatus';
 import { getPesoStatus } from '../helpers/getPesoStatus';
@@ -133,7 +133,8 @@ export const RoteirizacaoEnrichmentService = {
     helpers: Helper[] = [],
     routePlanningItems: RoutePlanningItem[] = [],
     planningDate?: string,
-    criticClients: CriticClient[] = []
+    criticClients: CriticClient[] = [],
+    sswCidades: CidadeAtendidaSSW[] = []
   ): RoteirizacaoItem[] {
     // Build maps for efficient lookup
     const occMap = new Map<string, DeliveryOccurrence>();
@@ -213,38 +214,97 @@ export const RoteirizacaoEnrichmentService = {
       let normPrazo: number | undefined = undefined;
       let normPriority: string | undefined = 'NORMAL';
 
+      // Determine decision logic variables
+      let matchedSource: 'CTRC' | 'EXCECAO' | 'SSW' | 'NENHUM' = 'NENHUM';
+      let pracaHubVal: string | undefined = undefined;
+      let pracaDestinoVal: string | undefined = undefined;
+      let ufDestinoVal: string | undefined = undefined;
+      let frequenciaVal: string | undefined = undefined;
+
+      const hasValidSetorBruto = setorBruto && 
+        setorBruto.toUpperCase().trim() !== 'SEM SETOR' && 
+        setorBruto.toUpperCase().trim() !== 'SEM ROTA' && 
+        setorBruto.toUpperCase().trim() !== 'PADRÃO' && 
+        setorBruto.trim() !== '' && 
+        setorBruto !== '0' && 
+        setorBruto !== '00';
+
+      // Find Exception Match (Step 3)
+      const matchException = cidadesRotas.find((cr) => {
+        const routeCity = cr.cidade.toUpperCase().trim();
+        const cleanRouteCity = routeCity.split(/[-/]/)[0].trim();
+        if (routeCity === validCity || cleanRouteCity === cleanedCityInput) return true;
+        if (cr.alias) {
+          const aliases = cr.alias.toUpperCase().split(',').map((s) => s.trim());
+          const cleanedAliases = aliases.map(a => a.split(/[-/]/)[0].trim());
+          if (aliases.includes(validCity) || 
+              aliases.includes(cleanedCityInput) || 
+              cleanedAliases.includes(cleanedCityInput)) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+      // Find SSW Match (Step 4)
+      const matchSsw = sswCidades.find((sc) => {
+        if (!sc.cidadeDestino) return false;
+        const destCity = sc.cidadeDestino.toUpperCase().trim();
+        const cleanDestCity = destCity.split(/[-/]/)[0].trim();
+        return destCity === validCity || cleanDestCity === cleanedCityInput;
+      });
+
+      if (matchSsw) {
+        pracaHubVal = matchSsw.pracaHub || matchSsw.pracaDestinoNormalizada || undefined;
+        pracaDestinoVal = matchSsw.pracaDestinoOriginal || matchSsw.pracaDestino || undefined;
+        ufDestinoVal = matchSsw.ufDestino;
+        frequenciaVal = matchSsw.frequencia;
+      }
+
+      // Execute Hierarchical Check
       if (is99) {
         normCidade = validCity;
         normRota = 'ROTA 99';
         normSetor = 'ROTA 99';
+        matchedSource = 'CTRC';
+        normPrazo = matchException?.prazo_padrao || matchSsw?.prazo || undefined;
+        normPriority = matchException?.prioridade_operacional || 'NORMAL';
+      } else if (hasValidSetorBruto) {
+        // Step 2: Setor informado no CTRC importado
+        normCidade = validCity;
+        normRota = normalizeRouteLabel(setorBruto);
+        normSetor = setorBruto.toUpperCase().trim();
+        matchedSource = 'CTRC';
+        normPrazo = matchException?.prazo_padrao || matchSsw?.prazo || undefined;
+        normPriority = matchException?.prioridade_operacional || 'NORMAL';
+      } else if (matchException) {
+        // Step 3: Exceção operacional cadastrada (Ajustes Operacionais / antiga Cidades e Rotas)
+        normCidade = matchException.cidade.toUpperCase().trim();
+        normRota = matchException.rota.toUpperCase().trim();
+        normSetor = normalizeRouteLabel(matchException.setor.toUpperCase().trim());
+        normPrazo = matchException.prazo_padrao;
+        normPriority = matchException.prioridade_operacional;
+        matchedSource = 'EXCECAO';
+      } else if (matchSsw) {
+        // Step 4: Cobertura encontrada no BD SSW (Cidades Atendidas SSW)
+        // A praça do SSW serve como fonte corporativa de cobertura, prazo, frequência etc.
+        // Contudo, pracaHub e pracaDestino NÃO devem preencher indevidamente a rota operacional 
+        // ou o setor operacional, os quais devem ser mapeados via Exceção Operacional ou manual.
+        normCidade = matchSsw.cidadeDestino.toUpperCase().trim();
+        normPrazo = matchSsw.prazo;
+        normPriority = 'NORMAL';
+        matchedSource = 'SSW';
+        
+        normRota = 'ROTA NÃO MAPEADA';
+        normSetor = 'ROTA NÃO MAPEADA';
       } else {
-        const matchRoute = cidadesRotas.find((cr) => {
-          const routeCity = cr.cidade.toUpperCase().trim();
-          const cleanRouteCity = routeCity.split(/[-/]/)[0].trim();
-          if (routeCity === validCity || cleanRouteCity === cleanedCityInput) return true;
-          if (cr.alias) {
-            const aliases = cr.alias.toUpperCase().split(',').map((s) => s.trim());
-            const cleanedAliases = aliases.map(a => a.split(/[-/]/)[0].trim());
-            if (aliases.includes(validCity) || 
-                aliases.includes(cleanedCityInput) || 
-                cleanedAliases.includes(cleanedCityInput)) {
-              return true;
-            }
-          }
-          return false;
-        });
-
-        if (matchRoute) {
-          normCidade = matchRoute.cidade.toUpperCase().trim();
-          normRota = matchRoute.rota.toUpperCase().trim();
-          normSetor = normalizeRouteLabel(matchRoute.setor.toUpperCase().trim());
-          normPrazo = matchRoute.prazo_padrao;
-          normPriority = matchRoute.prioridade_operacional;
-        } else {
-          normCidade = validCity;
-          normRota = normalizeRouteLabel(setorBruto);
-          normSetor = normalizeRouteLabel(setorBruto);
-        }
+        // Step 5: Sem definição
+        normCidade = validCity;
+        normRota = 'ROTA NÃO MAPEADA';
+        normSetor = 'ROTA NÃO MAPEADA';
+        normPrazo = undefined;
+        normPriority = 'NORMAL';
+        matchedSource = 'NENHUM';
       }
 
       // 2. SLA calculations
@@ -419,6 +479,11 @@ export const RoteirizacaoEnrichmentService = {
         routingBlockReason: eligibilityInfo.routingBlockReason,
         routingEligibilitySource: eligibilityInfo.routingEligibilitySource,
         occurrenceSector,
+        pracaHub: pracaHubVal,
+        pracaDestino: pracaDestinoVal,
+        ufDestino: ufDestinoVal,
+        frequencia: frequenciaVal,
+        matchedSource,
       };
     });
   }

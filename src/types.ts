@@ -303,6 +303,11 @@ export interface RoteirizacaoItem extends Ctrc {
   routingBlockReason?: string;
   routingEligibilitySource?: string;
   occurrenceSector?: string;
+  pracaHub?: string;
+  pracaDestino?: string;
+  ufDestino?: string;
+  frequencia?: string;
+  matchedSource?: 'CTRC' | 'EXCECAO' | 'SSW' | 'NENHUM';
 }
 
 export type RoutingEligibility =

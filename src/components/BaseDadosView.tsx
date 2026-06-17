@@ -1162,7 +1162,7 @@ export default function BaseDadosView({
 const TABS = [
   { id: 'unidades', label: 'Unidades Operacionais' },
   { id: 'ocorrencias', label: 'Ocorrências' },
-  { id: 'cidades_rotas', label: 'Cidades Atendidas / Rotas' },
+  { id: 'cidades_rotas', label: 'Exceções Operacionais (Rotas)' },
   { id: 'curva_a', label: 'Curva A' },
   { id: 'clientes_especiais', label: 'Clientes Especiais' },
   { id: 'feriados', label: 'Feriados (Calendário)' },

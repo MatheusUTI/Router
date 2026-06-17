@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient, RoteirizacaoDiagnostics } from '../../types';
+import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient, RoteirizacaoDiagnostics, CidadeAtendidaSSW } from '../../types';
 import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
 import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
 import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
@@ -8,6 +8,7 @@ import { RoutePlanningRepository } from '../../infrastructure/localdb/repositori
 import { UserPreferenceRepository } from '../../infrastructure/localdb/repositories/userPreferenceRepository';
 import { RouteGateRepository } from '../../infrastructure/localdb/repositories/routeGateRepository';
 import { PreRomaneioRepository } from '../../infrastructure/localdb/repositories/preRomaneioRepository';
+import { CidadeAtendidaSSWRepository } from '../../infrastructure/localdb/repositories/cidadeAtendidaSSWRepository';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
 
 // Modular Imports
@@ -50,6 +51,7 @@ export default function RoteirizacaoView({
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
   const [cidadesRotas, setCidadesRotas] = useState<CidadeRota[]>([]);
+  const [sswCidades, setSswCidades] = useState<CidadeAtendidaSSW[]>([]);
   const [curvaAClientsLocal, setCurvaAClientsLocal] = useState<CurvaAClientLocal[]>([]);
   const [helpers, setHelpers] = useState<Helper[]>([]);
   const [routePlanningItems, setRoutePlanningItems] = useState<RoutePlanningItem[]>([]);
@@ -93,16 +95,18 @@ export default function RoteirizacaoView({
     const loadEnrichmentBases = async () => {
       setIsNormalizing(true);
       try {
-        const [occList, crList, caList, hList, planList] = await Promise.all([
+        const [occList, crList, caList, hList, planList, sswList] = await Promise.all([
           OccurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
           CidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
           CurvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
           HelperRepository.getAll().catch(() => [] as Helper[]),
           RoutePlanningRepository.getAll().catch(() => [] as RoutePlanningItem[]),
+          CidadeAtendidaSSWRepository.getAll().catch(() => [] as CidadeAtendidaSSW[]),
         ]);
 
         setDbOccurrencesList(occList);
         setCidadesRotas(crList);
+        setSswCidades(sswList);
         setCurvaAClientsLocal(caList);
         setHelpers(hList);
         setRoutePlanningItems(planList);
@@ -180,7 +184,8 @@ export default function RoteirizacaoView({
       helpers,
       routePlanningItems,
       planningDate,
-      criticClients
+      criticClients,
+      sswCidades
     );
 
     // LOG AFTER ENRICHMENT
@@ -230,7 +235,7 @@ export default function RoteirizacaoView({
     });
 
     return res;
-  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients, adminUser]);
+  }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients, adminUser, sswCidades]);
 
   // Temporary allocations triggers
   const {

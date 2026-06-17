@@ -551,13 +551,13 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#1e2e4f]/50">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-3xl font-extrabold text-on-surface tracking-tight">Cidades Atendidas / Rotas</h2>
+            <h2 className="text-3xl font-extrabold text-on-surface tracking-tight">Exceções e Parâmetros de Rotas</h2>
             <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800/30 px-2.5 py-0.5 rounded-full font-bold font-mono tracking-wider">
-              SSW_CIDADES + BD_ROTAS
+              SSW_COBERTURA + EXCEÇÕES
             </span>
           </div>
           <p className="text-sm text-on-surface-variant mt-1.5">
-            Gerenciamento global de praças de destino extraídas do SSW e parametrização operacional de direcionamento de rotas.
+            O banco de dados oficial de cubagem e prazos vem diretamente do SSW. Os parâmetros abaixo cadastram exceções, aliases de busca, setores personalizados e desvios operacionais.
           </p>
         </div>
 
@@ -589,7 +589,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
               : 'border-transparent text-gray-400 hover:text-white'
           }`}
         >
-          📍 2. Parâmetros de Rotas Operacionais ({cidadeRotas.length})
+          📍 2. Ajustes e Exceções Operacionais ({cidadeRotas.length})
         </button>
       </div>
 
