@@ -620,6 +620,23 @@ Com o fim de evitar inconsistências de cache no Vercel ou preferências persist
    - **Exportação de Logs**: Provê um botão para copiar o relatório técnico formatado de diagnóstico em formato Markdown/JSON para a área de transferência do operador, otimizando o suporte administrativo de homologação.
    - **Logs de Engenharia**: Ao abrir o painel de diagnósticos na Mesa, o sistema imprime tabelas completas (`console.table`) com os contadores de cada etapa de transição, a fim de agilizar testes por desenvolvedores no ambiente de homologação.
 
+## Reversibilidade de Operações Operacionais
+
+1. **Pré-Romaneio Reversível**:
+   - Um Pré-Romaneio é considerado em estado de rascunho ou separação prévia e é totalmente reversível.
+   - Ao alterar o status de um Pré-Romaneio para `CANCELADO`, a trava operacional é removida.
+   - O cancelamento processa as faturas (CTRCs) associadas a ele, mudando de volta seus status no repositório local (`CtrcRepository`) de `'Separando'` para `'Disponível'`.
+   - Estas faturas reaparecem imediatamente na Mesa de Roteirização (`availableCtrcs`) para serem re-planejadas em novas rotas, sem a necessidade de recarga da página (F5).
+
+2. **Romaneio Finalizado Irreversível**:
+   - Um Romaneio em trânsito consolidado ou finalizado representa a consolidação fiscal/física das faturas, tornando-se uma operação estrutural irreversível para garantir a integridade dos dados e auditorias.
+
+3. **Garantia do Diagnóstico Operacional**:
+   - Após o cancelamento do Pré-Romaneio:
+     - O volume total do IndexedDB permanece o mesmo (as faturas não são excluídas).
+     - A contagem de CTRCs "Disponíveis" aumenta.
+     - A contagem de CTRCs "Vinculados" diminui.
+
 
 
 

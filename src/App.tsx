@@ -728,6 +728,22 @@ export default function App() {
     setCurvaAClients(initialCurvaAClients);
   };
 
+  const rehydrateCtrcsOnly = async () => {
+    try {
+      const localCtrcs = await CtrcRepository.getAll();
+      if (localCtrcs.length > 0) {
+        const { available, linked } = await partitionCtrcs(localCtrcs);
+        setAvailableCtrcs(available);
+        setLinkedCtrcs(linked);
+      } else {
+        setAvailableCtrcs([]);
+        setLinkedCtrcs([]);
+      }
+    } catch (err) {
+      console.error('[App] Erro ao reidratar CTRCs do IndexedDB:', err);
+    }
+  };
+
   const handleRefreshAllLocalData = async () => {
     try {
       const localVehicles = await VehicleRepository.getAll();
@@ -753,15 +769,7 @@ export default function App() {
         setSavedRomaneios([]);
       }
 
-      const localCtrcs = await CtrcRepository.getAll();
-      if (localCtrcs.length > 0) {
-        const { available, linked } = await partitionCtrcs(localCtrcs);
-        setAvailableCtrcs(available);
-        setLinkedCtrcs(linked);
-      } else {
-        setAvailableCtrcs([]);
-        setLinkedCtrcs([]);
-      }
+      await rehydrateCtrcsOnly();
     } catch (err) {
       console.error('[App] Erro ao reidratar memória local do IndexedDB:', err);
     }
@@ -835,6 +843,7 @@ export default function App() {
             onSaveRomaneio={handleSaveRomaneio}
             onDeleteRomaneio={handleDeleteRomaneio}
             adminUser={adminProfile}
+            onRefreshCtrcs={rehydrateCtrcsOnly}
           />
         );
       case 'desempenho':

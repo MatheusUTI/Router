@@ -34,6 +34,7 @@ interface FinalizacaoViewProps {
   onSaveRomaneio?: (romaneio: any) => void;
   onDeleteRomaneio?: (id: string) => void;
   adminUser?: AppUser;
+  onRefreshCtrcs?: () => Promise<void>;
 }
 
 export default function FinalizacaoView({
@@ -44,6 +45,7 @@ export default function FinalizacaoView({
   onSaveRomaneio,
   onDeleteRomaneio,
   adminUser,
+  onRefreshCtrcs,
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
   const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('preromaneio');
@@ -1587,9 +1589,28 @@ export default function FinalizacaoView({
                         value={pr.status}
                         onChange={async (e) => {
                           const newStatus = e.target.value as any;
+                          const prevStatus = pr.status;
                           await PreRomaneioRepository.updateStatus(pr.id, newStatus);
+                          
+                          if (newStatus === 'CANCELADO' && prevStatus !== 'CANCELADO') {
+                            if (pr.ctrcIds && pr.ctrcIds.length > 0) {
+                              const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+                              const updated = prCtrcs.map(c => ({ ...c, status: 'Disponível' as const }));
+                              await CtrcRepository.putMany(updated);
+                            }
+                          } else if (prevStatus === 'CANCELADO' && newStatus !== 'CANCELADO') {
+                            if (pr.ctrcIds && pr.ctrcIds.length > 0) {
+                              const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+                              const updated = prCtrcs.map(c => ({ ...c, status: 'Separando' as const }));
+                              await CtrcRepository.putMany(updated);
+                            }
+                          }
+                          
                           triggerToast(`Status do pré-romaneio ${pr.route} atualizado.`);
                           loadPreRomaneiosData();
+                          if (onRefreshCtrcs) {
+                            await onRefreshCtrcs();
+                          }
                         }}
                         className="bg-slate-900 border border-outline-variant/50 hover:border-outline-variant rounded-lg px-2 py-2 text-xs text-white font-mono cursor-pointer focus:outline-none"
                       >
