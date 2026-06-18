@@ -216,7 +216,9 @@ export default function RoteirizacaoView({
       const comp = isLogisticallyCompatible(
         item.locationLabel || item.localizacao || '',
         item.unid || '',
-        targetUnit
+        targetUnit,
+        item.pracaHub,
+        item.pracaDestino
       );
       if (comp) {
         logisticCompatibilityCounts.compatible++;
@@ -277,6 +279,8 @@ export default function RoteirizacaoView({
     setSearchQuery,
     showOtherUnits,
     setShowOtherUnits,
+    logisticScope,
+    setLogisticScope,
     activeTacticalFilter,
     setActiveTacticalFilter,
     selectedEligibility,
@@ -292,6 +296,32 @@ export default function RoteirizacaoView({
     filteredCtrcs,
     filterCounts,
     clearFilters,
+
+    // Excel column filters properties
+    excelUniqueRoutes,
+    excelUniqueCities,
+    excelUniqueDests,
+    excelUniquePrevs,
+    excelUniqueStatuses,
+    excelUniqueLocs,
+    excelUniqueSenders,
+    excelUniqueOcorrSectors,
+    excelRouteFilter,
+    setExcelRouteFilter,
+    excelCityFilter,
+    setExcelCityFilter,
+    excelDestFilter,
+    setExcelDestFilter,
+    excelPrevFilter,
+    setExcelPrevFilter,
+    excelStatusFilter,
+    setExcelStatusFilter,
+    excelLocationFilter,
+    setExcelLocationFilter,
+    excelSenderFilter,
+    setExcelSenderFilter,
+    excelOcorrSectorFilter,
+    setExcelOcorrSectorFilter,
   } = useRoteirizacaoFilters({
     ctrcs: unassignedCtrcs,
     adminUser,
@@ -344,7 +374,9 @@ export default function RoteirizacaoView({
       const comp = isLogisticallyCompatible(
         item.locationLabel || item.localizacao || '',
         item.unid || '',
-        targetUnit
+        targetUnit,
+        item.pracaHub,
+        item.pracaDestino
       );
       if (comp) {
         byLogisticCompatibility.compatible++;
@@ -521,7 +553,7 @@ export default function RoteirizacaoView({
             setDensityMode(rotPref.densityMode);
           }
           if (rotPref.groupingMode) {
-            setGroupingMode(rotPref.groupingMode as any);
+            setGroupingMode('none');
           }
           if (rotPref.selectedUnit) {
             setSelectedUnit(rotPref.selectedUnit);
@@ -561,7 +593,7 @@ export default function RoteirizacaoView({
             setDensityMode(rotPref.densityMode);
           }
           if (rotPref.groupingMode) {
-            setGroupingMode(rotPref.groupingMode as any);
+            setGroupingMode('none');
           }
           if (rotPref.selectedUnit) {
             setSelectedUnit(rotPref.selectedUnit);
@@ -767,24 +799,8 @@ export default function RoteirizacaoView({
         adminUser={adminUser}
         selectedUnit={selectedUnit}
         setSelectedUnit={setSelectedUnit}
-        selectedSector={selectedSector}
-        setSelectedSector={setSelectedSector}
-        selectedLocationFilter={selectedLocationFilter}
-        setSelectedLocationFilter={setSelectedLocationFilter}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        activeTacticalFilter={activeTacticalFilter}
-        setActiveTacticalFilter={setActiveTacticalFilter}
-        selectedEligibility={selectedEligibility}
-        setSelectedEligibility={setSelectedEligibility}
-        selectedOccurrenceSectors={selectedOccurrenceSectors}
-        setSelectedOccurrenceSectors={setSelectedOccurrenceSectors}
-        sortField={sortField}
-        setSortField={setSortField}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-        availableSectors={availableSectors}
-        uniqueSectors={uniqueSectors}
         totalCtrcsCount={unassignedCtrcs.length}
         filteredCtrcsCount={filteredCtrcs.length}
         onClearFilters={handleClearFilters}
@@ -792,9 +808,6 @@ export default function RoteirizacaoView({
         onOpenFleetDrawer={() => setIsDrawerOpen(true)}
         draftCount={Object.keys(draftAssignments).length}
         planningDate={planningDate}
-        densityMode={densityMode}
-        showOtherUnits={showOtherUnits}
-        setShowOtherUnits={setShowOtherUnits}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         diagnostics={diagnostics}
       />
@@ -829,6 +842,51 @@ export default function RoteirizacaoView({
             onUpdateDensity={(density) => setDensityMode(density)}
             totalCtrcsCount={unassignedCtrcs.length}
             onClearFilters={handleClearFilters}
+            
+            // Migrated Filters Props
+            adminUser={adminUser}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedUnit={selectedUnit}
+            setSelectedUnit={setSelectedUnit}
+            selectedSector={selectedSector}
+            setSelectedSector={setSelectedSector}
+            selectedOccurrenceSectors={selectedOccurrenceSectors}
+            setSelectedOccurrenceSectors={setSelectedOccurrenceSectors}
+            sortField={sortField}
+            setSortField={setSortField}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+            uniqueSectors={uniqueSectors}
+            availableSectors={availableSectors}
+            logisticScope={logisticScope}
+            setLogisticScope={setLogisticScope}
+
+            // Excel Column filtering props
+            excelUniqueRoutes={excelUniqueRoutes}
+            excelUniqueCities={excelUniqueCities}
+            excelUniqueDests={excelUniqueDests}
+            excelUniquePrevs={excelUniquePrevs}
+            excelUniqueStatuses={excelUniqueStatuses}
+            excelUniqueLocs={excelUniqueLocs}
+            excelUniqueSenders={excelUniqueSenders}
+            excelUniqueOcorrSectors={excelUniqueOcorrSectors}
+            excelRouteFilter={excelRouteFilter}
+            setExcelRouteFilter={setExcelRouteFilter}
+            excelCityFilter={excelCityFilter}
+            setExcelCityFilter={setExcelCityFilter}
+            excelDestFilter={excelDestFilter}
+            setExcelDestFilter={setExcelDestFilter}
+            excelPrevFilter={excelPrevFilter}
+            setExcelPrevFilter={setExcelPrevFilter}
+            excelStatusFilter={excelStatusFilter}
+            setExcelStatusFilter={setExcelStatusFilter}
+            excelLocationFilter={excelLocationFilter}
+            setExcelLocationFilter={setExcelLocationFilter}
+            excelSenderFilter={excelSenderFilter}
+            setExcelSenderFilter={setExcelSenderFilter}
+            excelOcorrSectorFilter={excelOcorrSectorFilter}
+            setExcelOcorrSectorFilter={setExcelOcorrSectorFilter}
           />
         )}
       </div>

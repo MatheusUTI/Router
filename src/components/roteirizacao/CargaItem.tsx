@@ -11,94 +11,119 @@ interface CargaItemProps {
   densityMode?: 'compact' | 'default' | 'comfortable';
 }
 
-const resolveStatusColor = (statusStr: string): { bg: string; text: string; border: string } => {
-  const norm = (statusStr || '').toUpperCase();
-  if (norm === 'DISPONÍVEL' || norm === 'DISPONIVEL' || norm === 'LIBERADO') {
-    return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' };
-  }
-  if (norm.includes('AGUARDANDO') || norm.includes('BOX') || norm === 'AGUARDANDO DESCARGA') {
-    return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/10' };
-  }
-  if (norm.includes('RETIDO') || norm.includes('PROBLEMA') || norm.includes('DEVOLUÇÃO') || norm.includes('RECUSADO') || norm.includes('RETIDO/PROBLEMA')) {
-    return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' };
-  }
-  if (norm.includes('TRANSFERÊNCIA') || norm.includes('EM ROTA') || norm.includes('TRANSFER') || norm.includes('ROTA') || norm.includes('EM TRANSFERÊNCIA')) {
-    return { bg: 'bg-blue-500/10', text: 'text-blue-300', border: 'border-blue-500/20' };
-  }
-  if (norm.includes('AGENDADO') || norm.includes('AGENDAMENTO')) {
-    return { bg: 'bg-indigo-500/10', text: 'text-indigo-300', border: 'border-indigo-500/20' };
-  }
-  return { bg: 'bg-[#101a2e]', text: 'text-slate-350', border: 'border-slate-800' };
-};
-
 const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
   switch (status) {
     case 'URGENTE':
       return {
         label: 'URG',
         borderClass: 'border-l-red-500',
-        badgeBg: 'bg-red-500/15 text-red-400 border-red-500/20 font-black',
+        badgeBg: 'bg-red-500/10 text-red-400 border-red-500/15 font-black',
         textClass: 'text-red-400',
-        cardBg: 'bg-red-950/[0.015] hover:bg-red-950/[0.035]',
+        cardBg: 'bg-red-950/[0.012] hover:bg-red-950/[0.03]',
       };
     case 'PRIORIDADE':
       return {
         label: 'PRI',
         borderClass: 'border-l-amber-500',
-        badgeBg: 'bg-amber-500/15 text-amber-405 border-amber-500/20 font-bold',
-        textClass: 'text-amber-450',
-        cardBg: 'bg-amber-950/[0.015] hover:bg-amber-950/[0.035]',
+        badgeBg: 'bg-amber-500/10 text-amber-300 border-amber-500/15 font-bold',
+        textClass: 'text-amber-400',
+        cardBg: 'bg-amber-950/[0.012] hover:bg-amber-950/[0.03]',
       };
     case 'SEGURAR':
       return {
         label: 'SEG',
-        borderClass: 'border-l-orange-500',
-        badgeBg: 'bg-orange-500/20 text-orange-400 border-orange-500/25 font-black',
-        textClass: 'text-orange-400',
-        cardBg: 'bg-orange-950/[0.025] hover:bg-orange-950/[0.055]',
+        borderClass: 'border-l-orange-555',
+        badgeBg: 'bg-orange-500/15 text-orange-400 border-orange-500/20 font-black',
+        textClass: 'text-orange-450',
+        cardBg: 'bg-orange-950/[0.018] hover:bg-orange-950/[0.045]',
       };
     case 'NAO_SAI_HOJE':
       return {
         label: 'NÃO',
         borderClass: 'border-l-slate-700',
-        badgeBg: 'bg-slate-900/40 text-slate-500 border-slate-705/25',
+        badgeBg: 'bg-slate-900/35 text-slate-500 border-slate-705/20',
         textClass: 'text-slate-500 line-through',
-        cardBg: 'bg-slate-950/20 hover:bg-slate-900/20 opacity-55 saturate-[45%]',
+        cardBg: 'bg-slate-950/20 hover:bg-slate-900/15 opacity-55 saturate-[45%]',
       };
     case 'AGENDADO':
       return {
         label: 'AGD',
         borderClass: 'border-l-cyan-500',
-        badgeBg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25',
+        badgeBg: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/15',
         textClass: 'text-cyan-300',
-        cardBg: 'bg-cyan-950/[0.01] hover:bg-cyan-950/[0.035]',
+        cardBg: 'bg-cyan-950/[0.008] hover:bg-cyan-950/[0.03]',
       };
     case 'CONSOLIDADO':
       return {
         label: 'CONS',
         borderClass: 'border-l-emerald-500',
-        badgeBg: 'bg-emerald-500/15 text-emerald-450 border-emerald-500/25 font-black',
-        textClass: 'text-emerald-450',
-        cardBg: 'bg-emerald-950/[0.015] hover:bg-emerald-950/[0.035]',
+        badgeBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15 font-black',
+        textClass: 'text-emerald-400',
+        cardBg: 'bg-emerald-950/[0.01] hover:bg-emerald-950/[0.03]',
       };
     case 'PLANEJADO':
       return {
         label: 'PLAN',
         borderClass: 'border-l-emerald-400',
-        badgeBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        textClass: 'text-emerald-450',
-        cardBg: 'bg-emerald-950/[0.005] hover:bg-emerald-950/[0.02]',
+        badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/15',
+        textClass: 'text-emerald-400',
+        cardBg: 'bg-emerald-950/[0.005] hover:bg-emerald-950/[0.018]',
       };
     case 'A_PLANEJAR':
     default:
       return {
         label: 'PEND',
-        borderClass: 'border-l-indigo-500/20',
-        badgeBg: 'bg-slate-900 text-slate-405 border-slate-805',
+        borderClass: 'border-l-indigo-500/15',
+        badgeBg: 'bg-slate-900/80 text-slate-400 border-slate-800',
         textClass: 'text-slate-400',
-        cardBg: 'bg-slate-950/10 hover:bg-slate-950/20',
+        cardBg: 'bg-slate-950/10 hover:bg-slate-950/18',
       };
   }
+};
+
+const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
+  const pStatus = item.planningStatus;
+  if (pStatus === 'CONSOLIDADO') return 'PROGRAMADO';
+  if (pStatus === 'PLANEJADO') return 'PRÉ-ROMANEIO';
+  if (pStatus === 'URGENTE') return 'URGENTE';
+  if (pStatus === 'PRIORIDADE') return 'PRIORITÁRIO';
+  if (pStatus === 'SEGURAR') return 'HOLD';
+  if (pStatus === 'NAO_SAI_HOJE') return 'CORTE';
+
+  const rawStatus = (item.availabilityLabel || item.status || '').toUpperCase();
+  if (rawStatus.includes('AGUARDANDO') || rawStatus === 'DISPONÍVEL' || rawStatus === 'DISPONIVEL' || rawStatus === 'LIBERADO') {
+    return 'NA MESA';
+  }
+  if (rawStatus.includes('EM ROTA') || rawStatus.includes('S SPO') || rawStatus.includes('TRÂNSITO') || rawStatus.includes('TRANSIT')) {
+    return 'EM TRÂNSITO';
+  }
+  if (rawStatus.includes('RETIDO') || rawStatus.includes('PROBLEMA') || rawStatus.includes('AVERIGUA') || rawStatus.includes('VISTORIA')) {
+    return 'RETIDO/AUDIT';
+  }
+  return rawStatus;
+};
+
+const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; border: string } => {
+  const norm = statusLabel.toUpperCase();
+  if (norm === 'NA MESA' || norm === 'DISPONÍVEL') {
+    return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' };
+  }
+  if (norm === 'PRÉ-ROMANEIO') {
+    return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' };
+  }
+  if (norm === 'PROGRAMADO' || norm === 'CONSOLIDADO') {
+    return { bg: 'bg-indigo-500/10', text: 'text-indigo-305', border: 'border-[#1e2e5c]' };
+  }
+  if (norm.includes('URGENTE') || norm.includes('PRIORITÁRIO') || norm.includes('RETIDO') || norm.includes('AUDIT')) {
+    return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' };
+  }
+  if (norm === 'HOLD') {
+    return { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' };
+  }
+  if (norm === 'EM TRÂNSITO') {
+    return { bg: 'bg-blue-500/10', text: 'text-blue-300', border: 'border-blue-500/20' };
+  }
+  return { bg: 'bg-[#101a2e]', text: 'text-slate-350', border: 'border-slate-800' };
 };
 
 export default function CargaItem({
@@ -109,6 +134,7 @@ export default function CargaItem({
   densityMode = 'default',
 }: CargaItemProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [typedRoute, setTypedRoute] = useState(item.operationalRoute || '');
   const [typedNote, setTypedNote] = useState(item.operationalNote || '');
 
@@ -127,7 +153,6 @@ export default function CargaItem({
   const padBlock4 = densityMode === 'compact' ? 'py-0.5 px-2 gap-0' : densityMode === 'comfortable' ? 'py-2.5 px-3 gap-1.5' : 'py-1 px-2.5 gap-0.5';
   const padBlock5 = densityMode === 'compact' ? 'py-0.5 px-2 gap-0' : densityMode === 'comfortable' ? 'py-2.5 px-3 gap-1.5' : 'py-1 px-2.5 gap-0.5';
 
-  // Dropdown density dynamic styles
   const isCompact = densityMode === 'compact';
   const isComfortable = densityMode === 'comfortable';
 
@@ -146,6 +171,16 @@ export default function CargaItem({
 
   const resetBtnPad = isCompact ? 'py-1 text-[8.5px]' : isComfortable ? 'py-2 text-[10px]' : 'py-1.5 text-[9px]';
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
+    setDropdownOpen(true);
+  };
+
+  const flowStatusLabel = getFlowStatusLabel(item);
+  const flowStatusStyles = getFlowStatusColor(flowStatusLabel);
+
   return (
     <div
       onClick={() => {
@@ -153,15 +188,16 @@ export default function CargaItem({
           onToggle(item.id);
         }
       }}
-      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(155px,0.9fr)_minmax(250px,1.4fr)_minmax(320px,1.6fr)_minmax(120px,0.45fr)_36px] items-stretch select-none transition-all duration-150 cursor-pointer ${
+      onContextMenu={handleContextMenu}
+      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)_36px] items-stretch select-none transition-all duration-150 cursor-pointer ${
         isSelected 
-          ? 'bg-indigo-650/[0.07] shadow-[inset_2px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.03)]' 
+          ? 'bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
-      } hover:shadow-[0_1px_4px_rgba(0,0,0,0.25)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''}`}
+      } hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''}`}
     >
-      {/* Block 1: [FAIXA LATERAL COMPACTA] (24px) */}
+      {/* Block 1: [FAIXA LATERAL COMPACTA SEM TEXTO REDUNDANTE] (24px) */}
       <div 
-        className={`shrink-0 flex flex-col items-center justify-start ${padOuterY} px-0.5 gap-1.5 font-mono select-none border-l-[2px] ${pStyle.borderClass} ${pStyle.badgeBg}`}
+        className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-600/10' : 'bg-slate-900/10'}`}
         style={{ minWidth: '24px', maxWidth: '24px' }}
       >
         <div 
@@ -179,34 +215,31 @@ export default function CargaItem({
             checked={isSelected}
             disabled={item.planningStatus === 'CONSOLIDADO'}
             onChange={() => {}}
-            className="w-3 h-3 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           />
-        </div>
-        <div className="[writing-mode:vertical-lr] rotate-180 font-black tracking-widest uppercase text-[7px] leading-none whitespace-nowrap shrink-0 mt-0.5 scale-95">
-          {pStyle.label}
         </div>
       </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight`}>
-        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade}>
-          {item.normCidade || 'LOCALIDADE IND'}
+        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade}>
+          {item.normCidade || item.cidade || 'LOCALIDADE IND'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
           {/* Main Directing Route */}
-          <div className="flex items-center gap-1 flex-wrap text-[12px]">
+          <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
             <span className="text-indigo-400 font-black uppercase text-[14px]">
               {item.effectiveRoute || 'SEM ROTA'}
             </span>
             {item.isManualRoute && (
-              <span className="text-orange-400 font-extrabold uppercase text-[10px] tracking-tight shrink-0 select-none">
-                • MANUAL
+              <span className="text-orange-400 font-black uppercase text-[10px] px-1 py-0.2 bg-orange-950/20 border border-orange-500/15 rounded select-none shrink-0 leading-none">
+                MANUAL
               </span>
             )}
             {item.planningStatus === 'SEGURAR' && (
-              <span className="text-red-400 font-extrabold uppercase text-[10px] tracking-tight shrink-0 select-none">
-                • SEGURAR
+              <span className="text-red-400 font-black uppercase text-[10px] px-1 py-0.2 bg-red-950/20 border border-red-500/15 rounded select-none shrink-0 leading-none animate-pulse">
+                SEGURAR
               </span>
             )}
           </div>
@@ -222,42 +255,45 @@ export default function CargaItem({
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[#131f38]/15`}>
+        {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-4a5 font-black select-none shrink-0 text-[11px] tracking-tight">DEST:</span>
-          <span className="text-slate-100 font-semibold truncate block uppercase text-[12px] tracking-wide" title={item.destinatario}>
+          <span className="text-slate-500 font-black select-none shrink-0 text-[10px] tracking-tight">DST:</span>
+          <span className="text-slate-105 font-bold truncate block uppercase text-[12px] tracking-wide" title={item.destinatario}>
             {item.destinatario}
           </span>
         </div>
 
+        {/* Remetente */}
         <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-4a5 font-black select-none shrink-0 text-[11px] tracking-tight">REM:</span>
+          <span className="text-slate-500 font-black select-none shrink-0 text-[10px] tracking-tight">REM:</span>
           <span 
-            className={`font-semibold truncate block uppercase text-[12px] tracking-wide ${
+            className={`font-semibold shrink truncate block uppercase text-[11.5px] tracking-wide ${
               item.isCurvaA 
-                ? 'text-purple-300 bg-purple-500/12 px-1 py-0.2 rounded border border-purple-500/20' 
-                : 'text-slate-350'
+                ? 'text-[#d8b4fe] bg-purple-950/40 px-1 py-0.2 rounded border border-purple-500/25 font-black text-[11px]' 
+                : 'text-slate-400'
             }`}
             title={item.remetente}
           >
             {item.remetente || 'REMETENTE VAGO'}
-            {item.isCurvaA && <span className="text-[10px] font-black text-purple-400 ml-1 select-none">[★ CURVA A]</span>}
+            {item.isCurvaA && <span className="text-[9.5px] font-black text-purple-400 ml-1 select-none">★ CURVA A</span>}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[12px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
+        {/* Info row */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
           <span>CTRC: {item.id}</span>
           <span>•</span>
           <span>NF: {item.nf || 'S/N'}</span>
           {item.isCriticClient && (
             <span 
-              className="bg-violet-500/15 text-violet-300 font-extrabold text-[9.5px] px-1.5 py-0.5 rounded border border-violet-500/35 shrink-0 select-none leading-none animate-pulse flex items-center gap-1"
+              className="bg-violet-500/10 text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-500/20 shrink-0 select-none leading-none animate-pulse flex items-center gap-0.5 shrink-0"
               title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
             >
               👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
             </span>
           )}
           {item.isFob && (
-            <span className="bg-amber-500/10 text-amber-400 font-bold text-[10px] px-1 py-0.2 rounded border border-amber-500/20 shrink-0 select-none leading-none">
+            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
               FOB
             </span>
           )}
@@ -268,17 +304,23 @@ export default function CargaItem({
       <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[#131f38]/15`}>
         
         {/* Line 1: SLA and date parameters */}
-        <div className="flex items-center gap-1.5 text-[11.5px] font-bold font-mono text-slate-400 leading-none">
-          <span>PREV: {item.prev_ent || 'S/P'}</span>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-450 leading-none flex-wrap">
+          <span>PREV: {!item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' ? 'SEM PREVISÃO' : item.prev_ent}</span>
           <span>•</span>
-          <span className={`font-black rounded-sm border px-1 py-0.2 text-[10px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/25'}`}>
-            {item.slaStatus?.label || 'D+0'}
-            {item.slaStatus?.daysDiff !== undefined && item.slaStatus.daysDiff > 0 && ` +${item.slaStatus.daysDiff}D`}
-            {item.slaStatus?.isDelayed && ` ATRASADO`}
-          </span>
+          {(!item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P') ? (
+            <span className="font-extrabold rounded-sm border border-slate-700/20 bg-slate-900/40 text-slate-400 px-1 py-0.2 text-[9.5px] leading-none uppercase select-none">
+              S/P
+            </span>
+          ) : (
+            <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/20'}`}>
+              {item.slaStatus?.label || 'S/ PRAZO'}
+              {item.slaStatus?.daysDiff !== undefined && item.slaStatus.daysDiff > 0 && ` +${item.slaStatus.daysDiff}D`}
+              {item.slaStatus?.isDelayed && ` ATRASADO`}
+            </span>
+          )}
           {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
-            <span className="font-extrabold text-[#00f2fe] bg-cyan-950/20 px-1 rounded-sm border border-cyan-800/15 text-[9.5px] leading-none whitespace-nowrap">
-              AGENDA
+            <span className="bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
+              AGENDADO
             </span>
           )}
           {item.occurrenceSector && (
@@ -289,7 +331,7 @@ export default function CargaItem({
         </div>
 
         {/* Line 2: Occurrence Code and Description */}
-        <div className="min-w-0 text-[12px] leading-none select-text">
+        <div className="min-w-0 text-[12px] leading-none select-text mt-0.5">
           {item.occurrenceCode ? (
             item.occurrenceDescription === 'Ocorrência não mapeada' ? (
               <span className="text-slate-400 font-bold block truncate text-[11px]">
@@ -309,30 +351,26 @@ export default function CargaItem({
               </span>
             )
           ) : (
-            <span className="text-emerald-550 font-bold uppercase text-[11px] tracking-tight">
+            <span className="text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
               🟢 SEM OCORRÊNCIA
             </span>
           )}
         </div>
 
-        {/* Line 3: Operational Availability Status and Physical Warehouse Location */}
-        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0">
-          {(() => {
-            const displayStatus = (item.availabilityLabel || item.status || 'DISPONÍVEL').toUpperCase();
-            const colors = resolveStatusColor(displayStatus);
-            return (
-              <span className={`font-mono font-black uppercase px-1 py-0.2 rounded-sm border text-[10px] shrink-0 leading-none ${colors.bg} ${colors.text} ${colors.border}`}>
-                {displayStatus}
-              </span>
-            );
-          })()}
+        {/* Line 3: High-context Flow Status (No redundant Aguardando) and clean location */}
+        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-0.5 flex-wrap">
+          {/* Custom flow status label */}
+          <span className={`font-mono font-black uppercase px-1.5 py-0.2 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
+            {flowStatusLabel}
+          </span>
 
+          {/* Clean location details (Omit prefix BOX:) */}
           {(() => {
-            const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').trim() : '';
-            const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'NÃO INFORMADO' : normLoc;
+            const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+            const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
             return (
-              <span className="text-teal-400 font-mono text-[11px] truncate max-w-[190px]" title={item.locationLabel || 'NÃO INFORMADO'}>
-                BOX: <span className="font-extrabold uppercase text-slate-200 text-[11px]">{displayLoc}</span>
+              <span className="text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
+                📍<span className="font-extrabold uppercase text-slate-300 text-[11px]">{displayLoc}</span>
               </span>
             );
           })()}
@@ -340,7 +378,7 @@ export default function CargaItem({
 
         {/* Micro operational note banner */}
         {item.operationalNote && (
-          <div className="text-[11px] font-medium text-amber-305 italic truncate" title={item.operationalNote}>
+          <div className="text-[11px] font-medium text-amber-305 italic truncate mt-0.5" title={item.operationalNote}>
             Obs: {item.operationalNote}
           </div>
         )}
@@ -365,7 +403,10 @@ export default function CargaItem({
       {/* Block 6: [BLOCO ACOES] - Discreet absolute priority dropdown & details editor */}
       <div className="flex items-center justify-center px-0.5 border-l border-[#131f38]/15 relative" onClick={(e) => e.stopPropagation()}>
         <button
-          onClick={() => setDropdownOpen(!dropdownOpen)}
+          onClick={() => {
+            setMenuPosition(null);
+            setDropdownOpen(!dropdownOpen);
+          }}
           className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-all duration-155 cursor-pointer ${
             dropdownOpen
               ? 'bg-red-950/40 text-red-500 border-red-500/40 shadow-[0_0_8px_rgba(239,68,68,0.2)]'
@@ -381,13 +422,32 @@ export default function CargaItem({
             {/* Click-away overlay specific to this item's dropdown */}
             <div 
               className="fixed inset-0 z-40 bg-transparent" 
-              onClick={() => setDropdownOpen(false)} 
+              onClick={() => {
+                setDropdownOpen(false);
+                setMenuPosition(null);
+              }} 
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setDropdownOpen(false);
+                setMenuPosition(null);
+              }}
             />
 
-            {/* Absolute Dropdown body */}
+            {/* Absolute/Fixed Dropdown body */}
             <div 
-              className={`absolute top-full right-0 mt-2 bg-[#0b132a]/95 backdrop-blur-md border border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-200 select-none ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
-              style={{ filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))' }}
+              className={`${
+                menuPosition 
+                  ? 'fixed' 
+                  : 'absolute top-full right-0 mt-2'
+              } bg-[#0b132a]/95 backdrop-blur-md border border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-200 select-none ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
+              style={{ 
+                filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))',
+                ...(menuPosition ? {
+                  left: `${Math.min(menuPosition.x, window.innerWidth - 305)}px`,
+                  top: `${Math.min(menuPosition.y, window.innerHeight - 440)}px`,
+                } : {})
+              }}
+              onContextMenu={(e) => e.preventDefault()}
             >
               {/* Dropdown Header */}
               <div className={`${dropHeaderPad} bg-[#0e1732] border-b border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
@@ -414,7 +474,7 @@ export default function CargaItem({
                     value={typedRoute}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => setTypedRoute(e.target.value.toUpperCase())}
-                    className={`bg-[#05080f] border border-[#16223f] text-slate-100 placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
+                    className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
                   />
                   <button
                     onClick={(e) => {
@@ -528,7 +588,7 @@ export default function CargaItem({
                     value={typedNote}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => setTypedNote(e.target.value)}
-                    className={`bg-[#05080f] border border-[#16223f] text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
+                    className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
                   />
                   <button
                     onClick={(e) => {

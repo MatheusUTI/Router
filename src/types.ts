@@ -176,7 +176,10 @@ export type RoteirizacaoSortField =
   | 'peso'
   | 'volumes'
   | 'valor'
-  | 'frete';
+  | 'frete'
+  | 'priority'
+  | 'ocorrencia'
+  | 'rota';
 
 export type SortDirection = 'asc' | 'desc';
 

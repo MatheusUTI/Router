@@ -1,7 +1,9 @@
 import React from 'react';
-import { RoteirizacaoItem, RoutePlanningItem, DensityMode } from '../../types';
+import { RoteirizacaoItem, RoutePlanningItem, DensityMode, AppUser, RoteirizacaoSortField, SortDirection } from '../../types';
 import CargaItem from './CargaItem';
 import CargaGroup from './CargaGroup';
+import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
+import ExcelColumnFilter from './ExcelColumnFilter';
 
 interface CargaListProps {
   filteredCtrcs: RoteirizacaoItem[];
@@ -19,6 +21,51 @@ interface CargaListProps {
   onUpdateDensity?: (density: DensityMode) => void;
   totalCtrcsCount?: number;
   onClearFilters?: () => void;
+
+  // Migrated Filters Props
+  adminUser: AppUser;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  selectedUnit: string;
+  setSelectedUnit: (unit: string) => void;
+  selectedSector: string;
+  setSelectedSector: (sector: string) => void;
+  selectedOccurrenceSectors: string[];
+  setSelectedOccurrenceSectors: (sectors: string[]) => void;
+  sortField: RoteirizacaoSortField;
+  setSortField: (field: RoteirizacaoSortField) => void;
+  sortDirection: SortDirection;
+  setSortDirection: (direction: SortDirection) => void;
+  uniqueSectors: string[];
+  availableSectors: string[];
+  logisticScope: 'my-unit' | 'my-unit-transit' | 'all-units' | 'incompatible';
+  setLogisticScope: (scope: 'my-unit' | 'my-unit-transit' | 'all-units' | 'incompatible') => void;
+
+  // Excel columns filters props
+  excelUniqueRoutes: string[];
+  excelUniqueCities: string[];
+  excelUniqueDests: string[];
+  excelUniquePrevs: string[];
+  excelUniqueStatuses: string[];
+  excelUniqueLocs: string[];
+  excelUniqueSenders: string[];
+  excelUniqueOcorrSectors: string[];
+  excelRouteFilter: string[] | null;
+  setExcelRouteFilter: (filter: string[] | null) => void;
+  excelCityFilter: string[] | null;
+  setExcelCityFilter: (filter: string[] | null) => void;
+  excelDestFilter: string[] | null;
+  setExcelDestFilter: (filter: string[] | null) => void;
+  excelPrevFilter: string[] | null;
+  setExcelPrevFilter: (filter: string[] | null) => void;
+  excelStatusFilter: string[] | null;
+  setExcelStatusFilter: (filter: string[] | null) => void;
+  excelLocationFilter: string[] | null;
+  setExcelLocationFilter: (filter: string[] | null) => void;
+  excelSenderFilter: string[] | null;
+  setExcelSenderFilter: (filter: string[] | null) => void;
+  excelOcorrSectorFilter: string[] | null;
+  setExcelOcorrSectorFilter: (filter: string[] | null) => void;
 }
 
 export default function CargaList({
@@ -37,6 +84,51 @@ export default function CargaList({
   onUpdateDensity,
   totalCtrcsCount = 0,
   onClearFilters,
+
+  // Migrated Filters Props
+  adminUser,
+  searchQuery,
+  setSearchQuery,
+  selectedUnit,
+  setSelectedUnit,
+  selectedSector,
+  setSelectedSector,
+  selectedOccurrenceSectors,
+  setSelectedOccurrenceSectors,
+  sortField,
+  setSortField,
+  sortDirection,
+  setSortDirection,
+  uniqueSectors,
+  availableSectors,
+  logisticScope,
+  setLogisticScope,
+
+  // Excel column filtering props
+  excelUniqueRoutes,
+  excelUniqueCities,
+  excelUniqueDests,
+  excelUniquePrevs,
+  excelUniqueStatuses,
+  excelUniqueLocs,
+  excelUniqueSenders,
+  excelUniqueOcorrSectors,
+  excelRouteFilter,
+  setExcelRouteFilter,
+  excelCityFilter,
+  setExcelCityFilter,
+  excelDestFilter,
+  setExcelDestFilter,
+  excelPrevFilter,
+  setExcelPrevFilter,
+  excelStatusFilter,
+  setExcelStatusFilter,
+  excelLocationFilter,
+  setExcelLocationFilter,
+  excelSenderFilter,
+  setExcelSenderFilter,
+  excelOcorrSectorFilter,
+  setExcelOcorrSectorFilter,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -45,10 +137,10 @@ export default function CargaList({
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#080c14] border border-[#16223f] rounded-xl overflow-hidden relative">
       {/* List Sub-header with Master Selection and Grouping Triggers */}
-      <div className="bg-[#0b1322] px-3 py-2 flex flex-wrap gap-2 items-center justify-between border-b border-[#1a2440] shrink-0 text-slate-300">
+      <div className="bg-[#0b1322] px-3 py-1.5 flex flex-col md:flex-row gap-2 items-center justify-between border-b border-[#1a2440] shrink-0 text-slate-300">
         
         {/* Master Checkbox */}
-        <div className="flex items-center gap-2 select-none">
+        <div className="flex items-center gap-2 select-none shrink-0">
           <input
             type="checkbox"
             id="master-cargo-checkbox"
@@ -56,91 +148,313 @@ export default function CargaList({
             onChange={() => onSelectAllVisible(visibleIds)}
             className="w-4 h-4 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer"
           />
-          <label htmlFor="master-cargo-checkbox" className="text-[13px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white">
+          <label htmlFor="master-cargo-checkbox" className="text-[12px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white">
             Selecionar Todos ({filteredCtrcs.length})
           </label>
         </div>
 
-        {/* Right side controls (Grouping) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Group Selector Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-[#070c14] p-1 rounded border border-[#16223f] select-none">
-            <span className="text-[12px] text-slate-500 font-extrabold uppercase px-1.5 py-0.5">Agrupar:</span>
+        {/* Right side controls (Grouping - Hidden in V1.12/V1.22) */}
+        {false && (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Group Selector Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#070c14] px-1.5 py-0.5 rounded border border-[#16223f] select-none">
+              <span className="text-[10px] text-indigo-400 font-extrabold uppercase px-1">Agrupar:</span>
+              <button
+                id="group-by-sector-btn"
+                onClick={() => setGroupingMode('sector')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'sector' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Rota Operacional
+              </button>
+              <button
+                id="group-by-city-btn"
+                onClick={() => setGroupingMode('city')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'city' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Cidade
+              </button>
+              <button
+                id="group-by-destinatario-btn"
+                onClick={() => setGroupingMode('destinatario')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'destinatario' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Destinatário
+              </button>
+              <button
+                id="group-by-previsao-btn"
+                onClick={() => setGroupingMode('previsao')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'previsao' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Previsão
+              </button>
+              <button
+                id="group-by-priority-btn"
+                onClick={() => setGroupingMode('priority')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'priority' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Prioridade
+              </button>
+              <button
+                id="group-by-status-btn"
+                onClick={() => setGroupingMode('status')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'status' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Status
+              </button>
+              <button
+                id="group-by-location-btn"
+                onClick={() => setGroupingMode('location')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'location' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Localização
+              </button>
+              <button
+                id="group-by-none-btn"
+                onClick={() => setGroupingMode('none')}
+                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
+                  groupingMode === 'none' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Nenhum
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Excel-Like Unified Filters Bar - Unified, No Duplication */}
+      <div className="bg-[#090f1d] px-3 py-1.5 flex flex-wrap gap-2 items-center border-b border-[#15203a] shrink-0 text-[11px] relative z-40">
+        {/* [🔍 BUSCAR] Input */}
+        <div className="relative w-36 h-7 shrink-0">
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[11px] font-mono select-none">🔍</span>
+          <input
+            id="list-filters-search"
+            type="text"
+            placeholder="BUSCAR..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-full bg-[#070c14] border border-[#1d2a45] rounded pl-6 pr-2 py-0 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[10px] uppercase font-bold"
+          />
+        </div>
+
+        {/* 1. [ROTA ▼] */}
+        <ExcelColumnFilter
+          label="Rota"
+          uniqueValues={excelUniqueRoutes}
+          selectedValues={excelRouteFilter}
+          onApply={setExcelRouteFilter}
+          onSortAsc={() => {
+            setSortField('rota');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('rota');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
+        />
+
+        {/* 2. [CIDADE ▼] */}
+        <ExcelColumnFilter
+          label="Cidade"
+          uniqueValues={excelUniqueCities}
+          selectedValues={excelCityFilter}
+          onApply={setExcelCityFilter}
+          onSortAsc={() => {
+            setSortField('cidade');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('cidade');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
+        />
+
+        {/* 3. [DESTINATÁRIO ▼] */}
+        <ExcelColumnFilter
+          label="Destinatário"
+          uniqueValues={excelUniqueDests}
+          selectedValues={excelDestFilter}
+          onApply={setExcelDestFilter}
+          onSortAsc={() => {
+            setSortField('destinatario');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('destinatario');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
+        />
+
+        {/* 4. [REMETENTE ▼] */}
+        <ExcelColumnFilter
+          label="Remetente"
+          uniqueValues={excelUniqueSenders}
+          selectedValues={excelSenderFilter}
+          onApply={setExcelSenderFilter}
+          onSortAsc={() => {
+            setSortField('remetente');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('remetente');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
+        />
+
+        {/* 5. [OCORRÊNCIA ▼] */}
+        <ExcelColumnFilter
+          label="Ocorrência"
+          uniqueValues={excelUniqueOcorrSectors}
+          selectedValues={excelOcorrSectorFilter}
+          onApply={setExcelOcorrSectorFilter}
+          onSortAsc={() => {
+            setSortField('ocorrencia');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('ocorrencia');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'ocorrencia' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'ocorrencia' && sortDirection === 'desc'}
+        />
+
+        {/* 6. [STATUS ▼] */}
+        <ExcelColumnFilter
+          label="Status"
+          uniqueValues={excelUniqueStatuses}
+          selectedValues={excelStatusFilter}
+          onApply={setExcelStatusFilter}
+          onSortAsc={() => {
+            setSortField('priority');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('priority');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'priority' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'priority' && sortDirection === 'desc'}
+        />
+
+        {/* 7. [LOCALIZAÇÃO ▼] */}
+        <ExcelColumnFilter
+          label="Localização"
+          uniqueValues={excelUniqueLocs}
+          selectedValues={excelLocationFilter}
+          onApply={setExcelLocationFilter}
+          onSortAsc={() => {
+            setSortField('priority');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('priority');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={false}
+          isSortedActiveDesc={false}
+        />
+
+        {/* 8. [PREVISÃO ▼] */}
+        <ExcelColumnFilter
+          label="Previsão"
+          uniqueValues={excelUniquePrevs}
+          selectedValues={excelPrevFilter}
+          onApply={setExcelPrevFilter}
+          onSortAsc={() => {
+            setSortField('prev_ent');
+            setSortDirection('asc');
+          }}
+          onSortDesc={() => {
+            setSortField('prev_ent');
+            setSortDirection('desc');
+          }}
+          isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
+        />
+      </div>
+
+      {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
+      {filteredCtrcs.length > 0 && (
+        <div className="bg-[#0b1322] border-b border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)_36px] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
+          
+          {/* Col 1: Spacer */}
+          <div className="w-6 shrink-0" />
+
+          {/* Col 2: Rota / Cidade */}
+          <div className="min-w-0 flex items-center gap-1.5 px-1 uppercase">
+            <span>ROTA</span>
+            <span className="text-slate-700">/</span>
+            <span>CIDADE</span>
+          </div>
+
+          {/* Col 3: Destinatário / Remetente */}
+          <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[#131f38]/15 uppercase">
+            <span>DESTINATÁRIO</span>
+            <span className="text-slate-700">/</span>
+            <span>REMETENTE</span>
+          </div>
+
+          {/* Col 4: Previsão / Status / Box */}
+          <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[#131f38]/15 uppercase">
+            <span>PREVISÃO</span>
+            <span className="text-slate-700">/</span>
+            <span>STATUS</span>
+            <span className="text-slate-700">/</span>
+            <span>BOX</span>
+          </div>
+
+          {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
+          <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[#131f38]/15 gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
             <button
-              id="group-by-sector-btn"
-              onClick={() => setGroupingMode('sector')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'sector' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => {
+                const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
+                setSortField('peso');
+                setSortDirection(targetDir);
+              }}
+              className={`hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-400 font-black' : ''}`}
             >
-              Rota Operacional
+              Pes {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
             </button>
+            <span>|</span>
             <button
-              id="group-by-city-btn"
-              onClick={() => setGroupingMode('city')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'city' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => {
+                const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
+                setSortField('volumes');
+                setSortDirection(targetDir);
+              }}
+              className={`hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-400 font-black' : ''}`}
             >
-              Cidade
-            </button>
-            <button
-              id="group-by-destinatario-btn"
-              onClick={() => setGroupingMode('destinatario')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'destinatario' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Destinatário
-            </button>
-            <button
-              id="group-by-previsao-btn"
-              onClick={() => setGroupingMode('previsao')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'previsao' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Previsão
-            </button>
-            <button
-              id="group-by-priority-btn"
-              onClick={() => setGroupingMode('priority')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'priority' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Prioridade
-            </button>
-            <button
-              id="group-by-status-btn"
-              onClick={() => setGroupingMode('status')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'status' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Status
-            </button>
-            <button
-              id="group-by-location-btn"
-              onClick={() => setGroupingMode('location')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'location' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Localização
-            </button>
-            <button
-              id="group-by-none-btn"
-              onClick={() => setGroupingMode('none')}
-              className={`px-3 py-1 text-[12px] font-black rounded uppercase transition-all cursor-pointer ${
-                groupingMode === 'none' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Nenhum
+              Vol {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
             </button>
           </div>
+
+          {/* Col 6: Actions spacer */}
+          <div className="w-9 shrink-0" />
         </div>
-      </div>
+      )}
 
       {/* Main Items View Area */}
       <div className="flex-1 overflow-x-hidden overflow-y-auto divide-y divide-[#14203a] scrollbar-thin scrollbar-track-[#080c14] scrollbar-thumb-indigo-550 scroll-smooth">
@@ -149,20 +463,20 @@ export default function CargaList({
             <span className="text-3xl">📦</span>
             <p className="text-xs font-bold uppercase font-mono">Nenhuma carga pendente corresponde ao filtro selecionado</p>
             {totalCtrcsCount > 0 && onClearFilters && (
-              <div className="mt-2 bg-[#0e1726]/80 border border-[#1e2e4f] rounded-lg p-3 max-w-sm animate-pulse">
+              <div className="mt-2 bg-[#0e1726]/80 border border-[#1e2e4f] rounded-lg p-3 max-w-sm animate-pulse w-full">
                 <p className="text-xs text-indigo-300 font-sans leading-relaxed mb-2">
                   Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?
                 </p>
                 <button
                   onClick={onClearFilters}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-[11px] uppercase tracking-wider px-3.5 py-1.5 rounded shadow-lg transition-all active:scale-95 cursor-pointer"
+                  className="bg-indigo-600 hover:bg-indigo-505 text-white font-mono font-bold text-[11px] uppercase tracking-wider px-3.5 py-1.5 rounded shadow-lg transition-all active:scale-95 cursor-pointer"
                 >
                   Limpar filtros
                 </button>
               </div>
             )}
           </div>
-        ) : groupingMode === 'none' ? (
+        ) : true ? ( // Force direct flat list layout in V1.22
           // Direct List Mode
           <div className="divide-y divide-[#14203a] pb-36">
             {filteredCtrcs.map((item) => (
@@ -178,7 +492,7 @@ export default function CargaList({
           </div>
         ) : (
           // Grouped modes with beautiful collapsible segment headers
-          <div className="flex flex-col select-none pb-36">
+          <div className="flex flex-col select-none pb-36 font-sans">
             {Object.keys(groupedData).map((groupKey) => {
               const groupCtrcs = groupedData[groupKey] || [];
               const isExpanded = expandedGroups[groupKey] !== false;

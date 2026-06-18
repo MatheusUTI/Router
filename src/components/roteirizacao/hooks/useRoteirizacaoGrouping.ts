@@ -14,7 +14,7 @@ export function useRoteirizacaoGrouping<T extends {
   locationLabel?: string;
   localizacao?: string;
 }>(items: T[]) {
-  const [groupingMode, setGroupingMode] = useState<GroupingMode>('city');
+  const [groupingMode, setGroupingMode] = useState<GroupingMode>('none');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // Reset expansions when mode shifts
