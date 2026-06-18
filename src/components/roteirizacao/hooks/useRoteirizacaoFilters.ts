@@ -30,6 +30,28 @@ function parseDDMMYYYY(dateStr?: string): number {
   return 0;
 }
 
+function getFlowStatusLabel(item: RoteirizacaoItem): string {
+  const pStatus = item.planningStatus;
+  if (pStatus === 'CONSOLIDADO') return 'PROGRAMADO';
+  if (pStatus === 'PLANEJADO') return 'PRÉ-ROMANEIO';
+  if (pStatus === 'URGENTE') return 'URGENTE';
+  if (pStatus === 'PRIORIDADE') return 'PRIORITÁRIO';
+  if (pStatus === 'SEGURAR') return 'HOLD';
+  if (pStatus === 'NAO_SAI_HOJE') return 'CORTE';
+
+  const rawStatus = (item.availabilityLabel || item.status || '').toUpperCase();
+  if (rawStatus.includes('AGUARDANDO') || rawStatus === 'DISPONÍVEL' || rawStatus === 'DISPONIVEL' || rawStatus === 'LIBERADO') {
+    return 'NA MESA';
+  }
+  if (rawStatus.includes('EM ROTA') || rawStatus.includes('S SPO') || rawStatus.includes('TRÂNSITO') || rawStatus.includes('TRANSIT')) {
+    return 'EM TRÂNSITO';
+  }
+  if (rawStatus.includes('RETIDO') || rawStatus.includes('PROBLEMA') || rawStatus.includes('AVERIGUA') || rawStatus.includes('VISTORIA')) {
+    return 'RETIDO/AUDIT';
+  }
+  return rawStatus || 'SEM STATUS';
+}
+
 export function sortRoteirizacaoItems(
   items: RoteirizacaoItem[],
   sortField: RoteirizacaoSortField,
@@ -106,6 +128,20 @@ export function sortRoteirizacaoItems(
         const textA = (a.occurrenceCode || a.ocorrencia || '').toUpperCase().trim();
         const textB = (b.occurrenceCode || b.ocorrencia || '').toUpperCase().trim();
         result = textA.localeCompare(textB, 'pt-BR');
+        break;
+      }
+      case 'status': {
+        const textA = getFlowStatusLabel(a).toUpperCase().trim();
+        const textB = getFlowStatusLabel(b).toUpperCase().trim();
+        result = textA.localeCompare(textB, 'pt-BR');
+        break;
+      }
+      case 'localizacao': {
+        const normLocA = a.locationLabel ? a.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+        const normLocB = b.locationLabel ? b.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+        const displayLocA = (!normLocA || normLocA === '' || normLocA === 'SEM BOX' || normLocA === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLocA;
+        const displayLocB = (!normLocB || normLocB === '' || normLocB === 'SEM BOX' || normLocB === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLocB;
+        result = displayLocA.toUpperCase().localeCompare(displayLocB.toUpperCase(), 'pt-BR');
         break;
       }
       case 'rota': {
@@ -251,7 +287,9 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   const [excelStatusFilter, setExcelStatusFilter] = useState<string[] | null>(null);
   const [excelLocationFilter, setExcelLocationFilter] = useState<string[] | null>(null);
   const [excelSenderFilter, setExcelSenderFilter] = useState<string[] | null>(null);
-  const [excelOcorrSectorFilter, setExcelOcorrSectorFilter] = useState<string[] | null>(null);
+  const [excelOcorrSectorFilter, setExcelOcorrSectorFilter] = useState<string[] | null>(
+    DEFAULT_ROUTE_SECTORS.map((s) => s.toUpperCase().trim())
+  );
 
   // Available unique occurrence sectors
   const availableSectors = useMemo(() => {
@@ -371,18 +409,21 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       return isEligibleForUnit(ctrc, activeUnit);
     });
 
-    // Step 2: Route/Sector filtering (based on effectiveRoute or normRota)
-    const afterRoute = afterUnit.filter((ctrc) => {
-      if (selectedSector !== 'all' && (ctrc.effectiveRoute || ctrc.normRota) !== selectedSector) return false;
-      return true;
-    });
+    // Step 2: Route/Sector filtering (excelRouteFilter) - Single source of truth
+    const afterRoute = excelRouteFilter === null 
+      ? afterUnit 
+      : afterUnit.filter(c => {
+          const val = (c.effectiveRoute || c.normRota || 'SEM ROTA').toUpperCase().trim();
+          return excelRouteFilter.includes(val);
+        });
 
-    // Step 3: Setor Ocorrência Filter (multi-select)
-    const afterOccurrence = afterRoute.filter((ctrc) => {
-      const sector = ctrc.occurrenceSector || 'Sem setor';
-      if (selectedOccurrenceSectors.length > 0 && !selectedOccurrenceSectors.includes(sector)) return false;
-      return true;
-    });
+    // Step 3: Setor Ocorrência Filter (excelOcorrSectorFilter) - Single source of truth
+    const afterOccurrence = excelOcorrSectorFilter === null
+      ? afterRoute 
+      : afterRoute.filter(c => {
+          const val = (c.occurrenceSector || 'SEM SETOR').toUpperCase().trim();
+          return excelOcorrSectorFilter.includes(val);
+        });
 
     // Step 4: Case-insensitive unified query search
     const afterSearch = afterOccurrence.filter((ctrc) => {
@@ -441,18 +482,10 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     const afterStatus = afterLogistic;
 
     // Excel column multi-select filters
-    // Excel Route Filter
-    const excelAfterRoute = excelRouteFilter === null 
-      ? afterStatus 
-      : afterStatus.filter(c => {
-          const val = (c.effectiveRoute || c.normRota || 'SEM ROTA').toUpperCase().trim();
-          return excelRouteFilter.includes(val);
-        });
-
     // Excel City Filter
     const excelAfterCity = excelCityFilter === null 
-      ? excelAfterRoute 
-      : excelAfterRoute.filter(c => {
+      ? afterStatus 
+      : afterStatus.filter(c => {
           const val = (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim();
           return excelCityFilter.includes(val);
         });
@@ -517,15 +550,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
           return excelSenderFilter.includes(val);
         });
 
-    // Excel Setor Ocorrência Filter
-    const excelAfterOcorrSector = excelOcorrSectorFilter === null
-      ? excelAfterSender
-      : excelAfterSender.filter(c => {
-          const val = (c.occurrenceSector || 'SEM SETOR').toUpperCase().trim();
-          return excelOcorrSectorFilter.includes(val);
-        });
-
-    const sortedList = sortRoteirizacaoItems(excelAfterOcorrSector, sortField, sortDirection);
+    const sortedList = sortRoteirizacaoItems(excelAfterSender, sortField, sortDirection);
 
     return {
       filteredCtrcs: sortedList,

@@ -720,6 +720,35 @@ O processo de enriquecimento e direcionamento de faturas (`RoteirizacaoEnrichmen
 - **Escopo Exclusivo**: O banco legado deixa de ser a fonte principal de roteiro e assume o papel estrito de controle de aliases, sinônimos, desvios operacionais locais na ausência de diretriz da matriz de rotas do ERP, prazos regionais excepcionais, prioridades específicas de bairros e operabilidade semanal personalizada (segunda a sexta).
 
 
+## 27. Sanitização da Mesa de Roteirização (V1.22.3) — Saneamento e Estabilização
+
+Este capítulo documenta as melhorias estruturais introduzidas na versão V1.22.3 para garantir integridade, robustez visual e remover resíduos redundantes ou concorrentes na Mesa de Roteirização.
+
+### 27.1 Unificação de Filtros (Single Source of Truth)
+- **Eliminação de Filtros Concorrentes**: Os filtros invisíveis e duplicados (`selectedSector` e `selectedOccurrenceSectors`) que geravam discrepâncias de visibilidade para o operador foram interceptados.
+- **Duto Unificado**: O duto de filtragem (`useRoteirizacaoFilters`) utiliza os seletores interativos do `ExcelColumnFilter` como única fonte real de visibilidade.
+- **Filtro Padrão Inicial**: O filtro de Setor de Ocorrência é inicializado no modelo Excel com o mapa de classificação padrão recomendado para a Roteirização (`DEFAULT_ROUTE_SECTORS.map(s => s.toUpperCase().trim())`), integrando a visibilidade visual com os seletores clicáveis da coluna desde a primeira renderização.
+- **Preenchimento de Limpar Filtros**: O botão "Limpar Filtros" limpa todas as regras aplicadas nas colunas estruturantes de volta para `null`, exibindo instantaneamente todas as cargas disponíveis, enquanto preserva os metadados agregados do painel de diagnósticos.
+
+### 27.2 Correção de Ordenações Virtuais
+- **Separação de Chaves**: A ordenação de colunas virtuais foi separada da métrica técnica `priority` (vinculada ao status do rascunho de planejamento).
+- **Status Real**: Ordenado de forma alfabética com base no rótulo correspondente visível exibido para o operador nas células da tabela (definido por `getFlowStatusLabel` para uniformizar a experiência de visualização-ordenação).
+- **Localização Exata**: Ordenado de forma alfabética pela marcação física purificada de باکس (`locationLabel` ou `localizacao` higienizada), tratando inconsistências físicas e faturas com rotulamento "S/ Localização" de modo consistente.
+
+### 27.3 Remoção de Código Morto e Simplificação do DOM
+- **Expurgo do DOM Coletivo**: O import e o braço inalcançável de renderização encadeada por grupos (`CargaGroup`) foram removidos de `CargaList.tsx`.
+- **Lista Padrão Plana**: Garante a renderização direta e sequencial das células `<CargaItem />` sem overhead de renderização encadeada ou avaliações de agrupamento em desuso, favorecendo performance com grandes volumes de faturas importadas.
+
+### 27.4 Governança Progressiva de Logs em Produção
+- **Logs Condicionais**: O harness ativável de compatibilidade e mapeamento de campos (`validateFieldContract`) foi ajustado para silenciar asserts e warnings desnecessários no console do operador final.
+- **Ativação por Vetores**: O detalhamento estatístico e de conformidade somente se torna `verbose` sob o ambiente de desenvolvimento local (`process.env.NODE_ENV === 'development'`) ou sob solicitação do operador mediante abertura explícita do painel de diagnósticos (`isDiagnosticsOpen`).
+
+### 27.5 Módulo de Densidade Preservado
+- **Controle Físico**: Um componente segmentado interativo ("COMPACTO", "PADRÃO", "CONFORTÁVEL") foi incluído de maneira elegante na extrema direita do painel de filtros.
+- **Fuga de Dependência do Navegador**: Permite reduzir ou expandir o espaçamento interno das faturas carregadas, otimizando a visualização de acordo com o tamanho do monitor sem sofrer distorções pelo nível de zoom global do navegador.
+- **Persistência Segura**: Cada comutação é automaticamente persistida no banco do usuário e integrada ao fluxo idempotente de sincronia com a nuvem.
+
+
 
 
 

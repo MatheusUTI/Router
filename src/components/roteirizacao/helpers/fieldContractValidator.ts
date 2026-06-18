@@ -18,7 +18,7 @@ export interface ContractValidationResult {
  * Specifically checks for correct field mapping, non-contamination, and forecast safe-parsing.
  * Acts as an active runtime test harness to guarantee integrity.
  */
-export function validateFieldContract(items: RoteirizacaoItem[]): ContractValidationResult {
+export function validateFieldContract(items: RoteirizacaoItem[], verbose: boolean = false): ContractValidationResult {
   const warnings: string[] = [];
   const stats = {
     total: items.length,
@@ -113,13 +113,15 @@ export function validateFieldContract(items: RoteirizacaoItem[]): ContractValida
   const success = warnings.length === 0;
 
   // Run console asserts as test assertions under development/preview
-  console.assert(stats.validCities === stats.total, `[Test Assert] Cidades em conformidade: ${stats.validCities}/${stats.total}`);
-  console.assert(stats.validRoutes === stats.total, `[Test Assert] Rotas em conformidade: ${stats.validRoutes}/${stats.total}`);
-  
-  if (!success) {
-    console.warn(`[Field Contract Validator] Encontrado ${warnings.length} desvios de contrato de dados nos itens carregados.`);
-  } else {
-    console.log(`[Field Contract Validator] Todos os ${items.length} itens da mesa cumprem as regras do contrato.`);
+  if (verbose) {
+    console.assert(stats.validCities === stats.total, `[Test Assert] Cidades em conformidade: ${stats.validCities}/${stats.total}`);
+    console.assert(stats.validRoutes === stats.total, `[Test Assert] Rotas em conformidade: ${stats.validRoutes}/${stats.total}`);
+    
+    if (!success) {
+      console.warn(`[Field Contract Validator] Encontrado ${warnings.length} desvios de contrato de dados nos itens carregados.`);
+    } else {
+      console.log(`[Field Contract Validator] Todos os ${items.length} itens da mesa cumprem as regras do contrato.`);
+    }
   }
 
   return { success, warnings, stats };

@@ -179,6 +179,8 @@ export type RoteirizacaoSortField =
   | 'frete'
   | 'priority'
   | 'ocorrencia'
+  | 'status'
+  | 'localizacao'
   | 'rota';
 
 export type SortDirection = 'asc' | 'desc';

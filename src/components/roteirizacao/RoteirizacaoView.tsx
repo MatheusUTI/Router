@@ -434,7 +434,8 @@ export default function RoteirizacaoView({
 
     // Execute active Test Harness for Field Mappings Contract to prevent future regressions
     try {
-      const validation = validateFieldContract(unassignedCtrcs);
+      const isDev = process.env.NODE_ENV === 'development';
+      const validation = validateFieldContract(unassignedCtrcs, isDiagnosticsOpen || isDev);
       if (!validation.success) {
         warnings.push(...validation.warnings.slice(0, 5));
         if (validation.warnings.length > 5) {
@@ -465,7 +466,7 @@ export default function RoteirizacaoView({
       byLogisticCompatibility,
       warnings,
     };
-  }, [availableCtrcs, linkedCtrcs, enrichedCtrcsList, unassignedCtrcs, filterCounts, adminUser]);
+  }, [availableCtrcs, linkedCtrcs, enrichedCtrcsList, unassignedCtrcs, filterCounts, adminUser, isDiagnosticsOpen]);
 
   // Trigger console table logs when diagnostics open
   useEffect(() => {

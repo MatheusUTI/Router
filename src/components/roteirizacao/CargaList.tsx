@@ -1,7 +1,6 @@
 import React from 'react';
 import { RoteirizacaoItem, RoutePlanningItem, DensityMode, AppUser, RoteirizacaoSortField, SortDirection } from '../../types';
 import CargaItem from './CargaItem';
-import CargaGroup from './CargaGroup';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
 import ExcelColumnFilter from './ExcelColumnFilter';
 
@@ -263,15 +262,15 @@ export default function CargaList({
           selectedValues={excelStatusFilter}
           onApply={setExcelStatusFilter}
           onSortAsc={() => {
-            setSortField('priority');
+            setSortField('status');
             setSortDirection('asc');
           }}
           onSortDesc={() => {
-            setSortField('priority');
+            setSortField('status');
             setSortDirection('desc');
           }}
-          isSortedActiveAsc={sortField === 'priority' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'priority' && sortDirection === 'desc'}
+          isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
         />
 
         {/* 7. [LOCALIZAÇÃO ▼] */}
@@ -281,15 +280,15 @@ export default function CargaList({
           selectedValues={excelLocationFilter}
           onApply={setExcelLocationFilter}
           onSortAsc={() => {
-            setSortField('priority');
+            setSortField('localizacao');
             setSortDirection('asc');
           }}
           onSortDesc={() => {
-            setSortField('priority');
+            setSortField('localizacao');
             setSortDirection('desc');
           }}
-          isSortedActiveAsc={false}
-          isSortedActiveDesc={false}
+          isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
+          isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
         />
 
         {/* 8. [PREVISÃO ▼] */}
@@ -309,6 +308,49 @@ export default function CargaList({
           isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
           isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
         />
+
+        {/* Density Mode Selector Component */}
+        <div className="ml-auto flex items-center h-7 bg-[#070c14] border border-[#1d2a45] rounded p-0.5 select-none shrink-0 gap-0.5">
+          <span className="text-[9px] font-black font-mono text-slate-500 uppercase px-1.5 whitespace-nowrap leading-none select-none">
+            DENSIDADE:
+          </span>
+          <button
+            id="density-compact"
+            onClick={() => onUpdateDensity?.('compact')}
+            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
+              densityMode === 'compact'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
+            }`}
+            title="Compacto"
+          >
+            COMPACTO
+          </button>
+          <button
+            id="density-default"
+            onClick={() => onUpdateDensity?.('default')}
+            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
+              densityMode === 'default'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
+            }`}
+            title="PADRÃO"
+          >
+            PADRÃO
+          </button>
+          <button
+            id="density-comfortable"
+            onClick={() => onUpdateDensity?.('comfortable')}
+            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
+              densityMode === 'comfortable'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
+            }`}
+            title="Confortável"
+          >
+            CONFORTÁVEL
+          </button>
+        </div>
       </div>
 
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
@@ -388,7 +430,7 @@ export default function CargaList({
               </div>
             )}
           </div>
-        ) : true ? ( // Force direct flat list layout in V1.22
+        ) : (
           // Direct List Mode
           <div className="divide-y divide-[#14203a] pb-36">
             {filteredCtrcs.map((item) => (
@@ -401,28 +443,6 @@ export default function CargaList({
                 densityMode={densityMode}
               />
             ))}
-          </div>
-        ) : (
-          // Grouped modes with beautiful collapsible segment headers
-          <div className="flex flex-col select-none pb-36 font-sans">
-            {Object.keys(groupedData).map((groupKey) => {
-              const groupCtrcs = groupedData[groupKey] || [];
-              const isExpanded = expandedGroups[groupKey] !== false;
-              return (
-                <CargaGroup
-                  key={groupKey}
-                  groupKey={groupKey}
-                  items={groupCtrcs}
-                  isExpanded={isExpanded}
-                  onToggleCollapse={() => toggleGroup(groupKey)}
-                  selectedIds={selectedIds}
-                  onToggleItem={onToggleItem}
-                  onToggleGroupSelection={onToggleGroupSelection}
-                  onUpdatePlanning={onUpdatePlanning}
-                  densityMode={densityMode}
-                />
-              );
-            })}
           </div>
         )}
       </div>
