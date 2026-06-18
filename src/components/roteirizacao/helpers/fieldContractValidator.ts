@@ -73,7 +73,11 @@ export function validateFieldContract(items: RoteirizacaoItem[], verbose: boolea
       stats.validDests++;
       // Check if recipient is contaminated with city name
       if (resolvedCity && resolvedDest.toUpperCase().trim() === resolvedCity.toUpperCase().trim()) {
-        warnings.push(`${prefix} Contaminação cruzada: Destinatário bota exatamente o mesmo valor da Cidade ("${resolvedCity}").`);
+        if (resolvedCity.trim().length > 3 && resolvedDest.trim().length > 3) {
+          warnings.push(`${prefix} [CRÍTICO] Contaminação crítica detectada: Destinatário possui exatamente o mesmo valor da Cidade ("${resolvedCity}").`);
+        } else {
+          warnings.push(`${prefix} Contaminação cruzada: Destinatário possui exatamente o mesmo valor da Cidade ("${resolvedCity}").`);
+        }
       }
     } else {
       warnings.push(`${prefix} Contrato de DESTINATÁRIO ausente.`);

@@ -222,8 +222,8 @@ export default function CargaItem({
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-[#14203a]/30`}>
-        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent}>
-          {item.normCidade || item.cidade || item.cidade_ent || 'LOCALIDADE IND'}
+        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+          {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
@@ -258,8 +258,8 @@ export default function CargaItem({
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
           <span className="text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
-          <span className="text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario}>
-            {item.destinatario}
+          <span className="text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
+            {item.destinatario || 'SEM DESTINATÁRIO'}
           </span>
         </div>
 
@@ -272,9 +272,9 @@ export default function CargaItem({
                 ? 'text-[#d8b4fe] bg-purple-950/40 px-1 py-0.2 rounded border border-purple-500/25 font-black text-[12px]' 
                 : 'text-slate-400'
             }`}
-            title={item.remetente}
+            title={item.remetente || 'SEM REMETENTE'}
           >
-            {item.remetente || 'REMETENTE VAGO'}
+            {item.remetente || 'SEM REMETENTE'}
             {item.isCurvaA && <span className="text-[10px] font-black text-purple-400 ml-1 select-none">★ CURVA A</span>}
           </span>
         </div>
