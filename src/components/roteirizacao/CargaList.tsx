@@ -136,105 +136,6 @@ export default function CargaList({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#080c14] border border-[#16223f] rounded-xl overflow-hidden relative">
-      {/* List Sub-header with Master Selection and Grouping Triggers */}
-      <div className="bg-[#0b1322] px-3 py-1.5 flex flex-col md:flex-row gap-2 items-center justify-between border-b border-[#1a2440] shrink-0 text-slate-300">
-        
-        {/* Master Checkbox */}
-        <div className="flex items-center gap-2 select-none shrink-0">
-          <input
-            type="checkbox"
-            id="master-cargo-checkbox"
-            checked={allVisibleChecked}
-            onChange={() => onSelectAllVisible(visibleIds)}
-            className="w-4 h-4 accent-indigo-500 rounded border-slate-705 bg-[#070c14] focus:ring-0 cursor-pointer"
-          />
-          <label htmlFor="master-cargo-checkbox" className="text-[12px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white">
-            Selecionar Todos ({filteredCtrcs.length})
-          </label>
-        </div>
-
-        {/* Right side controls (Grouping - Hidden in V1.12/V1.22) */}
-        {false && (
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Group Selector Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-[#070c14] px-1.5 py-0.5 rounded border border-[#16223f] select-none">
-              <span className="text-[10px] text-indigo-400 font-extrabold uppercase px-1">Agrupar:</span>
-              <button
-                id="group-by-sector-btn"
-                onClick={() => setGroupingMode('sector')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'sector' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Rota Operacional
-              </button>
-              <button
-                id="group-by-city-btn"
-                onClick={() => setGroupingMode('city')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'city' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Cidade
-              </button>
-              <button
-                id="group-by-destinatario-btn"
-                onClick={() => setGroupingMode('destinatario')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'destinatario' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Destinatário
-              </button>
-              <button
-                id="group-by-previsao-btn"
-                onClick={() => setGroupingMode('previsao')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'previsao' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Previsão
-              </button>
-              <button
-                id="group-by-priority-btn"
-                onClick={() => setGroupingMode('priority')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'priority' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Prioridade
-              </button>
-              <button
-                id="group-by-status-btn"
-                onClick={() => setGroupingMode('status')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'status' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Status
-              </button>
-              <button
-                id="group-by-location-btn"
-                onClick={() => setGroupingMode('location')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'location' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Localização
-              </button>
-              <button
-                id="group-by-none-btn"
-                onClick={() => setGroupingMode('none')}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded uppercase transition-all cursor-pointer ${
-                  groupingMode === 'none' ? 'bg-indigo-650 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Nenhum
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Excel-Like Unified Filters Bar - Unified, No Duplication */}
       <div className="bg-[#090f1d] px-3 py-1.5 flex flex-wrap gap-2 items-center border-b border-[#15203a] shrink-0 text-[11px] relative z-40">
@@ -249,6 +150,20 @@ export default function CargaList({
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-full bg-[#070c14] border border-[#1d2a45] rounded pl-6 pr-2 py-0 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[10px] uppercase font-bold"
           />
+        </div>
+
+        {/* Master Checkbox */}
+        <div className="flex items-center gap-2 select-none shrink-0 bg-[#070c14] hover:bg-[#111c34] px-2.5 py-1 rounded border border-[#1d2a45] h-7 cursor-pointer transition-all">
+          <input
+            type="checkbox"
+            id="master-cargo-checkbox"
+            checked={allVisibleChecked}
+            onChange={() => onSelectAllVisible(visibleIds)}
+            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-700 bg-transparent focus:ring-0 cursor-pointer"
+          />
+          <label htmlFor="master-cargo-checkbox" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white select-none leading-none">
+            Selecionar Todos ({filteredCtrcs.length})
+          </label>
         </div>
 
         {/* 1. [ROTA ▼] */}
@@ -398,16 +313,16 @@ export default function CargaList({
 
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
       {filteredCtrcs.length > 0 && (
-        <div className="bg-[#0b1322] border-b border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)_36px] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
+        <div className="bg-[#0b1322] border-b border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
           
           {/* Col 1: Spacer */}
           <div className="w-6 shrink-0" />
 
-          {/* Col 2: Rota / Cidade */}
+          {/* Col 2: Cidade / Rota */}
           <div className="min-w-0 flex items-center gap-1.5 px-1 uppercase">
-            <span>ROTA</span>
-            <span className="text-slate-700">/</span>
             <span>CIDADE</span>
+            <span className="text-slate-700">/</span>
+            <span>ROTA</span>
           </div>
 
           {/* Col 3: Destinatário / Remetente */}
@@ -450,9 +365,6 @@ export default function CargaList({
               Vol {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
             </button>
           </div>
-
-          {/* Col 6: Actions spacer */}
-          <div className="w-9 shrink-0" />
         </div>
       )}
 

@@ -245,8 +245,11 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         lower === 'cidade do destinatario' || 
         lower === 'cidade_entrega' || 
         lower.includes('cidade') || 
+        lower.includes('municipio') || 
+        lower.includes('município') || 
         lower.includes('praca') || 
-        lower.includes('praça')
+        lower.includes('praça') ||
+        lower.includes('localidade')
       ) {
         newMappings.cidade = h;
       }
@@ -254,11 +257,16 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       else if (
         lower === 'destinatario' || 
         lower === 'destinatário' || 
+        lower === 'dst' || 
+        lower === 'dest' || 
         lower === 'cliente destino' || 
         lower === 'cliente destinatario' || 
+        lower === 'dest_nome' || 
+        lower === 'nome dest' || 
         lower.includes('destinatario') || 
         lower.includes('destinatário') || 
-        lower.includes('recebedor')
+        lower.includes('recebedor') ||
+        lower.includes('cliente')
       ) {
         newMappings.destinatario = h;
       }

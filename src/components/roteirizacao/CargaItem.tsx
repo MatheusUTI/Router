@@ -32,7 +32,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
     case 'SEGURAR':
       return {
         label: 'SEG',
-        borderClass: 'border-l-orange-555',
+        borderClass: 'border-l-orange-500',
         badgeBg: 'bg-orange-500/15 text-orange-400 border-orange-500/20 font-black',
         textClass: 'text-orange-450',
         cardBg: 'bg-orange-950/[0.018] hover:bg-orange-950/[0.045]',
@@ -189,7 +189,7 @@ export default function CargaItem({
         }
       }}
       onContextMenu={handleContextMenu}
-      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)_36px] items-stretch select-none transition-all duration-150 cursor-pointer ${
+      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-stretch select-none transition-all duration-150 cursor-pointer ${
         isSelected 
           ? 'bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
@@ -221,9 +221,9 @@ export default function CargaItem({
       </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight`}>
-        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade}>
-          {item.normCidade || item.cidade || 'LOCALIDADE IND'}
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-[#14203a]/30`}>
+        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent}>
+          {item.normCidade || item.cidade || item.cidade_ent || 'LOCALIDADE IND'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
@@ -257,30 +257,30 @@ export default function CargaItem({
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[#131f38]/15`}>
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-500 font-black select-none shrink-0 text-[10px] tracking-tight">DST:</span>
-          <span className="text-slate-105 font-bold truncate block uppercase text-[12px] tracking-wide" title={item.destinatario}>
+          <span className="text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
+          <span className="text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario}>
             {item.destinatario}
           </span>
         </div>
 
         {/* Remetente */}
         <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-500 font-black select-none shrink-0 text-[10px] tracking-tight">REM:</span>
+          <span className="text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
           <span 
-            className={`font-semibold shrink truncate block uppercase text-[11.5px] tracking-wide ${
+            className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
               item.isCurvaA 
-                ? 'text-[#d8b4fe] bg-purple-950/40 px-1 py-0.2 rounded border border-purple-500/25 font-black text-[11px]' 
+                ? 'text-[#d8b4fe] bg-purple-950/40 px-1 py-0.2 rounded border border-purple-500/25 font-black text-[12px]' 
                 : 'text-slate-400'
             }`}
             title={item.remetente}
           >
             {item.remetente || 'REMETENTE VAGO'}
-            {item.isCurvaA && <span className="text-[9.5px] font-black text-purple-400 ml-1 select-none">★ CURVA A</span>}
+            {item.isCurvaA && <span className="text-[10px] font-black text-purple-400 ml-1 select-none">★ CURVA A</span>}
           </span>
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
+        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
           <span>CTRC: {item.id}</span>
           <span>•</span>
           <span>NF: {item.nf || 'S/N'}</span>
@@ -400,227 +400,212 @@ export default function CargaItem({
         </span>
       </div>
 
-      {/* Block 6: [BLOCO ACOES] - Discreet absolute priority dropdown & details editor */}
-      <div className="flex items-center justify-center px-0.5 border-l border-[#131f38]/15 relative" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => {
-            setMenuPosition(null);
-            setDropdownOpen(!dropdownOpen);
-          }}
-          className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-all duration-155 cursor-pointer ${
-            dropdownOpen
-              ? 'bg-red-950/40 text-red-500 border-red-500/40 shadow-[0_0_8px_rgba(239,68,68,0.2)]'
-              : 'bg-slate-900/90 text-slate-400 border-slate-800 hover:text-indigo-400 hover:border-indigo-500/40 hover:bg-slate-850'
-          }`}
-          title="Definir rota ou prioridade"
-        >
-          {dropdownOpen ? <X size={15} className="stroke-[2.5]" /> : <MoreVertical size={15} className="stroke-[2.5]" />}
-        </button>
+      {dropdownOpen && (
+        <div className="absolute inset-0 z-50 pointer-events-none" onClick={(e) => e.stopPropagation()}>
+          {/* Click-away overlay specific to this item's dropdown */}
+          <div 
+            className="fixed inset-0 z-40 bg-transparent pointer-events-auto" 
+            onClick={() => {
+              setDropdownOpen(false);
+              setMenuPosition(null);
+            }} 
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setDropdownOpen(false);
+              setMenuPosition(null);
+            }}
+          />
 
-        {dropdownOpen && (
-          <>
-            {/* Click-away overlay specific to this item's dropdown */}
-            <div 
-              className="fixed inset-0 z-40 bg-transparent" 
-              onClick={() => {
-                setDropdownOpen(false);
-                setMenuPosition(null);
-              }} 
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setDropdownOpen(false);
-                setMenuPosition(null);
-              }}
-            />
-
-            {/* Absolute/Fixed Dropdown body */}
-            <div 
-              className={`${
-                menuPosition 
-                  ? 'fixed' 
-                  : 'absolute top-full right-0 mt-2'
-              } bg-[#0b132a]/95 backdrop-blur-md border border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-200 select-none ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
-              style={{ 
-                filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))',
-                ...(menuPosition ? {
-                  left: `${Math.min(menuPosition.x, window.innerWidth - 305)}px`,
-                  top: `${Math.min(menuPosition.y, window.innerHeight - 440)}px`,
-                } : {})
-              }}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              {/* Dropdown Header */}
-              <div className={`${dropHeaderPad} bg-[#0e1732] border-b border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
-                <span className={`${dropHeaderText} font-sans font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5`}>
-                  🛡️ Parâmetros CTRC {item.id}
-                </span>
-                <button 
-                  onClick={() => setDropdownOpen(false)}
-                  className="text-slate-500 hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-              
-              {/* Option block 1: Route overwrite */}
-              <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
-                <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
-                  📍 Rota Operacional
-                </span>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    placeholder="Ex: ROTA 04"
-                    value={typedRoute}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => setTypedRoute(e.target.value.toUpperCase())}
-                    className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdatePlanning?.(item.id, { operationalRoute: typedRoute || undefined });
-                      setDropdownOpen(false);
-                    }}
-                    className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-
-              {/* Option block 2: Priority modifiers */}
-              <div className="flex flex-col py-1 border-b border-[#16223f]/70 bg-[#070c16]/30">
-                <div className={`${priorityHeaderLabel} font-mono font-black text-slate-500 uppercase tracking-widest select-none`}>
-                  Definir Alerta Prioridade
-                </div>
-
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'URGENTE', planningStatus: 'URGENTE' });
-                    setDropdownOpen(false);
-                  }}
-                  className={`${priorityBtnPad} text-left hover:bg-red-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                    item.planningStatus === 'URGENTE' ? 'bg-red-500/5 text-red-300 border-l-2 border-red-500 pl-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-red-405 shrink-0"><AlertCircle size={12} className="stroke-[2.5]" /></span>
-                    <span className="font-extrabold tracking-wide uppercase group-hover/btn:text-red-300 w-full text-left">P0 / URGENTE</span>
-                  </div>
-                  <span className={`${tagTextSize} font-mono font-semibold text-red-500/60 bg-red-500/10 px-1 py-0.2 rounded border border-red-500/15 uppercase`}>CRÍTICO</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'PRIORIDADE', planningStatus: 'PRIORIDADE' });
-                    setDropdownOpen(false);
-                  }}
-                  className={`${priorityBtnPad} text-left hover:bg-amber-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                    item.planningStatus === 'PRIORIDADE' ? 'bg-amber-500/5 text-amber-300 border-l-2 border-amber-500 pl-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 shrink-0"><Star size={12} className="fill-amber-400/20" /></span>
-                    <span className="font-bold tracking-wide uppercase group-hover/btn:text-amber-300 w-full text-left">P1 / PRIORIDADE</span>
-                  </div>
-                  <span className={`${tagTextSize} font-mono font-semibold text-amber-500/60 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/15 uppercase`}>ALTO</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'SEGURAR', planningStatus: 'SEGURAR' });
-                    setDropdownOpen(false);
-                  }}
-                  className={`${priorityBtnPad} text-left hover:bg-orange-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                    item.planningStatus === 'SEGURAR' ? 'bg-orange-500/5 text-orange-305 border-l-2 border-orange-550 pl-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-orange-400 shrink-0"><PauseCircle size={12} /></span>
-                    <span className="font-black tracking-wide uppercase group-hover/btn:text-orange-300 w-full text-left">SEGURAR CARGA</span>
-                  </div>
-                  <span className={`${tagTextSize} font-mono font-semibold text-orange-500/60 bg-orange-500/10 px-1 py-0.2 rounded border border-orange-500/15 uppercase`}>HOLD</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'NAO_SAI_HOJE', planningStatus: 'NAO_SAI_HOJE' });
-                    setDropdownOpen(false);
-                  }}
-                  className={`${priorityBtnPad} text-left hover:bg-slate-700/15 text-slate-400 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                    item.planningStatus === 'NAO_SAI_HOJE' ? 'bg-slate-900/50 text-slate-300 border-l-2 border-slate-600 pl-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 shrink-0"><Ban size={12} /></span>
-                    <span className="font-semibold tracking-wide uppercase group-hover/btn:text-slate-300 w-full text-left">NÃO SAI HOJE</span>
-                  </div>
-                  <span className={`${tagTextSize} font-mono font-semibold text-slate-500/80 bg-slate-900 px-1 py-0.2 rounded border border-slate-700/30 uppercase`}>CORTE</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'AGENDADO', planningStatus: 'AGENDADO' });
-                    setDropdownOpen(false);
-                  }}
-                  className={`${priorityBtnPad} text-left hover:bg-cyan-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                    item.planningStatus === 'AGENDADO' ? 'bg-cyan-500/5 text-cyan-300 border-l-2 border-cyan-500 pl-2' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-400 shrink-0"><Calendar size={12} /></span>
-                    <span className="font-bold tracking-wide uppercase group-hover/btn:text-cyan-305 w-full text-left">AGENDADO</span>
-                  </div>
-                  <span className={`${tagTextSize} font-mono font-semibold text-cyan-500/60 bg-cyan-500/10 px-1 py-0.2 rounded border border-cyan-500/15 uppercase`}>DATA</span>
-                </button>
-              </div>
-
-              {/* Option block 3: Note comment editor */}
-              <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
-                <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
-                  📝 Observação Operacional
-                </span>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    placeholder="Ex: Aguardando docs..."
-                    value={typedNote}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => setTypedNote(e.target.value)}
-                    className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdatePlanning?.(item.id, { operationalNote: typedNote || undefined });
-                      setDropdownOpen(false);
-                    }}
-                    className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-
-              {/* Option block 4: Clean reset */}
-              <div className="p-2 bg-[#061021] rounded-b-xl flex justify-center">
-                <button
-                  onClick={() => {
-                    onUpdatePlanning?.(item.id, { manualPriority: 'NORMAL', planningStatus: 'A_PLANEJAR', operationalRoute: undefined, operationalNote: undefined });
-                    setDropdownOpen(false);
-                  }}
-                  className={`w-full bg-slate-900 border border-slate-800 hover:border-red-500/20 hover:bg-red-550/[0.06] text-slate-400 hover:text-red-400 hover:shadow-[0_0_8px_rgba(239,68,68,0.05)] font-sans font-black rounded-lg text-center uppercase transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${resetBtnPad}`}
-                >
-                  <RefreshCw size={11} className="transition-transform duration-300 group-hover:rotate-180" />
-                  Restaurar planejamento automático
-                </button>
-              </div>
-
+          {/* Absolute/Fixed Dropdown body */}
+          <div 
+            className={`${
+              menuPosition 
+                ? 'fixed' 
+                : 'absolute top-2 right-4'
+            } bg-[#0b132a]/95 backdrop-blur-md border border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-200 select-none pointer-events-auto ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
+            style={{ 
+              filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))',
+              ...(menuPosition ? {
+                left: `${Math.min(menuPosition.x, window.innerWidth - 305)}px`,
+                top: `${Math.min(menuPosition.y, window.innerHeight - 440)}px`,
+              } : {})
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {/* Dropdown Header */}
+            <div className={`${dropHeaderPad} bg-[#0e1732] border-b border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
+              <span className={`${dropHeaderText} font-sans font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5`}>
+                🛡️ Parâmetros CTRC {item.id}
+              </span>
+              <button 
+                onClick={() => {
+                  setDropdownOpen(false);
+                  setMenuPosition(null);
+                }}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={12} />
+              </button>
             </div>
-          </>
-        )}
-      </div>
+            
+            {/* Option block 1: Route overwrite */}
+            <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
+              <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
+                📍 Rota Operacional
+              </span>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Ex: ROTA 04"
+                  value={typedRoute}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setTypedRoute(e.target.value.toUpperCase())}
+                  className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdatePlanning?.(item.id, { operationalRoute: typedRoute || undefined });
+                    setDropdownOpen(false);
+                  }}
+                  className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+
+            {/* Option block 2: Priority modifiers */}
+            <div className="flex flex-col py-1 border-b border-[#16223f]/70 bg-[#070c16]/30">
+              <div className={`${priorityHeaderLabel} font-mono font-black text-slate-500 uppercase tracking-widest select-none`}>
+                Definir Alerta Prioridade
+              </div>
+
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'URGENTE', planningStatus: 'URGENTE' });
+                  setDropdownOpen(false);
+                }}
+                className={`${priorityBtnPad} text-left hover:bg-red-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'URGENTE' ? 'bg-red-500/5 text-red-300 border-l-2 border-red-500 pl-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-red-405 shrink-0"><AlertCircle size={12} className="stroke-[2.5]" /></span>
+                  <span className="font-extrabold tracking-wide uppercase group-hover/btn:text-red-300 w-full text-left">P0 / URGENTE</span>
+                </div>
+                <span className={`${tagTextSize} font-mono font-semibold text-red-500/60 bg-red-500/10 px-1 py-0.2 rounded border border-red-500/15 uppercase`}>CRÍTICO</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'PRIORIDADE', planningStatus: 'PRIORIDADE' });
+                  setDropdownOpen(false);
+                }}
+                className={`${priorityBtnPad} text-left hover:bg-amber-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'PRIORIDADE' ? 'bg-amber-500/5 text-amber-300 border-l-2 border-amber-500 pl-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400 shrink-0"><Star size={12} className="fill-amber-400/20" /></span>
+                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-amber-300 w-full text-left">P1 / PRIORIDADE</span>
+                </div>
+                <span className={`${tagTextSize} font-mono font-semibold text-amber-500/60 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/15 uppercase`}>ALTO</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'SEGURAR', planningStatus: 'SEGURAR' });
+                  setDropdownOpen(false);
+                }}
+                className={`${priorityBtnPad} text-left hover:bg-orange-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'SEGURAR' ? 'bg-orange-500/5 text-orange-305 border-l-2 border-orange-550 pl-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-orange-400 shrink-0"><PauseCircle size={12} /></span>
+                  <span className="font-black tracking-wide uppercase group-hover/btn:text-orange-300 w-full text-left">SEGURAR CARGA</span>
+                </div>
+                <span className={`${tagTextSize} font-mono font-semibold text-orange-500/60 bg-orange-500/10 px-1 py-0.2 rounded border border-orange-500/15 uppercase`}>HOLD</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'NAO_SAI_HOJE', planningStatus: 'NAO_SAI_HOJE' });
+                  setDropdownOpen(false);
+                }}
+                className={`${priorityBtnPad} text-left hover:bg-slate-700/15 text-slate-400 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'NAO_SAI_HOJE' ? 'bg-slate-900/50 text-slate-300 border-l-2 border-slate-600 pl-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 shrink-0"><Ban size={12} /></span>
+                  <span className="font-semibold tracking-wide uppercase group-hover/btn:text-slate-300 w-full text-left">NÃO SAI HOJE</span>
+                </div>
+                <span className={`${tagTextSize} font-mono font-semibold text-slate-500/80 bg-slate-900 px-1 py-0.2 rounded border border-slate-700/30 uppercase`}>CORTE</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'AGENDADO', planningStatus: 'AGENDADO' });
+                  setDropdownOpen(false);
+                }}
+                className={`${priorityBtnPad} text-left hover:bg-cyan-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'AGENDADO' ? 'bg-cyan-505/5 text-cyan-300 border-l-2 border-cyan-500 pl-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-cyan-400 shrink-0"><Calendar size={12} /></span>
+                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-cyan-305 w-full text-left">AGENDADO</span>
+                </div>
+                <span className={`${tagTextSize} font-mono font-semibold text-cyan-500/60 bg-cyan-500/10 px-1 py-0.2 rounded border border-cyan-500/15 uppercase`}>DATA</span>
+              </button>
+            </div>
+
+            {/* Option block 3: Note comment editor */}
+            <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
+              <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
+                📝 Observação Operacional
+              </span>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Ex: Aguardando docs..."
+                  value={typedNote}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setTypedNote(e.target.value)}
+                  className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdatePlanning?.(item.id, { operationalNote: typedNote || undefined });
+                    setDropdownOpen(false);
+                  }}
+                  className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+
+            {/* Option block 4: Clean reset */}
+            <div className="p-2 bg-[#061021] rounded-b-xl flex justify-center">
+              <button
+                onClick={() => {
+                  onUpdatePlanning?.(item.id, { manualPriority: 'NORMAL', planningStatus: 'A_PLANEJAR', operationalRoute: undefined, operationalNote: undefined });
+                  setDropdownOpen(false);
+                }}
+                className={`w-full bg-slate-900 border border-slate-800 hover:border-red-500/20 hover:bg-red-550/[0.06] text-slate-400 hover:text-red-400 hover:shadow-[0_0_8px_rgba(239,68,68,0.05)] font-sans font-black rounded-lg text-center uppercase transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${resetBtnPad}`}
+              >
+                <RefreshCw size={11} className="transition-transform duration-300 group-hover:rotate-180" />
+                Restaurar planejamento automático
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

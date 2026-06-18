@@ -14,7 +14,29 @@ export interface SlaStatus {
 export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = new Date().toISOString().split('T')[0]): SlaStatus {
   if (!prevEnt) {
     return {
-      label: 'S/ PRAZO',
+      label: 'SEM PREVISÃO',
+      bgClass: 'bg-slate-900 border-slate-800',
+      textClass: 'text-slate-500',
+      daysDiff: 99,
+      isToday: false,
+      isDelayed: false,
+      isTomorrow: false
+    };
+  }
+
+  const cleanPrev = prevEnt.toUpperCase().trim();
+  if (
+    cleanPrev === '' ||
+    cleanPrev === 'SEM PREVISÃO' ||
+    cleanPrev === 'SEM PREVISAO' ||
+    cleanPrev === 'S/P' ||
+    cleanPrev === 'SP' ||
+    cleanPrev === 'S/PRAZO' ||
+    cleanPrev === 'S/ DRAZO' ||
+    cleanPrev === 'SEM PREV'
+  ) {
+    return {
+      label: 'SEM PREVISÃO',
       bgClass: 'bg-slate-900 border-slate-800',
       textClass: 'text-slate-500',
       daysDiff: 99,

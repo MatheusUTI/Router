@@ -303,7 +303,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   }, [afterUnitCtrcs]);
 
   const excelUniqueCities = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.normCidade || c.cidade || 'SEM CIDADE').toUpperCase().trim());
+    const list = afterUnitCtrcs.map(c => (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
   }, [afterUnitCtrcs]);
 
@@ -391,7 +391,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         const mId = (ctrc.id || '').toLowerCase().includes(query);
         const mDest = (ctrc.destinatario || '').toLowerCase().includes(query);
         const mRem = (ctrc.remetente || '').toLowerCase().includes(query);
-        const mCid = (ctrc.normCidade || '').toLowerCase().includes(query);
+        const mCid = (ctrc.normCidade || ctrc.cidade || ctrc.cidade_ent || '').toLowerCase().includes(query);
         const mNf = (ctrc.nf || '').toLowerCase().includes(query);
         const mSetor = (ctrc.normSetor || '').toLowerCase().includes(query);
         const mRoute = (ctrc.effectiveRoute || '').toLowerCase().includes(query) || (ctrc.normRota || '').toLowerCase().includes(query);
@@ -453,15 +453,14 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     const excelAfterCity = excelCityFilter === null 
       ? excelAfterRoute 
       : excelAfterRoute.filter(c => {
-          const val = (c.normCidade || c.cidade || 'SEM CIDADE').toUpperCase().trim();
+          const val = (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim();
           return excelCityFilter.includes(val);
         });
 
     // Excel Destinatario Filter
-    const excelAfterDest = excelCityFilter === null && excelDestFilter === null
+    const excelAfterDest = excelDestFilter === null
       ? excelAfterCity 
       : excelAfterCity.filter(c => {
-          if (excelDestFilter === null) return true;
           const val = (c.destinatario || 'SEM DESTINATÁRIO').toUpperCase().trim();
           return excelDestFilter.includes(val);
         });

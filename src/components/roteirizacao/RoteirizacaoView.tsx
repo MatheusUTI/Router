@@ -24,6 +24,7 @@ import { useRoteirizacaoFilters, isLogisticallyCompatible } from './hooks/useRot
 import { useCargaSelection } from './hooks/useCargaSelection';
 import { useRoteirizacaoGrouping } from './hooks/useRoteirizacaoGrouping';
 import { useVehicleAllocation } from './hooks/useVehicleAllocation';
+import { validateFieldContract } from './helpers/fieldContractValidator';
 
 interface RoteirizacaoViewProps {
   availableCtrcs: Ctrc[];
@@ -429,6 +430,19 @@ export default function RoteirizacaoView({
       warnings.push(
         `Regra de Compatibilidade Logística reteve ${incCount} faturas porque constam como em trânsito ou no depósito de outra filial. Habilite 'Outras unidades' para visualizar.`
       );
+    }
+
+    // Execute active Test Harness for Field Mappings Contract to prevent future regressions
+    try {
+      const validation = validateFieldContract(unassignedCtrcs);
+      if (!validation.success) {
+        warnings.push(...validation.warnings.slice(0, 5));
+        if (validation.warnings.length > 5) {
+          warnings.push(`[+${validation.warnings.length - 5}] Outras inconsistências detectadas. Abra o Console do Navegador para ver os asserts.`);
+        }
+      }
+    } catch (err) {
+      console.warn('[Validation Harness Error]', err);
     }
 
     return {
