@@ -831,6 +831,7 @@ export default function App() {
             criticClients={clients}
             onGeneratePreRomaneioSuccess={handleGeneratePreRomaneioSuccess}
             linkedCtrcs={linkedCtrcs}
+            onRefreshCtrcs={rehydrateCtrcsOnly}
           />
         );
       case 'finalizacao':

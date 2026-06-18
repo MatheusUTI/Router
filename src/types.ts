@@ -449,6 +449,9 @@ export interface RoteirizacaoDiagnostics {
   byRoutingEligibility: Record<string, number>;
   byLogisticCompatibility: Record<string, number>;
   warnings: string[];
+  contaminationCount?: number;
+  contaminationExamples?: { id: string; destinatario: string; cidade: string; }[];
+  totalCtrcs?: number;
 }
 
 export interface CidadeAtendidaSSW {

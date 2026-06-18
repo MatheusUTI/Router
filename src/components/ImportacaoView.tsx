@@ -235,38 +235,33 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ) {
         newMappings.prev_ent = h;
       }
-      // 4. CIDADE DE ENTREGA
+      // 4. CIDADE DE ENTREGA -> Strict Whitelist Matches Only
       else if (
         lower === 'cidade entrega' || 
+        lower === 'cidade_entrega' || 
         lower === 'cidade de entrega' || 
+        lower === 'cidade_de_entrega' || 
         lower === 'cidade ent' || 
         lower === 'cidade_ent' || 
         lower === 'cidade destino' || 
-        lower === 'cidade do destinatario' || 
-        lower === 'cidade_entrega' || 
-        lower.includes('cidade') || 
-        lower.includes('municipio') || 
-        lower.includes('município') || 
-        lower.includes('praca') || 
-        lower.includes('praça') ||
-        lower.includes('localidade')
+        lower === 'cidade_destino' ||
+        lower === 'cidade do destinatario' ||
+        lower === 'cidade_do_destinatario'
       ) {
         newMappings.cidade = h;
       }
-      // 5. DESTINATÁRIO
+      // 5. DESTINATÁRIO -> Strict Whitelist Matches Only
       else if (
         lower === 'destinatario' || 
         lower === 'destinatário' || 
-        lower === 'dst' || 
-        lower === 'dest' || 
-        lower === 'cliente destino' || 
+        lower === 'destinatario nome' || 
+        lower === 'destinatario_nome' || 
         lower === 'cliente destinatario' || 
-        lower === 'dest_nome' || 
-        lower === 'nome dest' || 
-        lower.includes('destinatario') || 
-        lower.includes('destinatário') || 
-        lower.includes('recebedor') ||
-        lower.includes('cliente')
+        lower === 'cliente_destinatario' || 
+        lower === 'nome destinatario' || 
+        lower === 'nome_destinatario' || 
+        lower === 'destinatário final' || 
+        lower === 'destinatario_final'
       ) {
         newMappings.destinatario = h;
       }
@@ -281,11 +276,13 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ) {
         newMappings.id = h;
       }
-      // 7. REMETENTE
+      // 7. REMETENTE -> Strict Whitelist Matches Only
       else if (
         lower === 'remetente' || 
         lower === 'cliente remetente' || 
-        lower.includes('remetente')
+        lower === 'cliente_remetente' || 
+        lower === 'nome remetente' || 
+        lower === 'nome_remetente'
       ) {
         newMappings.remetente = h;
       }
@@ -537,6 +534,19 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
   const parsedRecords = parseRows();
   const previewCollection = parsedRecords.slice(0, 5); // display first 5
 
+  // Quality check for UI display
+  let uiContaminatedCount = 0;
+  parsedRecords.forEach(rec => {
+    const dest = (rec.destinatario || '').toUpperCase().trim();
+    const city = (rec.cidade || '').toUpperCase().trim();
+    if (dest && city && dest === city && dest.length > 3) {
+      uiContaminatedCount++;
+    }
+  });
+  const uiTotalParsed = parsedRecords.length;
+  const uiInfectedPercentage = uiTotalParsed > 0 ? (uiContaminatedCount / uiTotalParsed) * 100 : 0;
+  const isContaminatedInBulk = uiContaminatedCount > 0 && uiInfectedPercentage > 5;
+
   const handleApplyMapping = () => {
     if (!mappings.id || !mappings.destinatario || !mappings.cidade) {
       alert("Por favor, preencha ao menos as associações obrigatórias: ID CTRC, Destinatário e Cidade de Destino.");
@@ -546,6 +556,35 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     if (parsedRecords.length === 0) {
       alert("Nenhum registro de CTRC válido pôde ser extraído com a configuração atual. Altere a linha do cabeçalho.");
       return;
+    }
+
+    // Quality check for destinatario === cidade contamination
+    let contaminationCount = 0;
+    parsedRecords.forEach(rec => {
+      const dest = (rec.destinatario || '').toUpperCase().trim();
+      const city = (rec.cidade || '').toUpperCase().trim();
+      if (dest && city && dest === city && dest.length > 3) {
+        contaminationCount++;
+      }
+    });
+
+    const totalParsed = parsedRecords.length;
+    const infectedPercentage = totalParsed > 0 ? (contaminationCount / totalParsed) * 100 : 0;
+
+    if (contaminationCount > 0) {
+      if (infectedPercentage > 5) {
+        alert(
+          `BLOQUEIO DE SEGURANÇA: Possível erro de mapeamento: Destinatário está igual à cidade em muitos registros (${infectedPercentage.toFixed(1)}% dos CTRCs estão contaminados).\n\nPor favor, revise o De-Para de Atributos no painel lateral de forma a selecionar a coluna correta para "Cliente Recebedor / Destinatário" e "Cidade de Entrega".`
+        );
+        return;
+      } else {
+        const confirmResult = window.confirm(
+          `REVISÃO DE SEGURANÇA: Possível erro de mapeamento: O destinatário é IDENTICO à cidade em alguns registros (${contaminationCount} itens).\n\nDeseja confirmar e prosseguir com o carregamento mesmo assim ou Cancelar para reajustar o mapeamento?`
+        );
+        if (!confirmResult) {
+          return;
+        }
+      }
     }
 
     onAddCtrcs(parsedRecords);
@@ -841,29 +880,56 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
             )}
           </div>
 
-          <div className="mt-8 pt-4 border-t border-outline-variant/30 flex justify-between items-center gap-4">
-            <span className="text-[10px] text-[#9cb4e4] font-mono leading-tight">
-              {parsedRecords.length > 0 ? (
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  {parsedRecords.length} registros prontos
-                </span>
-              ) : (
-                '0 registros carregados'
-              )}
-            </span>
-            <button
-              disabled={extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade}
-              onClick={handleApplyMapping}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow ${
-                extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  : 'bg-primary hover:bg-[#4d8eff] text-white shadow-lg'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">verified_user</span>
-              Confirmar e Carregar para Rota
-            </button>
+          <div className="mt-8 pt-4 border-t border-outline-variant/30 space-y-4">
+            {uiContaminatedCount > 0 && (
+              <div className={`p-3 rounded-lg border text-left text-xs space-y-1.5 ${
+                isContaminatedInBulk 
+                  ? 'bg-rose-950/45 border-rose-500/30 text-rose-300' 
+                  : 'bg-amber-950/45 border-amber-500/30 text-amber-300'
+              }`}>
+                <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]">
+                  <span className="material-symbols-outlined text-[16px]">error</span>
+                  <span>Possível erro de mapeamento: Destinatário está igual à cidade.</span>
+                </div>
+                <p className="leading-relaxed text-[11px]">
+                  Detectamos que <strong className="font-mono text-white">{uiContaminatedCount}</strong> de <strong className="font-mono text-white">{uiTotalParsed}</strong> registros ({uiInfectedPercentage.toFixed(1)}%) possuem exatamente o mesmo valor para destinatário e cidade.
+                </p>
+                {isContaminatedInBulk ? (
+                  <p className="text-[10px] bg-rose-500/10 text-rose-300 border border-rose-500/20 px-2 py-1 rounded font-semibold">
+                    ⚠️ Confirmação bloqueada. É obrigatório redefinir a coluna correta de Destinatário ou de Cidade.
+                  </p>
+                ) : (
+                  <p className="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-1 rounded">
+                    💡 Recomendamos revisar a coluna escolhida antes de carregar os dados.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-between items-center gap-4">
+              <span className="text-[10px] text-[#9cb4e4] font-mono leading-tight">
+                {parsedRecords.length > 0 ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    {parsedRecords.length} registros prontos
+                  </span>
+                ) : (
+                  '0 registros carregados'
+                )}
+              </span>
+              <button
+                disabled={extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade || isContaminatedInBulk}
+                onClick={handleApplyMapping}
+                className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow ${
+                  extractedHeaders.length === 0 || !mappings.id || !mappings.destinatario || !mappings.cidade || isContaminatedInBulk
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    : 'bg-primary hover:bg-[#4d8eff] text-white shadow-lg'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">verified_user</span>
+                Confirmar e Carregar para Rota
+              </button>
+            </div>
           </div>
         </div>
 

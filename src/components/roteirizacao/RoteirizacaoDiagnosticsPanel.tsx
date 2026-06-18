@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { RoteirizacaoDiagnostics } from '../../types';
 import { AlertTriangle, Clipboard, Check, RefreshCw, X, ChevronRight, BarChart2 } from 'lucide-react';
+import { CtrcRepository } from '../../infrastructure/localdb/repositories/ctrcRepository';
 
 interface RoteirizacaoDiagnosticsPanelProps {
   diagnostics: RoteirizacaoDiagnostics;
   onClearFilters: () => void;
   isOpen: boolean;
   onClose: () => void;
+  adminUser?: any; // AppUser or null
+  onRefreshCtrcs?: () => void;
 }
 
 export default function RoteirizacaoDiagnosticsPanel({
@@ -14,6 +17,8 @@ export default function RoteirizacaoDiagnosticsPanel({
   onClearFilters,
   isOpen,
   onClose,
+  adminUser,
+  onRefreshCtrcs,
 }: RoteirizacaoDiagnosticsPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -129,6 +134,96 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
                   ))}
                 </ul>
               </div>
+            </div>
+          )}
+
+          {/* Audit & Clean-up Contaminated CTRCs Panel */}
+          {(diagnostics.contaminationCount ?? 0) > 0 && (
+            <div className="bg-rose-950/20 border border-rose-500/30 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-rose-400">
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-pulse" />
+                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-rose-300">
+                  Auditoria de Integridade Semântica (Destinatário = Cidade)
+                </h4>
+              </div>
+
+              <div className="text-[11px] font-sans text-rose-200/90 leading-relaxed space-y-2">
+                <p>
+                  Foi identificada uma anomalia grave em <strong className="text-white font-mono">{(diagnostics.contaminationCount ?? 0)}</strong> de <strong className="text-white font-mono">{diagnostics.totalCtrcs ?? 0}</strong> CTRCs ativos.
+                </p>
+                <div className="bg-[#120a0d] border border-rose-500/20 p-2.5 rounded text-[10px] space-y-1">
+                  <div>🏁 <strong className="text-rose-300 font-semibold">Provável Causa:</strong> Mapeamento inadequado de colunas durante a importação do CSV/BI operacional.</div>
+                  <div>🚨 <strong className="text-rose-300 font-semibold">Impacto Logístico:</strong> Faturas duplicando o nome da cidade no destinatário, distorcendo a visualização de filiais e rotas de entrega.</div>
+                </div>
+
+                {/* List Examples (Up to 20 Examples) */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest font-mono block">
+                    Exemplos Detectados (Exibindo até 20)
+                  </span>
+                  <div className="max-h-36 overflow-y-auto border border-rose-500/10 rounded bg-[#0a0507] pr-1 scrollbar-thin">
+                    <table className="w-full text-left text-[10px] font-mono text-rose-300/80">
+                      <thead className="bg-[#14080d]/80 text-[#dae2fd]/70 sticky top-0 font-bold">
+                        <tr>
+                          <th className="px-2 py-1">Código CTRC</th>
+                          <th className="px-2 py-1">Destinatário</th>
+                          <th className="px-2 py-1">Cidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-rose-500/10">
+                        {diagnostics.contaminationExamples?.map((ex, idx) => (
+                          <tr key={idx} className="hover:bg-rose-500/5">
+                            <td className="px-2 py-1 font-bold text-rose-400">{ex.id}</td>
+                            <td className="px-2 py-1 truncate max-w-[120px]">{ex.destinatario}</td>
+                            <td className="px-2 py-1 truncate max-w-[100px] text-white">{ex.cidade}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Master Purge Tool */}
+              {adminUser?.is_master ? (
+                <div className="pt-2 border-t border-rose-500/20 space-y-2">
+                  <div className="text-[10px] text-[#dac1c5] font-mono leading-relaxed bg-rose-500/5 p-2 rounded">
+                    🛡️ <strong className="text-rose-400 font-semibold">Modo Master Ativo:</strong> Como administrador, você pode excluir os registros corrompidos identificados no IndexedDB local com total sincronização.
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const confirmPurge = window.confirm(
+                        `Deseja excluir DEFINITIVAMENTE todos os ${diagnostics.contaminationCount} CTRCs contaminados?\n\nEsta ação atualizará o faturamento operacional de forma irreversível.`
+                      );
+                      if (confirmPurge) {
+                        try {
+                          const idsToPurge = diagnostics.contaminationExamples?.map(ex => ex.id) || [];
+                          if (idsToPurge.length > 0) {
+                            await CtrcRepository.deleteMany(idsToPurge);
+                            alert(`Expurgo Concluído: ${idsToPurge.length} faturas foram limpas da base.`);
+                            if (onRefreshCtrcs) {
+                              onRefreshCtrcs();
+                            }
+                            onClose();
+                          } else {
+                            alert("Não foi possível mapear os IDs para exclusão.");
+                          }
+                        } catch (err) {
+                          console.error("Erro ao expurgar registros:", err);
+                        }
+                      }
+                    }}
+                    className="w-full bg-[#1b2540] hover:bg-[#344673] hover:text-white text-rose-300 border border-outline-variant hover:border-slate-500 rounded py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Excluir importação contaminada ({diagnostics.contaminationCount} CTRCs)
+                  </button>
+                </div>
+              ) : (
+                <div className="text-[10px] text-amber-400 leading-relaxed bg-[#1d120a] border border-amber-600/25 p-2.5 rounded font-mono">
+                  🔒 <strong className="font-bold">Ação Restrita:</strong> Solicite a um usuário Master para realizar o expurgo das faturas contaminadas, ou limpe a base no menu de Configurações e importe o CSV novamente com o De-Para de correspondência correto.
+                </div>
+              )}
             </div>
           )}
 

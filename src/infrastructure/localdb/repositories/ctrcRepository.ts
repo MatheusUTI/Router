@@ -51,6 +51,17 @@ export const CtrcRepository = {
     }
   },
 
+  async deleteMany(ids: string[], skipSync = false): Promise<void> {
+    await db.transaction('rw', db.ctrcs, async () => {
+      await db.ctrcs.bulkDelete(ids);
+    });
+    if (!skipSync) {
+      for (const id of ids) {
+        await addToSyncQueue('ctrc', 'DELETE', { id });
+      }
+    }
+  },
+
   async clearAll(): Promise<void> {
     await db.ctrcs.clear();
   }

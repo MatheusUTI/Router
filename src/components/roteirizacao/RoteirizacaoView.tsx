@@ -36,6 +36,7 @@ interface RoteirizacaoViewProps {
   criticClients?: CriticClient[];
   onGeneratePreRomaneioSuccess?: (preRomaneios: PreRomaneio[], originalCtrcs: Ctrc[]) => void;
   linkedCtrcs?: Ctrc[];
+  onRefreshCtrcs?: () => void;
 }
 
 export default function RoteirizacaoView({
@@ -48,6 +49,7 @@ export default function RoteirizacaoView({
   criticClients = [],
   onGeneratePreRomaneioSuccess,
   linkedCtrcs = [],
+  onRefreshCtrcs,
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -432,15 +434,39 @@ export default function RoteirizacaoView({
       );
     }
 
+    // Calculate contamination metrics (destinatario === cidade)
+    const contaminationExamples: { id: string; destinatario: string; cidade: string; }[] = [];
+    let contaminationCount = 0;
+
+    unassignedCtrcs.forEach(rec => {
+      const dest = (rec.destinatario || '').toUpperCase().trim();
+      const city = (rec.cidade_ent || rec.cidade || '').toUpperCase().trim();
+      if (dest && city && dest === city && dest.length > 3) {
+        contaminationCount++;
+        if (contaminationExamples.length < 20) {
+          contaminationExamples.push({
+            id: rec.id || 'N/A',
+            destinatario: rec.destinatario || '',
+            cidade: rec.cidade_ent || rec.cidade || '',
+          });
+        }
+      }
+    });
+
+    if (contaminationCount > 0) {
+      warnings.push(
+        `[MAPEAMENTO] Crítico: Foram detectados ${contaminationCount} CTRCs com o destinatário idêntico à cidade. Isso indica uma provável inconformidade física no arquivo de carregamento originada no "Mapeamento de Importação".`
+      );
+    }
+
     // Execute active Test Harness for Field Mappings Contract to prevent future regressions
     try {
       const isDev = process.env.NODE_ENV === 'development';
       const validation = validateFieldContract(unassignedCtrcs, isDiagnosticsOpen || isDev);
       if (!validation.success) {
-        warnings.push(...validation.warnings.slice(0, 5));
-        if (validation.warnings.length > 5) {
-          warnings.push(`[+${validation.warnings.length - 5}] Outras inconsistências detectadas. Abra o Console do Navegador para ver os asserts.`);
-        }
+        // Exclude general "cidade igual destinatario" warning messages since we handle separately with rich stats
+        const otherWarnings = validation.warnings.filter(w => !w.includes('Contaminação crítica detectada') && !w.includes('Contaminação cruzada'));
+        warnings.push(...otherWarnings.slice(0, 10));
       }
     } catch (err) {
       console.warn('[Validation Harness Error]', err);
@@ -465,6 +491,9 @@ export default function RoteirizacaoView({
       byRoutingEligibility,
       byLogisticCompatibility,
       warnings,
+      contaminationCount,
+      contaminationExamples,
+      totalCtrcs: unassignedCtrcs.length,
     };
   }, [availableCtrcs, linkedCtrcs, enrichedCtrcsList, unassignedCtrcs, filterCounts, adminUser, isDiagnosticsOpen]);
 
@@ -951,6 +980,8 @@ export default function RoteirizacaoView({
         isOpen={isDiagnosticsOpen}
         onClose={() => setIsDiagnosticsOpen(false)}
         onClearFilters={handleClearFilters}
+        adminUser={adminUser}
+        onRefreshCtrcs={onRefreshCtrcs}
       />
 
       {/* Pre-Romaneio Summary Modal */}
