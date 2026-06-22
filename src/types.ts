@@ -61,6 +61,7 @@ export interface Ctrc {
   obs?: string;
   disponibilidade?: string;
   localizacao?: string;
+  bairro?: string;
 }
 
 export interface Expense {

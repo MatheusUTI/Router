@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
-import { Ctrc, Vehicle, AppUser, PreRomaneio } from '../types';
+import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal } from '../types';
 import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
+import { CurvaAClientRepository } from '../infrastructure/localdb/repositories/curvaAClientRepository';
+import { isClienteCurvaA } from './roteirizacao/helpers/isClienteCurvaA';
 import {
   Printer,
   ArrowLeft,
@@ -57,6 +59,11 @@ export default function FinalizacaoView({
       setActiveTab(saved);
       localStorage.removeItem('finalizacao_initial_tab');
     }
+  }, []);
+
+  const [curvaAClients, setCurvaAClients] = useState<CurvaAClientLocal[]>([]);
+  useEffect(() => {
+    CurvaAClientRepository.getAll().then(setCurvaAClients).catch(err => console.error('[FinalizacaoView] error loading Curva A list:', err));
   }, []);
 
   const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
@@ -482,7 +489,7 @@ export default function FinalizacaoView({
           }
 
           @page {
-            size: ${(activeTab === 'programacao' || activeTab === 'preromaneio') ? 'A4 landscape' : 'A4 portrait'} !important;
+            size: ${activeTab === 'programacao' ? 'A4 landscape' : 'A4 portrait'} !important;
             margin: 8mm !important;
           }
         }
@@ -1769,145 +1776,228 @@ export default function FinalizacaoView({
         </div>
       )}
 
-      {/* --------------------------------------------------------- */}
-      {/* CASE 3 PRINT-ONLY EMBEDDED HIGH CONTRAST LANDSCAPE LAYOUT */}
-      {/* --------------------------------------------------------- */}
       {activeTab === 'preromaneio' && (
         <div className="hidden print:block print-area text-black bg-white w-full text-left font-sans p-2">
           {(printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).map((pr, pIdx) => {
             const isLast = pIdx === (printPreRomaneios.length > 0 ? printPreRomaneios : preRomaneios).length - 1;
+
+            const formatPlanningDate = (dateStr: string) => {
+              if (!dateStr) return 'SEM DATA';
+              const parts = dateStr.split('-');
+              if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+              }
+              return dateStr;
+            };
+
+            const formatRouteText = (routeStr: string) => {
+              if (!routeStr) return '';
+              const match = routeStr.match(/\d+/);
+              if (match) {
+                return match[0];
+              }
+              return routeStr.toUpperCase().replace('ROTA', '').trim();
+            };
+
+            const ctrcsList = (pr.ctrcIds || [])
+              .map((id) => resolvedCtrcsMap[id])
+              .filter(Boolean);
+
+            const sortedCtrcs = [...ctrcsList].sort((a, b) => {
+              // 1. Cidade
+              const cityA = (a.cidade_ent || a.cidade || '').toUpperCase().trim();
+              const cityB = (b.cidade_ent || b.cidade || '').toUpperCase().trim();
+              if (cityA !== cityB) {
+                return cityA.localeCompare(cityB, 'pt-BR');
+              }
+
+              // 2. Bairro
+              const bA = (a.bairro || '').toUpperCase().trim();
+              const bB = (b.bairro || '').toUpperCase().trim();
+              if (bA !== bB) {
+                return bA.localeCompare(bB, 'pt-BR');
+              }
+
+              // 3. Destinatário
+              const destA = (a.destinatario || '').toUpperCase().trim();
+              const destB = (b.destinatario || '').toUpperCase().trim();
+              if (destA !== destB) {
+                return destA.localeCompare(destB, 'pt-BR');
+              }
+
+              // 4. CTRC ID
+              const idA = (a.id || '').toUpperCase().trim();
+              const idB = (b.id || '').toUpperCase().trim();
+              return idA.localeCompare(idB, 'pt-BR');
+            });
+
             return (
-              <div key={pr.id} className={`w-full min-h-screen ${isLast ? '' : 'page-break'} pb-8`}>
-                <div className="border-b-2 border-black pb-3 mb-4 flex justify-between items-end">
-                  <div>
-                    <h1 className="text-xl font-bold uppercase tracking-tight">PRÉ-ROMANEIO DE SEPARAÇÃO</h1>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold">FILIAL VARGINHA | CONFERÊNCIA E SEPARAÇÃO DE CARGA</p>
+              <div key={pr.id} className={`w-full min-h-screen ${isLast ? '' : 'page-break'} pb-6 leading-tight`}>
+                
+                {/* CABEÇALHO MODELO EXCEL */}
+                <div className="border border-black p-3 mb-4 rounded bg-white text-black font-mono">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1.5">
+                      <h1 className="text-base font-black tracking-tight leading-none uppercase">
+                        PRÉ-ROMANEIO {pr.route.toUpperCase()} - {formatPlanningDate(pr.planningDate)}
+                      </h1>
+                      <div className="text-xs font-bold leading-none">
+                        ROTA: {formatRouteText(pr.route)}
+                      </div>
+                      <div className="text-lg font-black tracking-wide leading-none uppercase mt-1">
+                        {pr.vehiclePlate ? `${pr.vehiclePlate.toUpperCase()}  ${(pr.driverName || 'NÃO ATRIBUÍDO').toUpperCase()}` : 'SEM PLACA | MOTORISTA NÃO INFORMADO'}
+                      </div>
+                      <div className="text-[11px] font-bold leading-none text-gray-800">
+                        Ajud.: {(pr.helperName || 'NÃO ATRIBUÍDO').toUpperCase()}
+                      </div>
+                    </div>
+                    
+                    <div className="text-right space-y-1 text-[11px] font-bold">
+                      <div>Total CTRC: <span className="font-extrabold text-black">{pr.ctrcIds.length}</span></div>
+                      <div>Peso: <span className="font-extrabold text-black">{pr.totalWeight.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg</span></div>
+                      <div>Qt vol.: <span className="font-extrabold text-black">{String(pr.totalVolumes).padStart(4, '0')}</span></div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="block text-[10px] text-gray-400 font-bold uppercase">Data de Planejamento</span>
-                    <span className="text-sm font-mono font-bold">{pr.planningDate}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 border border-gray-400 rounded-lg mb-4 text-xs">
-                  <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Rota / Doca</span>
-                    <span className="font-bold text-sm text-black uppercase">{pr.route} (Doca: {pr.gate || 'N/D'})</span>
-                  </div>
-                  <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Placa / Motorista</span>
-                    <span className="font-bold text-sm text-black uppercase">
-                      {pr.vehiclePlate ? `${pr.vehiclePlate} | ${pr.driverName || 'Não Informado'}` : 'Não Atribuído'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Ajudante / Obs</span>
-                    <span className="font-bold text-xs text-black block truncate">
-                      {pr.helperName || 'Não Informado'} {pr.observations ? `(${pr.observations})` : ''}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="block text-gray-500 font-bold uppercase text-[9px]">Totais</span>
-                    <span className="font-mono text-sm text-black block font-bold leading-tight">
-                      {pr.ctrcIds.length} CTRCs | {pr.totalWeight.toLocaleString('pt-BR')} kg | {pr.totalVolumes} vol.
-                    </span>
+                  
+                  <div className="pt-2">
+                    <div className="text-[10px] font-black text-red-600 uppercase tracking-wider leading-none">
+                      * EM DESTAQUE OS CLIENTES CURVA A *
+                    </div>
                   </div>
                 </div>
 
-                <table className="w-full text-[10px] text-left border-collapse border border-gray-400">
+                {/* COLUNAS PRINCIPAIS */}
+                <table className="w-full text-[10px] text-left border-collapse border border-black table-fixed">
                   <thead>
-                    <tr className="bg-gray-100 uppercase font-bold text-[9px]">
-                      <th className="border border-gray-400 px-1 py-1 text-center w-[4%]">CHK</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[12%]">CTRC</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[8%]">NF</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[22%]">Destinatário</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[18%]">Remetente</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[12%]">Cidade</th>
-                      <th className="border border-gray-400 px-1 py-1 text-center w-[5%]">Vol</th>
-                      <th className="border border-gray-400 px-2 py-1 text-right w-[8%]">Peso</th>
-                      <th className="border border-gray-400 px-2 py-1 w-[11%]">Localização</th>
+                    <tr className="bg-gray-100 uppercase font-black text-[9px] font-mono border-b border-black">
+                      <th className="border border-black px-2 py-1.5 w-[16%]">CTRC</th>
+                      <th className="border border-black px-2 py-1.5 w-[14%]">NF</th>
+                      <th className="border border-black px-2 py-1.5 w-[42%]">REMETENTE / DESTINATÁRIO</th>
+                      <th className="border border-black px-2 py-1.5 w-[28%]">CIDADE / BAIRRO</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pr.ctrcIds.length === 0 ? (
+                    {sortedCtrcs.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="border border-gray-400 px-3 py-6 text-center text-gray-405 italic">
+                        <td colSpan={4} className="border border-black px-3 py-6 text-center text-gray-500 italic">
                           Nenhum documento eletrônico vinculado a este pré-romaneio.
                         </td>
                       </tr>
                     ) : (
-                      pr.ctrcIds.map((id, index) => {
-                        const ctrc = resolvedCtrcsMap[id];
-                        if (!ctrc) {
-                          return (
-                            <tr key={index} className="text-gray-500">
-                              <td className="border border-gray-400 px-1 py-1.5 text-center">
-                                <div className="w-3.5 h-3.5 border border-black mx-auto rounded-sm"></div>
-                              </td>
-                              <td className="border border-gray-400 px-2 py-1.5 font-mono font-bold text-red-650">{id}</td>
-                              <td colSpan={7} className="border border-gray-400 px-2 py-1.5 text-red-500 font-bold italic">
-                                CTRC não localizado no banco (ou dados limpos temporariamente)
-                              </td>
-                            </tr>
-                          );
-                        }
-
+                      sortedCtrcs.map((ctrc, index) => {
+                        const isCurvaA = isClienteCurvaA(ctrc, curvaAClients).isCurvaA;
+                        const isAgendamento = ctrc.status === 'Agendamento';
                         const weight = (ctrc.peso_r || ctrc.weight || 0);
                         const vols = ctrc.volume || 0;
-                        const loc = ctrc.localizacao || 'Doca';
+                        
+                        const weightFormatted = weight.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg';
+                        const volsFormatted = String(vols).padStart(4, '0');
+                        const prevEntStr = ctrc.prev_ent ? formatPlanningDate(ctrc.prev_ent) : 'SEM PREVISÃO';
+
+                        // Curva A styling
+                        const rowBgClass = isCurvaA ? 'bg-red-50 text-red-700 font-bold' : 'bg-white text-black';
+                        const borderColClass = isCurvaA ? 'border-red-500' : 'border-gray-400';
+                        const textBoldClass = isCurvaA ? 'text-red-900 font-black' : 'text-black';
 
                         return (
-                          <tr key={ctrc.id || index} className="font-medium text-[10px] text-black">
-                            <td className="border border-gray-400 px-1 py-1.5 text-center">
-                              <div className="w-3.5 h-3.5 border border-black mx-auto rounded-sm"></div>
-                            </td>
-                            <td className="border border-gray-400 px-2 py-1.5 font-mono font-bold leading-none">{ctrc.id}</td>
-                            <td className="border border-gray-400 px-2 py-1.5 font-mono leading-none">{ctrc.nf || 'N/A'}</td>
-                            <td className="border border-gray-400 px-2 py-1.5 uppercase font-mono leading-tight">{ctrc.destinatario}</td>
-                            <td className="border border-gray-400 px-2 py-1.5 uppercase text-gray-600 leading-tight">{ctrc.remetente || 'N/A'}</td>
-                            <td className="border border-gray-400 px-2 py-1.5 truncate uppercase">{ctrc.cidade_ent || ctrc.cidade}</td>
-                            <td className="border border-gray-400 px-1 py-1.5 text-center font-mono font-bold">{vols}</td>
-                            <td className="border border-gray-400 px-2 py-1.5 text-right font-mono">{weight.toLocaleString('pt-BR')} kg</td>
-                            <td className="border border-gray-400 px-2 py-1.5 uppercase font-mono font-semibold">{loc}</td>
-                          </tr>
+                          <React.Fragment key={ctrc.id || index}>
+                            {/* Linha 1: CTRC | NF | REMETENTE | CIDADE */}
+                            <tr className={`${rowBgClass} text-[10px]`}>
+                              <td className={`border ${borderColClass} px-2 py-1 font-mono font-bold flex items-center gap-1.5`}>
+                                <div className={`w-3.5 h-3.5 border ${isCurvaA ? 'border-red-500' : 'border-black'} shrink-0 bg-white rounded-sm`}></div>
+                                <span className={`leading-none ${isCurvaA ? 'text-red-700' : 'text-black'}`}>{ctrc.id}</span>
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-1 font-mono`}>
+                                {ctrc.nf || '—'}
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-1 uppercase truncate font-mono ${textBoldClass}`}>
+                                {isCurvaA ? `★ [CURVA A] ${ctrc.remetente}` : (ctrc.remetente || '—')}
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-1 uppercase font-mono truncate`}>
+                                {(ctrc.cidade_ent || ctrc.cidade || '').toUpperCase()}
+                              </td>
+                            </tr>
+
+                            {/* Linha 2: (empty) | DESTINATÁRIO | BAIRRO */}
+                            <tr className={`${rowBgClass} text-[10px]`}>
+                              <td className={`border-l border-b border-r ${borderColClass} px-2 py-0.5`} colSpan={2}>
+                                {/* Alignment blank space */}
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-0.5 uppercase tracking-wide truncate font-semibold text-gray-800`}>
+                                {ctrc.destinatario || '—'}
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-0.5 uppercase text-gray-500 truncate`}>
+                                {ctrc.bairro || '—'}
+                              </td>
+                            </tr>
+
+                            {/* Linha 3: (empty) | Previsão, Vol, Peso list */}
+                            <tr className={`${rowBgClass} border-b-2 ${isCurvaA ? 'border-b-red-400' : 'border-b-black/80'} text-[9px]`}>
+                              <td className={`border-l border-b border-r ${borderColClass} px-2 py-0.5`} colSpan={2}>
+                                {/* Alignment blank space */}
+                              </td>
+                              <td className={`border ${borderColClass} px-2 py-0.5 font-mono text-gray-600`} colSpan={2}>
+                                <div className="flex flex-wrap items-center gap-x-5 leading-none">
+                                  <span>
+                                    Prev. Ent.: <strong className="text-black font-extrabold">{prevEntStr}</strong>
+                                    {isAgendamento && (
+                                      <span className="ml-1.5 px-1 py-0.2 bg-cyan-100 text-cyan-800 border border-cyan-400 text-[8px] font-black uppercase tracking-wider font-sans leading-none inline-block">
+                                        [AG]
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span>
+                                    QT VOL.: <strong className="text-black font-extrabold">{volsFormatted}</strong>
+                                  </span>
+                                  <span>
+                                    Peso: <strong className="text-black font-extrabold">{weightFormatted}</strong>
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          </React.Fragment>
                         );
                       })
                     )}
                   </tbody>
                 </table>
 
-                {/* Separation Checklist Signature Blocks & Manual Input Fields Card */}
-                <div className="border border-gray-400 rounded-lg p-3 mt-4 bg-gray-50/50">
-                  <h3 className="text-[10px] font-bold text-gray-700 uppercase mb-2 border-b border-gray-300 pb-1">CAMPOS CONFIRMAÇÃO MANUAL (FÍSICO):</h3>
-                  <div className="grid grid-cols-4 gap-4 text-[10px]">
-                    <div>
-                      <span className="text-gray-500 uppercase font-semibold">Separador (Nome):</span>
-                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                {/* ASSINATURAS / CONFERÊNCIA INTERNA */}
+                <div className="border border-black rounded p-3 mt-4 bg-white space-y-3 font-mono text-black">
+                  <h3 className="text-[10px] font-black uppercase tracking-wider border-b border-black pb-1">
+                    CONFERÊNCIA INTERNA DE EXPEDIÇÃO:
+                  </h3>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-3.5 text-[10px]">
+                    <div className="flex items-end gap-1.5">
+                      <span className="font-bold">Separador:</span>
+                      <div className="border-b border-black h-4 flex-grow"></div>
                     </div>
-                    <div>
-                      <span className="text-gray-500 uppercase font-semibold">Conferente (Nome):</span>
-                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                    
+                    <div className="flex items-end gap-1.5">
+                      <span className="font-bold">Conferente:</span>
+                      <div className="border-b border-black h-4 flex-grow"></div>
                     </div>
-                    <div>
-                      <span className="text-gray-500 uppercase font-semibold">Motorista (Assinatura):</span>
-                      <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
+                    
+                    <div className="flex items-end gap-1.5">
+                      <span className="font-bold">Horário início:</span>
+                      <div className="border-b border-black h-4 w-28"></div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="text-gray-500 uppercase font-semibold">Horário Início:</span>
-                        <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 uppercase font-semibold">Horário Fim:</span>
-                        <div className="border-b border-gray-400 h-6 mt-1 w-full"></div>
-                      </div>
+                    
+                    <div className="flex items-end gap-1.5">
+                      <span className="font-bold">Horário fim:</span>
+                      <div className="border-b border-black h-4 w-28"></div>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-gray-500 font-semibold uppercase block">Observações / Divergências de Separação Encontradas:</span>
-                    <div className="border border-gray-300 rounded h-16 mt-1 w-full bg-white"></div>
+                  
+                  <div className="pt-1.5">
+                    <span className="text-[10px] font-bold block">Observações / Divergências:</span>
+                    <div className="border border-black h-12 mt-1.5 relative">
+                      <div className="absolute top-4 left-0 w-full border-b border-black/20"></div>
+                      <div className="absolute top-8 left-0 w-full border-b border-black/20"></div>
+                    </div>
                   </div>
                 </div>
+
               </div>
             );
           })}
