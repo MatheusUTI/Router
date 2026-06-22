@@ -809,24 +809,39 @@ export default function RoteirizacaoView({
         });
       }
 
-      // 3. Persist the pre-romaneios
-      await PreRomaneioRepository.putMany(newPreRomaneios);
-
-      // 4. Update state to show summary modal, clear current selections, show success toast
+      // Just update state to show confirmation modal, don't persist yet
       setGeneratedPreRomaneios(newPreRomaneios);
+    } catch (err) {
+      console.error('[Roteirizacao] Erro ao planejar pré-romaneios:', err);
+      setToastMessage('⚠️ Erro ao calcular pré-romaneios');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const handleConfirmPreRomaneio = async () => {
+    if (!generatedPreRomaneios) return;
+    try {
+      // 1. Persist the pre-romaneios
+      await PreRomaneioRepository.putMany(generatedPreRomaneios);
+
+      // 2. Clear current selections
+      const selectedCtrcs = filteredCtrcs.filter((c) => selectedIds.includes(c.id));
       clearSelection();
 
-      setToastMessage(`📦 Gerados ${newPreRomaneios.length} pré-romaneios com sucesso!`);
+      // 3. Update state, close modal and show success toast
+      setToastMessage(`📦 Gerados ${generatedPreRomaneios.length} pré-romaneios com sucesso!`);
       setTimeout(() => setToastMessage(null), 3000);
 
       // Call parent success callback to handle state update and route redirection
       if (onGeneratePreRomaneioSuccess) {
-        onGeneratePreRomaneioSuccess(newPreRomaneios, selectedCtrcs);
+        onGeneratePreRomaneioSuccess(generatedPreRomaneios, selectedCtrcs);
       }
     } catch (err) {
       console.error('[Roteirizacao] Erro ao gerar pré-romaneios de separação:', err);
       setToastMessage('⚠️ Erro ao gerar pré-romaneios');
       setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setGeneratedPreRomaneios(null);
     }
   };
 
@@ -1009,63 +1024,84 @@ export default function RoteirizacaoView({
       {generatedPreRomaneios && (
         <>
           <div 
-            className="fixed inset-0 bg-black/85 backdrop-blur-xs z-[100] transition-all duration-200" 
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] transition-all duration-200" 
             onClick={() => setGeneratedPreRomaneios(null)} 
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#080d1a] border border-emerald-500/45 rounded-2xl shadow-2xl z-[110] overflow-hidden flex flex-col p-5 font-sans">
-            <div className="flex items-center gap-3 border-b border-[#1b2b4d] pb-3 mb-4 shrink-0 select-none">
-              <span className="text-2xl">📦</span>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#0a0f1d] border border-emerald-500/40 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.85)] z-[110] overflow-hidden flex flex-col p-6 font-sans">
+            <div className="flex items-center gap-3.5 border-b border-[#1b2b4d] pb-4 mb-4 shrink-0 select-none">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+                📦
+              </div>
               <div>
-                <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider leading-none">Pré-Romaneio de Separação</h3>
-                <p className="text-[10px] text-emerald-400 font-bold uppercase font-mono mt-1">Carga Dividida por Portão Físico</p>
+                <h3 className="text-sm font-black text-white uppercase tracking-wider leading-none">Confirmar Pré-separação</h3>
+                <p className="text-[10px] text-emerald-400 font-bold uppercase font-mono mt-1.5 font-bold">Enviar lote agrupado por rota e portão para docas</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed uppercase font-mono mb-3">
-              As faturas foram agrupadas por suas rotas de destino e direcionadas aos respectivos portões de separação na filial:
+            <p className="text-[11px] text-slate-355 leading-relaxed uppercase font-mono mb-4">
+              O sistema consolidou as cargas selecionadas em lotes de separação física. Confirme o despacho abaixo para criar os respectivos pré-romaneios:
             </p>
 
-            <div className="flex-1 overflow-y-auto max-h-[280px] flex flex-col gap-3 pr-1 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto max-h-[300px] flex flex-col gap-3.5 pr-1.5 scrollbar-thin scrollbar-track-slate-950/20 scrollbar-thumb-emerald-500/20">
               {generatedPreRomaneios.map((pr) => (
-                <div key={pr.id} className="bg-[#0f1a30] border border-emerald-500/20 rounded-xl p-3 flex flex-col gap-2">
+                <div key={pr.id} className="bg-[#101726] border border-emerald-500/15 rounded-xl p-3 flex flex-col gap-2.5 hover:border-emerald-500/35 transition-colors duration-150">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <span>🚚</span> {pr.route}
+                    <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px]">🚚</span>
+                      {pr.route}
                     </span>
-                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold font-mono px-2 py-0.5 rounded uppercase">
+                    <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-black font-mono px-2.5 py-1 rounded-lg uppercase tracking-wider">
                       ⚓ {pr.gate}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10.5px] font-mono text-slate-300 pt-1 border-t border-[#1b2b4d]/40">
-                    <div>
-                      📑 CTRCs: <span className="text-white font-bold">{pr.ctrcIds.length}</span>
+                  {/* Elegant Bento Grid elements inside matching the custom styling guide */}
+                  <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-[#1b2d4f]/50">
+                    <div className="bg-[#0b0f19] border border-slate-800/60 rounded p-1.5 text-center">
+                      <div className="text-[8px] text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">📑 CTRCs</div>
+                      <div className="text-xs text-white font-black font-mono">{pr.ctrcIds.length}</div>
                     </div>
-                    <div>
-                      ⚖️ Peso: <span className="text-emerald-400 font-bold">{pr.totalWeight >= 1000 ? `${(pr.totalWeight / 1000).toFixed(2)}t` : `${pr.totalWeight} kg`}</span>
+                    <div className="bg-[#0b0f19] border border-slate-800/60 rounded p-1.5 text-center">
+                      <div className="text-[8px] text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">⚖️ Peso</div>
+                      <div className="text-xs text-emerald-450 font-black font-mono">
+                        {pr.totalWeight >= 1000 ? `${(pr.totalWeight / 1000).toFixed(1)}t` : `${pr.totalWeight}kg`}
+                      </div>
                     </div>
-                    <div>
-                      📦 Volumes: <span className="text-yellow-450 font-bold">{pr.totalVolumes}</span>
+                    <div className="bg-[#0b0f19] border border-slate-800/60 rounded p-1.5 text-center">
+                      <div className="text-[8px] text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">📦 Vols</div>
+                      <div className="text-xs text-yellow-450 font-black font-mono">{pr.totalVolumes}</div>
                     </div>
-                    <div>
-                      💰 Frete: <span className="text-sky-400 font-bold">R$ {pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <div className="bg-[#0b0f19] border border-slate-800/60 rounded p-1.5 text-center">
+                      <div className="text-[8px] text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">💰 Frete</div>
+                      <div className="text-[10px] text-sky-400 font-extrabold font-mono truncate" title={`R$ ${pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                        R$ {pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 pt-1 border-t border-[#1b2b4d]/20">
-                    <span>STATUS: EM SEPARAÇÃO</span>
-                    <span>DATA: {pr.planningDate}</span>
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-550 pt-1 border-t border-[#1b2d4f]/20">
+                    <span className="font-bold text-emerald-500/80 uppercase">● AGUARDANDO LIBERAÇÃO</span>
+                    <span>PROG: {pr.planningDate}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 pt-3 border-t border-[#1b2b4d] flex items-center justify-end gap-3 shrink-0">
+            {/* Standard buttons with secondary cancel action */}
+            <div className="mt-6 pt-4 border-t border-[#1b2b4d] flex items-center justify-between gap-3 shrink-0">
               <button
+                type="button"
                 onClick={() => setGeneratedPreRomaneios(null)}
-                className="w-full bg-emerald-650 hover:bg-emerald-600 border border-emerald-550 text-white font-black uppercase text-xs tracking-wider py-2.5 rounded-lg transition-all duration-150 cursor-pointer text-center"
+                className="px-4 py-2.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white uppercase font-black text-xs tracking-wider rounded-xl transition-all duration-150 cursor-pointer text-center flex-1"
               >
-                Concordar e Enviar às Docas de Separação
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPreRomaneio}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-550 border border-emerald-500/50 text-white font-black uppercase text-xs tracking-wider rounded-xl transition-all duration-150 active:scale-98 cursor-pointer text-center flex-[1.5] shadow-[0_4px_12px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_16px_rgba(16,185,129,0.25)]"
+              >
+                Confirmar envio para separação
               </button>
             </div>
           </div>

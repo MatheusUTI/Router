@@ -10,6 +10,7 @@ interface ExcelColumnFilterProps {
   onSortDesc: () => void;
   isSortedActiveAsc: boolean;
   isSortedActiveDesc: boolean;
+  customTrigger?: React.ReactNode;
 }
 
 export default function ExcelColumnFilter({
@@ -21,6 +22,7 @@ export default function ExcelColumnFilter({
   onSortDesc,
   isSortedActiveAsc,
   isSortedActiveDesc,
+  customTrigger,
 }: ExcelColumnFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,25 +99,31 @@ export default function ExcelColumnFilter({
   return (
     <div className="relative inline-block text-left select-none font-sans" ref={dropdownRef}>
       {/* Trigger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9.5px] md:text-[10.5px] font-extrabold uppercase transition-all duration-150 cursor-pointer ${
-          hasActiveFilter
-            ? 'bg-indigo-600/15 border-indigo-500 text-indigo-300 shadow-[0_0_6px_rgba(99,102,241,0.15)] animate-pulse'
-            : isSortedActiveAsc || isSortedActiveDesc
-            ? 'bg-teal-650/10 border-teal-500/50 text-teal-300'
-            : 'bg-[#060c16] border-slate-755/65 text-slate-350 hover:border-slate-600 hover:text-white'
-        }`}
-      >
-        <span>{label}</span>
-        {isSortedActiveAsc && <ArrowUp size={9} className="stroke-[3]" />}
-        {isSortedActiveDesc && <ArrowDown size={9} className="stroke-[3]" />}
-        {hasActiveFilter ? (
-          <Filter size={9} className="stroke-[2.5] text-indigo-400 fill-indigo-400/10" />
-        ) : (
-          <ChevronDown size={9} className="stroke-[2] text-slate-500" />
-        )}
-      </button>
+      {customTrigger ? (
+        <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer inline-flex items-center">
+          {customTrigger}
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9.5px] md:text-[10.5px] font-extrabold uppercase transition-all duration-150 cursor-pointer ${
+            hasActiveFilter
+              ? 'bg-indigo-600/15 border-indigo-500 text-indigo-300 shadow-[0_0_6px_rgba(99,102,241,0.15)] animate-pulse'
+              : isSortedActiveAsc || isSortedActiveDesc
+              ? 'bg-teal-650/10 border-teal-500/50 text-teal-300'
+              : 'bg-[#060c16] border-slate-755/65 text-slate-350 hover:border-slate-600 hover:text-white'
+          }`}
+        >
+          <span>{label}</span>
+          {isSortedActiveAsc && <ArrowUp size={9} className="stroke-[3]" />}
+          {isSortedActiveDesc && <ArrowDown size={9} className="stroke-[3]" />}
+          {hasActiveFilter ? (
+            <Filter size={9} className="stroke-[2.5] text-indigo-400 fill-indigo-400/10" />
+          ) : (
+            <ChevronDown size={9} className="stroke-[2] text-slate-500" />
+          )}
+        </button>
+      )}
 
       {/* Filter Dropdown Body */}
       {isOpen && (
