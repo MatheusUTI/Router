@@ -50,6 +50,38 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
     setIsLoading(true);
 
+    const uNormal = cleanUser.toLowerCase();
+    const uNoDomain = uNormal.endsWith("@rotaoperational.com") ? uNormal.replace("@rotaoperational.com", "") : uNormal;
+
+    const tryLocalFallback = async (): Promise<boolean> => {
+      try {
+        const localUsers = await getAppUsers();
+        const userMatch = localUsers.find(u => {
+          const dbUserLower = u.username.toLowerCase();
+          return (dbUserLower === uNormal || dbUserLower === uNoDomain) && u.password === cleanPass;
+        });
+
+        if (userMatch) {
+          setSuccessMsg("Autenticação efetuada com sucesso!");
+          const isMaster = !!userMatch.is_master;
+          if (isMaster) {
+            localStorage.setItem('master_last_unid', loginUnid);
+          }
+          const finalUnid = isMaster ? loginUnid : (userMatch.unid || DEFAULT_OPERATIONAL_UNIT);
+          setTimeout(() => {
+            onLoginSuccess({
+              ...userMatch,
+              unid: finalUnid
+            });
+          }, 800);
+          return true;
+        }
+      } catch (localErr) {
+        console.error("Erro no login local de fallback:", localErr);
+      }
+      return false;
+    };
+
     try {
       const creds = getSavedCredentials();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -80,28 +112,17 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           });
         }, 800);
       } else {
-        setErrorMsg(data.error || "Credenciais inválidas. Verifique seu login e senha.");
+        // Quando /api/auth/login responder erro, antes de mostrar o erro final:
+        const locallyAuthenticated = await tryLocalFallback();
+        if (!locallyAuthenticated) {
+          setErrorMsg("Credenciais inválidas ou usuário não sincronizado.");
+        }
       }
     } catch (err: any) {
-      // Fallback offline login using database helpers (localStorage/DEFAULT_APP_USERS)
       console.warn("API de login offline, testando login local fallback:", err);
-      const localUsers = await getAppUsers();
-      const userMatch = localUsers.find(
-        u => u.username.toLowerCase() === cleanUser.toLowerCase() && u.password === cleanPass
-      );
-
-      if (userMatch) {
-         const isMaster = !!userMatch.is_master;
-         if (isMaster) {
-           localStorage.setItem('master_last_unid', loginUnid);
-         }
-         const finalUnid = isMaster ? loginUnid : (userMatch.unid || DEFAULT_OPERATIONAL_UNIT);
-         onLoginSuccess({
-           ...userMatch,
-           unid: finalUnid
-         });
-      } else {
-        setErrorMsg("Erro de conexão ou credenciais locais inválidas.");
+      const locallyAuthenticated = await tryLocalFallback();
+      if (!locallyAuthenticated) {
+        setErrorMsg("Credenciais inválidas ou usuário não sincronizado.");
       }
     } finally {
       setIsLoading(false);

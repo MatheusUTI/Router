@@ -65,6 +65,11 @@ export default function RoteirizacaoView({
   // Operational Diagnostics Panel open state
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
 
+  // Operational Notices state management
+  const [isAvisosOpen, setIsAvisosOpen] = useState<boolean>(true);
+  const [noticesCount, setNoticesCount] = useState<number>(0);
+  const [highestNoticeSeverity, setHighestNoticeSeverity] = useState<'INFO' | 'WARNING' | 'CRITICAL'>('INFO');
+
   // User Preferences sync and visual density management
   const [densityMode, setDensityMode] = useState<DensityMode>('default');
   const [isPrefLoaded, setIsPrefLoaded] = useState<boolean>(false);
@@ -854,11 +859,21 @@ export default function RoteirizacaoView({
         planningDate={planningDate}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         diagnostics={diagnostics}
+        isAvisosOpen={isAvisosOpen}
+        setIsAvisosOpen={setIsAvisosOpen}
+        noticesCount={noticesCount}
+        highestNoticeSeverity={highestNoticeSeverity}
       />
 
       <OperationalNoticesBanner
         planningDate={planningDate}
         availableCtrcs={availableCtrcs}
+        isOpen={isAvisosOpen}
+        onClose={() => setIsAvisosOpen(false)}
+        onNoticesChange={(count, severity) => {
+          setNoticesCount(count);
+          setHighestNoticeSeverity(severity);
+        }}
       />
 
       {/* Main Containers: Left List (Full Width) */}

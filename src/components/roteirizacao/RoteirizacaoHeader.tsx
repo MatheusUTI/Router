@@ -17,6 +17,10 @@ interface RoteirizacaoHeaderProps {
   planningDate?: string;
   onOpenDiagnostics?: () => void;
   diagnostics?: RoteirizacaoDiagnostics;
+  isAvisosOpen?: boolean;
+  setIsAvisosOpen?: (open: boolean) => void;
+  noticesCount?: number;
+  highestNoticeSeverity?: 'INFO' | 'WARNING' | 'CRITICAL';
 }
 
 export default function RoteirizacaoHeader({
@@ -34,6 +38,10 @@ export default function RoteirizacaoHeader({
   planningDate,
   onOpenDiagnostics,
   diagnostics,
+  isAvisosOpen = true,
+  setIsAvisosOpen,
+  noticesCount = 0,
+  highestNoticeSeverity = 'INFO',
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -158,6 +166,33 @@ export default function RoteirizacaoHeader({
                 <span>📊 Diagnóstico</span>
               </>
             )}
+          </button>
+        )}
+
+        {/* Compact reopen notices badge (Avisos Operacionais) */}
+        {!isAvisosOpen && noticesCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsAvisosOpen?.(true)}
+            className={`rounded font-extrabold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none flex items-center gap-1.5 shrink-0 border shadow-sm ${
+              highestNoticeSeverity === 'CRITICAL'
+                ? 'bg-red-950/50 hover:bg-red-900/65 border-red-700/60 text-red-350 animate-pulse'
+                : highestNoticeSeverity === 'WARNING'
+                ? 'bg-amber-950/40 hover:bg-amber-900/50 border-amber-700/50 text-amber-350'
+                : 'bg-blue-950/40 hover:bg-blue-900/50 border-blue-900/55 text-blue-350'
+            }`}
+            title="Reabrir Avisos Operacionais"
+            id="reopen-notices-badge"
+          >
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                highestNoticeSeverity === 'CRITICAL' ? 'bg-red-400' : highestNoticeSeverity === 'WARNING' ? 'bg-amber-400' : 'bg-blue-400'
+              }`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                highestNoticeSeverity === 'CRITICAL' ? 'bg-red-500' : highestNoticeSeverity === 'WARNING' ? 'bg-amber-500' : 'bg-blue-500'
+              }`}></span>
+            </span>
+            <span>⚠️ Avisos ({noticesCount})</span>
           </button>
         )}
 

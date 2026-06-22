@@ -161,14 +161,15 @@ async function startServer() {
     }
 
     const cleanUser = username.trim().toLowerCase();
+    const loginName = cleanUser.endsWith("@rotaoperational.com") ? cleanUser.replace("@rotaoperational.com", "") : cleanUser;
     const cleanPass = password.trim();
 
-    console.log(`[BACKEND] Tentativa de login recebida para: ${cleanUser}`);
+    console.log(`[BACKEND] Tentativa de login recebida para: ${cleanUser} (loginName: ${loginName})`);
     const activeSupabase = getRequestSupabaseClient(req);
 
     try {
       if (activeSupabase) {
-        const email = cleanUser.includes("@") ? cleanUser : `${cleanUser}@rotaoperational.com`;
+        const email = cleanUser.includes("@") ? cleanUser : `${loginName}@rotaoperational.com`;
         
         console.log(`[BACKEND] Tentativa de login via Supabase para: ${email}`);
         
@@ -193,16 +194,16 @@ async function startServer() {
           console.log(`[BACKEND] Login corporativo autenticado com sucesso.`);
           const meta = authData.user.user_metadata || {};
           const mappedUser = {
-            username: cleanUser,
-            name: meta.name || authData.user.email?.split("@")[0] || username,
+            username: loginName,
+            name: meta.name || authData.user.email?.split("@")[0] || loginName,
             role: meta.role || "Operador de Despacho",
-            is_master: meta.is_master === true || cleanUser === 'master',
+            is_master: meta.is_master === true || loginName === 'master',
             created_at: authData.user.created_at
           };
 
           try {
             await activeSupabase.from("app_users").upsert({
-              username: cleanUser,
+              username: loginName,
               password: cleanPass,
               name: mappedUser.name,
               role: mappedUser.role,
@@ -229,7 +230,7 @@ async function startServer() {
                 const dbRes = await activeSupabase
                   .from("app_users")
                   .select("*")
-                  .eq("username", cleanUser);
+                  .eq("username", loginName);
                 dbData = dbRes.data;
                 dbError = dbRes.error;
               } catch (fetchErr: any) {
@@ -263,11 +264,11 @@ async function startServer() {
 
           // Let's check fallback auto-provisioning!
           const fallbackMatch = DEFAULT_APP_USERS.find(
-            u => u.username.toLowerCase() === cleanUser && u.password === cleanPass
+            u => u.username.toLowerCase() === loginName && u.password === cleanPass
           );
           
           if (fallbackMatch) {
-            console.log(`[BACKEND] Ativando conta corporativa padrão '${cleanUser}'.`);
+            console.log(`[BACKEND] Ativando conta corporativa padrão '${loginName}'.`);
             
             if (!isOffline && !offlineHosts.has(rxHost)) {
               try {
@@ -309,11 +310,11 @@ async function startServer() {
 
     // Try in-memory or fallback matching for seeds (including 'master')
     const match = inMemoryUsers.find(
-      u => u.username.toLowerCase() === cleanUser && u.password === cleanPass
+      u => u.username.toLowerCase() === loginName && u.password === cleanPass
     );
 
     if (match) {
-      console.log(`[BACKEND] Login realizado com sucesso via Fallback em Memória para: ${cleanUser}`);
+      console.log(`[BACKEND] Login realizado com sucesso via Fallback em Memória para: ${loginName}`);
       return res.json({
         success: true,
         user: {
@@ -451,7 +452,8 @@ async function startServer() {
             password: updatedUser.password,
             name: updatedUser.name,
             role: updatedUser.role,
-            is_master: updatedUser.is_master
+            is_master: updatedUser.is_master,
+            unid: updatedUser.unid
           });
 
         if (dbError) {
