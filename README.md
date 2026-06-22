@@ -6,6 +6,51 @@ O **Router** foi desenvolvido para preencher uma lacuna crítica nas operações
 
 ---
 
+## Status Estável Atual — V1.23.0
+
+**Baseline Operacional Estável da Roteirização.**
+
+A versão **V1.23.0** marca o primeiro ponto de estabilidade operacional validado em teste prático real. O fluxo principal do aplicativo foi comparado com a planilha operacional padrão usada atualmente e a primeira rota montada pelo Router apresentou resultado equivalente.
+
+### Fluxo validado
+
+```text
+Importação de CTRCs
+        ↓
+Mesa de Roteirização
+        ↓
+Organização e montagem da rota
+        ↓
+Pré-romaneio / pré-separação imprimível
+```
+
+### Escopo considerado funcional nesta baseline
+
+- Login operacional com usuário master.
+- Importação operacional de CTRCs.
+- Organização e leitura dos dados na Mesa de Roteirização.
+- Seleção e montagem prática de rota.
+- Geração e impressão da pré-separação, também chamada de pré-romaneio.
+
+### Limites conhecidos desta baseline
+
+Esta versão valida o núcleo **durante** a roteirização, mas ainda não declara como estáveis os fluxos antes da importação ou após o pré-romaneio.
+
+Pontos já identificados para evolução incremental:
+
+- melhorar a localização visual do CTRC na Mesa;
+- melhorar a leitura e exibição de dados operacionais;
+- refinar o fluxo antes da importação;
+- revisar e amadurecer o fluxo posterior ao pré-romaneio;
+- separar futuramente Mesa ativa, histórico, entregues, ocorrências e KPIs;
+- preparar importação única do SSW com classificação automática por situação do CTRC.
+
+### Decisão de projeto
+
+A partir da **V1.23.0**, o fluxo **importação → mesa → montagem de rota → pré-romaneio** deve ser tratado como núcleo funcional protegido. Novas mudanças devem ser pequenas, incrementais e guiadas por testes reais, evitando refatorações amplas que possam quebrar o comportamento já validado.
+
+---
+
 ## 1. Visão Geral do Sistema
 
 No ecossistema de transporte de cargas e logística de distribuição (TMS/WMS), a velocidade operacional e a continuidade dos processos de expedição e montagem de cargas são imperativas. Paradas de poucos minutos na doca de carregamento causadas por lentidão de rede, indisponibilidade do banco de dados na nuvem ou quedas de conexão geram custos em cadeia (veículos ociosos, atrasos em janelas de entrega do varejo e horas extras de operadores).
@@ -98,13 +143,15 @@ src/
 O Router expandiu seu arcabouço de persistência local para garantir governança logística total, dividindo seus domínios de escopo de forma clara.
 
 ### Módulos Já Operacionais
-- **Calendário Operacional (Avisos de Feriados)**: Base local semeadora contendo feriados de Minas Gerais para 2026. Parser inteligente e banner superior no cockpit alertando sobre suspensões e recessos iminentes nos próximos 5 dias, com link direto às rotas ativas exibidas na mesa.
+- **Baseline Operacional V1.23.0**: Fluxo validado de importação, organização da Mesa, montagem prática da rota e impressão do pré-romaneio.
+- **Calendário Operacional (Avisos de Feriados)**: Base local semeadora contendo feriados de Minas Gerais para 2026. Parser inteligente e aviso compacto no cockpit alertando sobre suspensões e recessos iminentes nos próximos 5 dias, com link direto às rotas ativas exibidas na mesa.
 - **Simplificação e Agilidade Visual**: Cabeçalho condensado extremamente limpo contendo apenas filtros de Filial, Rota, Setor de Ocorrência com múltipla escolha e Ordenação operacional sem quebras visuais sob zoom de navegador.
 - **Setor de Ocorrência e Ordenação Excel**: Fluxo operacional inspirado na planilha Excel para marcar/desmarcar múltiplos setores simultaneamente e ordenar toda a carga em tempo real (Ex: por data de entrega crescente/decrescente, remetente, valor, peso etc.).
 - **Elegibilidade Interna de Segurança**: O campo `routingEligibility` opera silenciosamente como guardião de risco no motor de negócios, sinalizando perigo nas listagens inferiores e interrompendo consolidações de faturas que estejam em trânsito ou finalizadas.
 - **Enriquecimento Operacional**: Conversão assíncrona de CTRC bruto importado em um objeto de negócios enriquecido de dados normalizados de rotas, classes comerciais, restrições e SLAs.
 - **RoteirizacaoView / Dashboard**: Vista contendo duas colunas (Cargas x Veículos), priorizando rascunhos em tempo real com controle de payload restante e sugestão automatizada de veículo.
-- **Importação ERP (Mapeadores)**: Mapeador de carga flexível capaz de traduzir metadados brutos originados de sistemas ERP em payloads válidos.
+- **Importação ERP/SSW (Mapeadores)**: Mapeador de carga flexível capaz de traduzir metadados brutos originados de sistemas ERP/TMS em payloads válidos.
+- **Pré-romaneio / Pré-separação**: Impressão operacional da carga consolidada para conferência e separação física na doca.
 - **Persistência Local Offline**: Bancos transacionais de cadastros, dicionários de cidades e ocorrências diretamente no IndexedDB via Dexie.
 - **Gestão da Frota do Pátio**: Rastreamento rápido e preciso da ocupação de veículos por peso (kg) e volumetria (volumes) por viagem ou rascunho.
 - **Base de Curva A Local**: Registro indexado de CNPJs prioritários para indicação destacada instantânea na expedição.
@@ -114,8 +161,11 @@ O Router expandiu seu arcabouço de persistência local para garantir governanç
 - **Roteirização Automática / Sugestões Complexas**: Algoritmo que calcula agrupamento lógico de CTRCs com o veículo disponível de menor custo associado que atenda às datas de entrega.
 - **Algoritmo TSP (Travelling Salesperson) de Sequenciamento**: Ordenação geográfica lógica de posições e sequências de e-commerce/varejo após a finalização e emissão do romaneio.
 - **Consolidador Centralizado de Romaneios**: Processo em background que transfere pacotes assinados de romaneios locais consolidados em lotes para arquivamento no Supabase Cloud.
+- **Fluxo pós-pré-romaneio**: Etapas de fechamento, finalização e integração operacional após a pré-separação ainda exigem validação real e refinamento.
 
 ### Módulos Futuros
+- **Importação SSW Completa com Classificação Automática**: Entrada única contendo pendentes, entregues, ocorrências e finalizados, separando automaticamente Mesa ativa, histórico e base analítica.
+- **KPIs Históricos e Performance Operacional**: Indicadores por rota, cidade, cliente, ocorrência, prazo, peso, volume e performance de entrega.
 - **Mobile de Assinatura Digital e Entrega**: Extensão móvel para o motorista realizar coletas, baixar entregas em campo e atualizar reativamente o status de pátio na doca.
 - **Torre de Controle de Frota**: Monitoramento georreferenciado e controle de tempos de descarregamento em tempo real.
 
@@ -152,7 +202,10 @@ Para blindar o sistema contra inconsistências comuns originadas em bancos de da
          [Consolidação de Rota] ──────────────────► Agrupamentos por rota, conferência de lotes e volumes totais
                      │
                      ▼
-      [Escolha de Veículo & Equipe] ──────────────► Distribui equipes (ajudantes e motoristas) e sugere frotas
+      [Pré-romaneio / Pré-separação] ─────────────► Impressão operacional para conferência e separação física
+                     │
+                     ▼
+       [Escolha de Veículo & Equipe] ─────────────► Distribui equipes (ajudantes e motoristas) e sugere frotas
                      │                              adequadas por limite técnico de peso e cubagem de payload
                      ▼
       [Faturando Romaneios / Draft]
@@ -163,9 +216,6 @@ Para blindar o sistema contra inconsistências comuns originadas em bancos de da
                      ▼
    [Sync Queue / Provedor Cloud] ─────────────────► Sincronização em lotes assíncronos junto ao Supabase Cloud
 ```
-
----
-
 
 ---
 
@@ -200,7 +250,7 @@ export interface UserPreference {
   id: string; // ID estrutural baseado no usuário logado
   username: string;
   view: string;
-  preferences: any; 
+  preferences: any;
   updated_at: string;
 }
 
@@ -299,9 +349,11 @@ npm run build
 
 ## 10. Status Atual do Projeto e Maturidade
 
+- 🟩 **Baseline Operacional Estável — V1.23.0**: Núcleo validado em teste real até o pré-romaneio. Inclui importação de CTRCs, organização da Mesa, montagem de rota e impressão da pré-separação.
 - 🟩 **Instalado e Consolidado**: Persistência local multi-tabelas IndexedDB transacional; motor de enriquecimento automático de CTRCs brutos em lote; interface modular do cockpit de roteirização rápida e dinâmica com feedback tátil e bloqueaduras de payload.
-- 🟡 **Em Amadurecimento**: Sincronização assíncrona do histórico de romaneios assinados da 'sync_queue' com a nuvem centralizada no Supabase e conciliação remota periódica.
-- 💤 **Planejado**: Automatização completa de arranjos bidimensionais de caixas em baú de carregamento logístico (cubagem tática gráfica tridimensional).
+- 🟡 **Em Hardening Operacional**: Refinamento da localização visual do CTRC, clareza de leitura dos dados na Mesa, ajustes no fluxo anterior à importação e validação do fluxo posterior ao pré-romaneio.
+- 🟡 **Em Amadurecimento**: Sincronização assíncrona do histórico de romaneios assinados da `sync_queue` com a nuvem centralizada no Supabase e conciliação remota periódica.
+- 💤 **Planejado**: Importação SSW completa com classificação automática entre Mesa ativa, histórico, entregues, ocorrências e base futura de KPIs; automatização completa de arranjos bidimensionais de caixas em baú de carregamento logístico.
 
 ---
 
