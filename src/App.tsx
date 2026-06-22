@@ -25,6 +25,7 @@ import {
 } from './supabase';
 
 // Local Persistence Layer & Repositories
+import { db } from './infrastructure/localdb/db';
 import { runCompatibilityMigration } from './infrastructure/localdb/adapters/localStorageAdapter';
 import { CtrcRepository } from './infrastructure/localdb/repositories/ctrcRepository';
 import { VehicleRepository } from './infrastructure/localdb/repositories/vehicleRepository';
@@ -419,12 +420,32 @@ export default function App() {
   // IMPORTAÇÃO DE CTRC
   // ---------------------------------------------------------
   const handleAddCtrcs = async (newCtrcs: Ctrc[]) => {
+    // 0. Fetch all existing local CTRCs first to find and isolate the active/available queue
+    const allExistingCtrcs = await CtrcRepository.getAll();
+    const { available: oldAvailable, linked: oldLinked } = await partitionCtrcs(allExistingCtrcs);
+    const oldAvailableCount = oldAvailable.length;
+
+    // Remove old active/available CTRCs from DB to prevent merging/growing queue
+    const deletedCtrcIds = oldAvailable.map(c => c.id);
+    if (deletedCtrcIds.length > 0) {
+      await CtrcRepository.deleteMany(deletedCtrcIds);
+      // Clean up planning items for those deleted CTRCs (unconsolidated routing links)
+      try {
+        const planningItemsToDelete = await db.route_planning_items.where('ctrcId').anyOf(deletedCtrcIds).toArray();
+        if (planningItemsToDelete.length > 0) {
+          await db.route_planning_items.bulkDelete(planningItemsToDelete.map(p => p.id));
+        }
+      } catch (err) {
+        console.warn('[Importacao] Falha ao limpar prioridades/vínculos de rota obsoletos:', err);
+      }
+    }
+
     // 1. Load existing CTRCs from the offline database to perform a safe merge
     const ids = newCtrcs.map(c => c.id);
     const existingCtrcs = await CtrcRepository.getByIds(ids);
     const existingMap = new Map<string, Ctrc>(existingCtrcs.map(c => [c.id, c]));
 
-    // 2. Perform safe merge: keep new raw SSW fields but preserve existing local decisions/states
+    // 2. Perform safe merge: keep new raw SSW fields but preserve existing local decisions/states (for linked/saved CTRCs)
     const mergedCtrcs = newCtrcs.map((newCtrc) => {
       const existing = existingMap.get(newCtrc.id);
       if (!existing) {
@@ -459,21 +480,16 @@ export default function App() {
       return merged;
     });
 
-    // 3. Update memory react state safely partitioning by their previous state/status
-    setAvailableCtrcs((prev) => {
-      const filtered = prev.filter(p => !mergedCtrcs.some(n => n.id === p.id));
-      // Only append brand-new CTRCs or existing available CTRCs
-      const toAvailable = mergedCtrcs.filter((c) => {
-        const existing = existingMap.get(c.id);
-        if (!existing) return true; // Brand-new goes to available list
-        return isStatusAvailable(existing.status);
-      });
-      return [...filtered, ...toAvailable];
-    });
+    // 3. Update memory react states safely replacing the active available queue
+    const oldLinkedIdsSet = new Set(oldLinked.map(l => l.id));
+    const toAvailable = mergedCtrcs.filter(c => !oldLinkedIdsSet.has(c.id));
+
+    setAvailableCtrcs(toAvailable);
 
     setLinkedCtrcs((prev) => {
       // Merge updated raw fields for items already inside the linked list
-      return prev.map((item) => {
+      const filtered = prev.filter(p => !deletedCtrcIds.includes(p.id));
+      return filtered.map((item) => {
         const merged = mergedCtrcs.find((m) => m.id === item.id);
         return merged ? merged : item;
       });
@@ -482,7 +498,11 @@ export default function App() {
     // 4. Batch persist to local IndexedDB
     await CtrcRepository.putMany(mergedCtrcs);
 
-    // 2. Incremental historical occurrence capture to IndexedDB
+    // 5. Stash the import stats in localStorage so we can display beautiful, detailed numbers in the UI
+    localStorage.setItem('last_import_old_removed_count', String(oldAvailableCount));
+    localStorage.setItem('last_import_new_added_count', String(newCtrcs.length));
+
+    // 6. Incremental historical occurrence capture to IndexedDB
     try {
       const nowStr = new Date().toISOString();
       const historyItemsToSave: CtrcOccurrenceHistoryItem[] = [];

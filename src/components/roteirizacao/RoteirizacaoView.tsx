@@ -548,6 +548,12 @@ export default function RoteirizacaoView({
     clearSelection,
   } = useCargaSelection();
 
+  // Clean stale selected checked row elements which are no longer present inside availableCtrcs elements
+  useEffect(() => {
+    const activeIds = availableCtrcs.map((c) => c.id);
+    setSelectedIds((prev) => prev.filter((id) => activeIds.includes(id)));
+  }, [availableCtrcs, setSelectedIds]);
+
   // Subordinated colapsable groupings
   const {
     groupingMode,

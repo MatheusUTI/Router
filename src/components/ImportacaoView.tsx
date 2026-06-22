@@ -588,7 +588,9 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     }
 
     onAddCtrcs(parsedRecords);
-    setSuccessMsg(`Importação realizada com sucesso de ${parsedRecords.length} CTRCs vindos do arquivo local! Eles acabaram de ser anexados ao painel operacional e estão prontos para a formulação do seu Romaneio.`);
+    const oldCount = localStorage.getItem('last_import_old_removed_count') || '0';
+    const newCount = localStorage.getItem('last_import_new_added_count') || String(parsedRecords.length);
+    setSuccessMsg(`Importação concluída. A fila ativa foi substituída por ${newCount} CTRCs do novo arquivo. ${oldCount} CTRCs antigos foram removidos da Mesa ativa.`);
     
     // reset file states only while retaining mappings layout on local storage
     setFileName(null);
