@@ -191,12 +191,62 @@ export default function FinalizacaoView({
     loadPreRomaneiosData();
   }, [manifestDate, activeTab]);
 
+  const handleUpdatePreRomaneioField = async (prId: string, field: keyof PreRomaneio, val: any) => {
+    const pr = preRomaneios.find(p => p.id === prId);
+    if (!pr) return;
+
+    const prevStatus = pr.status;
+
+    // 1. Update in-memory state
+    setPreRomaneios((prev) =>
+      prev.map((item) => (item.id === prId ? { ...item, [field]: val } : item))
+    );
+
+    // 2. Persist to DB and cascade changes if needed
+    try {
+      if (field === 'status') {
+        const newStatus = val as any;
+        await PreRomaneioRepository.updateStatus(prId, newStatus);
+
+        if (newStatus === 'CANCELADO' && prevStatus !== 'CANCELADO') {
+          if (pr.ctrcIds && pr.ctrcIds.length > 0) {
+            const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+            const updated = prCtrcs.map(c => ({ 
+              ...c, 
+              status: 'Disponível' as const,
+              preRomaneioId: undefined 
+            }));
+            await CtrcRepository.putMany(updated);
+          }
+        } else if (prevStatus === 'CANCELADO' && newStatus !== 'CANCELADO') {
+          if (pr.ctrcIds && pr.ctrcIds.length > 0) {
+            const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+            const updated = prCtrcs.map(c => ({ 
+              ...c, 
+              status: 'Separando' as const,
+              preRomaneioId: prId 
+            }));
+            await CtrcRepository.putMany(updated);
+          }
+        }
+        
+        triggerToast(`Status do pré-romaneio ${pr.route} atualizado.`);
+        loadPreRomaneiosData();
+        if (onRefreshCtrcs) {
+          await onRefreshCtrcs();
+        }
+      } else {
+        await PreRomaneioRepository.updateAssignment(prId, { [field]: val });
+      }
+    } catch (err) {
+      console.error('[FinalizacaoView] Error updating pre-romaneio field:', err);
+    }
+  };
+
   const programacaoRows: any[] = [];
 
-  // Filter and map preRomaneios that have either vehiclePlate or driverName filled
-  const preRomaneiosToShip = preRomaneios.filter(
-    (pr) => (pr.vehiclePlate && pr.vehiclePlate.trim() !== '') || (pr.driverName && pr.driverName.trim() !== '')
-  );
+  // Active planning views link to the exact same pre-romaneios list, fully sync'd
+  const preRomaneiosToShip = preRomaneios;
 
   preRomaneiosToShip.forEach((pr) => {
     const matchingCtrcs = (pr.ctrcIds || [])
@@ -205,15 +255,16 @@ export default function FinalizacaoView({
 
     programacaoRows.push({
       id: pr.id,
-      vehiclePlate: pr.vehiclePlate || 'S/P',
-      driverName: pr.driverName || 'Não Informado',
-      helperName: pr.helperName || 'Não Informado',
+      vehiclePlate: pr.vehiclePlate || '',
+      driverName: pr.driverName || '',
+      helperName: pr.helperName || '',
       ctrcs: matchingCtrcs,
       isDraft: false,
       observations: pr.observations || pr.notes || '',
       date: pr.planningDate,
       route: pr.route,
-      gate: pr.gate
+      gate: pr.gate || '',
+      status: pr.status
     });
   });
 
@@ -669,11 +720,14 @@ export default function FinalizacaoView({
                         <th className="p-3">PLACA</th>
                         <th className="p-3">MOTORISTA</th>
                         <th className="p-3">AJUDANTE</th>
+                        <th className="p-3">PORTÃO</th>
+                        <th className="p-3">STATUS</th>
                         <th className="p-3">SETOR</th>
                         <th className="p-3">CIDADES</th>
                         <th className="p-3 text-center">QT NF</th>
                         <th className="p-3 text-right">PESO (kg)</th>
                         <th className="p-3 text-right">QT VOL</th>
+                        <th className="p-3">OBSERVAÇÕES</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/30">
@@ -684,14 +738,70 @@ export default function FinalizacaoView({
                         const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
                         return (
                           <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
-                            <td className="p-3 font-mono font-bold text-primary">{row.vehiclePlate}</td>
-                            <td className="p-3 text-white">{row.driverName}</td>
-                            <td className="p-3 text-on-surface-variant">{row.helperName}</td>
-                            <td className="p-3 font-mono text-on-surface-variant">{s}</td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.vehiclePlate}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs w-[100px] focus:outline-none"
+                                placeholder="Placa"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.driverName}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
+                                placeholder="Motorista"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.helperName}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
+                                placeholder="Ajudante"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.gate || ''}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[80px] focus:outline-none"
+                                placeholder="Doca"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <select
+                                value={row.status}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[110px] focus:outline-none cursor-pointer"
+                              >
+                                <option value="RASCUNHO">Rascunho</option>
+                                <option value="EM_SEPARACAO">Separando</option>
+                                <option value="SEPARADO">Separado</option>
+                                <option value="COM_DIVERGENCIA">Divergência</option>
+                                <option value="CANCELADO">Cancelado</option>
+                                <option value="CONVERTIDO_ROMANEIO">Convertido</option>
+                              </select>
+                            </td>
+                            <td className="p-3 font-mono text-on-surface-variant max-w-[120px] truncate" title={s}>{s}</td>
                             <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
                             <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
                             <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
                             <td className="p-3 text-right font-mono text-white">{volSum}</td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.observations}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[180px] focus:outline-none"
+                                placeholder="Observações..."
+                              />
+                            </td>
                           </tr>
                         );
                       })}
@@ -725,11 +835,14 @@ export default function FinalizacaoView({
                         <th className="p-3">PLACA</th>
                         <th className="p-3">MOTORISTA</th>
                         <th className="p-3">AJUDANTE</th>
+                        <th className="p-3">PORTÃO</th>
+                        <th className="p-3">STATUS</th>
                         <th className="p-3">SETOR</th>
                         <th className="p-3">CIDADES</th>
                         <th className="p-3 text-center">QT NF</th>
                         <th className="p-3 text-right">PESO (kg)</th>
                         <th className="p-3 text-right">QT VOL</th>
+                        <th className="p-3">OBSERVAÇÕES</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/30">
@@ -740,14 +853,70 @@ export default function FinalizacaoView({
                         const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
                         return (
                           <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
-                            <td className="p-3 font-mono font-bold text-primary">{row.vehiclePlate}</td>
-                            <td className="p-3 text-white">{row.driverName}</td>
-                            <td className="p-3 text-on-surface-variant">{row.helperName}</td>
-                            <td className="p-3 font-mono text-on-surface-variant">{s}</td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.vehiclePlate}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs w-[100px] focus:outline-none"
+                                placeholder="Placa"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.driverName}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
+                                placeholder="Motorista"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.helperName}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
+                                placeholder="Ajudante"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.gate || ''}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[80px] focus:outline-none"
+                                placeholder="Doca"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <select
+                                value={row.status}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[110px] focus:outline-none cursor-pointer"
+                              >
+                                <option value="RASCUNHO">Rascunho</option>
+                                <option value="EM_SEPARACAO">Separando</option>
+                                <option value="SEPARADO">Separado</option>
+                                <option value="COM_DIVERGENCIA">Divergência</option>
+                                <option value="CANCELADO">Cancelado</option>
+                                <option value="CONVERTIDO_ROMANEIO">Convertido</option>
+                              </select>
+                            </td>
+                            <td className="p-3 font-mono text-on-surface-variant max-w-[120px] truncate" title={s}>{s}</td>
                             <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
                             <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
                             <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
                             <td className="p-3 text-right font-mono text-white">{volSum}</td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={row.observations}
+                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
+                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[180px] focus:outline-none"
+                                placeholder="Observações..."
+                              />
+                            </td>
                           </tr>
                         );
                       })}
@@ -1526,12 +1695,7 @@ export default function FinalizacaoView({
                             <input
                               type="text"
                               value={pr.vehiclePlate || ''}
-                              onChange={async (e) => {
-                                const val = e.target.value.toUpperCase();
-                                // Update local list state so it registers immediately
-                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, vehiclePlate: val } : item));
-                                await PreRomaneioRepository.updateAssignment(pr.id, { vehiclePlate: val });
-                              }}
+                              onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'vehiclePlate', e.target.value.toUpperCase())}
                               placeholder="Placa (ex: ABC1234)"
                               className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 font-mono focus:outline-none"
                             />
@@ -1541,11 +1705,7 @@ export default function FinalizacaoView({
                             <input
                               type="text"
                               value={pr.driverName || ''}
-                              onChange={async (e) => {
-                                const val = e.target.value;
-                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, driverName: val } : item));
-                                await PreRomaneioRepository.updateAssignment(pr.id, { driverName: val });
-                              }}
+                              onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'driverName', e.target.value)}
                               placeholder="Nome Motorista"
                               className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
                             />
@@ -1555,25 +1715,27 @@ export default function FinalizacaoView({
                             <input
                               type="text"
                               value={pr.helperName || ''}
-                              onChange={async (e) => {
-                                const val = e.target.value;
-                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, helperName: val } : item));
-                                await PreRomaneioRepository.updateAssignment(pr.id, { helperName: val });
-                              }}
+                              onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'helperName', e.target.value)}
                               placeholder="Nome Ajudante"
                               className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
                             />
                           </div>
                           <div>
+                            <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Portão/Doca</label>
+                            <input
+                              type="text"
+                              value={pr.gate || ''}
+                              onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'gate', e.target.value)}
+                              placeholder="Portão ou Doca"
+                              className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                            />
+                          </div>
+                          <div className="col-span-2">
                             <label className="text-[8.5px] text-on-surface-variant uppercase font-bold block mb-1">Observações</label>
                             <input
                               type="text"
                               value={pr.observations || ''}
-                              onChange={async (e) => {
-                                const val = e.target.value;
-                                setPreRomaneios(prev => prev.map(item => item.id === pr.id ? { ...item, observations: val } : item));
-                                await PreRomaneioRepository.updateAssignment(pr.id, { observations: val });
-                              }}
+                              onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'observations', e.target.value)}
                               placeholder="Obs/Instruções"
                               className="w-full bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 hover:border-outline rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
                             />
@@ -1594,39 +1756,7 @@ export default function FinalizacaoView({
                       {/* Status select quick-switcher */}
                       <select
                         value={pr.status}
-                        onChange={async (e) => {
-                          const newStatus = e.target.value as any;
-                          const prevStatus = pr.status;
-                          await PreRomaneioRepository.updateStatus(pr.id, newStatus);
-                          
-                          if (newStatus === 'CANCELADO' && prevStatus !== 'CANCELADO') {
-                            if (pr.ctrcIds && pr.ctrcIds.length > 0) {
-                              const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
-                              const updated = prCtrcs.map(c => ({ 
-                                ...c, 
-                                status: 'Disponível' as const,
-                                preRomaneioId: undefined 
-                              }));
-                              await CtrcRepository.putMany(updated);
-                            }
-                          } else if (prevStatus === 'CANCELADO' && newStatus !== 'CANCELADO') {
-                            if (pr.ctrcIds && pr.ctrcIds.length > 0) {
-                              const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
-                              const updated = prCtrcs.map(c => ({ 
-                                ...c, 
-                                status: 'Separando' as const,
-                                preRomaneioId: pr.id 
-                              }));
-                              await CtrcRepository.putMany(updated);
-                            }
-                          }
-                          
-                          triggerToast(`Status do pré-romaneio ${pr.route} atualizado.`);
-                          loadPreRomaneiosData();
-                          if (onRefreshCtrcs) {
-                            await onRefreshCtrcs();
-                          }
-                        }}
+                        onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'status', e.target.value)}
                         className="bg-slate-900 border border-outline-variant/50 hover:border-outline-variant rounded-lg px-2 py-2 text-xs text-white font-mono cursor-pointer focus:outline-none"
                       >
                         <option value="RASCUNHO">Rascunho</option>

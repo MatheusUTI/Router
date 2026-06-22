@@ -645,9 +645,6 @@ export default function App() {
 
     // 4. Force state direction to pre-romaneio list
     localStorage.setItem('finalizacao_initial_tab', 'preromaneio');
-
-    // 5. Navigate
-    setCurrentView('finalizacao');
   };
 
   // ---------------------------------------------------------
