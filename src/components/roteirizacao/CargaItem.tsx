@@ -179,6 +179,27 @@ const normalizeSswSeriesFromUnit = (rawUnit?: string): string | null => {
   return null;
 };
 
+const formatSswDate = (date: Date): string => {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = String(date.getFullYear()).slice(-2);
+
+  return `${d}${m}${y}`;
+};
+
+const getSswSafeDateRange = (): { dataIni: string; dataFin: string } => {
+  const today = new Date();
+
+  const start = new Date(today);
+  start.setMonth(start.getMonth() - 23);
+  start.setDate(1);
+
+  return {
+    dataIni: formatSswDate(start),
+    dataFin: formatSswDate(today),
+  };
+};
+
 const buildSswLink = (ctrc: Pick<RoteirizacaoItem, 'id' | 'unid'>): string | null => {
   const rawId = String(ctrc.id ?? '').trim();
 
@@ -191,17 +212,14 @@ const buildSswLink = (ctrc: Pick<RoteirizacaoItem, 'id' | 'unid'>): string | nul
     return null;
   }
 
-  const today = new Date();
-  const d = String(today.getDate()).padStart(2, '0');
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const y = String(today.getFullYear()).slice(-2);
+  const { dataIni, dataFin } = getSswSafeDateRange();
 
   const params = new URLSearchParams({
     act: 'P1',
     t_ser_ctrc: series,
     t_nro_ctrc: number,
-    t_data_ini: '010124',
-    t_data_fin: `${d}${m}${y}`,
+    t_data_ini: dataIni,
+    t_data_fin: dataFin,
   });
 
   return `https://sistema.ssw.inf.br/bin/ssw0053?${params.toString()}`;
