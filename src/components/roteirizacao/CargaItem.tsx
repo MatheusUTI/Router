@@ -126,16 +126,70 @@ const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; bo
   return { bg: 'bg-[#101a2e]', text: 'text-slate-350', border: 'border-slate-800' };
 };
 
+const SSW_SERIES_BY_UNIT: Record<string, string> = {
+  'RCS - VGA': 'BCA',
+  'RCS - VGS': 'BCA',
+  VGA: 'BCA',
+  VGS: 'BCA',
+};
+
+const parseSswCtrcCode = (rawId: string): { series: string | null; number: string | null } => {
+  const value = String(rawId ?? '').trim().toUpperCase();
+
+  if (!value) {
+    return { series: null, number: null };
+  }
+
+  // Padrão principal do SSW/BI:
+  // BCA217880-0
+  // BCA217880
+  // BCA 217880-0
+  // BCA-217880-0
+  const fullMatch = value.match(/^([A-Z]{2,5})[-\s]?(\d+)(?:-\d+)?$/);
+
+  if (fullMatch) {
+    return {
+      series: fullMatch[1],
+      number: fullMatch[2],
+    };
+  }
+
+  // Fallback: se vier apenas número.
+  const digitsOnly = value.replace(/\D/g, '');
+
+  return {
+    series: null,
+    number: digitsOnly || null,
+  };
+};
+
+const normalizeSswSeriesFromUnit = (rawUnit?: string): string | null => {
+  const unit = String(rawUnit ?? '').trim().toUpperCase();
+
+  if (!unit) return null;
+
+  if (SSW_SERIES_BY_UNIT[unit]) {
+    return SSW_SERIES_BY_UNIT[unit];
+  }
+
+  if (unit.includes('VGA') || unit.includes('VGS')) {
+    return 'BCA';
+  }
+
+  return null;
+};
+
 const buildSswLink = (ctrc: Pick<RoteirizacaoItem, 'id' | 'unid'>): string | null => {
   const rawId = String(ctrc.id ?? '').trim();
-  if (!rawId) return null;
 
-  const match = rawId.match(/^([a-zA-Z]+)[-\s]?(\d+)$/) || rawId.match(/^([a-zA-Z]+)(\d+)$/);
+  const parsed = parseSswCtrcCode(rawId);
 
-  const series = String(ctrc.unid || match?.[1] || '').trim().toUpperCase();
-  const number = match?.[2] || rawId.replace(/\D/g, '') || rawId;
+  const series = parsed.series || normalizeSswSeriesFromUnit(ctrc.unid);
+  const number = parsed.number;
 
-  if (!series || !number) return null;
+  if (!series || !number) {
+    return null;
+  }
 
   const today = new Date();
   const d = String(today.getDate()).padStart(2, '0');
