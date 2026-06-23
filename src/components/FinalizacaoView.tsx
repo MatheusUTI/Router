@@ -669,270 +669,416 @@ export default function FinalizacaoView({
             </div>
           </div>
 
-          {/* Quick Metrics stats ribbon */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
-              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Total Veículos</span>
-              <div className="text-2xl font-black text-white font-mono">{programacaoRows.length}</div>
-            </div>
+          {/* Executive Summary Dashboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
-              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Total CTRCs / NF</span>
-              <div className="text-2xl font-black text-white font-mono">
-                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}
+            {/* Real-time Printed Pocket Manifest Summary Receipt */}
+            <div className="bg-slate-950 border border-outline-variant/40 rounded-2xl p-5 font-mono shadow-inner relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute right-4 top-4 opacity-[0.03] pointer-events-none select-none font-sans text-7xl font-black">
+                DOCA
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center border-b border-dashed border-outline-variant/30 pb-2.5 mb-3.5">
+                  <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">Programação do Dia</span>
+                  <span className="text-[10px] text-on-surface-variant bg-slate-900 border border-white/5 px-2 py-0.5 rounded">
+                    {manifestDate}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 text-xs text-white">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">Pré-romaneios:</span>
+                    <span className="font-bold text-white text-sm">{programacaoRows.length}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">CTRCs Totais:</span>
+                    <span className="font-bold text-white">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">NFs Estimadas:</span>
+                    <span className="font-bold text-white">
+                      {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => {
+                        if (!c.nf) return sum;
+                        const parts = c.nf.split(/[\s,;\/\\|]+/).filter(Boolean);
+                        return sum + (parts.length > 0 ? parts.length : 1);
+                      }, 0), 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">Peso Consolidado:</span>
+                    <span className="font-bold text-emerald-400">
+                      {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">Volumes do Dia:</span>
+                    <span className="font-bold text-sky-400">
+                      {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline border-t border-dashed border-outline-variant/30 pt-2.5 mt-2.5">
+                    <span className="text-on-surface-variant">Veículos definidos:</span>
+                    <span className={`font-bold ${programacaoRows.filter(r => r.vehiclePlate && r.vehiclePlate.trim() !== '').length === programacaoRows.length ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {programacaoRows.filter(r => r.vehiclePlate && r.vehiclePlate.trim() !== '').length}/{programacaoRows.length}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-on-surface-variant">Motoristas definidos:</span>
+                    <span className={`font-bold ${programacaoRows.filter(r => r.driverName && r.driverName.trim() !== '').length === programacaoRows.length ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {programacaoRows.filter(r => r.driverName && r.driverName.trim() !== '').length}/{programacaoRows.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-outline-variant/30 pt-3 mt-3.5 flex justify-between items-center text-[10px] text-on-surface-variant">
+                <span>Varginha Filial</span>
+                <span className="uppercase tracking-widest text-[8px] font-black text-emerald-500">
+                  ● OPERACIONAL ATIVO
+                </span>
               </div>
             </div>
 
-            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
-              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Peso Consolidado</span>
-              <div className="text-2xl font-black text-white font-mono">
-                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} KG
+            {/* Status Breakdown & Alerts Bento Grid */}
+            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="bg-surface-container border border-outline-variant/40 rounded-2xl p-4 flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Rascunhos</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className="text-3xl font-black text-white font-mono">
+                    {programacaoRows.filter(r => r.status === 'RASCUNHO').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-300 font-bold rounded uppercase">RSC</span>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-surface-container border border-outline-variant/60 p-4 rounded-xl">
-              <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase block tracking-wider mb-1">Volume Movimentado</span>
-              <div className="text-2xl font-black text-white font-mono">
-                {programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)} VOL
+              <div className="bg-surface-container border border-outline-variant/40 rounded-2xl p-4 flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Separando</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className="text-3xl font-black text-amber-400 font-mono">
+                    {programacaoRows.filter(r => r.status === 'EM_SEPARACAO').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-amber-500/10 text-amber-500 font-bold rounded uppercase border border-amber-500/20">SEP</span>
+                </div>
+              </div>
+
+              <div className="bg-surface-container border border-outline-variant/40 rounded-2xl p-4 flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Separado</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className="text-3xl font-black text-emerald-400 font-mono">
+                    {programacaoRows.filter(r => r.status === 'SEPARADO').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-500 font-bold rounded uppercase border border-emerald-500/20">PRT</span>
+                </div>
+              </div>
+
+              <div className="bg-surface-container border border-outline-variant/40 rounded-2xl p-4 flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Com Divergência</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className="text-3xl font-black text-red-400 font-mono">
+                    {programacaoRows.filter(r => r.status === 'COM_DIVERGENCIA').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-red-500/10 text-red-500 font-bold rounded uppercase border border-red-500/20">DIV</span>
+                </div>
+              </div>
+
+              <div className={`bg-surface-container border rounded-2xl p-4 flex flex-col justify-between transition-all ${
+                programacaoRows.filter(r => !r.vehiclePlate || r.vehiclePlate.trim() === '').length > 0 
+                  ? 'border-amber-500/30 bg-amber-500/[0.02]' 
+                  : 'border-outline-variant/40'
+              }`}>
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Sem Veículo</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className={`text-3xl font-black font-mono ${
+                    programacaoRows.filter(r => !r.vehiclePlate || r.vehiclePlate.trim() === '').length > 0 ? 'text-amber-400' : 'text-white/40'
+                  }`}>
+                    {programacaoRows.filter(r => !r.vehiclePlate || r.vehiclePlate.trim() === '').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-300 font-bold rounded uppercase">PLC</span>
+                </div>
+              </div>
+
+              <div className={`bg-surface-container border rounded-2xl p-4 flex flex-col justify-between transition-all ${
+                programacaoRows.filter(r => !r.driverName || r.driverName.trim() === '').length > 0 
+                  ? 'border-amber-500/30 bg-amber-500/[0.02]' 
+                  : 'border-outline-variant/40'
+              }`}>
+                <span className="text-[10px] text-on-surface-variant font-mono font-bold uppercase tracking-wider block">Sem Motorista</span>
+                <div className="flex justify-between items-baseline mt-4">
+                  <span className={`text-3xl font-black font-mono ${
+                    programacaoRows.filter(r => !r.driverName || r.driverName.trim() === '').length > 0 ? 'text-amber-400' : 'text-white/40'
+                  }`}>
+                    {programacaoRows.filter(r => !r.driverName || r.driverName.trim() === '').length}
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-300 font-bold rounded uppercase">MTR</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Core Table Grid layout */}
-          <div className="bg-surface-container border border-outline-variant p-6 rounded-2xl space-y-6">
+          {/* Core Bento Card Grid & Logistics Rows */}
+          <div className="bg-surface-container border border-outline-variant p-6 rounded-2xl space-y-8">
             
-            {/* 1. FROTA SECTION */}
-            <div>
-              <div className="flex items-center justify-between border-b border-outline-variant/50 pb-2 mb-4">
-                <h2 className="text-xs font-black text-sky-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-sky-400" />
-                  Frota Própria Estável
-                </h2>
-                <span className="text-[10px] text-on-surface-variant font-mono">
-                  Veículos em rota: {frotaRows.length}
-                </span>
-              </div>
+            {/* Helper function defined at component level or styled cleanly */}
+            {(() => {
+              const formatCurrency = (val?: number) => {
+                if (val === undefined || val === null || isNaN(val)) return 'R$ 0,00';
+                return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              };
 
-              {frotaRows.length === 0 ? (
-                <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-surface/30 rounded-xl border border-dashed border-outline-variant/40">
-                  Nenhum veículo próprio alocado para hoje nesta central.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="text-on-surface-variant uppercase font-mono text-[10px] tracking-wider border-b border-outline-variant/40 bg-surface/40">
-                        <th className="p-3">PLACA</th>
-                        <th className="p-3">MOTORISTA</th>
-                        <th className="p-3">AJUDANTE</th>
-                        <th className="p-3">PORTÃO</th>
-                        <th className="p-3">STATUS</th>
-                        <th className="p-3">SETOR</th>
-                        <th className="p-3">CIDADES</th>
-                        <th className="p-3 text-center">QT NF</th>
-                        <th className="p-3 text-right">PESO (kg)</th>
-                        <th className="p-3 text-right">QT VOL</th>
-                        <th className="p-3">OBSERVAÇÕES</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/30">
-                      {frotaRows.map((row, rIdx) => {
-                        const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
-                        const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
-                        const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
-                        const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
-                        return (
-                          <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.vehiclePlate}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs w-[100px] focus:outline-none"
-                                placeholder="Placa"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.driverName}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
-                                placeholder="Motorista"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.helperName}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
-                                placeholder="Ajudante"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.gate || ''}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[80px] focus:outline-none"
-                                placeholder="Doca"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <select
-                                value={row.status}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[110px] focus:outline-none cursor-pointer"
-                              >
-                                <option value="RASCUNHO">Rascunho</option>
-                                <option value="EM_SEPARACAO">Separando</option>
-                                <option value="SEPARADO">Separado</option>
-                                <option value="COM_DIVERGENCIA">Divergência</option>
-                                <option value="CANCELADO">Cancelado</option>
-                                <option value="CONVERTIDO_ROMANEIO">Convertido</option>
-                              </select>
-                            </td>
-                            <td className="p-3 font-mono text-on-surface-variant max-w-[120px] truncate" title={s}>{s}</td>
-                            <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
-                            <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
-                            <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
-                            <td className="p-3 text-right font-mono text-white">{volSum}</td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.observations}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[180px] focus:outline-none"
-                                placeholder="Observações..."
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+              const renderLogisticsCard = (row: any, idx: number) => {
+                // Derived values for the card
+                const cities = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean);
+                const sectors = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).filter(Boolean);
+                const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
+                const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
+                const valSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.valor || 0), 0);
+                const freteSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.frete || 0), 0);
+                const nfsCount = row.ctrcs.reduce((acc: number, c: any) => {
+                  if (!c.nf) return acc;
+                  const parts = c.nf.split(/[\s,;\/\\|]+/).filter(Boolean);
+                  return acc + (parts.length > 0 ? parts.length : 1);
+                }, 0);
 
-            {/* 2. AGREGADOS SECTION */}
-            <div>
-              <div className="flex items-center justify-between border-b border-outline-variant/50 pb-2 mb-4 pt-4">
-                <h2 className="text-xs font-black text-amber-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-amber-400" />
-                  Frota de Apoio (Agregados)
-                </h2>
-                <span className="text-[10px] text-on-surface-variant font-mono">
-                  Veículos em rota: {agregadoRows.length}
-                </span>
-              </div>
+                return (
+                  <div key={row.id || idx} className="bg-surface border border-outline-variant/60 rounded-xl p-5 hover:border-primary/40 transition-all space-y-4">
+                    
+                    {/* Header Row */}
+                    <div className="flex flex-wrap justify-between items-center gap-3 border-b border-outline-variant/40 pb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-primary/20 text-primary border border-primary/30 rounded-lg text-sm font-black font-mono uppercase tracking-wide">
+                          {row.route || 'Sem Rota'}
+                        </span>
+                        <span className="text-[10px] text-on-surface-variant font-mono bg-slate-900 border border-white/5 px-2.5 py-0.5 rounded flex items-center gap-1">
+                          📅 {row.date ? row.date.split('-').reverse().join('/') : 'Não informado'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase font-bold text-on-surface-variant font-mono">Status:</span>
+                        <select
+                          value={row.status}
+                          onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
+                          className="bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded px-2.5 py-1 text-white text-xs font-bold focus:outline-none cursor-pointer"
+                        >
+                          <option value="RASCUNHO">Rascunho</option>
+                          <option value="EM_SEPARACAO">Separando</option>
+                          <option value="SEPARADO">Separado</option>
+                          <option value="COM_DIVERGENCIA">Divergência</option>
+                          <option value="CANCELADO">Cancelado</option>
+                          <option value="CONVERTIDO_ROMANEIO">Convertido</option>
+                        </select>
+                      </div>
+                    </div>
 
-              {agregadoRows.length === 0 ? (
-                <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-surface/30 rounded-xl border border-dashed border-outline-variant/40">
-                  Nenhum veículo agregado/apoio alocado para hoje nesta central.
+                    {/* Content Columns Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                      
+                      {/* Operational Inputs Column */}
+                      <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        
+                        {/* Veículo/Placa */}
+                        <div>
+                          <label className="block text-[9px] text-on-surface-variant font-mono font-bold uppercase mb-1">PLACA / VEÍCULO</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={row.vehiclePlate}
+                              onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
+                              className="w-full bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded-lg pl-8 pr-2 py-1.5 text-white font-mono text-xs focus:outline-none uppercase"
+                              placeholder={row.vehiclePlate ? "" : "Não informado"}
+                            />
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]">🚚</span>
+                          </div>
+                        </div>
+
+                        {/* Motorista */}
+                        <div>
+                          <label className="block text-[9px] text-on-surface-variant font-mono font-bold uppercase mb-1">MOTORISTA</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={row.driverName}
+                              onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
+                              className="w-full bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded-lg pl-8 pr-2 py-1.5 text-white text-xs focus:outline-none"
+                              placeholder={row.driverName ? "" : "Não informado"}
+                            />
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]">👤</span>
+                          </div>
+                        </div>
+
+                        {/* Ajudante */}
+                        <div>
+                          <label className="block text-[9px] text-on-surface-variant font-mono font-bold uppercase mb-1">AJUDANTE / ESCALA</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={row.helperName}
+                              onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
+                              className="w-full bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded-lg pl-8 pr-2 py-1.5 text-white text-xs focus:outline-none"
+                              placeholder={row.helperName ? "" : "Não informado"}
+                            />
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]">👥</span>
+                          </div>
+                        </div>
+
+                        {/* Portão/Doca */}
+                        <div>
+                          <label className="block text-[9px] text-on-surface-variant font-mono font-bold uppercase mb-1">PORTÃO / DOCA</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={row.gate || ''}
+                              onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
+                              className="w-full bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded-lg pl-8 pr-2 py-1.5 text-white text-xs focus:outline-none"
+                              placeholder={row.gate ? "" : "Não informado"}
+                            />
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px]">🚪</span>
+                          </div>
+                        </div>
+
+                        {/* Observações */}
+                        <div className="md:col-span-2">
+                          <label className="block text-[9px] text-on-surface-variant font-mono font-bold uppercase mb-1">OBSERVAÇÕES OPERACIONAIS</label>
+                          <input
+                            type="text"
+                            value={row.observations}
+                            onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
+                            className="w-full bg-[#12192a] hover:bg-[#1c2741] focus:bg-[#1c2741] border border-outline-variant/40 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none"
+                            placeholder={row.observations ? "" : "Adicionar observações..."}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Statistics Indicators Column */}
+                      <div className="lg:col-span-5 bg-slate-900/40 border border-outline-variant/30 rounded-xl p-4 flex flex-col justify-between gap-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Documentação</span>
+                            <span className="text-xs font-black text-white font-mono mt-0.5 block">
+                              {row.ctrcs.length} CTRCs {nfsCount > 0 ? `(${nfsCount} NFs)` : '(S/ NF)'}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Volumetria</span>
+                            <span className="text-xs font-black text-sky-400 font-mono mt-0.5 block">
+                              {volSum} vol
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Cubagem de Peso</span>
+                            <span className="text-xs font-black text-emerald-400 font-mono mt-0.5 block">
+                              {weightSum.toLocaleString('pt-BR')} kg
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Setor Alocado</span>
+                            <span className="text-xs font-black text-amber-400 truncate mt-0.5 block" title={sectors.join(', ')}>
+                              {sectors.length > 0 ? sectors.join(', ') : 'Não informado'}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Valor Mercadoria</span>
+                            <span className="text-xs font-black text-white font-mono mt-0.5 block">
+                              {valSum > 0 ? formatCurrency(valSum) : 'R$ 0,00'}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-950/40 p-2.5 rounded-lg border border-white/5">
+                            <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block">Valor do Frete</span>
+                            <span className="text-xs font-black text-indigo-400 font-mono mt-0.5 block">
+                              {freteSum > 0 ? formatCurrency(freteSum) : 'R$ 0,00'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cities scope tags block */}
+                        <div className="border-t border-outline-variant/20 pt-2.5">
+                          <span className="text-[8px] text-on-surface-variant uppercase font-mono font-bold tracking-wider block mb-1">Cidades Atendidas ({cities.length})</span>
+                          <div className="flex flex-wrap gap-1 max-h-[44px] overflow-y-auto pr-1">
+                            {cities.length === 0 ? (
+                              <span className="text-[10px] text-on-surface-variant/40 italic">Não informado</span>
+                            ) : (
+                              cities.map((city: string, cIdx: number) => (
+                                <span key={cIdx} className="px-1.5 py-0.5 bg-slate-950 border border-white/5 text-[9px] font-mono font-medium rounded text-on-surface-variant max-w-[120px] truncate" title={city}>
+                                  📍 {city}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div className="space-y-8 text-left">
+                  
+                  {/* 1. FROTA SECTION */}
+                  <div>
+                    <div className="flex items-center justify-between border-b border-outline-variant/40 pb-2.5 mb-4">
+                      <h2 className="text-xs font-black text-sky-400 uppercase tracking-widest font-mono flex items-center gap-2">
+                        <Check className="w-4 h-4 text-sky-400" />
+                        Frota Própria Estável
+                      </h2>
+                      <span className="text-[10px] text-on-surface-variant font-mono bg-[#12192a] px-2 py-0.5 border border-outline-variant/30 rounded">
+                        Veículos alocados: {frotaRows.length}
+                      </span>
+                    </div>
+
+                    {frotaRows.length === 0 ? (
+                      <div className="text-center py-10 text-on-surface-variant/40 text-xs italic bg-[#101625] rounded-xl border border-dashed border-outline-variant/40">
+                        Nenhum veículo próprio alocado para hoje nesta central.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {frotaRows.map((row, rIdx) => renderLogisticsCard(row, rIdx))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. AGREGADOS SECTION */}
+                  <div>
+                    <div className="flex items-center justify-between border-b border-outline-variant/40 pb-2.5 mb-4 pt-4">
+                      <h2 className="text-xs font-black text-amber-400 uppercase tracking-widest font-mono flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400" />
+                        Frota de Apoio (Agregados)
+                      </h2>
+                      <span className="text-[10px] text-on-surface-variant font-mono bg-[#12192a] px-2 py-0.5 border border-outline-variant/30 rounded">
+                        Veículos alocados: {agregadoRows.length}
+                      </span>
+                    </div>
+
+                    {agregadoRows.length === 0 ? (
+                      <div className="text-center py-10 text-on-surface-variant/40 text-xs italic bg-[#101625] rounded-xl border border-dashed border-outline-variant/40">
+                        Nenhum veículo agregado/apoio alocado para hoje nesta central.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {agregadoRows.map((row, rIdx) => renderLogisticsCard(row, rIdx))}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="text-on-surface-variant uppercase font-mono text-[10px] tracking-wider border-b border-outline-variant/40 bg-surface/40">
-                        <th className="p-3">PLACA</th>
-                        <th className="p-3">MOTORISTA</th>
-                        <th className="p-3">AJUDANTE</th>
-                        <th className="p-3">PORTÃO</th>
-                        <th className="p-3">STATUS</th>
-                        <th className="p-3">SETOR</th>
-                        <th className="p-3">CIDADES</th>
-                        <th className="p-3 text-center">QT NF</th>
-                        <th className="p-3 text-right">PESO (kg)</th>
-                        <th className="p-3 text-right">QT VOL</th>
-                        <th className="p-3">OBSERVAÇÕES</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/30">
-                      {agregadoRows.map((row, rIdx) => {
-                        const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
-                        const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
-                        const weightSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.peso_r || c.weight || 0), 0);
-                        const volSum = row.ctrcs.reduce((acc: number, c: any) => acc + (c.volume || 0), 0);
-                        return (
-                          <tr key={row.id || rIdx} className="hover:bg-surface/50 font-medium">
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.vehiclePlate}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs w-[100px] focus:outline-none"
-                                placeholder="Placa"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.driverName}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
-                                placeholder="Motorista"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.helperName}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[140px] focus:outline-none"
-                                placeholder="Ajudante"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.gate || ''}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[80px] focus:outline-none"
-                                placeholder="Doca"
-                              />
-                            </td>
-                            <td className="p-3">
-                              <select
-                                value={row.status}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[110px] focus:outline-none cursor-pointer"
-                              >
-                                <option value="RASCUNHO">Rascunho</option>
-                                <option value="EM_SEPARACAO">Separando</option>
-                                <option value="SEPARADO">Separado</option>
-                                <option value="COM_DIVERGENCIA">Divergência</option>
-                                <option value="CANCELADO">Cancelado</option>
-                                <option value="CONVERTIDO_ROMANEIO">Convertido</option>
-                              </select>
-                            </td>
-                            <td className="p-3 font-mono text-on-surface-variant max-w-[120px] truncate" title={s}>{s}</td>
-                            <td className="p-3 text-on-surface-variant max-w-[200px] truncate" title={cits}>{cits}</td>
-                            <td className="p-3 text-center font-mono text-white">{row.ctrcs.length}</td>
-                            <td className="p-3 text-right font-mono text-white">{weightSum.toLocaleString('pt-BR')} kg</td>
-                            <td className="p-3 text-right font-mono text-white">{volSum}</td>
-                            <td className="p-3">
-                              <input
-                                type="text"
-                                value={row.observations}
-                                onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
-                                className="bg-[#131b2e] hover:bg-[#1c243a] focus:bg-[#1c243a] border border-outline-variant/40 focus:border-indigo-500 rounded px-2 py-1 text-white text-xs w-[180px] focus:outline-none"
-                                placeholder="Observações..."
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Sub footer totals row inside screen table */}
-            <div className="pt-4 mt-6 border-t border-outline-variant/50 flex flex-wrap gap-4 items-center justify-between font-mono font-semibold text-xs text-on-surface-variant">
+            <div className="pt-5 mt-6 border-t border-outline-variant/50 flex flex-wrap gap-4 items-center justify-between font-mono font-semibold text-xs text-on-surface-variant">
               <div>VEÍCULOS PROGRAMADOS: <span className="text-white font-bold ml-1">{programacaoRows.length}</span></div>
               <div>CTRCs / NOTAS TOTAIS: <span className="text-white font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</span></div>
               <div>CUBAGEM DE PESO INTEGRADA: <span className="text-emerald-400 font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} kg</span></div>

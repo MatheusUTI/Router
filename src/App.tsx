@@ -38,6 +38,9 @@ import { PreRomaneioRepository } from './infrastructure/localdb/repositories/pre
 import { UserPreferenceRepository } from './infrastructure/localdb/repositories/userPreferenceRepository';
 import { APP_VERSION } from './constants/appVersion';
 
+// Diagnostics master switch to reduce console verbosity
+const ENABLE_ROUTER_DIAGNOSTICS = false;
+
 // Import Views
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -265,20 +268,22 @@ export default function App() {
           const { available, linked } = await partitionCtrcs(localCtrcs);
 
           // Diagnostics block for App.tsx mount
-          const statusCounts: Record<string, number> = {};
-          const unidCounts: Record<string, number> = {};
-          localCtrcs.forEach((c) => {
-            statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
-            const u = (c.unid || 'sem filial').toUpperCase();
-            unidCounts[u] = (unidCounts[u] || 0) + 1;
-          });
-          console.log('[DIAG_APP_MOUNT] Reidratação de Inicialização:', {
-            totalCtrcsFromDb: localCtrcs.length,
-            availableCount: available.length,
-            linkedCount: linked.length,
-            byStatus: statusCounts,
-            byUnid: unidCounts,
-          });
+          if (ENABLE_ROUTER_DIAGNOSTICS) {
+            const statusCounts: Record<string, number> = {};
+            const unidCounts: Record<string, number> = {};
+            localCtrcs.forEach((c) => {
+              statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
+              const u = (c.unid || 'sem filial').toUpperCase();
+              unidCounts[u] = (unidCounts[u] || 0) + 1;
+            });
+            console.log('[DIAG_APP_MOUNT] Reidratação de Inicialização:', {
+              totalCtrcsFromDb: localCtrcs.length,
+              availableCount: available.length,
+              linkedCount: linked.length,
+              byStatus: statusCounts,
+              byUnid: unidCounts,
+            });
+          }
 
           setAvailableCtrcs(available);
           setLinkedCtrcs(linked);
@@ -557,20 +562,22 @@ export default function App() {
         const { available, linked } = await partitionCtrcs(allLocalCtres);
 
         // Diagnostics block for App.tsx handleAddCtrcs rehydration
-        const statusCounts: Record<string, number> = {};
-        const unidCounts: Record<string, number> = {};
-        allLocalCtres.forEach((c) => {
-          statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
-          const u = (c.unid || 'sem filial').toUpperCase();
-          unidCounts[u] = (unidCounts[u] || 0) + 1;
-        });
-        console.log('[DIAG_APP_REHYDRATE] Reidratação Pós-Importação:', {
-          totalCtrcsFromDb: allLocalCtres.length,
-          availableCount: available.length,
-          linkedCount: linked.length,
-          byStatus: statusCounts,
-          byUnid: unidCounts,
-        });
+        if (ENABLE_ROUTER_DIAGNOSTICS) {
+          const statusCounts: Record<string, number> = {};
+          const unidCounts: Record<string, number> = {};
+          allLocalCtres.forEach((c) => {
+            statusCounts[c.status || 'sem status'] = (statusCounts[c.status || 'sem status'] || 0) + 1;
+            const u = (c.unid || 'sem filial').toUpperCase();
+            unidCounts[u] = (unidCounts[u] || 0) + 1;
+          });
+          console.log('[DIAG_APP_REHYDRATE] Reidratação Pós-Importação:', {
+            totalCtrcsFromDb: allLocalCtres.length,
+            availableCount: available.length,
+            linkedCount: linked.length,
+            byStatus: statusCounts,
+            byUnid: unidCounts,
+          });
+        }
 
         setAvailableCtrcs(available);
         setLinkedCtrcs(linked);

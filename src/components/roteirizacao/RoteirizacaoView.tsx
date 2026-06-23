@@ -26,6 +26,8 @@ import { useRoteirizacaoGrouping } from './hooks/useRoteirizacaoGrouping';
 import { useVehicleAllocation } from './hooks/useVehicleAllocation';
 import { validateFieldContract } from './helpers/fieldContractValidator';
 
+const ENABLE_ROUTER_DIAGNOSTICS = false;
+
 interface RoteirizacaoViewProps {
   availableCtrcs: Ctrc[];
   vehicles: Vehicle[];
@@ -175,12 +177,14 @@ export default function RoteirizacaoView({
     if (isNormalizing) return [] as RoteirizacaoItem[];
 
     // LOG BEFORE ENRICHMENT
-    console.log('[DIAG_ROTEIRIZACAO_BEFORE] Configurações de Entrada:', {
-      availableCtrcsLength: availableCtrcs.length,
-      planningDate,
-      adminUnid: adminUser?.unid,
-      adminIsMaster: adminUser?.is_master,
-    });
+    if (ENABLE_ROUTER_DIAGNOSTICS) {
+      console.log('[DIAG_ROTEIRIZACAO_BEFORE] Configurações de Entrada:', {
+        availableCtrcsLength: availableCtrcs.length,
+        planningDate,
+        adminUnid: adminUser?.unid,
+        adminIsMaster: adminUser?.is_master,
+      });
+    }
 
     const res = RoteirizacaoEnrichmentService.enrichCargas(
       availableCtrcs,
@@ -235,14 +239,16 @@ export default function RoteirizacaoView({
       }
     });
 
-    console.log('[DIAG_ROTEIRIZACAO_AFTER] Estatísticas Pós-Enrichment:', {
-      enrichedItemsLength: res.length,
-      bySector: occurrenceSectorCounts,
-      byEligibility: routingEligibilityCounts,
-      byStatus: statusCounts,
-      byUnid: unidCounts,
-      byCompatibility: logisticCompatibilityCounts,
-    });
+    if (ENABLE_ROUTER_DIAGNOSTICS) {
+      console.log('[DIAG_ROTEIRIZACAO_AFTER] Estatísticas Pós-Enrichment:', {
+        enrichedItemsLength: res.length,
+        bySector: occurrenceSectorCounts,
+        byEligibility: routingEligibilityCounts,
+        byStatus: statusCounts,
+        byUnid: unidCounts,
+        byCompatibility: logisticCompatibilityCounts,
+      });
+    }
 
     return res;
   }, [availableCtrcs, cidadesRotas, dbOccurrencesList, combinedCurvaClients, vehicles, helpers, isNormalizing, routePlanningItems, planningDate, criticClients, adminUser, sswCidades]);
