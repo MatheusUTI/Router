@@ -135,13 +135,17 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('router_theme');
-    return (saved as 'light' | 'dark') || 'dark';
+    return saved === 'light' || saved === 'dark' ? saved : 'dark';
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('router_theme', theme);
   }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
   
   // Operator profile state
   const [adminProfile, setAdminProfile] = useState<AppUser>({
@@ -901,6 +905,8 @@ export default function App() {
             onGeneratePreRomaneioSuccess={handleGeneratePreRomaneioSuccess}
             linkedCtrcs={linkedCtrcs}
             onRefreshCtrcs={rehydrateCtrcsOnly}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
           />
         );
       case 'finalizacao':
@@ -1061,7 +1067,7 @@ export default function App() {
           onClearNotifications={handleClearNotifications}
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           theme={theme}
-          onToggleTheme={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+          onToggleTheme={handleToggleTheme}
         />
       )}
 

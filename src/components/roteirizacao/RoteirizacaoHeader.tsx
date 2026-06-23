@@ -23,6 +23,8 @@ interface RoteirizacaoHeaderProps {
   highestNoticeSeverity?: 'INFO' | 'WARNING' | 'CRITICAL';
   densityMode?: DensityMode;
   onUpdateDensity?: (density: DensityMode) => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export default function RoteirizacaoHeader({
@@ -46,6 +48,8 @@ export default function RoteirizacaoHeader({
   highestNoticeSeverity = 'INFO',
   densityMode = 'default',
   onUpdateDensity,
+  theme = 'dark',
+  onToggleTheme,
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -55,19 +59,19 @@ export default function RoteirizacaoHeader({
   const warningsCount = diagnostics?.warnings?.length ?? 0;
 
   // Compact tokens suited for sleek visual rhythm and spacing
-  const containerClass = "bg-[#0b1322] border-b border-[#1a2440] py-1.5 px-3 flex flex-wrap items-center justify-between gap-y-1.5 gap-x-3 shrink-0 select-none h-auto md:h-12";
+  const containerClass = "bg-white dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#1a2440] py-1.5 px-3 flex flex-wrap items-center justify-between gap-y-1.5 gap-x-3 shrink-0 select-none h-auto md:h-12";
   
-  const titleClass = "font-black text-slate-100 tracking-tight text-xs md:text-sm uppercase leading-none truncate";
-  const subtitleClass = "font-mono text-indigo-405 font-bold tracking-wider text-[9px] leading-none mt-0.5 flex items-center gap-1.5 flex-wrap";
+  const titleClass = "font-black text-slate-800 dark:text-slate-100 tracking-tight text-xs md:text-sm uppercase leading-none truncate";
+  const subtitleClass = "font-mono text-indigo-600 dark:text-indigo-405 font-bold tracking-wider text-[9px] leading-none mt-0.5 flex items-center gap-1.5 flex-wrap";
 
   const btnClass = "bg-indigo-650 hover:bg-indigo-600 text-white border border-indigo-500/20 rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all flex items-center gap-1 cursor-pointer select-none leading-none";
-  const btnSecondaryClass = "bg-[#1a2440] hover:bg-[#253359] text-gray-200 border border-[#2d3a5e] rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none";
-  const badgeClass = "bg-[#070c14] border border-[#1a2440] rounded font-mono text-indigo-300 text-[11px] px-2 py-1.5 h-8.5 flex items-center leading-none shrink-0";
+  const btnSecondaryClass = "bg-slate-100 dark:bg-[#1a2440] hover:bg-slate-200 dark:hover:bg-[#253359] text-slate-700 dark:text-gray-200 border border-slate-300 dark:border-[#2d3a5e] rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none";
+  const badgeClass = "bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded font-mono text-indigo-600 dark:text-indigo-300 text-[11px] px-2 py-1.5 h-8.5 flex items-center leading-none shrink-0";
 
-  const searchInputClass = "w-full bg-[#070c14] border border-[#1a2440] rounded-md pl-6 pr-2 py-1 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[11px] h-8.5 transition-all uppercase";
+  const searchInputClass = "w-full bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded-md pl-6 pr-2 py-1 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[11px] h-8.5 transition-all uppercase";
   const searchWrapClass = "relative w-40 md:w-48 h-8.5 shrink-0";
 
-  const rightStatusClass = "font-mono bg-[#070c14] rounded border border-[#16223f] px-2 py-1 h-8.5 flex items-center text-[11px] text-slate-450 leading-none shrink-0";
+  const rightStatusClass = "font-mono bg-slate-50 dark:bg-[#070c14] rounded border border-slate-200 dark:border-[#16223f] px-2 py-1 h-8.5 flex items-center text-[11px] text-slate-550 dark:text-slate-450 leading-none shrink-0";
 
   return (
     <div className={containerClass}>
@@ -224,6 +228,23 @@ export default function RoteirizacaoHeader({
         >
           Limpar
         </button>
+
+        {/* Theme Toggle Button */}
+        {onToggleTheme && (
+          <button
+            id="btn-toggle-theme-mesa"
+            onClick={onToggleTheme}
+            className="bg-[#1a2440] hover:bg-[#253359] text-gray-200 border border-[#2d3a5e] rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none flex items-center justify-center gap-1.5 shrink-0"
+            title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+          >
+            <span className="material-symbols-outlined text-[16px] select-none">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+            <span className="hidden sm:inline">
+              {theme === 'dark' ? 'Claro' : 'Escuro'}
+            </span>
+          </button>
+        )}
 
         {/* Fila count display (fila) */}
         <div className={rightStatusClass}>

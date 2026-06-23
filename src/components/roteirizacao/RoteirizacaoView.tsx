@@ -39,6 +39,8 @@ interface RoteirizacaoViewProps {
   onGeneratePreRomaneioSuccess?: (preRomaneios: PreRomaneio[], originalCtrcs: Ctrc[]) => void;
   linkedCtrcs?: Ctrc[];
   onRefreshCtrcs?: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export default function RoteirizacaoView({
@@ -52,6 +54,8 @@ export default function RoteirizacaoView({
   onGeneratePreRomaneioSuccess,
   linkedCtrcs = [],
   onRefreshCtrcs,
+  theme,
+  onToggleTheme,
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -892,6 +896,8 @@ export default function RoteirizacaoView({
         highestNoticeSeverity={highestNoticeSeverity}
         densityMode={densityMode}
         onUpdateDensity={(density) => setDensityMode(density)}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
       />
 
       <OperationalNoticesBanner
