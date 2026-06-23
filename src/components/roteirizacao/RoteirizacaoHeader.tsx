@@ -61,7 +61,7 @@ export default function RoteirizacaoHeader({
   // Compact tokens suited for sleek visual rhythm and spacing
   const containerClass = "bg-white dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#1a2440] py-1.5 px-3 flex flex-wrap items-center justify-between gap-y-1.5 gap-x-3 shrink-0 select-none h-auto md:h-12";
   
-  const titleClass = "font-black text-slate-800 dark:text-slate-100 tracking-tight text-xs md:text-sm uppercase leading-none truncate";
+  const titleClass = "font-black text-[#2563EB] dark:text-slate-100 tracking-tight text-xs md:text-sm uppercase leading-none truncate";
   const subtitleClass = "font-mono text-indigo-600 dark:text-indigo-405 font-bold tracking-wider text-[9px] leading-none mt-0.5 flex items-center gap-1.5 flex-wrap";
 
   const btnClass = "bg-indigo-650 hover:bg-indigo-600 text-white border border-indigo-500/20 rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all flex items-center gap-1 cursor-pointer select-none leading-none";
@@ -93,15 +93,15 @@ export default function RoteirizacaoHeader({
                   id="header-unit-selector"
                   value={selectedUnit}
                   onChange={(e) => setSelectedUnit(e.target.value)}
-                  className="bg-[#070c14] border border-[#1d2a45] rounded px-1.5 py-0.5 text-white font-mono font-bold focus:outline-none cursor-pointer text-[10px] h-5 leading-none transition-all hover:bg-slate-900 border-none select-none"
+                  className="bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1d2a45] rounded px-1.5 py-0.5 text-slate-800 dark:text-white font-mono font-bold focus:outline-none cursor-pointer text-[10px] h-5 leading-none transition-all hover:bg-slate-150 dark:hover:bg-slate-900 border-none select-none"
                 >
-                  <option value="TODAS" className="bg-[#0b1322]">TODAS</option>
+                  <option value="TODAS" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">TODAS</option>
                   {getOperationalUnits().filter(u => u.active).map(u => (
-                    <option key={u.code} value={u.code} className="bg-[#0b1322]">{u.code}</option>
+                    <option key={u.code} value={u.code} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">{u.code}</option>
                   ))}
                 </select>
               ) : (
-                <span className="text-white font-mono font-extrabold text-[10px] leading-none flex items-center gap-0.5 bg-slate-900/40 px-1 py-0.5 rounded border border-slate-700/20" title="Unidade restrita">
+                <span className="text-slate-800 dark:text-white font-mono font-extrabold text-[10px] leading-none flex items-center gap-0.5 bg-slate-100 dark:bg-slate-900/40 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700/20" title="Unidade restrita">
                   🔒 {(adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase()}
                 </span>
               )}
@@ -148,8 +148,8 @@ export default function RoteirizacaoHeader({
               hasVisibilityAlert
                 ? 'bg-amber-600 hover:bg-amber-550 border-amber-500 text-white animate-pulse'
                 : warningsCount > 0
-                ? 'bg-amber-950/40 hover:bg-amber-905/45 border-amber-800/40 text-amber-305'
-                : 'bg-slate-800/80 hover:bg-slate-705/85 border-slate-700/40 text-indigo-400 hover:text-indigo-305'
+                ? 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-905/45 border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-305'
+                : 'bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-705/85 border-slate-200 dark:border-slate-700/40 text-indigo-650 dark:text-indigo-400'
             }`}
             title="Diagnóstico de Visibilidade da Mesa"
           >
@@ -184,10 +184,10 @@ export default function RoteirizacaoHeader({
             onClick={() => setIsAvisosOpen?.(true)}
             className={`rounded font-extrabold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none flex items-center gap-1.5 shrink-0 border shadow-sm ${
               highestNoticeSeverity === 'CRITICAL'
-                ? 'bg-red-950/50 hover:bg-red-900/65 border-red-700/60 text-red-350 animate-pulse'
+                ? 'bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/65 border-red-200 dark:border-red-700/60 text-red-700 dark:text-red-350 animate-pulse'
                 : highestNoticeSeverity === 'WARNING'
-                ? 'bg-amber-950/40 hover:bg-amber-900/50 border-amber-700/50 text-amber-350'
-                : 'bg-blue-950/40 hover:bg-blue-900/50 border-blue-900/55 text-blue-350'
+                ? 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border-amber-200 dark:border-amber-700/50 text-amber-800 dark:text-amber-350'
+                : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border-blue-200 dark:border-blue-900/55 text-blue-700 dark:text-blue-350'
             }`}
             title="Reabrir Avisos Operacionais"
             id="reopen-notices-badge"
@@ -206,16 +206,16 @@ export default function RoteirizacaoHeader({
 
         {/* Density Selector */}
         {onUpdateDensity && (
-          <div className="flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded px-2 h-8.5 text-[11px] select-none text-slate-400">
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded px-2 h-8.5 text-[11px] select-none text-slate-500 dark:text-slate-400">
             <span className="font-mono text-[9px] text-slate-500 font-extrabold uppercase tracking-wide">Densidade:</span>
             <select
               value={densityMode}
               onChange={(e) => onUpdateDensity(e.target.value as DensityMode)}
-              className="bg-transparent border-none text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full"
+              className="bg-transparent border-none text-slate-800 dark:text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full"
             >
-              <option value="compact" className="bg-[#0b1322] text-white">COMPACTO</option>
-              <option value="default" className="bg-[#0b1322] text-white">PADRÃO</option>
-              <option value="comfortable" className="bg-[#0b1322] text-white">CONFORTÁVEL</option>
+              <option value="compact" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">COMPACTO</option>
+              <option value="default" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">PADRÃO</option>
+              <option value="comfortable" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">CONFORTÁVEL</option>
             </select>
           </div>
         )}
@@ -234,7 +234,7 @@ export default function RoteirizacaoHeader({
           <button
             id="btn-toggle-theme-mesa"
             onClick={onToggleTheme}
-            className="bg-[#1a2440] hover:bg-[#253359] text-gray-200 border border-[#2d3a5e] rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none flex items-center justify-center gap-1.5 shrink-0"
+            className="bg-slate-100 dark:bg-[#1a2440] hover:bg-slate-200 dark:hover:bg-[#253359] text-slate-700 dark:text-gray-200 border border-slate-300 dark:border-[#2d3a5e] rounded font-bold text-[11px] px-2.5 py-1.5 h-8.5 transition-all cursor-pointer select-none leading-none flex items-center justify-center gap-1.5 shrink-0"
             title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
           >
             <span className="material-symbols-outlined text-[16px] select-none">
@@ -248,7 +248,7 @@ export default function RoteirizacaoHeader({
 
         {/* Fila count display (fila) */}
         <div className={rightStatusClass}>
-          Fila: <span className="text-white font-extrabold ml-1 uppercase">{filteredCtrcsCount} / {totalCtrcsCount}</span>
+          Fila: <span className="text-slate-800 dark:text-white font-extrabold ml-1 uppercase">{filteredCtrcsCount} / {totalCtrcsCount}</span>
         </div>
 
         {/* Current clock (relógio) */}

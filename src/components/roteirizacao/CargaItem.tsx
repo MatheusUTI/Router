@@ -106,24 +106,24 @@ const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
 const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; border: string } => {
   const norm = statusLabel.toUpperCase();
   if (norm === 'DISPONÍVEL' || norm === 'DISPONIVEL' || norm === 'NA MESA') {
-    return { bg: 'bg-[#F1F5F9] dark:bg-slate-800/40', text: 'text-[#475569] dark:text-slate-300', border: 'border-[#E2E8F0] dark:border-slate-700/30' };
+    return { bg: 'bg-[#F1F5F9] dark:bg-slate-850/40', text: 'text-[#475569] dark:text-slate-300', border: 'border-[#E2E8F0] dark:border-slate-700/30' };
   }
   if (norm === 'PRÉ-ROMANEIO') {
-    return { bg: 'bg-[#E0E7FF] dark:bg-indigo-500/10', text: 'text-[#3730A3] dark:text-indigo-400', border: 'border-[#C7D2FE] dark:border-indigo-500/25' };
+    return { bg: 'bg-[#E0E7FF] dark:bg-indigo-950/40', text: 'text-[#3730A3] dark:text-indigo-300', border: 'border-[#C7D2FE] dark:border-indigo-500/20' };
   }
   if (norm === 'PROGRAMADO' || norm === 'CONSOLIDADO') {
-    return { bg: 'bg-[#DBEAFE] dark:bg-indigo-500/15', text: 'text-[#1D4ED8] dark:text-indigo-305', border: 'border-[#BFDBFE] dark:border-[#1e2e5c]' };
+    return { bg: 'bg-[#DBEAFE] dark:bg-blue-950/40', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
   }
   if (norm.includes('URGENTE') || norm.includes('PRIORITÁRIO') || norm.includes('RETIDO') || norm.includes('AUDIT') || norm.includes('PENDÊNCIA') || norm.includes('RETIDO/AUDIT')) {
-    return { bg: 'bg-[#FFE4E6] dark:bg-red-500/10', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-500/20' };
+    return { bg: 'bg-[#FFE4E6] dark:bg-red-950/40', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-500/20' };
   }
   if (norm === 'HOLD') {
-    return { bg: 'bg-[#FEF3C7] dark:bg-orange-500/10', text: 'text-[#92400E] dark:text-orange-400', border: 'border-[#FDE68A] dark:border-orange-500/20' };
+    return { bg: 'bg-[#FEF3C7] dark:bg-amber-950/40', text: 'text-[#92400E] dark:text-amber-300', border: 'border-[#FDE68A] dark:border-amber-500/20' };
   }
   if (norm === 'EM TRÂNSITO') {
-    return { bg: 'bg-[#DBEAFE] dark:bg-blue-500/10', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
+    return { bg: 'bg-[#DBEAFE] dark:bg-blue-950/40', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
   }
-  return { bg: 'bg-[#F1F5F9] dark:bg-[#101a2e]', text: 'text-[#475569] dark:text-slate-355', border: 'border-[#E2E8F0] dark:border-slate-800' };
+  return { bg: 'bg-[#F1F5F9] dark:bg-[#101a2e]', text: 'text-[#475569] dark:text-slate-350', border: 'border-[#E2E8F0] dark:border-slate-800' };
 };
 
 const SSW_SERIES_BY_UNIT: Record<string, string> = {
@@ -474,24 +474,30 @@ export default function CargaItem({
 
         {/* Linha 2: Status / Ocorrência (badge principal, descrição) */}
         <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
-          {/* Custom flow status label as MAIN badge */}
-          <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
-            {flowStatusLabel}
-          </span>
+          {/* Custom flow status label as MAIN badge (or simple text if Available) */}
+          {flowStatusLabel === 'DISPONÍVEL' ? (
+            <span className="text-slate-550 dark:text-slate-400 font-mono font-bold text-[10px] uppercase shrink-0 leading-none flex items-center gap-1 select-none">
+              🟢 Disponível
+            </span>
+          ) : (
+            <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
+              {flowStatusLabel}
+            </span>
+          )}
 
           {/* Occurrence details */}
           <div className="min-w-0 flex items-center gap-1">
             {item.occurrenceCode ? (
               (() => {
                 const code = String(item.occurrenceCode);
-                let badgeStyles = "bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
+                let badgeStyles = "bg-[#FFE4E6] dark:bg-red-950/40 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
                 
                 if (code === '57') {
-                  badgeStyles = "bg-[#DCFCE7] dark:bg-green-500/10 text-[#166534] dark:text-green-400 border-[#BBF7D0] dark:border-green-500/20";
+                  badgeStyles = "bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15";
                 } else if (code === '59') {
-                  badgeStyles = "bg-[#DBEAFE] dark:bg-blue-500/10 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/20";
+                  badgeStyles = "bg-[#DBEAFE] dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/15";
                 } else if (code === '70') {
-                  badgeStyles = "bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/20";
+                  badgeStyles = "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15";
                 }
 
                 return (
@@ -507,9 +513,11 @@ export default function CargaItem({
                 {item.occurrenceDescription === 'Ocorrência não mapeada' ? 'não mapeada' : item.occurrenceDescription}
               </span>
             ) : (
-              <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
-                🟢 SEM OCORRÊNCIA
-              </span>
+              flowStatusLabel === 'DISPONÍVEL' ? null : (
+                <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
+                  🟢 SEM OCORRÊNCIA
+                </span>
+              )
             )}
           </div>
         </div>
@@ -528,9 +536,15 @@ export default function CargaItem({
           })()}
 
           {item.occurrenceSector && (
-            <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
-              Setor: {item.occurrenceSector}
-            </span>
+            item.occurrenceSector.toUpperCase() === 'DISPONÍVEL' || item.occurrenceSector.toUpperCase() === 'DISPONIVEL' ? (
+              <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px] leading-none whitespace-nowrap select-none">
+                Setor: Disponível
+              </span>
+            ) : (
+              <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+                Setor: {item.occurrenceSector}
+              </span>
+            )
           )}
 
           {/* Micro operational note banner */}

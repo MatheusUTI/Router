@@ -873,7 +873,7 @@ export default function RoteirizacaoView({
   };
 
   return (
-    <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-[#080c14] border border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-200 select-none">
+    <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-[#F5F7FA] dark:bg-[#080c14] border border-slate-200 dark:border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-800 dark:text-slate-200 select-none">
       {/* Prime Header Block */}
       <RoteirizacaoHeader
         adminUser={adminUser}
@@ -915,7 +915,7 @@ export default function RoteirizacaoView({
       <div className="flex-1 flex gap-3 p-3 min-h-0 relative">
         {/* Cargo Fila Column */}
         {isNormalizing ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-[#080c14] border border-[#16223f] rounded-xl font-mono">
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#16223f] rounded-xl font-mono">
             <span className="animate-spin text-xl">⏳</span>
             <p className="text-xs font-bold uppercase">Correlacionando dicionários e rotas da malha...</p>
           </div>
