@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
-import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal } from '../types';
+import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal, VehicleRegistry } from '../types';
+import { calculateSuggestedGrLimit } from '../utils/grUtils';
 import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
 import { CurvaAClientRepository } from '../infrastructure/localdb/repositories/curvaAClientRepository';
@@ -37,6 +38,7 @@ interface FinalizacaoViewProps {
   onDeleteRomaneio?: (id: string) => void;
   adminUser?: AppUser;
   onRefreshCtrcs?: () => Promise<void>;
+  vehicleRegistries?: VehicleRegistry[];
 }
 
 export default function FinalizacaoView({
@@ -48,6 +50,7 @@ export default function FinalizacaoView({
   onDeleteRomaneio,
   adminUser,
   onRefreshCtrcs,
+  vehicleRegistries = [],
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
   const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('preromaneio');
@@ -302,7 +305,7 @@ export default function FinalizacaoView({
           <tbody>
     `;
 
-    html += `<tr class="group-header"><td colspan="8">FROTA</td></tr>`;
+    html += `<tr class="group-header"><td colspan="8">FROTA PRÓPRIA ESTÁVEL (CLASSIFICAÇÃO PENDENTE)</td></tr>`;
     frotaRows.forEach(row => {
       const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
       const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
@@ -324,7 +327,7 @@ export default function FinalizacaoView({
       `;
     });
 
-    html += `<tr class="group-header"><td colspan="8">AGREGADOS</td></tr>`;
+    html += `<tr class="group-header"><td colspan="8">APOIO / NÃO CLASSIFICADO (AGREGADOS)</td></tr>`;
     agregadoRows.forEach(row => {
       const s = Array.from(new Set(row.ctrcs.map((c: any) => c.setor || 'N/I'))).join(', ');
       const cits = Array.from(new Set(row.ctrcs.map((c: any) => (c.cidade_ent || c.cidade || '').replace(/,\s*[A-Z]{2}$/i, '').trim()))).filter(Boolean).join(', ');
@@ -683,6 +686,10 @@ export default function FinalizacaoView({
             const totalFrete = programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.frete || 0), 0), 0);
             const vehiclesDefined = programacaoRows.filter(r => r.vehiclePlate && r.vehiclePlate.trim() !== '').length;
             const driversDefined = programacaoRows.filter(r => r.driverName && r.driverName.trim() !== '').length;
+            const routesWithHighValue = programacaoRows.filter(r => {
+              const valSum = r.ctrcs.reduce((sum: number, c: any) => sum + (c.valor || 0), 0);
+              return valSum > 300000;
+            }).length;
 
             const formatCurrency = (val?: number) => {
               if (val === undefined || val === null || isNaN(val)) return 'R$ 0,00';
@@ -799,7 +806,39 @@ export default function FinalizacaoView({
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-outline-variant/30 pt-2 lg:pt-0 lg:pl-6 w-full lg:w-auto">
+                  <div className="flex items-center flex-wrap gap-3 border-t lg:border-t-0 lg:border-l border-outline-variant/30 pt-2 lg:pt-0 lg:pl-6 w-full lg:w-auto">
+                    {(() => {
+                      if (programacaoRows.length === 0) return null;
+                      const assignedPlates = programacaoRows.map(r => r.vehiclePlate).filter(Boolean);
+                      if (assignedPlates.length === 0) {
+                        return (
+                          <span className="px-2.5 py-1 bg-zinc-500/10 border border-zinc-500/30 text-zinc-400 rounded font-bold text-[10px] flex items-center gap-1">
+                            ℹ️ Escala Sem Veículos Vinculados
+                          </span>
+                        );
+                      }
+                      const unregisteredPlates = assignedPlates.filter(plate => {
+                        const cleanPlate = plate.toUpperCase().replace(/\s/g, '').trim();
+                        return !vehicleRegistries.some(vr => vr.placa.toUpperCase().replace(/\s/g, '').trim() === cleanPlate);
+                      });
+                      if (unregisteredPlates.length === 0) {
+                        return (
+                          <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded font-bold text-[10px] flex items-center gap-1">
+                            ✓ Classificação Validada via Cadastro de Frota
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="px-2.5 py-1 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded font-bold text-[10px] flex items-center gap-1" title={`Placas não cadastradas no GR: ${unregisteredPlates.join(', ')}`}>
+                          ℹ️ Usando Heurística Visual ({unregisteredPlates.length} não homologados)
+                        </span>
+                      );
+                    })()}
+                    {routesWithHighValue > 0 && (
+                      <span className="px-2.5 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded font-bold text-[10px] flex items-center gap-1 animate-pulse" title="Cargas com valor superior a R$ 300.000. Pré-alerta operacional de pendência para GR.">
+                        ⚠️ {routesWithHighValue} Pré-alerta Operacional (Valor Alto)
+                      </span>
+                    )}
                     {programacaoRows.length - vehiclesDefined > 0 && (
                       <span className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded font-bold text-[10px] flex items-center gap-1 animate-pulse">
                         ⚠️ {programacaoRows.length - vehiclesDefined} Sem Veículo
@@ -824,6 +863,50 @@ export default function FinalizacaoView({
                   {/* HELPER FOR RENDERING TRANSIT MATRIX TABLES */}
                   {(() => {
                     const renderOperationalTable = (rowsList: any[], groupTitle: string, accentColor: string, emptyText: string) => {
+                      const renderGrFeedback = (row: any, valSum: number) => {
+                        if (!row.vehiclePlate) return null;
+                        const cleanPlate = row.vehiclePlate.toUpperCase().replace(/\s/g, '').trim();
+                        const registered = (vehicleRegistries || []).find(vr => vr.placa.toUpperCase().replace(/\s/g, '').trim() === cleanPlate);
+                        
+                        if (registered) {
+                          const grLimit = registered.limiteGrSugerido;
+                          const isRastreado = registered.rastreado;
+                          const isExceeded = valSum > grLimit;
+                          const isNoTrackerViolation = !isRastreado && valSum > 300000;
+                          
+                          const classificationLabel = registered.tipo === 'PROPRIO' ? 'Prop.' : registered.tipo === 'AGREGADO' ? 'Agr.' : 'Apoio';
+                          
+                          return (
+                            <div className="mt-1.5 flex flex-col gap-1 text-[10px] font-mono leading-none">
+                              <div className="flex items-center justify-between text-on-surface-variant/70 border-t border-outline-variant/20 pt-1">
+                                <span>{classificationLabel} • {isRastreado ? 'Rastr.' : 'S/ Rast.'}</span>
+                              </div>
+                              {isExceeded && (
+                                <div className="text-red-400 font-bold bg-red-950/40 border border-red-500/30 rounded px-1 py-0.5 mt-0.5 text-center flex items-center justify-center gap-0.5 animate-pulse">
+                                  ⚠️ Excede Limite!
+                                </div>
+                              )}
+                              {isNoTrackerViolation && (
+                                <div className="text-amber-400 font-bold bg-amber-950/40 border border-amber-500/30 rounded px-1 py-0.5 mt-0.5 text-center flex items-center justify-center gap-0.5 animate-pulse">
+                                  ⚠️ S/ Rast {'>'} 300k
+                                </div>
+                              )}
+                            </div>
+                          );
+                        } else {
+                          const isHighValViolation = valSum > 300000;
+                          return (
+                            <div className="mt-1.5 flex flex-col gap-1 text-[10px] font-mono leading-none">
+                              <div className="text-amber-500 italic border-t border-outline-variant/20 pt-1">Não Cadastrado</div>
+                              {isHighValViolation && (
+                                <div className="text-amber-500 font-bold bg-amber-950/20 border border-amber-500/20 rounded px-1 py-0.5 mt-0.5 text-center flex items-center justify-center gap-0.5">
+                                  ⚠️ Risco {'>'} 300k
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                      };
                       return (
                         <div className="space-y-3 text-left">
                           
@@ -894,6 +977,7 @@ export default function FinalizacaoView({
                                               className={`w-full bg-[#111625] border ${row.vehiclePlate ? 'border-outline-variant/40' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs focus:outline-none uppercase text-center`}
                                               placeholder="Placa"
                                             />
+                                            {renderGrFeedback(row, valSum)}
                                             {!row.vehiclePlate && (
                                               <span className="absolute -top-1 -right-1 flex h-2 w-2">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -1031,13 +1115,13 @@ export default function FinalizacaoView({
                       <div className="space-y-8">
                         {renderOperationalTable(
                           frotaRows, 
-                          "Frota Própria Estável", 
+                          "Frota Própria Estável (Homologada)", 
                           "#38bdf8", 
                           "Nenhum veículo próprio alocado para hoje nesta central."
                         )}
                         {renderOperationalTable(
                           agregadoRows, 
-                          "Frota de Apoio (Agregados)", 
+                          "Apoio / Agregados & Terceirizados", 
                           "#f59e0b", 
                           "Nenhum veículo agregado/apoio alocado para hoje nesta central."
                         )}
@@ -1916,7 +2000,7 @@ export default function FinalizacaoView({
 
           {/* FROTA */}
           <div className="mb-6">
-            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">FROTA PRÓPRIA</h2>
+            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">FROTA PRÓPRIA ESTÁVEL (CLASSIFICAÇÃO PENDENTE)</h2>
             <table className="w-full text-xs text-left border-collapse border border-gray-400">
               <thead>
                 <tr className="bg-gray-100">
@@ -1963,7 +2047,7 @@ export default function FinalizacaoView({
 
           {/* AGREGADOS */}
           <div className="mb-6">
-            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">FROTA DE APOIO (AGREGADOS)</h2>
+            <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">APOIO / NÃO CLASSIFICADO (AGREGADOS)</h2>
             <table className="w-full text-xs text-left border-collapse border border-gray-400">
               <thead>
                 <tr className="bg-gray-100">

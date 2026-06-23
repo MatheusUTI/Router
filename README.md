@@ -6,44 +6,46 @@ O **Router** foi desenvolvido para preencher uma lacuna crítica nas operações
 
 ---
 
-## Status Estável Atual — V1.23.0
+## Status Estável Atual — V1.24.0
 
-**Baseline Operacional Estável da Roteirização.**
+**Auditoria de Regressão Operacional e Consolidação da Baseline.**
 
-A versão **V1.23.0** marca o primeiro ponto de estabilidade operacional validado em teste prático real. O fluxo principal do aplicativo foi comparado com a planilha operacional padrão usada atualmente e a primeira rota montada pelo Router apresentou resultado equivalente.
+A versão **V1.24.0** representa a consolidação da estabilidade operacional alcançada nas versões anteriores. O fluxo principal do aplicativo (desde o login até a Programação do Dia) foi exaustivamente auditado, garantindo a integridade dos módulos implementados e a confiabilidade para operações de expedição e montagem de carga.
 
-### Fluxo validado
+### Fluxo validado e consolidado
 
 ```text
+Login (Autenticação Local/Cloud)
+        ↓
 Importação de CTRCs
         ↓
-Mesa de Roteirização
+Mesa de Roteirização (Filtros e Densidade)
         ↓
-Organização e montagem da rota
+Pré-romaneio / pré-separação (Doca)
         ↓
-Pré-romaneio / pré-separação imprimível
+Programação do Dia (Matriz Operacional de Frota)
 ```
 
-### Escopo considerado funcional nesta baseline
+### Escopo considerado funcional e seguro
 
-- Login operacional com usuário master.
-- Importação operacional de CTRCs.
-- Organização e leitura dos dados na Mesa de Roteirização.
-- Seleção e montagem prática de rota.
-- Geração e impressão da pré-separação, também chamada de pré-romaneio.
+- **Login**: Autenticação operacional segura (`master` / `anderson`) com fallback local.
+- **Importação**: Preservação da fila ativa e das cargas vinculadas durante a ingestão de CTRCs.
+- **Mesa de Roteirização**: Motor de filtros visuais em tempo real, seleção em lote, e suporte a alta densidade de dados.
+- **Pré-romaneios**: Gestão ágil de metadados da carga (placa, motorista, doca) com impressão limpa e focada na separação física.
+- **Programação do Dia**: Consolidação matricial da frota alocada com cálculo de CTRCs, Notas Fiscais, Peso e Volume em tempo real.
+- **Cadastro de Frota e GR**: Gestor de limites sugeridos operando como referência consultiva sem bloqueios indevidos na operação.
+- **Integração Visual**: Suporte consistente aos modos Dark e Day com manutenção forçada da leitura e impressões simplificadas para economia de recursos físicos.
 
-### Limites conhecidos desta baseline
+### Limites conhecidos e pendências para a próxima fase
 
-Esta versão valida o núcleo **durante** a roteirização, mas ainda não declara como estáveis os fluxos antes da importação ou após o pré-romaneio.
+Esta versão consolida o estado atual, mapeando as seguintes áreas para a próxima fase de desenvolvimento e hardening:
 
-Pontos já identificados para evolução incremental:
-
-- melhorar a localização visual do CTRC na Mesa;
-- melhorar a leitura e exibição de dados operacionais;
-- refinar o fluxo antes da importação;
-- revisar e amadurecer o fluxo posterior ao pré-romaneio;
-- separar futuramente Mesa ativa, histórico, entregues, ocorrências e KPIs;
-- preparar importação única do SSW com classificação automática por situação do CTRC.
+- separação definitiva entre a Mesa ativa e o Catálogo/Histórico de faturas.
+- implantação da importação SSW completa contendo a classificação interna automatizada do status operacional do CTRC.
+- fortalecimento das políticas de segurança do banco de dados relacional remoto (Supabase RLS).
+- evolução do motor de Gerenciamento de Risco (GR) para liberação manual sob tokens de autorização específicos.
+- finalização da migração do sistema de Design Tokens e temas em áreas que possuem hardcoded colors.
+- melhoria expressiva na cobertura e na estrutura de automação de testes (e-2-e).
 
 ### Decisão de projeto
 

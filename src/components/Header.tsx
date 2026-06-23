@@ -7,6 +7,8 @@ interface HeaderProps {
   notificationCount: number;
   onClearNotifications?: () => void;
   onToggleSidebar: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export default function Header({
@@ -16,6 +18,8 @@ export default function Header({
   notificationCount,
   onClearNotifications,
   onToggleSidebar,
+  theme = 'dark',
+  onToggleTheme = () => {},
 }: HeaderProps) {
   const getViewTitleAndPlaceholder = (view: ViewType) => {
     switch (view) {
@@ -103,6 +107,17 @@ export default function Header({
 
       {/* Trailing Quick Actions */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={onToggleTheme}
+          className="relative text-on-surface-variant hover:text-primary transition-colors duration-200 p-2 rounded-full hover:bg-surface-container cursor-pointer"
+          title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+        >
+          <span className="material-symbols-outlined select-none text-[22px]">
+            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+
         {/* Support Help */}
         <button
           className="relative text-on-surface-variant hover:text-primary transition-colors duration-200 p-2 rounded-full hover:bg-surface-container"

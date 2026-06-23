@@ -1,5 +1,6 @@
-import { useState, FormEvent } from 'react';
-import { Vehicle, DriverScore } from '../types';
+import { useState, useEffect, FormEvent } from 'react';
+import { Vehicle, DriverScore, VehicleRegistry } from '../types';
+import { calculateSuggestedGrLimit } from '../utils/grUtils';
 
 interface FrotaViewProps {
   vehicles: Vehicle[];
@@ -12,6 +13,10 @@ interface FrotaViewProps {
   onRemoveDriver: (id: string) => void;
   searchValue: string;
   isMaster?: boolean;
+  vehicleRegistries: VehicleRegistry[];
+  onAddVehicleRegistry: (vr: VehicleRegistry) => void;
+  onUpdateVehicleRegistry: (vr: VehicleRegistry) => void;
+  onRemoveVehicleRegistry: (placa: string) => void;
 }
 
 export default function FrotaView({
@@ -25,10 +30,31 @@ export default function FrotaView({
   onRemoveDriver,
   searchValue,
   isMaster = false,
+  vehicleRegistries = [],
+  onAddVehicleRegistry,
+  onUpdateVehicleRegistry,
+  onRemoveVehicleRegistry,
 }: FrotaViewProps) {
-  const [subTab, setSubTab] = useState<'veiculos' | 'motoristas'>('veiculos');
+  const [subTab, setSubTab] = useState<'cadastro_gr' | 'veiculos' | 'motoristas'>('cadastro_gr');
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Form Fields for VehicleRegistry (GR)
+  const [vrPlaca, setVrPlaca] = useState('');
+  const [vrTipo, setVrTipo] = useState<'PROPRIO' | 'AGREGADO' | 'APOIO'>('PROPRIO');
+  const [vrRastreado, setVrRastreado] = useState<boolean>(true);
+  const [vrLimiteGrSugerido, setVrLimiteGrSugerido] = useState<number>(500000);
+  const [vrMotoristaPadrao, setVrMotoristaPadrao] = useState('');
+  const [vrAjudantePadrao, setVrAjudantePadrao] = useState('');
+  const [vrStatusOperacional, setVrStatusOperacional] = useState<'ATIVO' | 'MANUTENCAO' | 'INATIVO'>('ATIVO');
+  const [vrObservacoes, setVrObservacoes] = useState('');
+
+  // Auto-update suggested limit when type or tracking changes (only in non-editing mode, so we don't overwrite manual edits)
+  useEffect(() => {
+    if (!editingId) {
+      setVrLimiteGrSugerido(calculateSuggestedGrLimit(vrTipo, vrRastreado));
+    }
+  }, [vrTipo, vrRastreado, editingId]);
 
   // Form Fields for Vehicle
   const [vehiclePlaca, setVehiclePlaca] = useState('');
@@ -44,6 +70,19 @@ export default function FrotaView({
   const [driverBestRoute, setDriverBestRoute] = useState('');
   const [driverPhone, setDriverPhone] = useState('');
   const [driverCnh, setDriverCnh] = useState('');
+
+  const handleEditVehicleRegistry = (vr: VehicleRegistry) => {
+    setEditingId(vr.placa);
+    setVrPlaca(vr.placa);
+    setVrTipo(vr.tipo);
+    setVrRastreado(vr.rastreado);
+    setVrLimiteGrSugerido(vr.limiteGrSugerido);
+    setVrMotoristaPadrao(vr.motoristaPadrao || '');
+    setVrAjudantePadrao(vr.ajudantePadrao || '');
+    setVrStatusOperacional(vr.statusOperacional);
+    setVrObservacoes(vr.observacoes || '');
+    setShowForm(true);
+  };
 
   const handleEditVehicle = (veh: Vehicle) => {
     setEditingId(veh.id);
@@ -68,7 +107,32 @@ export default function FrotaView({
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
-    if (subTab === 'veiculos') {
+    if (subTab === 'cadastro_gr') {
+      if (!vrPlaca) {
+        alert("Preencha a placa do veículo.");
+        return;
+      }
+      const vr: VehicleRegistry = {
+        placa: vrPlaca.toUpperCase().trim(),
+        tipo: vrTipo,
+        rastreado: vrRastreado,
+        limiteGrSugerido: Number(vrLimiteGrSugerido) || 0,
+        motoristaPadrao: vrMotoristaPadrao || undefined,
+        ajudantePadrao: vrAjudantePadrao || undefined,
+        statusOperacional: vrStatusOperacional,
+        observacoes: vrObservacoes || undefined,
+      };
+      if (editingId) {
+        onUpdateVehicleRegistry(vr);
+      } else {
+        const exists = vehicleRegistries.some(x => x.placa === vr.placa);
+        if (exists) {
+          alert(`Veículo com a placa ${vr.placa} já está cadastrado.`);
+          return;
+        }
+        onAddVehicleRegistry(vr);
+      }
+    } else if (subTab === 'veiculos') {
       if (!vehiclePlaca || !vehicleCap) {
         alert("Preencha placa e capacidade do veículo.");
         return;
@@ -116,6 +180,14 @@ export default function FrotaView({
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setVrPlaca('');
+    setVrTipo('PROPRIO');
+    setVrRastreado(true);
+    setVrLimiteGrSugerido(500000);
+    setVrMotoristaPadrao('');
+    setVrAjudantePadrao('');
+    setVrStatusOperacional('ATIVO');
+    setVrObservacoes('');
     setVehiclePlaca('');
     setVehicleDriver('');
     setVehicleCap('');
@@ -128,6 +200,14 @@ export default function FrotaView({
     setDriverPhone('');
     setDriverCnh('');
   };
+
+  const filteredVehicleRegistries = (vehicleRegistries || []).filter(
+    (vr) =>
+      vr.placa.toLowerCase().includes(searchValue.toLowerCase()) ||
+      (vr.motoristaPadrao || '').toLowerCase().includes(searchValue.toLowerCase()) ||
+      vr.tipo.toLowerCase().includes(searchValue.toLowerCase()) ||
+      vr.statusOperacional.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   const filteredVehicles = vehicles.filter(
     (v) =>
@@ -143,7 +223,7 @@ export default function FrotaView({
   );
 
   const handleExportJson = () => {
-    const data = subTab === 'veiculos' ? vehicles : drivers;
+    const data = subTab === 'cadastro_gr' ? vehicleRegistries : subTab === 'veiculos' ? vehicles : drivers;
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -156,7 +236,29 @@ export default function FrotaView({
 
   const handleExportCsv = () => {
     let csvStr = '';
-    if (subTab === 'veiculos') {
+    if (subTab === 'cadastro_gr') {
+      const headers = ['placa', 'tipo', 'rastreado', 'limiteGrSugerido', 'motoristaPadrao', 'ajudantePadrao', 'statusOperacional', 'observacoes'];
+      const csvRows = [headers.join(';')];
+      for (const item of vehicleRegistries) {
+        const values = [
+          item.placa,
+          item.tipo,
+          item.rastreado ? 'SIM' : 'NÃO',
+          String(item.limiteGrSugerido),
+          item.motoristaPadrao || '',
+          item.ajudantePadrao || '',
+          item.statusOperacional,
+          item.observacoes || ''
+        ];
+        const escaped = values.map(v => {
+          let s = String(v).replace(/"/g, '""');
+          if (s.includes(';') || s.includes('\n') || s.includes('"')) s = `"${s}"`;
+          return s;
+        });
+        csvRows.push(escaped.join(';'));
+      }
+      csvStr = csvRows.join('\n');
+    } else if (subTab === 'veiculos') {
       const headers = ['id', 'driverName', 'capacity', 'type', 'status'];
       const csvRows = [headers.join(';')];
       for (const item of vehicles) {
@@ -197,6 +299,20 @@ export default function FrotaView({
       {/* Visual Tab Selection Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/60 pb-3">
         <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setSubTab('cadastro_gr');
+              resetForm();
+            }}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
+              subTab === 'cadastro_gr'
+                ? 'bg-primary-container text-on-primary-container shadow-sm border border-primary/20'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">verified_user</span>
+            Cadastro Operacional GR & Frota ({filteredVehicleRegistries.length})
+          </button>
           <button
             onClick={() => {
               setSubTab('veiculos');
@@ -250,7 +366,7 @@ export default function FrotaView({
               className="px-4 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md"
             >
               <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              {subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
+              {subTab === 'cadastro_gr' ? 'Cadastrar Veículo GR' : subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
             </button>
           ) : (
             <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none">
@@ -276,7 +392,106 @@ export default function FrotaView({
             </button>
           </div>
 
-          {subTab === 'veiculos' ? (
+          {subTab === 'cadastro_gr' ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Placa do Veículo</label>
+                <input
+                  type="text"
+                  placeholder="Ex: RTA3G45"
+                  value={vrPlaca}
+                  onChange={(e) => setVrPlaca(e.target.value)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary uppercase font-mono"
+                  required
+                  disabled={!!editingId}
+                />
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Classificação de Frota</label>
+                <select
+                  value={vrTipo}
+                  onChange={(e) => setVrTipo(e.target.value as any)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                >
+                  <option value="PROPRIO">Frota Própria Estável</option>
+                  <option value="AGREGADO">Agregado</option>
+                  <option value="APOIO">Frota de Apoio/Agregado Eventual</option>
+                </select>
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Rastreamento GR</label>
+                <select
+                  value={vrRastreado ? "true" : "false"}
+                  onChange={(e) => setVrRastreado(e.target.value === "true")}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                >
+                  <option value="true">Rastreado (Homologado)</option>
+                  <option value="false">Não Rastreado</option>
+                </select>
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Limite GR Sugerido (R$)</label>
+                <select
+                  value={vrLimiteGrSugerido}
+                  onChange={(e) => setVrLimiteGrSugerido(Number(e.target.value))}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                >
+                  <option value={300000}>Até R$ 300.000 (Padrão)</option>
+                  <option value={500000}>Até R$ 500.000 (Avançado)</option>
+                  <option value={1000000}>Até R$ 1.000.000 (Especial)</option>
+                </select>
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Motorista Padrão</label>
+                <input
+                  type="text"
+                  placeholder="Nome do motorista principal"
+                  value={vrMotoristaPadrao}
+                  onChange={(e) => setVrMotoristaPadrao(e.target.value)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Ajudante Padrão</label>
+                <input
+                  type="text"
+                  placeholder="Nome do ajudante principal"
+                  value={vrAjudantePadrao}
+                  onChange={(e) => setVrAjudantePadrao(e.target.value)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="text-left">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Status Operacional</label>
+                <select
+                  value={vrStatusOperacional}
+                  onChange={(e) => setVrStatusOperacional(e.target.value as any)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                >
+                  <option value="ATIVO">Ativo</option>
+                  <option value="MANUTENCAO">Manutenção</option>
+                  <option value="INATIVO">Inativo</option>
+                </select>
+              </div>
+
+              <div className="text-left md:col-span-1">
+                <label className="text-xs font-semibold text-on-surface block mb-1">Observações Operacionais</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Restrições de horário, etc"
+                  value={vrObservacoes}
+                  onChange={(e) => setVrObservacoes(e.target.value)}
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+          ) : subTab === 'veiculos' ? (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="text-left">
                 <label className="text-xs font-semibold text-on-surface block mb-1">Placa do Veículo</label>
@@ -412,7 +627,124 @@ export default function FrotaView({
       )}
 
       {/* Lists Row based on subTab */}
-      {subTab === 'veiculos' ? (
+      {subTab === 'cadastro_gr' ? (
+        <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h4 className="text-sm font-bold text-on-surface">Mesa Geral de Veículos & Cadastro de Risco (GR)</h4>
+              <p className="text-xs text-on-surface-variant">Classificação de frota e rastreamento para fechamento operacional dos pré-romaneios.</p>
+            </div>
+            <div className="text-right text-xs text-on-surface-variant">
+              Total de Veículos Homologados: <span className="font-bold text-primary">{vehicleRegistries.length}</span>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+            <table className="w-full text-left text-xs font-sans">
+              <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+                <tr>
+                  <th className="px-5 py-3">Placa</th>
+                  <th className="px-5 py-3">Classificação</th>
+                  <th className="px-5 py-3">Rastreamento GR</th>
+                  <th className="px-5 py-3">Limite Operacional</th>
+                  <th className="px-5 py-3">Motorista Padrão</th>
+                  <th className="px-5 py-3">Ajudante Padrão</th>
+                  <th className="px-5 py-3 text-center">Status Op.</th>
+                  <th className="px-5 py-3">Observações</th>
+                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/30 leading-normal">
+                {filteredVehicleRegistries.map((vr) => {
+                  const typeLabel =
+                    vr.tipo === 'PROPRIO'
+                      ? 'Próprio Estável'
+                      : vr.tipo === 'AGREGADO'
+                      ? 'Agregado'
+                      : 'Apoio/Eventual';
+                  const typeColor =
+                    vr.tipo === 'PROPRIO'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : vr.tipo === 'AGREGADO'
+                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+
+                  const trackerLabel = vr.rastreado ? 'Rastreado' : 'Sem Rastreio';
+                  const trackerColor = vr.rastreado
+                    ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                    : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+
+                  const statusColor =
+                    vr.statusOperacional === 'ATIVO'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : vr.statusOperacional === 'MANUTENCAO'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+                  return (
+                    <tr key={vr.placa} className="hover:bg-surface border-b border-outline-variant/30 transition-colors">
+                      <td className="px-5 py-3.5 font-bold font-mono text-primary text-sm uppercase">{vr.placa}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${typeColor}`}>
+                          {typeLabel}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${trackerColor}`}>
+                          {trackerLabel}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-on-surface">
+                        {vr.limiteGrSugerido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="px-5 py-3.5 text-on-surface font-semibold">{vr.motoristaPadrao || 'Não Vinculado'}</td>
+                      <td className="px-5 py-3.5 text-on-surface-variant">{vr.ajudantePadrao || '-'}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusColor}`}>
+                          {vr.statusOperacional}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-on-surface-variant truncate max-w-[180px]" title={vr.observacoes}>
+                        {vr.observacoes || <span className="text-zinc-600 text-[11px] italic">Sem observações</span>}
+                      </td>
+                      {isMaster && (
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEditVehicleRegistry(vr)}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              title="Editar"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Excluir o cadastro de GR do veículo ${vr.placa}?`)) {
+                                  onRemoveVehicleRegistry(vr.placa);
+                                }
+                              }}
+                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error transition-colors"
+                              title="Excluir"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+                {filteredVehicleRegistries.length === 0 && (
+                  <tr>
+                    <td colSpan={isMaster ? 9 : 8} className="text-center py-10 text-on-surface-variant">
+                      Nenhum veículo cadastrado no GR correspondente à pesquisa.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : subTab === 'veiculos' ? (
         <div className="bg-surface-container rounded-xl border border-outline-variant p-5">
           <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
             <table className="w-full text-left text-xs font-sans">

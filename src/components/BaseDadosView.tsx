@@ -7,7 +7,8 @@ import {
   CurvaAClient, 
   CriticClient, 
   AppUser,
-  OperationalCalendarEvent
+  OperationalCalendarEvent,
+  VehicleRegistry
 } from '../types';
 import { db } from '../infrastructure/localdb/db';
 import { OperationalUnitBIRepository } from '../infrastructure/localdb/repositories/operationalUnitBIRepository';
@@ -41,6 +42,10 @@ interface BaseDadosViewProps {
   criticClients: CriticClient[];
   onAddAuditNote: (clientId: string, note: string) => void;
   searchValue: string;
+  vehicleRegistries?: VehicleRegistry[];
+  onAddVehicleRegistry?: (vr: VehicleRegistry) => void;
+  onUpdateVehicleRegistry?: (vr: VehicleRegistry) => void;
+  onRemoveVehicleRegistry?: (placa: string) => void;
 }
 
 type TabId = 
@@ -76,6 +81,10 @@ export default function BaseDadosView({
   criticClients,
   onAddAuditNote,
   searchValue: globalSearchValue,
+  vehicleRegistries = [],
+  onAddVehicleRegistry = () => {},
+  onUpdateVehicleRegistry = () => {},
+  onRemoveVehicleRegistry = () => {},
 }: BaseDadosViewProps) {
   const [activeTab, setActiveTab] = useState<TabId>('unidades');
 
@@ -861,6 +870,10 @@ export default function BaseDadosView({
             onUpdateDriver={onUpdateDriver}
             onRemoveDriver={onRemoveDriver}
             searchValue={globalSearchValue}
+            vehicleRegistries={vehicleRegistries}
+            onAddVehicleRegistry={onAddVehicleRegistry}
+            onUpdateVehicleRegistry={onUpdateVehicleRegistry}
+            onRemoveVehicleRegistry={onRemoveVehicleRegistry}
           />
         );
 

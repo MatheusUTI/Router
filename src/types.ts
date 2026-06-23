@@ -483,6 +483,19 @@ export interface CidadeAtendidaSSW {
   updatedAt?: string;
 }
 
+export interface VehicleRegistry {
+  placa: string;
+  tipo: 'PROPRIO' | 'AGREGADO' | 'APOIO';
+  rastreado: boolean;
+  limiteGrSugerido: number;
+  motoristaPadrao?: string;
+  ajudantePadrao?: string;
+  statusOperacional: 'ATIVO' | 'MANUTENCAO' | 'INATIVO';
+  observacoes?: string;
+  updated_at?: string;
+  created_at?: string;
+}
+
 
 
 

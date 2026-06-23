@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio, VehicleRegistry } from './types';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import { IS_DEMO_MODE } from './constants/runtimeMode';
 import {
@@ -29,6 +29,7 @@ import { db } from './infrastructure/localdb/db';
 import { runCompatibilityMigration } from './infrastructure/localdb/adapters/localStorageAdapter';
 import { CtrcRepository } from './infrastructure/localdb/repositories/ctrcRepository';
 import { VehicleRepository } from './infrastructure/localdb/repositories/vehicleRepository';
+import { VehicleRegistryRepository } from './infrastructure/localdb/repositories/vehicleRegistryRepository';
 import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
@@ -124,6 +125,15 @@ export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: C
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('login');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('router_theme');
+    return (saved as 'light' | 'dark') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('router_theme', theme);
+  }, [theme]);
   
   // Operator profile state
   const [adminProfile, setAdminProfile] = useState<AppUser>({
@@ -136,6 +146,7 @@ export default function App() {
 
   // Global Operational Databases State
   const [vehicles, setVehicles] = useState<Vehicle[]>(IS_DEMO_MODE ? initialVehicles : []);
+  const [vehicleRegistries, setVehicleRegistries] = useState<VehicleRegistry[]>([]);
   const [drivers, setDrivers] = useState<DriverScore[]>(IS_DEMO_MODE ? initialDrivers : []);
   const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialAvailableCtrcs : []);
   const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialLinkedCtrcs : []);
@@ -247,6 +258,9 @@ export default function App() {
           setVehicles(localVehicles);
         }
 
+        const localVehicleRegistries = await VehicleRegistryRepository.getAll();
+        setVehicleRegistries(localVehicleRegistries);
+
         const localDrivers = await DriverRepository.getAll();
         if (localDrivers.length > 0) {
           setDrivers(localDrivers);
@@ -320,6 +334,24 @@ export default function App() {
     setIsSyncing(true);
     await removeVehicleFromSupabase(id);
     setIsSyncing(false);
+  };
+
+  const handleAddVehicleRegistry = async (vr: VehicleRegistry) => {
+    await VehicleRegistryRepository.put(vr);
+    const updated = await VehicleRegistryRepository.getAll();
+    setVehicleRegistries(updated);
+  };
+
+  const handleUpdateVehicleRegistry = async (vr: VehicleRegistry) => {
+    await VehicleRegistryRepository.put(vr);
+    const updated = await VehicleRegistryRepository.getAll();
+    setVehicleRegistries(updated);
+  };
+
+  const handleRemoveVehicleRegistry = async (placa: string) => {
+    await VehicleRegistryRepository.delete(placa);
+    const updated = await VehicleRegistryRepository.getAll();
+    setVehicleRegistries(updated);
   };
 
   const handleAddDriver = async (d: DriverScore) => {
@@ -841,6 +873,11 @@ export default function App() {
             onUpdateDriver={handleUpdateDriver}
             onRemoveDriver={handleRemoveDriver}
             searchValue={searchValue}
+            isMaster={adminProfile.is_master}
+            vehicleRegistries={vehicleRegistries}
+            onAddVehicleRegistry={handleAddVehicleRegistry}
+            onUpdateVehicleRegistry={handleUpdateVehicleRegistry}
+            onRemoveVehicleRegistry={handleRemoveVehicleRegistry}
           />
         );
       case 'roteirizacao':
@@ -873,6 +910,7 @@ export default function App() {
             onDeleteRomaneio={handleDeleteRomaneio}
             adminUser={adminProfile}
             onRefreshCtrcs={rehydrateCtrcsOnly}
+            vehicleRegistries={vehicleRegistries}
           />
         );
       case 'desempenho':
@@ -944,6 +982,10 @@ export default function App() {
             criticClients={clients}
             onAddAuditNote={(clientId, note) => handleAddAuditNote(clientId, note, adminProfile.name)}
             searchValue={searchValue}
+            vehicleRegistries={vehicleRegistries}
+            onAddVehicleRegistry={handleAddVehicleRegistry}
+            onUpdateVehicleRegistry={handleUpdateVehicleRegistry}
+            onRemoveVehicleRegistry={handleRemoveVehicleRegistry}
           />
         );
       case 'configuracoes':
@@ -988,7 +1030,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-background text-[#dae2fd] font-sans antialiased ${currentView === 'roteirizacao' ? 'pt-0' : 'pt-16'} md:pl-[72px] transition-all duration-300`}>
+    <div className={`min-h-screen bg-background text-on-surface font-sans antialiased ${currentView === 'roteirizacao' ? 'pt-0' : 'pt-16'} md:pl-[72px] transition-all duration-300`}>
       {/* Collapsible overlay sidebar */}
       <Sidebar
         currentView={currentView}
@@ -1009,6 +1051,8 @@ export default function App() {
           notificationCount={pendingTicketsCount}
           onClearNotifications={handleClearNotifications}
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          theme={theme}
+          onToggleTheme={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
         />
       )}
 

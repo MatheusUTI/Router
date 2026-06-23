@@ -1,4 +1,5 @@
 import { db, RomaneioSave } from '../db';
+import { VehicleRegistry } from '../../../types';
 import { 
   initialVehicles, 
   initialDrivers, 
@@ -153,6 +154,70 @@ export async function runCompatibilityMigration(): Promise<{
       }));
       await db.operational_units_bi.bulkPut(prepared);
       console.log(`[Adapter] Semeados ${prepared.length} registros de unidades operacionais BI.`);
+    }
+
+    // 10. Seeding de Vehicle Registry (Cadastro Operacional de Veículos)
+    const vehicleRegistryCount = await db.vehicle_registries.count();
+    if (vehicleRegistryCount === 0 && ALLOW_DEMO_TRANSACTIONAL_SEEDS) {
+      const initialRegistry: VehicleRegistry[] = [
+        {
+          placa: 'RTA3G45',
+          tipo: 'PROPRIO',
+          rastreado: true,
+          limiteGrSugerido: 500000,
+          motoristaPadrao: 'João Silva',
+          statusOperacional: 'ATIVO',
+          observacoes: 'Veículo próprio estável cadastrado no sistema',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          placa: 'OPR1B22',
+          tipo: 'PROPRIO',
+          rastreado: false,
+          limiteGrSugerido: 300000,
+          motoristaPadrao: 'Maria Oliveira',
+          statusOperacional: 'ATIVO',
+          observacoes: 'Frota própria sem rastreamento dedicado',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          placa: 'LOG9H88',
+          tipo: 'AGREGADO',
+          rastreado: true,
+          limiteGrSugerido: 300000,
+          statusOperacional: 'MANUTENCAO',
+          observacoes: 'Agregado de rota fixa',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          placa: 'FLT8M55',
+          tipo: 'PROPRIO',
+          rastreado: true,
+          limiteGrSugerido: 500000,
+          motoristaPadrao: 'Carlos Silva',
+          statusOperacional: 'ATIVO',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          placa: 'TRK4X90',
+          tipo: 'APOIO',
+          rastreado: false,
+          limiteGrSugerido: 300000,
+          motoristaPadrao: 'Ana Martins',
+          statusOperacional: 'ATIVO',
+          observacoes: 'Apoio urbano eventual',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      for (const vr of initialRegistry) {
+        await db.vehicle_registries.put(vr);
+      }
+      console.log('[Adapter] Semeados registros operacionais de veículos.');
     }
 
     console.log('[Adapter] Migração e Semeamento inteligente concluídos:', result);
