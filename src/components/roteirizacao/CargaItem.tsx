@@ -126,27 +126,31 @@ const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; bo
   return { bg: 'bg-[#101a2e]', text: 'text-slate-350', border: 'border-slate-800' };
 };
 
-const buildSswLink = (ctrcId: string) => {
-  const match = ctrcId.match(/^([a-zA-Z]+)[-\s]?(\d+)$/) || ctrcId.match(/^([a-zA-Z]+)(\d+)$/);
-  let series = 'BCA';
-  let number = ctrcId;
-  if (match) {
-    series = match[1].toUpperCase();
-    number = match[2];
-  } else {
-    const digitsOnly = ctrcId.replace(/\D/g, '');
-    if (digitsOnly) {
-      number = digitsOnly;
-    }
-  }
+const buildSswLink = (ctrc: Pick<RoteirizacaoItem, 'id' | 'unid'>): string | null => {
+  const rawId = String(ctrc.id ?? '').trim();
+  if (!rawId) return null;
+
+  const match = rawId.match(/^([a-zA-Z]+)[-\s]?(\d+)$/) || rawId.match(/^([a-zA-Z]+)(\d+)$/);
+
+  const series = String(ctrc.unid || match?.[1] || '').trim().toUpperCase();
+  const number = match?.[2] || rawId.replace(/\D/g, '') || rawId;
+
+  if (!series || !number) return null;
+
   const today = new Date();
   const d = String(today.getDate()).padStart(2, '0');
   const m = String(today.getMonth() + 1).padStart(2, '0');
   const y = String(today.getFullYear()).slice(-2);
-  const dataFin = `${d}${m}${y}`;
-  const dataIni = '010124';
-  
-  return `https://sistema.ssw.inf.br/bin/ssw0053?act=P1&t_ser_ctrc=${series}&t_nro_ctrc=${number}&t_data_ini=${dataIni}&t_data_fin=${dataFin}`;
+
+  const params = new URLSearchParams({
+    act: 'P1',
+    t_ser_ctrc: series,
+    t_nro_ctrc: number,
+    t_data_ini: '010124',
+    t_data_fin: `${d}${m}${y}`,
+  });
+
+  return `https://sistema.ssw.inf.br/bin/ssw0053?${params.toString()}`;
 };
 
 export default function CargaItem({
@@ -306,16 +310,22 @@ export default function CargaItem({
         <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
           <span>
             CTRC:{' '}
-            <a
-              href={buildSswLink(item.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="hover:underline text-indigo-400 hover:text-indigo-300 cursor-pointer font-bold inline"
-              title="Abrir CTRC no SSW"
-            >
-              {item.id}
-            </a>
+            {(() => {
+              const sswUrl = buildSswLink(item);
+              if (!sswUrl) return item.id;
+              return (
+                <a
+                  href={sswUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:underline text-indigo-400 hover:text-indigo-300 cursor-pointer font-bold inline"
+                  title="Abrir CTRC no SSW"
+                >
+                  {item.id}
+                </a>
+              );
+            })()}
           </span>
           <span>•</span>
           <span>NF: {item.nf || 'S/N'}</span>
