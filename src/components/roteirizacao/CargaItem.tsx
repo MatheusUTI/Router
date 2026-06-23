@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RoteirizacaoItem, RoutePlanningItem, PlanningStatus, PlanningPriority } from '../../types';
+import { RoteirizacaoItem, RoutePlanningItem, PlanningStatus, PlanningPriority, DensityMode } from '../../types';
 import { MoreVertical, X, Calendar, AlertCircle, Star, PauseCircle, Ban, RefreshCw } from 'lucide-react';
 
 interface CargaItemProps {
@@ -8,7 +8,7 @@ interface CargaItemProps {
   isSelected: boolean;
   onToggle: (id: string) => void;
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
-  densityMode?: 'compact' | 'default' | 'comfortable';
+  densityMode?: DensityMode;
 }
 
 const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
@@ -333,243 +333,465 @@ export default function CargaItem({
       </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-slate-200 dark:border-[#14203a]/30`}>
-        <span className="text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
-          {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
-        </span>
-        
-        <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
-          {/* Main Directing Route */}
-          <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-            <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase text-[14px]">
-              {item.effectiveRoute || 'SEM ROTA'}
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-slate-200 dark:border-[#14203a]/30 ${densityMode === 'planilha_operacional' ? 'py-1 px-2 gap-0.5 h-[52px]' : ''}`}>
+        {densityMode === 'planilha_operacional' ? (
+          <>
+            {/* Linha 1: Cidade */}
+            <span className="text-slate-900 dark:text-white font-extrabold text-[12.5px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+              {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
             </span>
-            {item.isManualRoute && (
-              <span className="text-orange-700 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-950/20 dark:border-orange-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
-                MANUAL
+            {/* Linha 2: Rota e flags */}
+            <div className="flex items-center gap-1 text-[11.5px] font-mono leading-none">
+              <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase">
+                {item.effectiveRoute || 'SEM ROTA'}
               </span>
-            )}
-            {item.planningStatus === 'SEGURAR' && (
-              <span className="text-red-700 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
-                SEGURAR
-              </span>
-            )}
-          </div>
+              {item.isManualRoute && (
+                <span className="text-orange-700 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-950/20 dark:border-orange-500/15 font-black uppercase text-[8.5px] px-1 py-0.2 rounded shrink-0 leading-none select-none">
+                  MANUAL
+                </span>
+              )}
+              {item.planningStatus === 'SEGURAR' && (
+                <span className="text-red-700 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-500/15 font-black uppercase text-[8.5px] px-1 py-0.2 rounded shrink-0 leading-none select-none">
+                  SEGURAR
+                </span>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+              {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
+            </span>
+            
+            <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
+              {/* Main Directing Route */}
+              <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
+                <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase text-[14px]">
+                  {item.effectiveRoute || 'SEM ROTA'}
+                </span>
+                {item.isManualRoute && (
+                  <span className="text-orange-700 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-950/20 dark:border-orange-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+                    MANUAL
+                  </span>
+                )}
+                {item.planningStatus === 'SEGURAR' && (
+                  <span className="text-red-700 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+                    SEGURAR
+                  </span>
+                )}
+              </div>
 
-          {/* Suggested route if Manual overwrite is active */}
-          {item.isManualRoute && item.suggestedRoute && (
-            <span className="text-slate-500 font-bold font-mono text-[11px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
-              Sug.: {item.suggestedRoute}
-            </span>
-          )}
-        </div>
+              {/* Suggested route if Manual overwrite is active */}
+              {item.isManualRoute && item.suggestedRoute && (
+                <span className="text-slate-500 font-bold font-mono text-[11px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
+                  Sug.: {item.suggestedRoute}
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-slate-200 dark:border-[#131f38]/15`}>
-        {/* Destinatário */}
-        <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
-          <span className="text-slate-800 dark:text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
-            {item.destinatario || 'SEM DESTINATÁRIO'}
-          </span>
-        </div>
-
-        {/* Remetente */}
-        <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
-          <span 
-            className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
-              item.isCurvaA 
-                ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-[#d8b4fe] dark:bg-purple-950/40 px-1 py-0.2 rounded border dark:border-purple-500/25 font-black text-[12px]' 
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-            title={item.remetente || 'SEM REMETENTE'}
-          >
-            {item.remetente || 'SEM REMETENTE'}
-            {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-purple-400 ml-1 select-none">★ CURVA A</span>}
-          </span>
-        </div>
-
-        {/* Info row */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-600 dark:text-indigo-350">
-          <span>
-            CTRC:{' '}
-            {(() => {
-              const sswUrl = buildSswLink(item);
-              if (!sswUrl) return item.id;
-              return (
-                <a
-                  href={sswUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleOpenSswCtrc}
-                  className="hover:underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 cursor-pointer font-bold inline"
-                  title="Abrir CTRC no SSW"
-                >
-                  {item.id}
-                </a>
-              );
-            })()}
-          </span>
-          <span className="text-slate-300 dark:text-slate-600">•</span>
-          <span>NF: {item.nf || 'S/N'}</span>
-          {item.isCriticClient && (
-            <span 
-              className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-200 dark:border-violet-500/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
-              title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
-            >
-              👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
-            </span>
-          )}
-          {item.isFob && (
-            <span className="bg-amber-550/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
-              FOB
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Block 4: [BLOCO OPERACIONAL SIMPLIFICADO EM HIERARQUIA CLARA] */}
-      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-slate-200 dark:border-[#131f38]/15`}>
-        
-        {/* Linha 1: Previsão (data, SLA) */}
-        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-500 dark:text-slate-450 leading-none flex-wrap">
-          {(() => {
-            const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
-            if (hasNoPrev) {
-              return <span>PREV: SEM PREVISÃO</span>;
-            }
-            return (
-              <>
-                <span>PREV: {item.prev_ent}</span>
-                <span>•</span>
-                <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${
-                  item.slaStatus?.isDelayed
-                    ? 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15'
-                    : item.slaStatus?.isToday
-                    ? 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/15'
-                    : 'bg-[#F1F5F9] dark:bg-slate-900/30 text-[#475569] dark:text-slate-400 border-[#E2E8F0] dark:border-slate-755/20'
-                }`}>
-                  {(() => {
-                    if (!item.slaStatus) return 'S/ PRAZO';
-                    if (item.slaStatus.isDelayed) {
-                      return `ATRASADO ${Math.abs(item.slaStatus.daysDiff)}D`;
-                    }
-                    if (item.slaStatus.isToday) {
-                      return 'HOJE';
-                    }
-                    return `D+${item.slaStatus.daysDiff}`;
-                  })()}
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-slate-200 dark:border-[#131f38]/15 ${densityMode === 'planilha_operacional' ? 'py-1 px-2.5 h-[52px]' : ''}`}>
+        {densityMode === 'planilha_operacional' ? (
+          <>
+            {/* Linha 1: Destinatário com possíveis destaques (FOB / Curva A) */}
+            <div className="flex items-center gap-1 leading-none truncate w-full text-[12.5px] select-text">
+              <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[9.5px] tracking-tight mr-0.5">DST:</span>
+              <span 
+                className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border ${
+                  item.isFob 
+                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black' 
+                    : item.isCurvaA
+                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black'
+                    : 'text-slate-900 dark:text-slate-100 border-transparent'
+                }`}
+                title={`${item.destinatario || ''}${item.isFob ? ' [FOB]' : ''}${item.isCurvaA ? ' [CURVA A]' : ''}`}
+              >
+                {item.destinatario || 'SEM DESTINATÁRIO'}
+              </span>
+              {item.isFob && (
+                <span className="bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-1 rounded text-[8.5px] font-black uppercase tracking-wider select-none shrink-0 leading-none">
+                  FOB
                 </span>
-              </>
-            );
-          })()}
-          {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
-            <span className="bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border border-[#C7D2FE] dark:border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
-              AGENDADO
-            </span>
-          )}
-        </div>
+              )}
+              {item.isCurvaA && (
+                <span className="bg-[#FCE7F3] text-[#9D174D] border border-[#FBCFE8] px-1 rounded text-[8.5px] font-black uppercase tracking-wider select-none shrink-0 leading-none">
+                  ★ CURVA A
+                </span>
+              )}
+            </div>
 
-        {/* Linha 2: Status / Ocorrência (badge principal, descrição) */}
-        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
-          {/* Custom flow status label as MAIN badge (or simple text if Available) */}
-          {flowStatusLabel === 'DISPONÍVEL' ? (
-            <span className="text-slate-550 dark:text-slate-400 font-mono font-bold text-[10px] uppercase shrink-0 leading-none flex items-center gap-1 select-none">
-              🟢 Disponível
-            </span>
-          ) : (
-            <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
-              {flowStatusLabel}
-            </span>
-          )}
+            {/* Linha 2: Remetente + CTRC + NF */}
+            <div className="flex items-center gap-1.5 leading-none truncate w-full text-[11px] font-mono select-text mt-0.5 text-slate-550 dark:text-slate-450">
+              <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[9px]">REM:</span>
+              <span 
+                className={`font-semibold truncate max-w-[120px] uppercase ${
+                  item.isCurvaA 
+                    ? 'text-[#9D174D] bg-[#FCE7F3]/40 border-[#FBCFE8]/30 px-1 rounded border font-black text-[10px]' 
+                    : 'text-slate-600 dark:text-slate-400'
+                }`}
+                title={item.remetente}
+              >
+                {item.remetente || 'S/ R'}
+              </span>
+              <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                CTRC:{' '}
+                {(() => {
+                  const sswUrl = buildSswLink(item);
+                  if (!sswUrl) return item.id;
+                  return (
+                    <a
+                      href={sswUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleOpenSswCtrc}
+                      className="hover:underline hover:text-indigo-500 cursor-pointer"
+                    >
+                      {item.id}
+                    </a>
+                  );
+                })()}
+              </span>
+              <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
+              <span className="font-bold">NF: {item.nf || 'S/N'}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Destinatário */}
+            <div className="flex items-center gap-1 leading-none truncate w-full">
+              <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
+              <span className="text-slate-800 dark:text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
+                {item.destinatario || 'SEM DESTINATÁRIO'}
+              </span>
+            </div>
 
-          {/* Occurrence details */}
-          <div className="min-w-0 flex items-center gap-1">
-            {item.occurrenceCode ? (
-              (() => {
-                const code = String(item.occurrenceCode);
-                let badgeStyles = "bg-[#FFE4E6] dark:bg-red-950/40 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
+            {/* Remetente */}
+            <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
+              <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
+              <span 
+                className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
+                  item.isCurvaA 
+                    ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-[#d8b4fe] dark:bg-purple-950/40 px-1 py-0.2 rounded border dark:border-purple-500/25 font-black text-[12px]' 
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+                title={item.remetente || 'SEM REMETENTE'}
+              >
+                {item.remetente || 'SEM REMETENTE'}
+                {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-purple-400 ml-1 select-none">★ CURVA A</span>}
+              </span>
+            </div>
+
+            {/* Info row */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-600 dark:text-indigo-350">
+              <span>
+                CTRC:{' '}
+                {(() => {
+                  const sswUrl = buildSswLink(item);
+                  if (!sswUrl) return item.id;
+                  return (
+                    <a
+                      href={sswUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleOpenSswCtrc}
+                      className="hover:underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 cursor-pointer font-bold inline"
+                      title="Abrir CTRC no SSW"
+                    >
+                      {item.id}
+                    </a>
+                  );
+                })()}
+              </span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <span>NF: {item.nf || 'S/N'}</span>
+              {item.isCriticClient && (
+                <span 
+                  className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-200 dark:border-violet-500/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
+                  title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
+                >
+                  👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
+                </span>
+              )}
+              {item.isFob && (
+                <span className="bg-amber-550/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
+                  FOB
+                </span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+          {/* Block 4: [BLOCO OPERACIONAL SIMPLIFICADO EM HIERARQUIA CLARA] */}
+      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-slate-200 dark:border-[#131f38]/15 ${densityMode === 'planilha_operacional' ? 'py-1 px-2.5 gap-0.5 h-[52px]' : ''}`}>
+        {densityMode === 'planilha_operacional' ? (
+          <>
+            {/* Linha 1: Previsão de entrega (cores condicionais) + Status / Ocorrência simplificado */}
+            <div className="flex items-center gap-1.5 text-[11.5px] leading-none flex-wrap">
+              {(() => {
+                const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
                 
-                if (code === '57') {
-                  badgeStyles = "bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15";
-                } else if (code === '59') {
-                  badgeStyles = "bg-[#DBEAFE] dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/15";
-                } else if (code === '70') {
-                  badgeStyles = "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15";
+                let prevStyles = 'bg-[#F1F5F9] text-[#64748B] border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
+                let label = 'SEM PREV';
+                
+                if (!hasNoPrev) {
+                  label = item.prev_ent;
+                  if (item.slaStatus?.isDelayed) {
+                    prevStyles = 'bg-[#FEE2E2] text-[#B91C1C] border-[#FCA5A5] dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40';
+                  } else if (item.slaStatus?.isToday) {
+                    prevStyles = 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40';
+                  } else {
+                    prevStyles = 'bg-[#FEF3C7] text-[#92400E] border-[#FCD34D] dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40';
+                  }
                 }
 
                 return (
-                  <span className={`font-mono font-bold uppercase px-1 py-0.2 rounded border text-[9px] shrink-0 leading-none ${badgeStyles}`}>
-                    OC {item.occurrenceCode}
+                  <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[9.5px] shrink-0 leading-none flex items-center gap-1 ${prevStyles}`}>
+                    📅 {label}
+                    {item.slaStatus?.isDelayed && <span className="text-[8px] font-bold">ATRASADO</span>}
+                    {item.slaStatus?.isToday && <span className="text-[8px] font-bold">HOJE</span>}
                   </span>
                 );
-              })()
-            ) : null}
+              })()}
 
-            {item.occurrenceCode ? (
-              <span className="text-slate-600 dark:text-slate-400 font-bold truncate text-[11px]" title={item.occurrenceDescription}>
-                {item.occurrenceDescription === 'Ocorrência não mapeada' ? 'não mapeada' : item.occurrenceDescription}
-              </span>
-            ) : (
-              flowStatusLabel === 'DISPONÍVEL' ? null : (
-                <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
-                  🟢 SEM OCORRÊNCIA
+              {/* Status ou Ocorrência simples */}
+              {flowStatusLabel === 'DISPONÍVEL' ? (
+                <span className="text-emerald-700 dark:text-emerald-400 font-mono font-extrabold text-[10.5px] uppercase shrink-0 leading-none flex items-center gap-0.5 select-none ml-1">
+                  🟢 DISPONÍVEL
                 </span>
-              )
-            )}
-          </div>
-        </div>
+              ) : (
+                <span className={`font-mono font-extrabold uppercase px-1 py-0.2 rounded border text-[9.5px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
+                  {flowStatusLabel}
+                </span>
+              )}
 
-        {/* Linha 3: Localização e Notas */}
-        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
-          {/* Clean location details */}
-          {(() => {
-            const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
-            const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
-            return (
-              <span className="text-teal-600 dark:text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
-                📍<span className="font-extrabold uppercase text-slate-800 dark:text-slate-300 text-[11px]">{displayLoc}</span>
-              </span>
-            );
-          })()}
-
-          {item.occurrenceSector && (
-            item.occurrenceSector.toUpperCase() === 'DISPONÍVEL' || item.occurrenceSector.toUpperCase() === 'DISPONIVEL' ? (
-              <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px] leading-none whitespace-nowrap select-none">
-                Setor: Disponível
-              </span>
-            ) : (
-              <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
-                Setor: {item.occurrenceSector}
-              </span>
-            )
-          )}
-
-          {/* Micro operational note banner */}
-          {item.operationalNote && (
-            <div className="text-[11px] font-medium text-amber-700 dark:text-amber-305 italic truncate" title={item.operationalNote}>
-              Obs: {item.operationalNote}
+              {item.occurrenceCode && (
+                <span className="font-mono font-black text-red-700 dark:text-red-400 text-[9.5px]">
+                  OC {item.occurrenceCode}
+                </span>
+              )}
             </div>
-          )}
-        </div>
+
+            {/* Linha 2: Localização + OBS (Planilha-style) */}
+            <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-0.5 flex-wrap">
+              {/* Localização compacta */}
+              {(() => {
+                const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+                const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
+                return (
+                  <span className="text-slate-500 dark:text-slate-450 font-mono font-bold flex items-center gap-0.5 text-[10.5px] uppercase shrink-0" title={item.locationLabel || 'NÃO INFORMADO'}>
+                    📍 {displayLoc}
+                  </span>
+                );
+              })()}
+
+              {/* OBS compacta estilo planilha (fundo amarelo claro #FFF7DB, texto #92400E) */}
+              <div 
+                className="bg-[#FFF7DB] text-[#92400E] border border-[#F5E6C4] rounded px-1.5 py-0.5 text-[10px] font-mono leading-none font-semibold truncate flex-1 min-w-[100px] dark:bg-[#342711] dark:text-[#fcd34d] dark:border-[#54411d]" 
+                title={item.operationalNote || 'Sem observações'}
+              >
+                {item.operationalNote ? `OBS: ${item.operationalNote}` : '-'}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Linha 1: Previsão (data, SLA) */}
+            <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-500 dark:text-slate-450 leading-none flex-wrap">
+              {(() => {
+                const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
+                if (hasNoPrev) {
+                  return <span>PREV: SEM PREVISÃO</span>;
+                }
+                return (
+                  <>
+                    <span>PREV: {item.prev_ent}</span>
+                    <span>•</span>
+                    <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${
+                      item.slaStatus?.isDelayed
+                        ? 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15'
+                        : item.slaStatus?.isToday
+                        ? 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/15'
+                        : 'bg-[#F1F5F9] dark:bg-slate-900/30 text-[#475569] dark:text-slate-400 border-[#E2E8F0] dark:border-slate-755/20'
+                    }`}>
+                      {(() => {
+                        if (!item.slaStatus) return 'S/ PRAZO';
+                        if (item.slaStatus.isDelayed) {
+                          return `ATRASADO ${Math.abs(item.slaStatus.daysDiff)}D`;
+                        }
+                        if (item.slaStatus.isToday) {
+                          return 'HOJE';
+                        }
+                        return `D+${item.slaStatus.daysDiff}`;
+                      })()}
+                    </span>
+                  </>
+                );
+              })()}
+              {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
+                <span className="bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border border-[#C7D2FE] dark:border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
+                  AGENDADO
+                </span>
+              )}
+            </div>
+
+            {/* Linha 2: Status / Ocorrência (badge principal, descrição) */}
+            <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
+              {/* Custom flow status label as MAIN badge (or simple text if Available) */}
+              {flowStatusLabel === 'DISPONÍVEL' ? (
+                <span className="text-slate-550 dark:text-slate-400 font-mono font-bold text-[10px] uppercase shrink-0 leading-none flex items-center gap-1 select-none">
+                  🟢 Disponível
+                </span>
+              ) : (
+                <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
+                  {flowStatusLabel}
+                </span>
+              )}
+
+              {/* Occurrence details */}
+              <div className="min-w-0 flex items-center gap-1">
+                {item.occurrenceCode ? (
+                  (() => {
+                    const code = String(item.occurrenceCode);
+                    let badgeStyles = "bg-[#FFE4E6] dark:bg-red-950/40 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
+                    
+                    if (code === '57') {
+                      badgeStyles = "bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15";
+                    } else if (code === '59') {
+                      badgeStyles = "bg-[#DBEAFE] dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/15";
+                    } else if (code === '70') {
+                      badgeStyles = "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15";
+                    }
+
+                    return (
+                      <span className={`font-mono font-bold uppercase px-1 py-0.2 rounded border text-[9px] shrink-0 leading-none ${badgeStyles}`}>
+                        OC {item.occurrenceCode}
+                      </span>
+                    );
+                  })()
+                ) : null}
+
+                {item.occurrenceCode ? (
+                  <span className="text-slate-600 dark:text-slate-400 font-bold truncate text-[11px]" title={item.occurrenceDescription}>
+                    {item.occurrenceDescription === 'Ocorrência não mapeada' ? 'não mapeada' : item.occurrenceDescription}
+                  </span>
+                ) : (
+                  flowStatusLabel === 'DISPONÍVEL' ? null : (
+                    <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
+                      🟢 SEM OCORRÊNCIA
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Linha 3: Localização e Notas */}
+            <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
+              {/* Clean location details */}
+              {(() => {
+                const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+                const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
+                return (
+                  <span className="text-teal-600 dark:text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
+                    📍<span className="font-extrabold uppercase text-slate-800 dark:text-slate-300 text-[11px]">{displayLoc}</span>
+                  </span>
+                );
+              })()}
+
+              {item.occurrenceSector && (
+                item.occurrenceSector.toUpperCase() === 'DISPONÍVEL' || item.occurrenceSector.toUpperCase() === 'DISPONIVEL' ? (
+                  <span className="text-slate-550 dark:text-slate-400 font-mono text-[10px] leading-none whitespace-nowrap select-none">
+                    Setor: Disponível
+                  </span>
+                ) : (
+                  <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+                    Setor: {item.occurrenceSector}
+                  </span>
+                )
+              )}
+
+              {/* Micro operational note banner */}
+              {item.operationalNote && (
+                <div className="text-[11px] font-medium text-amber-700 dark:text-amber-305 italic truncate" title={item.operationalNote}>
+                  Obs: {item.operationalNote}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-slate-200 dark:border-[#131f38]/15 bg-slate-50/30 dark:bg-[#070c14]/15`}>
-        <span className="text-slate-800 dark:text-slate-105 font-black text-[13px] leading-none">
-          {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
-        </span>
-        <span className="text-amber-700 dark:text-amber-455 font-bold text-[12px] leading-none mt-1">
-          {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
-        </span>
-        <span className="text-slate-500 dark:text-slate-400 text-[12px] mt-1">
-          R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-        </span>
-        <span className="text-indigo-600 dark:text-indigo-350 text-[11px] mt-1">
-          Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-        </span>
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-slate-200 dark:border-[#131f38]/15 bg-slate-50/30 dark:bg-[#070c14]/15 ${densityMode === 'planilha_operacional' ? 'py-1 px-2 h-[52px]' : ''}`}>
+        {densityMode === 'planilha_operacional' ? (
+          <>
+            {/* Linha 1: Peso com cor condicional + Valor com cor condicional */}
+            <div className="flex items-center gap-1 leading-none text-[11px] tracking-tight">
+              {/* Peso condicional */}
+              {(() => {
+                const p = item.peso_r || item.weight || 0;
+                let pClass = 'text-slate-650 dark:text-slate-300';
+                if (p > 10 && p <= 100) {
+                  pClass = 'text-emerald-800 dark:text-emerald-400 bg-emerald-550/10 border-emerald-500/15 px-1 py-0.2 rounded border font-bold';
+                } else if (p > 100 && p <= 500) {
+                  pClass = 'text-amber-800 dark:text-amber-400 bg-amber-500/10 border-amber-550/15 px-1 py-0.2 rounded border font-bold';
+                } else if (p > 500) {
+                  pClass = 'text-red-850 dark:text-red-400 bg-red-500/10 border-red-500/15 px-1 py-0.2 rounded border font-black';
+                }
+                return (
+                  <span className={pClass} title="Peso">
+                    {p.toLocaleString('pt-BR')} kg
+                  </span>
+                );
+              })()}
+
+              <span className="text-slate-300 dark:text-slate-700 select-none">|</span>
+
+              {/* Valor condicional */}
+              {(() => {
+                const v = item.valor || 0;
+                let vClass = 'text-slate-650 dark:text-slate-300';
+                if (v >= 5000 && v < 20000) {
+                  vClass = 'text-emerald-800 dark:text-emerald-400 bg-emerald-550/10 border-emerald-500/15 px-1 py-0.2 rounded border font-bold';
+                } else if (v >= 20000 && v < 100000) {
+                  vClass = 'text-cyan-850 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/15 px-1 py-0.2 rounded border font-black';
+                } else if (v >= 100000) {
+                  vClass = 'text-rose-800 dark:text-rose-400 bg-rose-500/10 border-rose-500/15 px-1 py-0.2 rounded border font-black';
+                }
+                return (
+                  <span className={vClass} title="Valor Mercadoria">
+                    R$ {v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                );
+              })()}
+            </div>
+
+            {/* Linha 2: Frete + Volumes count */}
+            <div className="flex items-center gap-1.5 leading-none mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+              <span>Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+              <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
+              <span className="font-bold text-amber-700 dark:text-amber-400">{item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-slate-800 dark:text-slate-105 font-black text-[13px] leading-none">
+              {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
+            </span>
+            <span className="text-amber-700 dark:text-amber-455 font-bold text-[12px] leading-none mt-1">
+              {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
+            </span>
+            <span className="text-slate-500 dark:text-slate-400 text-[12px] mt-1">
+              R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </span>
+            <span className="text-indigo-600 dark:text-indigo-350 text-[11px] mt-1">
+              Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </span>
+          </>
+        )}
       </div>
 
       {dropdownOpen && (

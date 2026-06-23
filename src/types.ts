@@ -166,7 +166,20 @@ export interface CurvaAClientLocal {
   updated_at: string;
 }
 
-export type DensityMode = 'compact' | 'default' | 'comfortable';
+export type DensityMode = 'compact' | 'default' | 'comfortable' | 'planilha_operacional';
+
+export interface MesaViewPreferences {
+  preset: 'default' | 'compact' | 'planilha_operacional';
+  rowLines: 2 | 3;
+  showValue: boolean;
+  showFreight: boolean;
+  showObs: boolean;
+  showAvailability: boolean;
+  showLocation: boolean;
+  showRemetente: boolean;
+  visibleColumns: string[];
+  primarySortField?: string;
+}
 
 export type OccurrenceSectorFilter = string[];
 
@@ -200,6 +213,7 @@ export interface RoteirizacaoPreferences {
   sortField?: RoteirizacaoSortField;
   sortDirection?: SortDirection;
   showOtherUnits?: boolean;
+  mesaViewPreferences?: MesaViewPreferences;
 }
 
 export interface UserPreferencesPayload {

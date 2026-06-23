@@ -207,15 +207,15 @@ export default function RoteirizacaoHeader({
         {/* Density Selector */}
         {onUpdateDensity && (
           <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded px-2 h-8.5 text-[11px] select-none text-slate-500 dark:text-slate-400">
-            <span className="font-mono text-[9px] text-slate-500 font-extrabold uppercase tracking-wide">Densidade:</span>
+            <span className="font-mono text-[9px] text-slate-500 font-extrabold uppercase tracking-wide">Layout:</span>
             <select
               value={densityMode}
               onChange={(e) => onUpdateDensity(e.target.value as DensityMode)}
               className="bg-transparent border-none text-slate-800 dark:text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full"
             >
-              <option value="compact" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">COMPACTO</option>
               <option value="default" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">PADRÃO</option>
-              <option value="comfortable" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">CONFORTÁVEL</option>
+              <option value="compact" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">COMPACTO</option>
+              <option value="planilha_operacional" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">PLANILHA OPERACIONAL</option>
             </select>
           </div>
         )}
