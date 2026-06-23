@@ -62,6 +62,7 @@ export interface Ctrc {
   disponibilidade?: string;
   localizacao?: string;
   bairro?: string;
+  isActiveForRouting?: boolean;
 }
 
 export interface Expense {

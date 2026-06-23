@@ -525,6 +525,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         ocorrencia: ocoVal || undefined,
         descricao_ocorr: descOcoVal || undefined,
         localizacao: locVal || undefined,
+        isActiveForRouting: true,
       });
     });
 

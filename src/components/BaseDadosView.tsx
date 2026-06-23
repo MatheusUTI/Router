@@ -18,6 +18,7 @@ import CidadesRotasView from './CidadesRotasView';
 import CurvaAView from './CurvaAView';
 import ClientesView from './ClientesView';
 import FrotaView from './FrotaView';
+import { Search, RotateCcw, Archive, CheckCircle2, RefreshCw } from 'lucide-react';
 
 interface BaseDadosViewProps {
   adminUser: AppUser;
@@ -46,10 +47,12 @@ interface BaseDadosViewProps {
   onAddVehicleRegistry?: (vr: VehicleRegistry) => void;
   onUpdateVehicleRegistry?: (vr: VehicleRegistry) => void;
   onRemoveVehicleRegistry?: (placa: string) => void;
+  onRefreshCtrcs?: () => void;
 }
 
 type TabId = 
   | 'unidades' 
+  | 'historico_ctrcs'
   | 'ocorrencias' 
   | 'cidades_rotas' 
   | 'curva_a' 
@@ -85,8 +88,52 @@ export default function BaseDadosView({
   onAddVehicleRegistry = () => {},
   onUpdateVehicleRegistry = () => {},
   onRemoveVehicleRegistry = () => {},
+  onRefreshCtrcs,
 }: BaseDadosViewProps) {
   const [activeTab, setActiveTab] = useState<TabId>('unidades');
+
+  // --- TAB: CATÁLOGO / HISTÓRICO DE CTRCS STATES ---
+  const [ctrcsList, setCtrcsList] = useState<any[]>([]);
+  const [ctrcSearch, setCtrcSearch] = useState('');
+  const [ctrcFilterStatus, setCtrcFilterStatus] = useState('ALL');
+  const [ctrcFilterUnit, setCtrcFilterUnit] = useState('ALL');
+  const [ctrcFilterIsActive, setCtrcFilterIsActive] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'HISTORICAL'
+
+  const loadCtrcsList = async () => {
+    try {
+      const list = await db.ctrcs.toArray();
+      setCtrcsList(list);
+    } catch (e) {
+      console.error('[BaseDadosView] Erro ao carregar CTRCs:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'historico_ctrcs') {
+      loadCtrcsList();
+    }
+  }, [activeTab]);
+
+  const handleToggleCtrcActive = async (ctrc: any) => {
+    try {
+      const currentActive = ctrc.isActiveForRouting !== undefined
+        ? ctrc.isActiveForRouting
+        : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || ctrc.status === 'Finalizado' || ctrc.status === 'Cancelado');
+
+      const updated = {
+        ...ctrc,
+        isActiveForRouting: !currentActive
+      };
+
+      await db.ctrcs.put(updated);
+      await loadCtrcsList();
+      if (onRefreshCtrcs) {
+        onRefreshCtrcs();
+      }
+    } catch (e) {
+      console.error('[BaseDadosView] Erro ao alternar atividade do CTRC:', e);
+    }
+  };
 
   // --- TAB: UNIDADES OPERACIONAIS STATES ---
   const [unidades, setUnidades] = useState<OperationalUnitBI[]>([]);
@@ -857,6 +904,221 @@ export default function BaseDadosView({
           </div>
         );
 
+      case 'historico_ctrcs': {
+        const uniqueCtrcStatuses = Array.from(new Set(ctrcsList.map(c => c.status).filter(Boolean))).sort();
+        const uniqueCtrcUnits = Array.from(new Set(ctrcsList.map(c => (c.unid || '').toUpperCase()).filter(Boolean))).sort();
+
+        const filteredHistoricalCtrcs = ctrcsList.filter((ctrc) => {
+          const query = ctrcSearch.toLowerCase().trim();
+          if (query) {
+            const matchId = (ctrc.id || '').toLowerCase().includes(query);
+            const matchDest = (ctrc.destinatario || '').toLowerCase().includes(query);
+            const matchRem = (ctrc.remetente || '').toLowerCase().includes(query);
+            const matchCid = (ctrc.cidade || '').toLowerCase().includes(query);
+            const matchNf = (ctrc.nf || '').toLowerCase().includes(query);
+            if (!matchId && !matchDest && !matchRem && !matchCid && !matchNf) {
+              return false;
+            }
+          }
+
+          if (ctrcFilterStatus !== 'ALL') {
+            if ((ctrc.status || '').toUpperCase() !== ctrcFilterStatus.toUpperCase()) {
+              return false;
+            }
+          }
+
+          if (ctrcFilterUnit !== 'ALL') {
+            if ((ctrc.unid || '').toUpperCase() !== ctrcFilterUnit.toUpperCase()) {
+              return false;
+            }
+          }
+
+          const currentActive = ctrc.isActiveForRouting !== undefined
+            ? ctrc.isActiveForRouting
+            : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || ctrc.status === 'Finalizado' || ctrc.status === 'Cancelado');
+
+          if (ctrcFilterIsActive === 'ACTIVE') {
+            if (!currentActive) return false;
+          } else if (ctrcFilterIsActive === 'HISTORICAL') {
+            if (currentActive) return false;
+          }
+
+          return true;
+        });
+
+        const activeCount = ctrcsList.filter(ctrc => {
+          return ctrc.isActiveForRouting !== undefined
+            ? ctrc.isActiveForRouting
+            : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || ctrc.status === 'Finalizado' || ctrc.status === 'Cancelado');
+        }).length;
+
+        const historicalCount = ctrcsList.length - activeCount;
+
+        return (
+          <div className="space-y-6">
+            {/* Filters and Search toolbar */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center justify-between bg-[#0e1726]/85 p-4 border border-[#1e2e4f]/70 rounded-xl">
+              <div className="flex flex-wrap items-center gap-3 flex-1">
+                {/* Search Field */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar CTRC, Destinatário, NF..."
+                    value={ctrcSearch}
+                    onChange={(e) => setCtrcSearch(e.target.value)}
+                    className="w-72 bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg pl-8 pr-8 py-1.5 text-xs outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-all font-sans"
+                  />
+                  <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+                  {ctrcSearch && (
+                    <button 
+                      onClick={() => setCtrcSearch('')} 
+                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-white text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Status select filter */}
+                <select
+                  value={ctrcFilterStatus}
+                  onChange={(e) => setCtrcFilterStatus(e.target.value)}
+                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                >
+                  <option value="ALL">Todos os Status</option>
+                  {uniqueCtrcStatuses.map(st => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+
+                {/* Filial select filter */}
+                <select
+                  value={ctrcFilterUnit}
+                  onChange={(e) => setCtrcFilterUnit(e.target.value)}
+                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                >
+                  <option value="ALL">Todas as Filiais</option>
+                  {uniqueCtrcUnits.map(uni => (
+                    <option key={uni} value={uni}>{uni}</option>
+                  ))}
+                </select>
+
+                {/* Separation select filter */}
+                <select
+                  value={ctrcFilterIsActive}
+                  onChange={(e) => setCtrcFilterIsActive(e.target.value)}
+                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans font-bold text-indigo-450"
+                >
+                  <option value="ALL">Todas as Situações</option>
+                  <option value="ACTIVE">🟢 Mesa Ativa (Apenas Operacional)</option>
+                  <option value="HISTORICAL">📁 Catálogo / Histórico</option>
+                </select>
+              </div>
+
+              {/* Statistics indicator box */}
+              <div className="flex items-center gap-4 text-xs font-mono bg-[#0c1322] border border-[#1a2b4b] px-4 py-2 rounded-lg shrink-0">
+                <div>Total: <span className="text-white font-bold">{ctrcsList.length}</span></div>
+                <div className="text-gray-500">|</div>
+                <div className="text-emerald-400">Ativos na Mesa: <span className="font-bold">{activeCount}</span></div>
+                <div className="text-gray-500">|</div>
+                <div className="text-amber-500">Histórico/KPIs: <span className="font-bold">{historicalCount}</span></div>
+              </div>
+            </div>
+
+            {/* List and Table Grid */}
+            <div className="bg-[#0b1322] border border-[#14203a] rounded-xl overflow-hidden shadow-md">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[900px]">
+                  <thead>
+                    <tr className="bg-[#0e1726] border-b border-[#14203a] text-gray-300 uppercase font-mono text-[10px] select-none">
+                      <th className="px-4 py-3">CTRC / ID</th>
+                      <th className="px-4 py-3">Destinatário</th>
+                      <th className="px-4 py-3">Cidade / Rota</th>
+                      <th className="px-4 py-3">Peso / Vol</th>
+                      <th className="px-4 py-3">Valor / Frete</th>
+                      <th className="px-4 py-3 text-center">Unid</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Roteirização</th>
+                      <th className="px-4 py-3 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#14203a]">
+                    {filteredHistoricalCtrcs.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-12 text-center text-gray-500 font-sans text-xs">
+                          Nenhum CTRC encontrado com os filtros ativos.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredHistoricalCtrcs.map((ctrc) => {
+                        const isCurrentActive = ctrc.isActiveForRouting !== undefined
+                          ? ctrc.isActiveForRouting
+                          : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || ctrc.status === 'Finalizado' || ctrc.status === 'Cancelado');
+
+                        return (
+                          <tr key={ctrc.id} className="hover:bg-[#121c30]/40 transition-colors text-xs font-sans text-gray-300">
+                            <td className="px-4 py-2.5 font-mono text-indigo-300 font-semibold">{ctrc.id}</td>
+                            <td className="px-4 py-2.5 truncate max-w-[200px] font-semibold text-slate-100" title={ctrc.destinatario}>{ctrc.destinatario}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="font-semibold">{ctrc.cidade}</div>
+                              {ctrc.setor && <div className="text-[10px] text-gray-500">{ctrc.setor}</div>}
+                            </td>
+                            <td className="px-4 py-2.5 font-mono">
+                              <div>{ctrc.weight} kg</div>
+                              <div className="text-[10px] text-gray-500">{ctrc.volume} vol</div>
+                            </td>
+                            <td className="px-4 py-2.5 font-mono text-[11px]">
+                              {ctrc.valor ? <div className="text-emerald-400 font-bold">R$ {ctrc.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : <div className="text-gray-500">-</div>}
+                              {ctrc.frete ? <div className="text-gray-400">F: R$ {ctrc.frete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : null}
+                            </td>
+                            <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-400">{ctrc.unid}</td>
+                            <td className="px-4 py-2.5">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                ctrc.status === 'Entregue' || ctrc.status === 'Finalizado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                ctrc.status === 'Recusado' || ctrc.status === 'Cancelado' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                                'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                              }`}>
+                                {ctrc.status || 'Pendente'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {isCurrentActive ? (
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                  Mesa Ativa
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 bg-gray-500/10 border border-gray-500/20 px-2.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                                  Histórico / Catálogo
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <button
+                                onClick={() => handleToggleCtrcActive(ctrc)}
+                                title={isCurrentActive ? "Arquivar CTRC (Mover para Histórico)" : "Reativar CTRC para Roteirização"}
+                                className={`p-1.5 rounded-lg cursor-pointer transition-all ${
+                                  isCurrentActive 
+                                    ? 'hover:bg-amber-500/10 text-amber-500' 
+                                    : 'hover:bg-emerald-500/10 text-emerald-400'
+                                }`}
+                              >
+                                {isCurrentActive ? <Archive className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       case 'veiculos':
       case 'motoristas':
         return (
@@ -1174,6 +1436,7 @@ export default function BaseDadosView({
 
 const TABS = [
   { id: 'unidades', label: 'Unidades Operacionais' },
+  { id: 'historico_ctrcs', label: 'Catálogo / Histórico de CTRCs' },
   { id: 'ocorrencias', label: 'Ocorrências' },
   { id: 'cidades_rotas', label: 'Exceções Operacionais (Rotas)' },
   { id: 'curva_a', label: 'Curva A' },

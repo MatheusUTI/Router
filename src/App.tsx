@@ -98,6 +98,14 @@ export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: C
   const linked: Ctrc[] = [];
 
   for (const ctrc of localCtrcs) {
+    const isActive = ctrc.isActiveForRouting !== undefined
+      ? ctrc.isActiveForRouting
+      : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || (ctrc.status as string) === 'Finalizado' || (ctrc.status as string) === 'Cancelado');
+
+    if (!isActive) {
+      continue;
+    }
+
     const isLinkedByPreRomaneio = activePreRomaneioCtrcIds.has(ctrc.id);
     const preRomaneioId = (ctrc as any).preRomaneioId;
     const hasPreRomaneioId = preRomaneioId && activePreRomaneioIds.has(preRomaneioId);
@@ -986,6 +994,7 @@ export default function App() {
             onAddVehicleRegistry={handleAddVehicleRegistry}
             onUpdateVehicleRegistry={handleUpdateVehicleRegistry}
             onRemoveVehicleRegistry={handleRemoveVehicleRegistry}
+            onRefreshCtrcs={rehydrateCtrcsOnly}
           />
         );
       case 'configuracoes':
