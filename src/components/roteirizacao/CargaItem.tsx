@@ -305,19 +305,30 @@ export default function CargaItem({
         
         {/* Line 1: SLA and date parameters */}
         <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-450 leading-none flex-wrap">
-          <span>PREV: {!item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' ? 'SEM PREVISÃO' : item.prev_ent}</span>
-          <span>•</span>
-          {(!item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P') ? (
-            <span className="font-extrabold rounded-sm border border-slate-700/20 bg-slate-900/40 text-slate-400 px-1 py-0.2 text-[9.5px] leading-none uppercase select-none">
-              S/P
-            </span>
-          ) : (
-            <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/20'}`}>
-              {item.slaStatus?.label || 'S/ PRAZO'}
-              {item.slaStatus?.daysDiff !== undefined && item.slaStatus.daysDiff > 0 && ` +${item.slaStatus.daysDiff}D`}
-              {item.slaStatus?.isDelayed && ` ATRASADO`}
-            </span>
-          )}
+          {(() => {
+            const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
+            if (hasNoPrev) {
+              return <span>PREV: SEM PREVISÃO</span>;
+            }
+            return (
+              <>
+                <span>PREV: {item.prev_ent}</span>
+                <span>•</span>
+                <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/20'}`}>
+                  {(() => {
+                    if (!item.slaStatus) return 'S/ PRAZO';
+                    if (item.slaStatus.isDelayed) {
+                      return `ATRASADO ${Math.abs(item.slaStatus.daysDiff)}D`;
+                    }
+                    if (item.slaStatus.isToday) {
+                      return 'HOJE';
+                    }
+                    return `D+${item.slaStatus.daysDiff}`;
+                  })()}
+                </span>
+              </>
+            );
+          })()}
           {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
             <span className="bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
               AGENDADO

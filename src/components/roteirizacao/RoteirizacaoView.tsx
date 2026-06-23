@@ -884,6 +884,8 @@ export default function RoteirizacaoView({
         setIsAvisosOpen={setIsAvisosOpen}
         noticesCount={noticesCount}
         highestNoticeSeverity={highestNoticeSeverity}
+        densityMode={densityMode}
+        onUpdateDensity={(density) => setDensityMode(density)}
       />
 
       <OperationalNoticesBanner

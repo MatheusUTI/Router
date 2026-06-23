@@ -17,8 +17,8 @@ export function isClienteCurvaA(ctrc: Ctrc, curvaAClients: CurvaAClient[] = []):
   const codCleanDigits = codStr.replace(/\D/g, '');
 
   const found = curvaAClients.find((cl) => {
-    const clCnpjClean = cl.cnpj_remetente.replace(/\D/g, '');
-    const clNameClean = cl.cliente_remetente.toUpperCase().trim();
+    const clCnpjClean = (cl.cnpj_remetente || '').replace(/\D/g, '');
+    const clNameClean = (cl.cliente_remetente || '').toUpperCase().trim();
 
     // 1. Exact Name Match
     if (remetenteStr === clNameClean) return true;

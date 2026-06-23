@@ -137,229 +137,26 @@ export default function CargaList({
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#080c14] border border-[#16223f] rounded-xl overflow-hidden relative">
 
-      {/* Excel-Like Unified Filters Bar - Unified, No Duplication */}
-      <div className="bg-[#090f1d] px-3 py-1.5 flex flex-wrap gap-2 items-center border-b border-[#15203a] shrink-0 text-[11px] relative z-40">
-        {/* [🔍 BUSCAR] Input */}
-        <div className="relative w-36 h-7 shrink-0">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[11px] font-mono select-none">🔍</span>
-          <input
-            id="list-filters-search"
-            type="text"
-            placeholder="BUSCAR..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-full bg-[#070c14] border border-[#1d2a45] rounded pl-6 pr-2 py-0 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[10px] uppercase font-bold"
-          />
-        </div>
-
-        {/* Master Checkbox */}
-        <div className="flex items-center gap-2 select-none shrink-0 bg-[#070c14] hover:bg-[#111c34] px-2.5 py-1 rounded border border-[#1d2a45] h-7 cursor-pointer transition-all">
-          <input
-            type="checkbox"
-            id="master-cargo-checkbox"
-            checked={allVisibleChecked}
-            onChange={() => onSelectAllVisible(visibleIds)}
-            className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-700 bg-transparent focus:ring-0 cursor-pointer"
-          />
-          <label htmlFor="master-cargo-checkbox" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer hover:text-white select-none leading-none">
-            Selecionar Todos ({filteredCtrcs.length})
-          </label>
-        </div>
-
-        {/* 1. [ROTA ▼] */}
-        <ExcelColumnFilter
-          label="Rota"
-          uniqueValues={excelUniqueRoutes}
-          selectedValues={excelRouteFilter}
-          onApply={setExcelRouteFilter}
-          onSortAsc={() => {
-            setSortField('rota');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('rota');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
-        />
-
-        {/* 2. [CIDADE ▼] */}
-        <ExcelColumnFilter
-          label="Cidade"
-          uniqueValues={excelUniqueCities}
-          selectedValues={excelCityFilter}
-          onApply={setExcelCityFilter}
-          onSortAsc={() => {
-            setSortField('cidade');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('cidade');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
-        />
-
-        {/* 3. [DESTINATÁRIO ▼] */}
-        <ExcelColumnFilter
-          label="Destinatário"
-          uniqueValues={excelUniqueDests}
-          selectedValues={excelDestFilter}
-          onApply={setExcelDestFilter}
-          onSortAsc={() => {
-            setSortField('destinatario');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('destinatario');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
-        />
-
-        {/* 4. [REMETENTE ▼] */}
-        <ExcelColumnFilter
-          label="Remetente"
-          uniqueValues={excelUniqueSenders}
-          selectedValues={excelSenderFilter}
-          onApply={setExcelSenderFilter}
-          onSortAsc={() => {
-            setSortField('remetente');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('remetente');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
-        />
-
-        {/* 5. [OCORRÊNCIA ▼] */}
-        <ExcelColumnFilter
-          label="Ocorrência"
-          uniqueValues={excelUniqueOcorrSectors}
-          selectedValues={excelOcorrSectorFilter}
-          onApply={setExcelOcorrSectorFilter}
-          onSortAsc={() => {
-            setSortField('ocorrencia');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('ocorrencia');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'ocorrencia' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'ocorrencia' && sortDirection === 'desc'}
-        />
-
-        {/* 6. [STATUS ▼] */}
-        <ExcelColumnFilter
-          label="Status"
-          uniqueValues={excelUniqueStatuses}
-          selectedValues={excelStatusFilter}
-          onApply={setExcelStatusFilter}
-          onSortAsc={() => {
-            setSortField('status');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('status');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
-        />
-
-        {/* 7. [LOCALIZAÇÃO ▼] */}
-        <ExcelColumnFilter
-          label="Localização"
-          uniqueValues={excelUniqueLocs}
-          selectedValues={excelLocationFilter}
-          onApply={setExcelLocationFilter}
-          onSortAsc={() => {
-            setSortField('localizacao');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('localizacao');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
-        />
-
-        {/* 8. [PREVISÃO ▼] */}
-        <ExcelColumnFilter
-          label="Previsão"
-          uniqueValues={excelUniquePrevs}
-          selectedValues={excelPrevFilter}
-          onApply={setExcelPrevFilter}
-          onSortAsc={() => {
-            setSortField('prev_ent');
-            setSortDirection('asc');
-          }}
-          onSortDesc={() => {
-            setSortField('prev_ent');
-            setSortDirection('desc');
-          }}
-          isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
-          isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
-        />
-
-        {/* Density Mode Selector Component */}
-        <div className="ml-auto flex items-center h-7 bg-[#070c14] border border-[#1d2a45] rounded p-0.5 select-none shrink-0 gap-0.5">
-          <span className="text-[9px] font-black font-mono text-slate-500 uppercase px-1.5 whitespace-nowrap leading-none select-none">
-            DENSIDADE:
-          </span>
-          <button
-            id="density-compact"
-            onClick={() => onUpdateDensity?.('compact')}
-            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
-              densityMode === 'compact'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
-            }`}
-            title="Compacto"
-          >
-            COMPACTO
-          </button>
-          <button
-            id="density-default"
-            onClick={() => onUpdateDensity?.('default')}
-            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
-              densityMode === 'default'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
-            }`}
-            title="PADRÃO"
-          >
-            PADRÃO
-          </button>
-          <button
-            id="density-comfortable"
-            onClick={() => onUpdateDensity?.('comfortable')}
-            className={`px-2 h-full text-[9px] font-black uppercase rounded cursor-pointer transition-all duration-150 ${
-              densityMode === 'comfortable'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900 bg-transparent'
-            }`}
-            title="Confortável"
-          >
-            CONFORTÁVEL
-          </button>
-        </div>
-      </div>
-
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
       {filteredCtrcs.length > 0 && (
         <div className="bg-[#0b1322] border-b border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
           
-          {/* Col 1: Spacer */}
-          <div className="w-6 shrink-0" />
+          {/* Col 1: Master Checkbox */}
+          <div className="w-6 shrink-0 flex items-center justify-center">
+            <input
+              type="checkbox"
+              id="master-cargo-checkbox"
+              checked={allVisibleChecked}
+              ref={(el) => {
+                if (el) {
+                  const someChecked = visibleIds.some((id) => selectedIds.includes(id));
+                  el.indeterminate = someChecked && !allVisibleChecked;
+                }
+              }}
+              onChange={() => onSelectAllVisible(visibleIds)}
+              className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
+            />
+          </div>
 
           {/* Col 2: Cidade / Rota */}
           <div className="min-w-0 flex items-center gap-1.5 px-1 uppercase text-[10px] font-mono select-none">
@@ -459,7 +256,7 @@ export default function CargaList({
             />
           </div>
 
-          {/* Col 4: Previsão / Status / Box */}
+          {/* Col 4: Previsão / Status / Localização */}
           <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
             <ExcelColumnFilter
               label="Previsão"
@@ -524,7 +321,7 @@ export default function CargaList({
               isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
               customTrigger={
                 <div className={`hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>BOX</span>
+                  <span>LOCALIZAÇÃO</span>
                   <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
                 </div>
               }

@@ -505,6 +505,11 @@ export default function FinalizacaoView({
             margin: 0 !important;
           }
           
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
           /* Wipe ambient overlays and navigational indicators */
           .no-print, header, nav, aside, button, .sidebar, .top-bar, .tab-bar {
             display: none !important;
@@ -1924,7 +1929,7 @@ export default function FinalizacaoView({
               if (!routeStr) return '';
               const match = routeStr.match(/\d+/);
               if (match) {
-                return match[0];
+                return parseInt(match[0], 10).toString();
               }
               return routeStr.toUpperCase().replace('ROTA', '').trim();
             };
@@ -2025,7 +2030,7 @@ export default function FinalizacaoView({
                         const prevEntStr = ctrc.prev_ent ? formatPlanningDate(ctrc.prev_ent) : 'SEM PREVISÃO';
 
                         // Curva A styling
-                        const rowBgClass = isCurvaA ? 'bg-red-50 text-red-700 font-bold' : 'bg-white text-black';
+                        const rowBgClass = isCurvaA ? 'bg-red-50/70 text-red-700 font-bold' : 'bg-white text-black';
                         const borderColClass = isCurvaA ? 'border-red-500' : 'border-gray-400';
                         const textBoldClass = isCurvaA ? 'text-red-900 font-black' : 'text-black';
 
@@ -2034,14 +2039,25 @@ export default function FinalizacaoView({
                             {/* Linha 1: CTRC | NF | REMETENTE | CIDADE */}
                             <tr className={`${rowBgClass} text-[10px]`}>
                               <td className={`border ${borderColClass} px-2 py-1 font-mono font-bold flex items-center gap-1.5`}>
-                                <div className={`w-3.5 h-3.5 border ${isCurvaA ? 'border-red-500' : 'border-black'} shrink-0 bg-white rounded-sm`}></div>
-                                <span className={`leading-none ${isCurvaA ? 'text-red-700' : 'text-black'}`}>{ctrc.id}</span>
+                                <div className={`w-3.5 h-3.5 border ${isCurvaA ? 'border-red-500 bg-red-100' : 'border-black'} shrink-0 bg-white rounded-sm`}></div>
+                                <span className={`leading-none ${isCurvaA ? 'text-red-700 font-bold' : 'text-black'}`}>{ctrc.id}</span>
+                                {isAgendamento && (
+                                  <span className="ml-1 px-1 py-0.5 bg-cyan-100 text-cyan-800 border border-cyan-500 text-[7.5px] font-black uppercase tracking-wider rounded shrink-0 leading-none inline-block">
+                                    [AG]
+                                  </span>
+                                )}
                               </td>
                               <td className={`border ${borderColClass} px-2 py-1 font-mono`}>
                                 {ctrc.nf || '—'}
                               </td>
                               <td className={`border ${borderColClass} px-2 py-1 uppercase truncate font-mono ${textBoldClass}`}>
-                                {isCurvaA ? `★ [CURVA A] ${ctrc.remetente}` : (ctrc.remetente || '—')}
+                                {isCurvaA ? (
+                                  <span className="text-red-600 font-extrabold border border-red-500 bg-red-50 px-1 py-0.5 rounded leading-none uppercase inline-block">
+                                    ★ [CURVA A] {ctrc.remetente}
+                                  </span>
+                                ) : (
+                                  ctrc.remetente || '—'
+                                )}
                               </td>
                               <td className={`border ${borderColClass} px-2 py-1 uppercase font-mono truncate`}>
                                 {(ctrc.cidade_ent || ctrc.cidade || '').toUpperCase()}
@@ -2057,7 +2073,7 @@ export default function FinalizacaoView({
                                 {ctrc.destinatario || '—'}
                               </td>
                               <td className={`border ${borderColClass} px-2 py-0.5 uppercase text-gray-500 truncate`}>
-                                {ctrc.bairro || '—'}
+                                {ctrc.bairro || ''}
                               </td>
                             </tr>
 

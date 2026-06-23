@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppUser, RoteirizacaoDiagnostics } from '../../types';
+import { AppUser, RoteirizacaoDiagnostics, DensityMode } from '../../types';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
 
 interface RoteirizacaoHeaderProps {
@@ -21,6 +21,8 @@ interface RoteirizacaoHeaderProps {
   setIsAvisosOpen?: (open: boolean) => void;
   noticesCount?: number;
   highestNoticeSeverity?: 'INFO' | 'WARNING' | 'CRITICAL';
+  densityMode?: DensityMode;
+  onUpdateDensity?: (density: DensityMode) => void;
 }
 
 export default function RoteirizacaoHeader({
@@ -42,6 +44,8 @@ export default function RoteirizacaoHeader({
   setIsAvisosOpen,
   noticesCount = 0,
   highestNoticeSeverity = 'INFO',
+  densityMode = 'default',
+  onUpdateDensity,
 }: RoteirizacaoHeaderProps) {
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -105,12 +109,12 @@ export default function RoteirizacaoHeader({
       {/* Control Actions, Search, Clock, Counters */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Unified Search Input (busca) */}
-        <div className={searchWrapClass}>
+        <div className="relative w-48 md:w-56 h-8.5 shrink-0">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[11px] font-mono select-none">🔍</span>
           <input
             id="header-universal-search"
             type="text"
-            placeholder="Buscar CTRC, NF..."
+            placeholder="Buscar CTRC, NF, destinatário ou remetente..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={searchInputClass}
@@ -194,6 +198,22 @@ export default function RoteirizacaoHeader({
             </span>
             <span>⚠️ Avisos ({noticesCount})</span>
           </button>
+        )}
+
+        {/* Density Selector */}
+        {onUpdateDensity && (
+          <div className="flex items-center gap-1 bg-[#070c14] border border-[#1a2440] rounded px-2 h-8.5 text-[11px] select-none text-slate-400">
+            <span className="font-mono text-[9px] text-slate-500 font-extrabold uppercase tracking-wide">Densidade:</span>
+            <select
+              value={densityMode}
+              onChange={(e) => onUpdateDensity(e.target.value as DensityMode)}
+              className="bg-transparent border-none text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full"
+            >
+              <option value="compact" className="bg-[#0b1322] text-white">COMPACTO</option>
+              <option value="default" className="bg-[#0b1322] text-white">PADRÃO</option>
+              <option value="comfortable" className="bg-[#0b1322] text-white">CONFORTÁVEL</option>
+            </select>
+          </div>
         )}
 
         {/* Limpar button */}
