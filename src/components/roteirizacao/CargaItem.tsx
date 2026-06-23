@@ -243,6 +243,19 @@ export default function CargaItem({
     setTypedNote(item.operationalNote || '');
   }, [item.operationalRoute, item.operationalNote]);
 
+  const handleOpenSswCtrc = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const url = buildSswLink(item);
+
+    if (!url) {
+      return;
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const pStyle = resolvePlanningStyle(item.planningStatus);
 
   // Dynamic density classes
@@ -390,7 +403,7 @@ export default function CargaItem({
                   href={sswUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={handleOpenSswCtrc}
                   className="hover:underline text-indigo-400 hover:text-indigo-300 cursor-pointer font-bold inline"
                   title="Abrir CTRC no SSW"
                 >
