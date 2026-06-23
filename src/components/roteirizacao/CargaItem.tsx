@@ -17,66 +17,66 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
       return {
         label: 'URG',
         borderClass: 'border-l-red-500',
-        badgeBg: 'bg-red-500/10 text-red-400 border-red-500/15 font-black',
-        textClass: 'text-red-400',
-        cardBg: 'bg-red-950/[0.012] hover:bg-red-950/[0.03]',
+        badgeBg: 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15 font-black',
+        textClass: 'text-[#BE123C] dark:text-red-400',
+        cardBg: 'bg-red-50/20 dark:bg-[#1a0e12]/15 hover:bg-red-50/50 dark:hover:bg-[#1a0e12]/30',
       };
     case 'PRIORIDADE':
       return {
         label: 'PRI',
         borderClass: 'border-l-amber-500',
-        badgeBg: 'bg-amber-500/10 text-amber-300 border-amber-500/15 font-bold',
-        textClass: 'text-amber-400',
-        cardBg: 'bg-amber-950/[0.012] hover:bg-amber-950/[0.03]',
+        badgeBg: 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15 font-bold',
+        textClass: 'text-[#92400E] dark:text-amber-400',
+        cardBg: 'bg-amber-50/15 dark:bg-[#1c140e]/15 hover:bg-amber-50/40 dark:hover:bg-[#1c140e]/30',
       };
     case 'SEGURAR':
       return {
         label: 'SEG',
         borderClass: 'border-l-orange-500',
-        badgeBg: 'bg-orange-500/15 text-orange-400 border-orange-500/20 font-black',
-        textClass: 'text-orange-450',
-        cardBg: 'bg-orange-950/[0.018] hover:bg-orange-950/[0.045]',
+        badgeBg: 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20 font-black',
+        textClass: 'text-orange-700 dark:text-orange-450',
+        cardBg: 'bg-orange-50/20 dark:bg-orange-950/[0.018] hover:bg-orange-50/50 dark:hover:bg-orange-950/[0.045]',
       };
     case 'NAO_SAI_HOJE':
       return {
         label: 'NÃO',
-        borderClass: 'border-l-slate-700',
-        badgeBg: 'bg-slate-900/35 text-slate-500 border-slate-705/20',
-        textClass: 'text-slate-500 line-through',
-        cardBg: 'bg-slate-950/20 hover:bg-slate-900/15 opacity-55 saturate-[45%]',
+        borderClass: 'border-l-slate-400 dark:border-slate-700',
+        badgeBg: 'bg-slate-100 dark:bg-slate-900/35 text-slate-500 border-slate-200 dark:border-slate-705/20',
+        textClass: 'text-slate-400 dark:text-slate-500 line-through',
+        cardBg: 'bg-slate-100/30 dark:bg-slate-950/20 hover:bg-slate-100/50 dark:hover:bg-slate-900/15 opacity-55 saturate-[45%]',
       };
     case 'AGENDADO':
       return {
         label: 'AGD',
         borderClass: 'border-l-cyan-500',
-        badgeBg: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/15',
-        textClass: 'text-cyan-300',
-        cardBg: 'bg-cyan-950/[0.008] hover:bg-cyan-950/[0.03]',
+        badgeBg: 'bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border-[#C7D2FE] dark:border-cyan-500/15',
+        textClass: 'text-[#3730A3] dark:text-cyan-300',
+        cardBg: 'bg-cyan-50/15 dark:bg-cyan-950/[0.008] hover:bg-cyan-50/40 dark:hover:bg-cyan-950/[0.03]',
       };
     case 'CONSOLIDADO':
       return {
         label: 'CONS',
         borderClass: 'border-l-emerald-500',
-        badgeBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15 font-black',
-        textClass: 'text-emerald-400',
-        cardBg: 'bg-emerald-950/[0.01] hover:bg-emerald-950/[0.03]',
+        badgeBg: 'bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15 font-black',
+        textClass: 'text-[#166534] dark:text-emerald-400',
+        cardBg: 'bg-emerald-50/15 dark:bg-emerald-950/[0.01] hover:bg-emerald-50/45 dark:hover:bg-emerald-950/[0.03]',
       };
     case 'PLANEJADO':
       return {
         label: 'PLAN',
         borderClass: 'border-l-emerald-400',
-        badgeBg: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/15',
-        textClass: 'text-emerald-400',
-        cardBg: 'bg-emerald-950/[0.005] hover:bg-emerald-950/[0.018]',
+        badgeBg: 'bg-[#DCFCE7] dark:bg-emerald-400/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-400/15',
+        textClass: 'text-[#166534] dark:text-emerald-405',
+        cardBg: 'bg-emerald-50/10 dark:bg-emerald-950/[0.005] hover:bg-emerald-50/30 dark:hover:bg-emerald-950/[0.018]',
       };
     case 'A_PLANEJAR':
     default:
       return {
         label: 'PEND',
-        borderClass: 'border-l-indigo-500/15',
-        badgeBg: 'bg-slate-900/80 text-slate-400 border-slate-800',
-        textClass: 'text-slate-400',
-        cardBg: 'bg-slate-950/10 hover:bg-slate-950/18',
+        borderClass: 'border-l-slate-200 dark:border-indigo-500/15',
+        badgeBg: 'bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800',
+        textClass: 'text-slate-500 dark:text-slate-400',
+        cardBg: 'bg-white dark:bg-slate-950/10 hover:bg-slate-50 dark:hover:bg-slate-950/18',
       };
   }
 };
@@ -92,7 +92,7 @@ const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
 
   const rawStatus = (item.availabilityLabel || item.status || '').toUpperCase();
   if (rawStatus.includes('AGUARDANDO') || rawStatus === 'DISPONÍVEL' || rawStatus === 'DISPONIVEL' || rawStatus === 'LIBERADO') {
-    return 'NA MESA';
+    return 'DISPONÍVEL';
   }
   if (rawStatus.includes('EM ROTA') || rawStatus.includes('S SPO') || rawStatus.includes('TRÂNSITO') || rawStatus.includes('TRANSIT')) {
     return 'EM TRÂNSITO';
@@ -105,25 +105,25 @@ const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
 
 const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; border: string } => {
   const norm = statusLabel.toUpperCase();
-  if (norm === 'NA MESA' || norm === 'DISPONÍVEL') {
-    return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' };
+  if (norm === 'DISPONÍVEL' || norm === 'DISPONIVEL' || norm === 'NA MESA') {
+    return { bg: 'bg-[#F1F5F9] dark:bg-slate-800/40', text: 'text-[#475569] dark:text-slate-300', border: 'border-[#E2E8F0] dark:border-slate-700/30' };
   }
   if (norm === 'PRÉ-ROMANEIO') {
-    return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' };
+    return { bg: 'bg-[#E0E7FF] dark:bg-indigo-500/10', text: 'text-[#3730A3] dark:text-indigo-400', border: 'border-[#C7D2FE] dark:border-indigo-500/25' };
   }
   if (norm === 'PROGRAMADO' || norm === 'CONSOLIDADO') {
-    return { bg: 'bg-indigo-500/10', text: 'text-indigo-305', border: 'border-[#1e2e5c]' };
+    return { bg: 'bg-[#DBEAFE] dark:bg-indigo-500/15', text: 'text-[#1D4ED8] dark:text-indigo-305', border: 'border-[#BFDBFE] dark:border-[#1e2e5c]' };
   }
-  if (norm.includes('URGENTE') || norm.includes('PRIORITÁRIO') || norm.includes('RETIDO') || norm.includes('AUDIT')) {
-    return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' };
+  if (norm.includes('URGENTE') || norm.includes('PRIORITÁRIO') || norm.includes('RETIDO') || norm.includes('AUDIT') || norm.includes('PENDÊNCIA') || norm.includes('RETIDO/AUDIT')) {
+    return { bg: 'bg-[#FFE4E6] dark:bg-red-500/10', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-500/20' };
   }
   if (norm === 'HOLD') {
-    return { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' };
+    return { bg: 'bg-[#FEF3C7] dark:bg-orange-500/10', text: 'text-[#92400E] dark:text-orange-400', border: 'border-[#FDE68A] dark:border-orange-500/20' };
   }
   if (norm === 'EM TRÂNSITO') {
-    return { bg: 'bg-blue-500/10', text: 'text-blue-300', border: 'border-blue-500/20' };
+    return { bg: 'bg-[#DBEAFE] dark:bg-blue-500/10', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
   }
-  return { bg: 'bg-[#101a2e]', text: 'text-slate-350', border: 'border-slate-800' };
+  return { bg: 'bg-[#F1F5F9] dark:bg-[#101a2e]', text: 'text-[#475569] dark:text-slate-355', border: 'border-[#E2E8F0] dark:border-slate-800' };
 };
 
 const SSW_SERIES_BY_UNIT: Record<string, string> = {
@@ -301,15 +301,15 @@ export default function CargaItem({
         }
       }}
       onContextMenu={handleContextMenu}
-      className={`border-b border-[#14203a]/45 grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-stretch select-none transition-all duration-150 cursor-pointer ${
+      className={`border-b border-slate-200 dark:border-[#14203a]/45 grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-stretch select-none transition-all duration-150 cursor-pointer ${
         isSelected 
-          ? 'bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
+          ? 'bg-indigo-50/50 dark:bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
-      } hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''}`}
+      } hover:shadow-[0_1px_5px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''}`}
     >
       {/* Block 1: [FAIXA LATERAL COMPACTA SEM TEXTO REDUNDANTE] (24px) */}
       <div 
-        className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-600/10' : 'bg-slate-900/10'}`}
+        className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-100/30 dark:bg-indigo-600/10' : 'bg-slate-100 dark:bg-slate-900/10'}`}
         style={{ minWidth: '24px', maxWidth: '24px' }}
       >
         <div 
@@ -327,30 +327,30 @@ export default function CargaItem({
             checked={isSelected}
             disabled={item.planningStatus === 'CONSOLIDADO'}
             onChange={() => {}}
-            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-700 bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-300 dark:border-slate-700 bg-white dark:bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           />
         </div>
       </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-[#14203a]/30`}>
-        <span className="text-white hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-slate-200 dark:border-[#14203a]/30`}>
+        <span className="text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
           {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
           {/* Main Directing Route */}
           <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-            <span className="text-indigo-400 font-black uppercase text-[14px]">
+            <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase text-[14px]">
               {item.effectiveRoute || 'SEM ROTA'}
             </span>
             {item.isManualRoute && (
-              <span className="text-orange-400 font-black uppercase text-[10px] px-1 py-0.2 bg-orange-950/20 border border-orange-500/15 rounded select-none shrink-0 leading-none">
+              <span className="text-orange-700 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-950/20 dark:border-orange-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
                 MANUAL
               </span>
             )}
             {item.planningStatus === 'SEGURAR' && (
-              <span className="text-red-400 font-black uppercase text-[10px] px-1 py-0.2 bg-red-950/20 border border-red-500/15 rounded select-none shrink-0 leading-none animate-pulse">
+              <span className="text-red-700 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
                 SEGURAR
               </span>
             )}
@@ -366,33 +366,33 @@ export default function CargaItem({
       </div>
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[#131f38]/15`}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-slate-200 dark:border-[#131f38]/15`}>
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
-          <span className="text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
+          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
+          <span className="text-slate-800 dark:text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
             {item.destinatario || 'SEM DESTINATÁRIO'}
           </span>
         </div>
 
         {/* Remetente */}
         <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
+          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
           <span 
             className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
               item.isCurvaA 
-                ? 'text-[#d8b4fe] bg-purple-950/40 px-1 py-0.2 rounded border border-purple-500/25 font-black text-[12px]' 
-                : 'text-slate-400'
+                ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-[#d8b4fe] dark:bg-purple-950/40 px-1 py-0.2 rounded border dark:border-purple-500/25 font-black text-[12px]' 
+                : 'text-slate-500 dark:text-slate-400'
             }`}
             title={item.remetente || 'SEM REMETENTE'}
           >
             {item.remetente || 'SEM REMETENTE'}
-            {item.isCurvaA && <span className="text-[10px] font-black text-purple-400 ml-1 select-none">★ CURVA A</span>}
+            {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-purple-400 ml-1 select-none">★ CURVA A</span>}
           </span>
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-350">
+        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-600 dark:text-indigo-350">
           <span>
             CTRC:{' '}
             {(() => {
@@ -404,7 +404,7 @@ export default function CargaItem({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleOpenSswCtrc}
-                  className="hover:underline text-indigo-400 hover:text-indigo-300 cursor-pointer font-bold inline"
+                  className="hover:underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 cursor-pointer font-bold inline"
                   title="Abrir CTRC no SSW"
                 >
                   {item.id}
@@ -412,29 +412,29 @@ export default function CargaItem({
               );
             })()}
           </span>
-          <span>•</span>
+          <span className="text-slate-300 dark:text-slate-600">•</span>
           <span>NF: {item.nf || 'S/N'}</span>
           {item.isCriticClient && (
             <span 
-              className="bg-violet-500/10 text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-500/20 shrink-0 select-none leading-none animate-pulse flex items-center gap-0.5 shrink-0"
+              className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-200 dark:border-violet-500/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
               title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
             >
               👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
             </span>
           )}
           {item.isFob && (
-            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
+            <span className="bg-amber-550/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
               FOB
             </span>
           )}
         </div>
       </div>
 
-      {/* Block 4: [BLOCO OPERACIONAL] - SLA, Ocorrência, Disponibilidade e Localização */}
-      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[#131f38]/15`}>
+      {/* Block 4: [BLOCO OPERACIONAL SIMPLIFICADO EM HIERARQUIA CLARA] */}
+      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-slate-200 dark:border-[#131f38]/15`}>
         
-        {/* Line 1: SLA and date parameters */}
-        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-450 leading-none flex-wrap">
+        {/* Linha 1: Previsão (data, SLA) */}
+        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-500 dark:text-slate-450 leading-none flex-wrap">
           {(() => {
             const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
             if (hasNoPrev) {
@@ -444,7 +444,13 @@ export default function CargaItem({
               <>
                 <span>PREV: {item.prev_ent}</span>
                 <span>•</span>
-                <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${item.slaStatus?.bgClass || 'bg-slate-900/30'} ${item.slaStatus?.textClass || 'text-slate-400 border-slate-755/20'}`}>
+                <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${
+                  item.slaStatus?.isDelayed
+                    ? 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15'
+                    : item.slaStatus?.isToday
+                    ? 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/15'
+                    : 'bg-[#F1F5F9] dark:bg-slate-900/30 text-[#475569] dark:text-slate-400 border-[#E2E8F0] dark:border-slate-755/20'
+                }`}>
                   {(() => {
                     if (!item.slaStatus) return 'S/ PRAZO';
                     if (item.slaStatus.isDelayed) {
@@ -460,83 +466,94 @@ export default function CargaItem({
             );
           })()}
           {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
-            <span className="bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
+            <span className="bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border border-[#C7D2FE] dark:border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
               AGENDADO
             </span>
           )}
-          {item.occurrenceSector && (
-            <span className="font-extrabold text-indigo-300 bg-indigo-950/30 px-1 rounded-sm border border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
-              {item.occurrenceSector}
-            </span>
-          )}
         </div>
 
-        {/* Line 2: Occurrence Code and Description */}
-        <div className="min-w-0 text-[12px] leading-none select-text mt-0.5">
-          {item.occurrenceCode ? (
-            item.occurrenceDescription === 'Ocorrência não mapeada' ? (
-              <span className="text-slate-400 font-bold block truncate text-[11px]">
-                ⚠️ OC {item.occurrenceCode} • não mapeada
-              </span>
-            ) : item.occurrenceCriticality === 'CRÍTICA' ? (
-              <span className="text-red-400 font-extrabold block truncate text-[11px]" title={item.occurrenceDescription}>
-                🚨 OC {item.occurrenceCode} • {item.occurrenceDescription}
-              </span>
-            ) : item.occurrenceCriticality === 'MÉDIA' ? (
-              <span className="text-amber-400 font-bold block truncate text-[11px]" title={item.occurrenceDescription}>
-                ⚠️ OC {item.occurrenceCode} • {item.occurrenceDescription}
-              </span>
-            ) : (
-              <span className="text-indigo-405 font-bold block truncate text-[11px]" title={item.occurrenceDescription}>
-                ℹ️ OC {item.occurrenceCode} • {item.occurrenceDescription}
-              </span>
-            )
-          ) : (
-            <span className="text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
-              🟢 SEM OCORRÊNCIA
-            </span>
-          )}
-        </div>
-
-        {/* Line 3: High-context Flow Status (No redundant Aguardando) and clean location */}
-        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-0.5 flex-wrap">
-          {/* Custom flow status label */}
-          <span className={`font-mono font-black uppercase px-1.5 py-0.2 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
+        {/* Linha 2: Status / Ocorrência (badge principal, descrição) */}
+        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
+          {/* Custom flow status label as MAIN badge */}
+          <span className={`font-mono font-black uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none ${flowStatusStyles.bg} ${flowStatusStyles.text} ${flowStatusStyles.border}`}>
             {flowStatusLabel}
           </span>
 
-          {/* Clean location details (Omit prefix BOX:) */}
+          {/* Occurrence details */}
+          <div className="min-w-0 flex items-center gap-1">
+            {item.occurrenceCode ? (
+              (() => {
+                const code = String(item.occurrenceCode);
+                let badgeStyles = "bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
+                
+                if (code === '57') {
+                  badgeStyles = "bg-[#DCFCE7] dark:bg-green-500/10 text-[#166534] dark:text-green-400 border-[#BBF7D0] dark:border-green-500/20";
+                } else if (code === '59') {
+                  badgeStyles = "bg-[#DBEAFE] dark:bg-blue-500/10 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/20";
+                } else if (code === '70') {
+                  badgeStyles = "bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/20";
+                }
+
+                return (
+                  <span className={`font-mono font-bold uppercase px-1 py-0.2 rounded border text-[9px] shrink-0 leading-none ${badgeStyles}`}>
+                    OC {item.occurrenceCode}
+                  </span>
+                );
+              })()
+            ) : null}
+
+            {item.occurrenceCode ? (
+              <span className="text-slate-600 dark:text-slate-400 font-bold truncate text-[11px]" title={item.occurrenceDescription}>
+                {item.occurrenceDescription === 'Ocorrência não mapeada' ? 'não mapeada' : item.occurrenceDescription}
+              </span>
+            ) : (
+              <span className="text-emerald-600 dark:text-emerald-500 font-bold uppercase text-[11px] tracking-wide inline-flex items-center gap-0.5 leading-none">
+                🟢 SEM OCORRÊNCIA
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Linha 3: Localização e Notas */}
+        <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
+          {/* Clean location details */}
           {(() => {
             const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
             const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
             return (
-              <span className="text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
-                📍<span className="font-extrabold uppercase text-slate-300 text-[11px]">{displayLoc}</span>
+              <span className="text-teal-600 dark:text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
+                📍<span className="font-extrabold uppercase text-slate-800 dark:text-slate-300 text-[11px]">{displayLoc}</span>
               </span>
             );
           })()}
-        </div>
 
-        {/* Micro operational note banner */}
-        {item.operationalNote && (
-          <div className="text-[11px] font-medium text-amber-305 italic truncate mt-0.5" title={item.operationalNote}>
-            Obs: {item.operationalNote}
-          </div>
-        )}
+          {item.occurrenceSector && (
+            <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+              Setor: {item.occurrenceSector}
+            </span>
+          )}
+
+          {/* Micro operational note banner */}
+          {item.operationalNote && (
+            <div className="text-[11px] font-medium text-amber-700 dark:text-amber-305 italic truncate" title={item.operationalNote}>
+              Obs: {item.operationalNote}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-[#131f38]/15 bg-[#070c14]/15`}>
-        <span className="text-slate-105 font-black text-[13px] leading-none">
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-slate-200 dark:border-[#131f38]/15 bg-slate-50/30 dark:bg-[#070c14]/15`}>
+        <span className="text-slate-800 dark:text-slate-105 font-black text-[13px] leading-none">
           {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
         </span>
-        <span className="text-amber-455 font-bold text-[12px] leading-none mt-1">
+        <span className="text-amber-700 dark:text-amber-455 font-bold text-[12px] leading-none mt-1">
           {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
         </span>
-        <span className="text-slate-400 text-[12px] mt-1">
+        <span className="text-slate-500 dark:text-slate-400 text-[12px] mt-1">
           R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
-        <span className="text-indigo-350 text-[11px] mt-1">
+        <span className="text-indigo-600 dark:text-indigo-350 text-[11px] mt-1">
           Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
       </div>
@@ -563,7 +580,7 @@ export default function CargaItem({
               menuPosition 
                 ? 'fixed' 
                 : 'absolute top-2 right-4'
-            } bg-[#0b132a]/95 backdrop-blur-md border border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-200 select-none pointer-events-auto ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
+            } bg-white dark:bg-[#0b132a]/95 backdrop-blur-md border border-slate-200 dark:border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-800 dark:text-slate-200 select-none pointer-events-auto ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
             style={{ 
               filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))',
               ...(menuPosition ? {
@@ -574,8 +591,8 @@ export default function CargaItem({
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* Dropdown Header */}
-            <div className={`${dropHeaderPad} bg-[#0e1732] border-b border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
-              <span className={`${dropHeaderText} font-sans font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5`}>
+            <div className={`${dropHeaderPad} bg-slate-50 dark:bg-[#0e1732] border-b border-slate-200 dark:border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
+              <span className={`${dropHeaderText} font-sans font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1.5`}>
                 🛡️ Parâmetros CTRC {item.id}
               </span>
               <button 
@@ -583,15 +600,15 @@ export default function CargaItem({
                   setDropdownOpen(false);
                   setMenuPosition(null);
                 }}
-                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X size={12} />
               </button>
             </div>
             
             {/* Option block 1: Route overwrite */}
-            <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
-              <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
+            <div className={`${dropBlockPad} border-b border-slate-150 dark:border-[#16223f]/70 flex flex-col`}>
+              <span className={`${labelTextSize} font-sans font-black text-indigo-600 dark:text-indigo-350 uppercase tracking-wider block`}>
                 📍 Rota Operacional
               </span>
               <div className="flex gap-2 items-center">
@@ -601,7 +618,7 @@ export default function CargaItem({
                   value={typedRoute}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => setTypedRoute(e.target.value.toUpperCase())}
-                  className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
+                  className={`bg-slate-50 dark:bg-[#05080f] border border-slate-200 dark:border-[#16223f] text-slate-800 dark:text-slate-105 placeholder-slate-400 dark:placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
                 />
                 <button
                   onClick={(e) => {
@@ -609,7 +626,7 @@ export default function CargaItem({
                     onUpdatePlanning?.(item.id, { operationalRoute: typedRoute || undefined });
                     setDropdownOpen(false);
                   }}
-                  className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
+                  className={`bg-indigo-600 dark:bg-indigo-650 hover:bg-indigo-500 dark:hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
                 >
                   OK
                 </button>
@@ -617,8 +634,8 @@ export default function CargaItem({
             </div>
 
             {/* Option block 2: Priority modifiers */}
-            <div className="flex flex-col py-1 border-b border-[#16223f]/70 bg-[#070c16]/30">
-              <div className={`${priorityHeaderLabel} font-mono font-black text-slate-500 uppercase tracking-widest select-none`}>
+            <div className="flex flex-col py-1 border-b border-slate-150 dark:border-[#16223f]/70 bg-slate-50/50 dark:bg-[#070c16]/30">
+              <div className={`${priorityHeaderLabel} font-mono font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest select-none`}>
                 Definir Alerta Prioridade
               </div>
 
@@ -627,15 +644,15 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'URGENTE', planningStatus: 'URGENTE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-red-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                  item.planningStatus === 'URGENTE' ? 'bg-red-500/5 text-red-300 border-l-2 border-red-500 pl-2' : ''
+                className={`${priorityBtnPad} text-left hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'URGENTE' ? 'bg-red-50 dark:bg-red-500/5 text-red-700 dark:text-red-300 border-l-2 border-red-500 pl-2' : ''
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-red-405 shrink-0"><AlertCircle size={12} className="stroke-[2.5]" /></span>
-                  <span className="font-extrabold tracking-wide uppercase group-hover/btn:text-red-300 w-full text-left">P0 / URGENTE</span>
+                  <span className="text-red-600 dark:text-red-405 shrink-0"><AlertCircle size={12} className="stroke-[2.5]" /></span>
+                  <span className="font-extrabold tracking-wide uppercase group-hover/btn:text-red-700 dark:group-hover/btn:text-red-300 w-full text-left">P0 / URGENTE</span>
                 </div>
-                <span className={`${tagTextSize} font-mono font-semibold text-red-500/60 bg-red-500/10 px-1 py-0.2 rounded border border-red-500/15 uppercase`}>CRÍTICO</span>
+                <span className={`${tagTextSize} font-mono font-semibold text-red-700 dark:text-red-500/60 bg-red-50 dark:bg-red-500/10 px-1 py-0.2 rounded border border-red-200 dark:border-red-500/15 uppercase`}>CRÍTICO</span>
               </button>
 
               <button
@@ -643,15 +660,15 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'PRIORIDADE', planningStatus: 'PRIORIDADE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-amber-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                  item.planningStatus === 'PRIORIDADE' ? 'bg-amber-500/5 text-amber-300 border-l-2 border-amber-500 pl-2' : ''
+                className={`${priorityBtnPad} text-left hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'PRIORIDADE' ? 'bg-amber-50 dark:bg-amber-500/5 text-amber-800 dark:text-amber-300 border-l-2 border-amber-500 pl-2' : ''
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-amber-400 shrink-0"><Star size={12} className="fill-amber-400/20" /></span>
-                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-amber-300 w-full text-left">P1 / PRIORIDADE</span>
+                  <span className="text-amber-600 dark:text-amber-400 shrink-0"><Star size={12} className="fill-amber-400/20" /></span>
+                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-amber-800 dark:group-hover/btn:text-amber-300 w-full text-left">P1 / PRIORIDADE</span>
                 </div>
-                <span className={`${tagTextSize} font-mono font-semibold text-amber-500/60 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/15 uppercase`}>ALTO</span>
+                <span className={`${tagTextSize} font-mono font-semibold text-amber-700 dark:text-amber-500/60 bg-amber-50 dark:bg-amber-500/10 px-1 py-0.2 rounded border border-amber-200 dark:border-amber-500/15 uppercase`}>ALTO</span>
               </button>
 
               <button
@@ -659,15 +676,15 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'SEGURAR', planningStatus: 'SEGURAR' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-orange-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                  item.planningStatus === 'SEGURAR' ? 'bg-orange-500/5 text-orange-305 border-l-2 border-orange-550 pl-2' : ''
+                className={`${priorityBtnPad} text-left hover:bg-orange-50 dark:hover:bg-orange-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'SEGURAR' ? 'bg-orange-50 dark:bg-orange-500/5 text-orange-700 dark:text-orange-305 border-l-2 border-orange-500 pl-2' : ''
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-orange-400 shrink-0"><PauseCircle size={12} /></span>
-                  <span className="font-black tracking-wide uppercase group-hover/btn:text-orange-300 w-full text-left">SEGURAR CARGA</span>
+                  <span className="text-orange-600 dark:text-orange-400 shrink-0"><PauseCircle size={12} /></span>
+                  <span className="font-black tracking-wide uppercase group-hover/btn:text-orange-700 dark:group-hover/btn:text-orange-300 w-full text-left">SEGURAR CARGA</span>
                 </div>
-                <span className={`${tagTextSize} font-mono font-semibold text-orange-500/60 bg-orange-500/10 px-1 py-0.2 rounded border border-orange-500/15 uppercase`}>HOLD</span>
+                <span className={`${tagTextSize} font-mono font-semibold text-orange-700 dark:text-orange-500/60 bg-orange-50 dark:bg-orange-500/10 px-1 py-0.2 rounded border border-orange-200 dark:border-orange-500/15 uppercase`}>HOLD</span>
               </button>
 
               <button
@@ -675,15 +692,15 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'NAO_SAI_HOJE', planningStatus: 'NAO_SAI_HOJE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-slate-700/15 text-slate-400 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                  item.planningStatus === 'NAO_SAI_HOJE' ? 'bg-slate-900/50 text-slate-300 border-l-2 border-slate-600 pl-2' : ''
+                className={`${priorityBtnPad} text-left hover:bg-slate-100 dark:hover:bg-slate-700/15 text-slate-500 dark:text-slate-400 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'NAO_SAI_HOJE' ? 'bg-slate-100 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border-l-2 border-slate-400 dark:border-slate-600 pl-2' : ''
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-slate-500 shrink-0"><Ban size={12} /></span>
-                  <span className="font-semibold tracking-wide uppercase group-hover/btn:text-slate-300 w-full text-left">NÃO SAI HOJE</span>
+                  <span className="font-semibold tracking-wide uppercase group-hover/btn:text-slate-700 dark:group-hover/btn:text-slate-300 w-full text-left">NÃO SAI HOJE</span>
                 </div>
-                <span className={`${tagTextSize} font-mono font-semibold text-slate-500/80 bg-slate-900 px-1 py-0.2 rounded border border-slate-700/30 uppercase`}>CORTE</span>
+                <span className={`${tagTextSize} font-mono font-semibold text-slate-600 dark:text-slate-500/80 bg-slate-200 dark:bg-slate-900 px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700/30 uppercase`}>CORTE</span>
               </button>
 
               <button
@@ -691,21 +708,21 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'AGENDADO', planningStatus: 'AGENDADO' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-cyan-500/10 text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
-                  item.planningStatus === 'AGENDADO' ? 'bg-cyan-505/5 text-cyan-300 border-l-2 border-cyan-500 pl-2' : ''
+                className={`${priorityBtnPad} text-left hover:bg-cyan-50 dark:hover:bg-cyan-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                  item.planningStatus === 'AGENDADO' ? 'bg-cyan-50 dark:bg-cyan-550/5 text-cyan-700 dark:text-cyan-300 border-l-2 border-cyan-500 pl-2' : ''
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-cyan-400 shrink-0"><Calendar size={12} /></span>
-                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-cyan-305 w-full text-left">AGENDADO</span>
+                  <span className="text-cyan-600 dark:text-cyan-400 shrink-0"><Calendar size={12} /></span>
+                  <span className="font-bold tracking-wide uppercase group-hover/btn:text-cyan-700 dark:group-hover/btn:text-cyan-305 w-full text-left">AGENDADO</span>
                 </div>
-                <span className={`${tagTextSize} font-mono font-semibold text-cyan-500/60 bg-cyan-500/10 px-1 py-0.2 rounded border border-cyan-500/15 uppercase`}>DATA</span>
+                <span className={`${tagTextSize} font-mono font-semibold text-cyan-700 dark:text-cyan-500/60 bg-cyan-50 dark:bg-cyan-500/10 px-1 py-0.2 rounded border border-cyan-200 dark:border-cyan-500/15 uppercase`}>DATA</span>
               </button>
             </div>
 
             {/* Option block 3: Note comment editor */}
-            <div className={`${dropBlockPad} border-b border-[#16223f]/70 flex flex-col`}>
-              <span className={`${labelTextSize} font-sans font-black text-indigo-350 uppercase tracking-wider block`}>
+            <div className={`${dropBlockPad} border-b border-slate-150 dark:border-[#16223f]/70 flex flex-col`}>
+              <span className={`${labelTextSize} font-sans font-black text-indigo-600 dark:text-indigo-350 uppercase tracking-wider block`}>
                 📝 Observação Operacional
               </span>
               <div className="flex gap-2 items-center">
@@ -715,7 +732,7 @@ export default function CargaItem({
                   value={typedNote}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => setTypedNote(e.target.value)}
-                  className={`bg-[#05080f] border border-[#16223f] text-slate-105 placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
+                  className={`bg-slate-50 dark:bg-[#05080f] border border-slate-200 dark:border-[#16223f] text-slate-800 dark:text-slate-105 placeholder-slate-400 dark:placeholder-slate-650 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 ${inputPadY}`}
                 />
                 <button
                   onClick={(e) => {
@@ -723,7 +740,7 @@ export default function CargaItem({
                     onUpdatePlanning?.(item.id, { operationalNote: typedNote || undefined });
                     setDropdownOpen(false);
                   }}
-                  className={`bg-indigo-650 hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
+                  className={`bg-indigo-600 dark:bg-indigo-650 hover:bg-indigo-500 dark:hover:bg-indigo-600 active:scale-95 text-white font-extrabold rounded-lg transition-all cursor-pointer uppercase shrink-0 leading-none shadow-sm ${buttonPadY}`}
                 >
                   OK
                 </button>
@@ -731,13 +748,13 @@ export default function CargaItem({
             </div>
 
             {/* Option block 4: Clean reset */}
-            <div className="p-2 bg-[#061021] rounded-b-xl flex justify-center">
+            <div className="p-2 bg-slate-100 dark:bg-[#061021] rounded-b-xl flex justify-center">
               <button
                 onClick={() => {
                   onUpdatePlanning?.(item.id, { manualPriority: 'NORMAL', planningStatus: 'A_PLANEJAR', operationalRoute: undefined, operationalNote: undefined });
                   setDropdownOpen(false);
                 }}
-                className={`w-full bg-slate-900 border border-slate-800 hover:border-red-500/20 hover:bg-red-550/[0.06] text-slate-400 hover:text-red-400 hover:shadow-[0_0_8px_rgba(239,68,68,0.05)] font-sans font-black rounded-lg text-center uppercase transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${resetBtnPad}`}
+                className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/20 hover:bg-red-550/[0.06] text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:shadow-[0_0_8px_rgba(239,68,68,0.05)] font-sans font-black rounded-lg text-center uppercase transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${resetBtnPad}`}
               >
                 <RefreshCw size={11} className="transition-transform duration-300 group-hover:rotate-180" />
                 Restaurar planejamento automático
