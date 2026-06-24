@@ -419,7 +419,22 @@ export default function CargaList({
 
             {/* Col 9: OBS / Disponível */}
             <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none text-slate-400">
-              <span>OBS / DISP</span>
+              <ExcelColumnFilter
+                label="Setor / Disponibilidade"
+                uniqueValues={excelUniqueOcorrSectors}
+                selectedValues={excelOcorrSectorFilter}
+                onApply={setExcelOcorrSectorFilter}
+                onSortAsc={() => {}}
+                onSortDesc={() => {}}
+                isSortedActiveAsc={false}
+                isSortedActiveDesc={false}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>OBS / DISP</span>
+                    <Filter size={8.5} className={excelOcorrSectorFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
             </div>
           </div>
         ) : (

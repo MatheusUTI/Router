@@ -79,35 +79,39 @@ export default function RoteirizacaoHeader({
       
       {/* 1. Brand, Plan, Filial */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
-        <span className="relative flex h-2 w-2 shrink-0 hidden sm:flex">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0ea5e9]"></span>
-        </span>
-        <div className="flex flex-col min-w-0">
-          <h1 className={titleClass}>Mesa de Roteirização</h1>
+        <div className="flex items-center shrink-0">
+          {adminUser.is_master ? (
+            <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded px-2 py-1 shadow-sm h-8 cursor-pointer relative transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30">
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
+              <select
+                id="header-unit-selector"
+                value={selectedUnit}
+                onChange={(e) => setSelectedUnit(e.target.value)}
+                className="bg-transparent text-indigo-900 dark:text-indigo-200 font-black focus:outline-none cursor-pointer text-[12px] leading-none transition-all border-none select-none uppercase appearance-none pr-3"
+              >
+                <option value="TODAS" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white font-semibold">TODAS</option>
+                {uniqueUnits.map(u => (
+                  <option key={u} value={u} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white font-bold">{u}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2">
+                <svg className="w-2.5 h-2.5 text-indigo-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/20 rounded px-2 py-1 shadow-sm h-8" title="Unidade restrita">
+              <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
+              <span className="text-slate-800 dark:text-white font-black text-[12px] leading-none flex items-center gap-1 select-none">
+                🔒 {(adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col min-w-0 ml-1">
+          <h1 className={`${titleClass} uppercase`}>Mesa de Roteirização</h1>
           <div className={subtitleClass}>
             <span>Plano: {formattedPlanningDate}</span>
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <div className="flex items-center gap-1 hidden sm:flex">
-              <span className="text-slate-500 font-bold uppercase text-[9px]">Filial:</span>
-              {adminUser.is_master ? (
-                <select
-                  id="header-unit-selector"
-                  value={selectedUnit}
-                  onChange={(e) => setSelectedUnit(e.target.value)}
-                  className="bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1d2a45] rounded px-1 py-0.5 text-slate-800 dark:text-white font-mono font-bold focus:outline-none cursor-pointer text-[9px] h-4 leading-none transition-all hover:bg-slate-150 dark:hover:bg-slate-900 border-none select-none"
-                >
-                  <option value="TODAS" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">TODAS</option>
-                  {uniqueUnits.map(u => (
-                    <option key={u} value={u} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">{u}</option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-slate-800 dark:text-white font-mono font-extrabold text-[9px] leading-none flex items-center gap-0.5 bg-slate-100 dark:bg-slate-900/40 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700/20" title="Unidade restrita">
-                  🔒 {(adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase()}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </div>

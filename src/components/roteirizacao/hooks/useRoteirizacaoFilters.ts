@@ -362,9 +362,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
         return `OC ${code} · ${occName}`;
       }
-      const sector = (c.occurrenceSector || '').toUpperCase();
-      if (sector) return sector;
-      return 'INDEFINIDO';
+      return 'SEM OCORRÊNCIA';
     });
     return Array.from(new Set(list)).sort();
   }, [afterUnitCtrcs]);
@@ -495,18 +493,15 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
           return excelPrevFilter.includes(val);
         });
 
-    // Excel Status Filter (Now Occurrence/Sector Filter)
+    // Excel Status Filter (Now Occurrence Filter)
     const excelAfterStatusState = excelStatusFilter === null 
       ? excelAfterPrev 
       : excelAfterPrev.filter(c => {
-          let label = '';
+          let label = 'SEM OCORRÊNCIA';
           if (c.occurrenceCode) {
             const code = String(c.occurrenceCode);
             const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
             label = `OC ${code} · ${occName}`;
-          } else {
-            const sector = (c.occurrenceSector || '').toUpperCase();
-            label = sector ? sector : 'INDEFINIDO';
           }
           return excelStatusFilter.includes(label.toUpperCase().trim());
         });

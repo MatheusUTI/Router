@@ -569,18 +569,11 @@ export default function CargaItem({
                 }
                 
                 const sector = item.occurrenceSector || '';
-                const showSector = sector && sector.toUpperCase() !== 'DISPONÍVEL' && sector.toUpperCase() !== 'DISPONIVEL';
-                
-                const fullTooltip = `${item.locationLabel || 'NÃO INFORMADO'}${showSector ? ` · Setor: ${sector}` : ''}`;
+                const fullTooltip = `${item.locationLabel || 'NÃO INFORMADO'}`;
                 
                 return (
                   <span className="truncate" title={fullTooltip}>
                     📍 {displayLoc}
-                    {showSector && (
-                      <span className="text-indigo-600 dark:text-indigo-400 font-medium ml-1">
-                        · {sector}
-                      </span>
-                    )}
                   </span>
                 );
               })()}
