@@ -882,7 +882,7 @@ export default function RoteirizacaoView({
   };
 
   return (
-    <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#1a2440] rounded-2xl overflow-hidden relative text-slate-800 dark:text-slate-200 select-none">
+    <div className="w-full flex flex-col h-[calc(100vh-12px)] bg-[var(--router-bg)] border border-[var(--router-border)] rounded-2xl overflow-hidden relative text-[var(--router-text)] select-none">
       {/* Prime Header Block */}
       <RoteirizacaoHeader
         adminUser={adminUser}
@@ -932,7 +932,7 @@ export default function RoteirizacaoView({
       >
         {/* Cargo Fila Column */}
         {isNormalizing ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#1a2440] rounded-xl font-mono">
+          <div className="flex-1 flex flex-col items-center justify-center text-[var(--router-text-muted)] gap-1.5 bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl font-mono">
             <span className="animate-spin text-xl">⏳</span>
             <p className="text-xs font-bold uppercase">Correlacionando dicionários e rotas da malha...</p>
           </div>
@@ -1006,7 +1006,7 @@ export default function RoteirizacaoView({
 
       {/* Persistent Overlay Toast alerts */}
       {toastMessage && (
-        <div className="absolute top-16 right-4 z-[70] bg-white dark:bg-[#0d1527] border-l-4 border-l-indigo-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-[#1a2440] dark:border-r-[#1a2440] text-indigo-700 dark:text-indigo-300 text-xs p-3 rounded-lg shadow-xl flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
+        <div className="absolute top-16 right-4 z-[70] bg-[var(--router-surface)] border-l-[4px] border-l-[var(--router-primary)] border-y border-r border-y-[var(--router-border)] border-r-[var(--router-border)] text-[var(--router-primary)] text-xs p-3 rounded-lg shadow-[var(--router-shadow)] flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
           {toastMessage.startsWith('📌') || toastMessage.startsWith('📝') ? (
             <span>📌</span>
           ) : (
@@ -1060,60 +1060,60 @@ export default function RoteirizacaoView({
             className="fixed inset-0 bg-slate-900/50 dark:bg-black/80 backdrop-blur-md z-[100] transition-all duration-200" 
             onClick={() => setGeneratedPreRomaneios(null)} 
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-[#0a0f1d] border border-slate-200 dark:border-emerald-500/40 rounded-2xl shadow-xl dark:shadow-[0_15px_50px_rgba(0,0,0,0.85)] z-[110] overflow-hidden flex flex-col p-6 font-sans">
-            <div className="flex items-center gap-3.5 border-b border-slate-100 dark:border-[#1b2b4d] pb-4 mb-4 shrink-0 select-none">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[var(--router-bg)] border border-[var(--router-border)] rounded-2xl shadow-[var(--router-shadow)] z-[110] overflow-hidden flex flex-col p-6 font-sans">
+            <div className="flex items-center gap-3.5 border-b border-[var(--router-border)] pb-4 mb-4 shrink-0 select-none">
+              <div className="w-10 h-10 rounded-xl bg-[var(--router-surface)] border border-[var(--router-border)] flex items-center justify-center text-xl shrink-0">
                 📦
               </div>
               <div>
-                <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider leading-none">Confirmar Pré-separação</h3>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase font-mono mt-1.5 font-bold">Enviar lote agrupado por rota e portão para docas</p>
+                <h3 className="text-sm font-black text-[var(--router-text)] uppercase tracking-wider leading-none">Confirmar Pré-separação</h3>
+                <p className="text-[10px] text-[var(--router-success)] font-bold uppercase font-mono mt-1.5 font-bold">Enviar lote agrupado por rota e portão para docas</p>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 dark:text-slate-355 leading-relaxed uppercase font-mono mb-4">
+            <p className="text-[11px] text-[var(--router-text-muted)] leading-relaxed uppercase font-mono mb-4">
               O sistema consolidou as cargas selecionadas em lotes de separação física. Confirme o despacho abaixo para criar os respectivos pré-romaneios:
             </p>
 
-            <div className="flex-1 overflow-y-auto max-h-[300px] flex flex-col gap-3.5 pr-1.5 scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-slate-950/20 scrollbar-thumb-emerald-500/20">
+            <div className="flex-1 overflow-y-auto max-h-[300px] flex flex-col gap-3.5 pr-1.5 scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-transparent scrollbar-thumb-[var(--router-success)]/20">
               {generatedPreRomaneios.map((pr) => (
-                <div key={pr.id} className="bg-slate-50 dark:bg-[#101726] border border-slate-200 dark:border-emerald-500/15 rounded-xl p-3 flex flex-col gap-2.5 hover:border-emerald-400/50 dark:hover:border-emerald-500/35 transition-colors duration-150">
+                <div key={pr.id} className="bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-xl p-3 flex flex-col gap-2.5 hover:border-[var(--router-success)]/35 transition-colors duration-150">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center text-[10px]">🚚</span>
+                    <span className="text-xs font-black text-[var(--router-text)] uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-[var(--router-surface-3)] border border-[var(--router-border)] flex items-center justify-center text-[10px]">🚚</span>
                       {pr.route}
                     </span>
-                    <span className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-[9.5px] font-black font-mono px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                    <span className="router-badge router-badge-success text-[9.5px] font-black font-mono px-2.5 py-1 rounded-lg uppercase tracking-wider">
                       ⚓ {pr.gate}
                     </span>
                   </div>
 
                   {/* Elegant Bento Grid elements inside matching the custom styling guide */}
-                  <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-slate-200 dark:border-[#1b2d4f]/50">
-                    <div className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800/60 rounded p-1.5 text-center">
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">📑 CTRCs</div>
-                      <div className="text-xs text-slate-800 dark:text-white font-black font-mono">{pr.ctrcIds.length}</div>
+                  <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-[var(--router-border)]">
+                    <div className="bg-[var(--router-bg)] border border-[var(--router-border)] rounded p-1.5 text-center">
+                      <div className="text-[8px] text-[var(--router-text-muted)] uppercase font-black font-mono tracking-wider mb-0.5">📑 CTRCs</div>
+                      <div className="text-xs text-[var(--router-text)] font-black font-mono">{pr.ctrcIds.length}</div>
                     </div>
-                    <div className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800/60 rounded p-1.5 text-center">
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">⚖️ Peso</div>
-                      <div className="text-xs text-emerald-600 dark:text-emerald-450 font-black font-mono">
+                    <div className="bg-[var(--router-bg)] border border-[var(--router-border)] rounded p-1.5 text-center">
+                      <div className="text-[8px] text-[var(--router-text-muted)] uppercase font-black font-mono tracking-wider mb-0.5">⚖️ Peso</div>
+                      <div className="text-xs text-[var(--router-success)] font-black font-mono">
                         {pr.totalWeight >= 1000 ? `${(pr.totalWeight / 1000).toFixed(1)}t` : `${pr.totalWeight}kg`}
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800/60 rounded p-1.5 text-center">
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">📦 Vols</div>
-                      <div className="text-xs text-amber-600 dark:text-yellow-450 font-black font-mono">{pr.totalVolumes}</div>
+                    <div className="bg-[var(--router-bg)] border border-[var(--router-border)] rounded p-1.5 text-center">
+                      <div className="text-[8px] text-[var(--router-text-muted)] uppercase font-black font-mono tracking-wider mb-0.5">📦 Vols</div>
+                      <div className="text-xs text-[var(--router-warning)] font-black font-mono">{pr.totalVolumes}</div>
                     </div>
-                    <div className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800/60 rounded p-1.5 text-center">
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 uppercase font-black font-mono tracking-wider mb-0.5">💰 Frete</div>
-                      <div className="text-[10px] text-sky-600 dark:text-sky-400 font-extrabold font-mono truncate" title={`R$ ${pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                    <div className="bg-[var(--router-bg)] border border-[var(--router-border)] rounded p-1.5 text-center">
+                      <div className="text-[8px] text-[var(--router-text-muted)] uppercase font-black font-mono tracking-wider mb-0.5">💰 Frete</div>
+                      <div className="text-[10px] text-[var(--router-info)] font-extrabold font-mono truncate" title={`R$ ${pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
                         R$ {pr.totalFrete.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 dark:text-slate-550 pt-1 border-t border-slate-200 dark:border-[#1b2d4f]/20">
-                    <span className="font-bold text-emerald-600 dark:text-emerald-500/80 uppercase">● AGUARDANDO LIBERAÇÃO</span>
+                  <div className="flex items-center justify-between text-[9px] font-mono text-[var(--router-text-muted)] pt-1 border-t border-[var(--router-border)]">
+                    <span className="font-bold text-[var(--router-success)] uppercase opacity-80">● AGUARDANDO LIBERAÇÃO</span>
                     <span>PROG: {pr.planningDate}</span>
                   </div>
                 </div>
@@ -1121,11 +1121,11 @@ export default function RoteirizacaoView({
             </div>
 
             {/* Standard buttons with secondary cancel action */}
-            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-[#1b2b4d] flex items-center justify-between gap-3 shrink-0">
+            <div className="mt-6 pt-4 border-t border-[var(--router-border)] flex items-center justify-between gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setGeneratedPreRomaneios(null)}
-                className="px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white uppercase font-black text-xs tracking-wider rounded-xl transition-all duration-150 cursor-pointer text-center flex-1"
+                className="px-4 py-2.5 bg-[var(--router-surface)] border border-[var(--router-border)] text-[var(--router-text-muted)] hover:text-[var(--router-text)] uppercase font-black text-xs tracking-wider rounded-xl transition-all duration-150 cursor-pointer text-center flex-1"
               >
                 Cancelar
               </button>

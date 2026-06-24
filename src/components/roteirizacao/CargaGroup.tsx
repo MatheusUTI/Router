@@ -164,7 +164,7 @@ export default function CargaGroup({
 
       {/* Group Entries List */}
       {isExpanded && (
-        <div className="bg-slate-50 dark:bg-[#080c14] divide-y divide-slate-200 dark:divide-slate-800/40">
+        <div className="bg-[var(--router-bg)] divide-y divide-[var(--router-border)]">
           {items.map((item) => (
             <CargaItem
               key={item.id}

@@ -106,27 +106,27 @@ export default function OperationalNoticesBanner({
     switch (severity) {
       case 'CRITICAL':
         return {
-          bannerBg: 'bg-white dark:bg-[#1a0e12]/95 border-red-200 dark:border-red-700/60 shadow-red-100/40 dark:shadow-red-950/20',
-          badgeBg: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-150 dark:border-red-800/50',
-          textColor: 'text-red-800 dark:text-red-350',
-          iconColor: 'text-red-500 dark:text-red-400',
-          borderL: 'border-l-4 border-l-red-500'
+          bannerBg: 'bg-[var(--router-surface)] border-red-200 dark:border-red-900 shadow-[var(--router-shadow)]',
+          badgeBg: 'router-badge router-badge-danger',
+          textColor: 'text-red-800 dark:text-red-400',
+          iconColor: 'text-[var(--router-danger)]',
+          borderL: 'border-l-[4px] border-l-[var(--router-danger)]'
         };
       case 'WARNING':
         return {
-          bannerBg: 'bg-white dark:bg-[#1c140e]/95 border-amber-200 dark:border-amber-700/50 shadow-amber-100/40 dark:shadow-amber-950/20',
-          badgeBg: 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border-amber-150 dark:border-amber-800/40',
-          textColor: 'text-amber-800 dark:text-amber-350',
-          iconColor: 'text-amber-550 dark:text-amber-400',
-          borderL: 'border-l-4 border-l-amber-500'
+          bannerBg: 'bg-[var(--router-surface)] border-amber-200 dark:border-amber-900 shadow-[var(--router-shadow)]',
+          badgeBg: 'router-badge router-badge-warning',
+          textColor: 'text-amber-800 dark:text-amber-400',
+          iconColor: 'text-[var(--router-warning)]',
+          borderL: 'border-l-[4px] border-l-[var(--router-warning)]'
         };
       default:
         return {
-          bannerBg: 'bg-white dark:bg-[#0f1422]/95 border-blue-200 dark:border-blue-900/50 shadow-blue-100/40 dark:shadow-blue-950/20',
-          badgeBg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-150 dark:border-blue-900/40',
-          textColor: 'text-blue-800 dark:text-blue-350',
-          iconColor: 'text-blue-500 dark:text-blue-400',
-          borderL: 'border-l-4 border-l-blue-500'
+          bannerBg: 'bg-[var(--router-surface)] border-blue-200 dark:border-blue-900 shadow-[var(--router-shadow)]',
+          badgeBg: 'router-badge router-badge-info',
+          textColor: 'text-blue-800 dark:text-blue-400',
+          iconColor: 'text-[var(--router-info)]',
+          borderL: 'border-l-[4px] border-l-[var(--router-info)]'
         };
     }
   };
@@ -143,7 +143,7 @@ export default function OperationalNoticesBanner({
       id="operational-notices-banner"
     >
       {/* Toast header / control strip */}
-      <div className="flex items-center justify-between gap-3 text-xs pb-1.5 border-b border-slate-100 dark:border-indigo-905/20">
+      <div className="flex items-center justify-between gap-3 text-xs pb-1.5 border-b border-[var(--router-border)]">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {highestSeverity === 'CRITICAL' ? (
             <AlertTriangle className={`w-4 h-4 shrink-0 ${styles.iconColor} animate-pulse`} />
@@ -153,7 +153,7 @@ export default function OperationalNoticesBanner({
             <Info className={`w-4 h-4 shrink-0 ${styles.iconColor}`} />
           )}
 
-          <span className="font-mono font-black uppercase tracking-wider text-[10px] bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 shrink-0 text-slate-500 dark:text-slate-350">
+          <span className="font-mono font-black uppercase tracking-wider text-[10px] bg-[var(--router-surface-2)] px-1.5 py-0.5 rounded border border-[var(--router-border)] shrink-0 text-[var(--router-text-muted)]">
             AVISOS ({notices.length})
           </span>
         </div>
@@ -198,11 +198,11 @@ export default function OperationalNoticesBanner({
       </div>
 
       {/* Actions line */}
-      <div className="mt-2.5 flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-indigo-905/20">
+      <div className="mt-2.5 flex items-center justify-end gap-2 pt-2 border-t border-[var(--router-border)]">
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1.5 font-mono text-[9px] uppercase font-black text-indigo-650 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 px-2 py-1 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-950/75 border border-indigo-100 dark:border-indigo-900/30 rounded transition cursor-pointer"
+          className="flex items-center gap-1.5 font-mono text-[9px] uppercase font-black text-[var(--router-primary)] px-2 py-1 bg-[var(--router-surface-3)] hover:bg-[var(--router-surface-3)] border border-[var(--router-border)] rounded transition cursor-pointer"
           id="toggle-notices-expansion"
         >
           {isExpanded ? (
@@ -221,7 +221,7 @@ export default function OperationalNoticesBanner({
 
       {/* Expanded list overlay inside the toast (doesn't push content below toast!) */}
       {isExpanded && (
-        <div className="mt-2.5 border-t border-slate-100 dark:border-indigo-900/10 pt-2 flex flex-col gap-1.5 max-h-[220px] overflow-y-auto custom-scrollbar">
+        <div className="mt-2.5 border-t border-[var(--router-border)] pt-2 flex flex-col gap-1.5 max-h-[220px] overflow-y-auto custom-scrollbar">
           {notices.map((notice) => {
             const itemStyles = getSeverityStyles(notice.severity);
             const daysText = notice.daysUntil === 0 
@@ -243,7 +243,7 @@ export default function OperationalNoticesBanner({
                   </span>
 
                   {notice.route && (
-                    <span className="font-mono text-[8px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 px-1 py-0.5 rounded uppercase">
+                    <span className="font-mono text-[8px] font-bold text-[var(--router-primary)] bg-[var(--router-surface-2)] border border-[var(--router-border)] px-1 py-0.5 rounded uppercase">
                       {notice.route}
                     </span>
                   )}

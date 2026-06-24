@@ -219,7 +219,7 @@ export default function CargaList({
             </div>
 
             {/* Col 3: Destinatário / Remetente */}
-            <div className="min-w-0 flex items-center gap-1 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Destinatário"
                 uniqueValues={excelUniqueDests}
@@ -293,7 +293,7 @@ export default function CargaList({
             </div>
 
             {/* Col 5: Previsão */}
-            <div className="min-w-0 flex items-center justify-center px-1 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center justify-center px-1 border-l border-[var(--router-border)] uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Previsão"
                 uniqueValues={excelUniquePrevs}
@@ -418,7 +418,7 @@ export default function CargaList({
             </div>
 
             {/* Col 9: OBS / Disponível */}
-            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none text-slate-400">
+            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none text-slate-400">
               <ExcelColumnFilter
                 label="Setor / Disponibilidade"
                 uniqueValues={excelUniqueOcorrSectors}
@@ -630,7 +630,7 @@ export default function CargaList({
             </div>
 
             {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
@@ -664,7 +664,7 @@ export default function CargaList({
             <span className="text-3xl">📦</span>
             <p className="text-xs font-bold uppercase font-mono">Nenhuma carga pendente corresponde ao filtro selecionado</p>
             {totalCtrcsCount > 0 && onClearFilters && (
-              <div className="mt-2 bg-slate-50 dark:bg-[#0b1322] border border-slate-200 dark:border-[#1f2a44] rounded-lg p-3 max-w-sm animate-pulse w-full">
+              <div className="mt-2 bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg p-3 max-w-sm animate-pulse w-full">
                 <p className="text-xs text-indigo-600 dark:text-indigo-300 font-sans leading-relaxed mb-2">
                   Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?
                 </p>

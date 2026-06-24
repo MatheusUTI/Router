@@ -120,10 +120,10 @@ export default function ConsolidacaoDrawer({
       />
 
       {/* Drawer Body Sliding-in */}
-      <div className="fixed top-0 right-0 h-full w-[460px] max-w-full bg-white dark:bg-[#080c14] border-l border-slate-200 dark:border-[#1a2440] shadow-2xl z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
+      <div className="fixed top-0 right-0 h-full w-[460px] max-w-full bg-[var(--router-bg)] border-l border-[var(--router-border)] shadow-[var(--router-shadow)] z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
         
         {/* Header Section */}
-        <div className="bg-slate-50 dark:bg-[#0b1322] px-4 py-3 border-b border-slate-200 dark:border-[#1a2440] flex items-center justify-between shrink-0 select-none">
+        <div className="bg-[var(--router-surface)] px-4 py-3 border-b border-[var(--router-border)] flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-2">
             <span className="text-base">🚛</span>
             <div>
@@ -141,7 +141,7 @@ export default function ConsolidacaoDrawer({
         </div>
 
         {/* Selected Cargo Mini Summary Metrics inside the Drawer */}
-        <div className="bg-slate-100 dark:bg-[#0e1629] border-b border-slate-200 dark:border-[#14203a] p-3 text-xs shrink-0 select-none">
+        <div className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] p-3 text-xs shrink-0 select-none">
           {selectedIds.length > 0 ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ export default function ConsolidacaoDrawer({
                 </span>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-[12.5px] font-mono border-t border-slate-200 dark:border-indigo-950/40 pt-1.5 text-slate-600 dark:text-slate-300">
+              <div className="grid grid-cols-2 gap-2 text-[12.5px] font-mono border-t border-[var(--router-border)] pt-1.5 text-[var(--router-text-muted)]">
                 <div>
                   PESO: <span className="text-emerald-600 dark:text-emerald-400 font-bold">{selectedWeight >= 1000 ? `${(selectedWeight / 1000).toFixed(2)}t` : `${selectedWeight} kg`}</span>
                 </div>
@@ -167,10 +167,10 @@ export default function ConsolidacaoDrawer({
               </div>
 
               {recommendedVehicleId && (
-                <div className="mt-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded p-1.5 text-[11.5px] text-amber-800 dark:text-amber-300 flex items-start gap-1 font-sans leading-relaxed">
+                <div className="mt-1 bg-[var(--router-warning)]/10 border border-[var(--router-warning)]/20 rounded p-1.5 text-[11.5px] text-[var(--router-warning)] flex items-start gap-1 font-sans leading-relaxed">
                   <span>💡</span>
                   <p className="font-bold">
-                    Veículo <span className="font-mono bg-amber-100 dark:bg-amber-500/10 px-1 rounded">{recommendedVehicleId}</span> é recomendado para este lote por eficiência de aproveitamento de carga.
+                    Veículo <span className="font-mono bg-[var(--router-warning)]/20 px-1 rounded">{recommendedVehicleId}</span> é recomendado para este lote por eficiência de aproveitamento de carga.
                   </p>
                 </div>
               )}
@@ -224,7 +224,7 @@ export default function ConsolidacaoDrawer({
         </div>
 
         {/* Footer Area with informative message */}
-        <div className="bg-slate-50 dark:bg-[#0b1322] border-t border-slate-200 dark:border-[#1a2440] p-3 text-center text-[9.5px] text-slate-400 dark:text-slate-500 select-none uppercase font-mono shrink-0">
+        <div className="bg-[var(--router-surface)] border-t border-[var(--router-border)] p-3 text-center text-[9.5px] text-[var(--router-text-muted)] select-none uppercase font-mono shrink-0">
           <span>Soberania Offline · Router Expedição</span>
         </div>
 

@@ -163,20 +163,20 @@ export default function RoteirizacaoHeader({
 
         {/* Layout/Escala Group */}
         {(onUpdateDensity || onUpdateMesaScale) && (
-          <div className="flex items-center bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded h-8 text-[10px] select-none text-slate-500 dark:text-slate-400 shrink-0 overflow-hidden">
+          <div className="flex items-center bg-[var(--router-surface)] border border-[var(--router-border)] rounded h-8 text-[10px] select-none text-[var(--router-text-muted)] shrink-0 overflow-hidden">
             {onUpdateDensity && (
-              <div className="flex items-center px-1.5 border-r border-slate-200 dark:border-[#1a2440]">
+              <div className="flex items-center px-1.5 border-r border-[var(--router-border)]">
                 <span className="font-mono text-[9px] font-extrabold uppercase tracking-wide mr-1 hidden lg:inline" title="Layout da Mesa">Layout:</span>
                 <span className="font-mono text-[9px] font-extrabold uppercase tracking-wide mr-1 lg:hidden" title="Layout da Mesa">L:</span>
                 <select
                   value={densityMode}
                   onChange={(e) => onUpdateDensity(e.target.value as DensityMode)}
-                  className="bg-transparent border-none text-slate-800 dark:text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full py-1"
+                  className="bg-transparent border-none text-[var(--router-text)] font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full py-1"
                   title="Layout da Mesa"
                 >
-                  <option value="default" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">PAD</option>
-                  <option value="compact" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">COMP</option>
-                  <option value="planilha_operacional" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">PLAN</option>
+                  <option value="default" className="bg-[var(--router-bg)] text-[var(--router-text)]">PAD</option>
+                  <option value="compact" className="bg-[var(--router-bg)] text-[var(--router-text)]">COMP</option>
+                  <option value="planilha_operacional" className="bg-[var(--router-bg)] text-[var(--router-text)]">PLAN</option>
                 </select>
               </div>
             )}
@@ -187,14 +187,14 @@ export default function RoteirizacaoHeader({
                 <select
                   value={mesaScale}
                   onChange={(e) => onUpdateMesaScale(e.target.value as any)}
-                  className="bg-transparent border-none text-slate-800 dark:text-white font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full py-1"
+                  className="bg-transparent border-none text-[var(--router-text)] font-black uppercase text-[10px] tracking-wider cursor-pointer focus:outline-none select-none h-full py-1"
                   title="Escala da Mesa"
                 >
-                  <option value="85%" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">85%</option>
-                  <option value="90%" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">90%</option>
-                  <option value="100%" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">100%</option>
-                  <option value="110%" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">110%</option>
-                  <option value="120%" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">120%</option>
+                  <option value="85%" className="bg-[var(--router-bg)] text-[var(--router-text)]">85%</option>
+                  <option value="90%" className="bg-[var(--router-bg)] text-[var(--router-text)]">90%</option>
+                  <option value="100%" className="bg-[var(--router-bg)] text-[var(--router-text)]">100%</option>
+                  <option value="110%" className="bg-[var(--router-bg)] text-[var(--router-text)]">110%</option>
+                  <option value="120%" className="bg-[var(--router-bg)] text-[var(--router-text)]">120%</option>
                 </select>
               </div>
             )}

@@ -99,18 +99,18 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
   };
 
   return (
-    <div className="absolute top-14 right-3 z-[60] w-[calc(100%-24px)] md:w-[480px] bg-white/95 dark:bg-[#0b1322]/98 border border-slate-200 dark:border-[#1e2e4f]/90 rounded-xl shadow-lg dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col max-h-[80vh] animate-fade-in backdrop-blur-md">
+    <div className="absolute top-14 right-3 z-[60] w-[calc(100%-24px)] md:w-[480px] bg-[var(--router-bg)]/95 border border-[var(--router-border)] rounded-xl shadow-[var(--router-shadow)] overflow-hidden flex flex-col max-h-[80vh] animate-fade-in backdrop-blur-md">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-[#14203a] bg-slate-50 dark:bg-[#0e1726] flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400">
-            <BarChart2 className="w-5 h-5 text-indigo-500 animate-pulse" />
-            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100">
+        <div className="px-5 py-4 border-b border-[var(--router-border)] bg-[var(--router-surface)] flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-[var(--router-primary)]">
+            <BarChart2 className="w-5 h-5 text-[var(--router-primary)] animate-pulse" />
+            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-[var(--router-text)]">
               Diagnóstico Operacional da Mesa de Roteirização
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 bg-slate-100 dark:bg-[#14203a] rounded hover:bg-slate-200 dark:hover:bg-[#1e2e4f] transition-all"
+            className="p-1 text-[var(--router-text-muted)] hover:text-[var(--router-text)] bg-[var(--router-surface-2)] rounded hover:bg-[var(--router-surface-3)] transition-all"
             title="Fechar"
           >
             <X className="w-4 h-4" />
@@ -228,7 +228,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           )}
 
           {/* Funnel Pipeline Visualization */}
-          <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-4">
+          <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-4">
             <p className="font-mono text-[11px] font-bold uppercase text-indigo-300 tracking-wide mb-3">
               Funil do Processo de Filtro (Pipeline)
             </p>
@@ -242,7 +242,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
                   <div key={i} className="flex items-center text-xs">
                     <span className="w-6 font-mono text-[10px] text-slate-500">#{i+1}</span>
                     <span className="w-48 font-mono text-[11px] text-slate-300 truncate">{st.name}</span>
-                    <div className="flex-1 mx-3 bg-slate-200 dark:bg-[#080c14] h-2.5 rounded-full overflow-hidden border border-slate-300 dark:border-[#14203a]">
+                    <div className="flex-1 mx-3 bg-[var(--router-bg)] h-2.5 rounded-full overflow-hidden border border-[var(--router-border)]">
                       <div
                         className={`h-full transition-all duration-500 ${isZero ? 'bg-rose-600' : 'bg-gradient-to-r from-indigo-600 to-indigo-500'}`}
                         style={{ width: `${pct}%` }}
@@ -273,7 +273,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           {/* Detailed distribution breakdowns counts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Unit */}
-            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+            <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
               <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Filtro de Filiais / Unidades
               </span>
@@ -292,7 +292,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Occurrence Sector */}
-            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+            <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
               <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Setores de Ocorrência
               </span>
@@ -311,7 +311,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Status counts */}
-            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+            <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
               <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Status Operacional da Carga (Fase)
               </span>
@@ -330,7 +330,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Eligibility */}
-            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+            <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
               <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Elegibilidade de Roteirização
               </span>
@@ -350,18 +350,18 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           </div>
 
           {/* Depot Compatibility counts */}
-          <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+          <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
             <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
               Compatibilidade de Box / Depósito
             </span>
             <div className="grid grid-cols-2 gap-4 font-mono text-xs">
-              <div className="bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#14203a] p-2.5 rounded text-center">
+              <div className="bg-[var(--router-bg)] border border-[var(--router-border)] p-2.5 rounded text-center">
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold block text-lg font-mono">
                   {diagnostics.byLogisticCompatibility.compatible ?? 0}
                 </span>
                 <span className="text-[10px] text-slate-500 uppercase font-mono">Compatíveis</span>
               </div>
-              <div className="bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#14203a] p-2.5 rounded text-center">
+              <div className="bg-[var(--router-bg)] border border-[var(--router-border)] p-2.5 rounded text-center">
                 <span className="text-rose-600 dark:text-rose-400 font-bold block text-lg font-mono">
                   {diagnostics.byLogisticCompatibility.incompatible ?? 0}
                 </span>
@@ -373,11 +373,11 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
         </div>
 
         {/* Footer controls */}
-        <div className="px-5 py-4 border-t border-slate-200 dark:border-[#14203a] bg-slate-50 dark:bg-[#0c121f] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-5 py-4 border-t border-[var(--router-border)] bg-[var(--router-surface)] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex gap-2">
             <button
               onClick={copyToClipboard}
-              className="bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-mono font-bold text-xs uppercase tracking-wider px-4 py-2 rounded flex items-center gap-1.5 select-none transition-all active:scale-95 cursor-pointer"
+              className="bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text)] font-mono font-bold text-xs uppercase tracking-wider px-4 py-2 rounded flex items-center gap-1.5 select-none transition-all active:scale-95 cursor-pointer"
             >
               {copied ? (
                 <>

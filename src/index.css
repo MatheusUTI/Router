@@ -2,31 +2,56 @@
 
 @layer components {
   .mesa-popover {
-    @apply bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-md shadow-slate-200/50 dark:shadow-xl dark:shadow-slate-900/50 rounded-xl overflow-hidden z-[60] text-slate-800 dark:text-slate-200 flex flex-col;
+    @apply rounded-xl overflow-hidden z-[60] flex flex-col;
+    background-color: var(--router-popover-bg);
+    border: 1px solid var(--router-popover-border);
+    box-shadow: var(--router-shadow);
+    color: var(--router-text);
   }
   .mesa-popover-header {
-    @apply px-3 py-2 bg-slate-50 dark:bg-[#111827] border-b border-slate-200 dark:border-slate-700 flex items-center justify-between;
+    @apply px-3 py-2 flex items-center justify-between;
+    background-color: var(--router-surface-2);
+    border-bottom: 1px solid var(--router-border);
   }
   .mesa-popover-header-title {
-    @apply font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-[9.5px];
+    @apply font-black uppercase tracking-widest text-[9.5px];
+    color: var(--router-primary);
   }
   .mesa-popover-search {
-    @apply px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-1.5 bg-white dark:bg-[#0F172A];
+    @apply px-3 py-1.5 flex items-center gap-1.5;
+    background-color: var(--router-input-bg);
+    border-bottom: 1px solid var(--router-border);
   }
   .mesa-popover-input {
-    @apply bg-transparent border-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 w-full text-[11px] font-bold font-sans;
+    @apply bg-transparent border-none focus:outline-none focus:ring-0 w-full text-[11px] font-bold font-sans;
+    color: var(--router-text);
+  }
+  .mesa-popover-input::placeholder {
+    color: var(--router-text-muted);
   }
   .mesa-popover-option {
-    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-[11px] transition-colors leading-tight truncate uppercase;
+    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded cursor-pointer text-[11px] transition-colors leading-tight truncate uppercase;
+  }
+  .mesa-popover-option:hover {
+    background-color: var(--router-surface-2);
   }
   .mesa-popover-footer {
-    @apply p-2 bg-slate-50 dark:bg-[#111827] border-t border-slate-200 dark:border-slate-700 flex items-center gap-2;
+    @apply p-2 flex items-center gap-2;
+    background-color: var(--router-surface-2);
+    border-top: 1px solid var(--router-border);
   }
   .mesa-btn-clear {
-    @apply px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-[10.5px] font-black uppercase rounded disabled:opacity-35 select-none cursor-pointer transition-all flex-1 text-center;
+    @apply px-2 py-1.5 text-[10.5px] font-black uppercase rounded disabled:opacity-35 select-none cursor-pointer transition-all flex-1 text-center;
+    background-color: var(--router-surface-3);
+    color: var(--router-text-muted);
+  }
+  .mesa-btn-clear:hover {
+    color: var(--router-danger);
   }
   .mesa-btn-apply {
-    @apply px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-[10.5px] font-black uppercase rounded select-none cursor-pointer shadow-sm transition-all flex-1 text-center;
+    @apply px-3 py-1.5 text-[10.5px] font-black uppercase rounded select-none cursor-pointer shadow-sm transition-all flex-1 text-center;
+    background-color: var(--router-primary);
+    color: #ffffff;
   }
 }
 
@@ -265,6 +290,97 @@
     background-color: var(--router-surface-2);
     color: var(--router-text-muted);
     border-color: var(--router-border);
+  }
+
+  .router-toolbar {
+    background-color: var(--router-surface-2);
+    border-bottom: 1px solid var(--router-border);
+    color: var(--router-text);
+  }
+  .router-upload-zone {
+    background-color: var(--router-bg-soft);
+    border: 2px dashed var(--router-border);
+    color: var(--router-text-muted);
+  }
+  .router-tabs {
+    border-bottom: 1px solid var(--router-border);
+    display: flex;
+    gap: 1rem;
+  }
+  .router-tab {
+    color: var(--router-text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .router-tab-active {
+    color: var(--router-primary);
+    border-bottom-color: var(--router-primary);
+  }
+  .router-table-wrapper {
+    background-color: var(--router-surface);
+    border: 1px solid var(--router-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  .router-table-empty {
+    color: var(--router-text-muted);
+    background-color: var(--router-bg-soft);
+    border: 1px dashed var(--router-border);
+  }
+  .router-kpi {
+    background-color: var(--router-surface-2);
+    border: 1px solid var(--router-border);
+    border-radius: 0.5rem;
+  }
+  .router-section-title {
+    color: var(--router-text);
+    font-weight: 600;
+  }
+  .router-pill {
+    background-color: var(--router-surface-2);
+    color: var(--router-text);
+    border: 1px solid var(--router-border);
+  }
+  .router-danger-control {
+    background-color: var(--router-danger-soft);
+    color: var(--router-danger);
+    border: 1px solid var(--router-danger);
+  }
+  .router-warning-control {
+    background-color: var(--router-warning-soft);
+    color: var(--router-warning);
+    border: 1px solid var(--router-warning);
+  }
+  .router-success-control {
+    background-color: var(--router-success-soft);
+    color: var(--router-success);
+    border: 1px solid var(--router-success);
+  }
+
+  /* Status specific row helpers */
+  .route-row-normal {
+    border-left-color: var(--router-border);
+  }
+  .route-row-urgent {
+    border-left-color: var(--router-danger);
+    background-color: var(--router-danger-soft) !important;
+  }
+  .route-row-priority {
+    border-left-color: var(--router-warning);
+    background-color: var(--router-warning-soft) !important;
+  }
+  .route-row-hold {
+    border-left-color: #F97316; /* Orange */
+  }
+  .route-row-disabled {
+    border-left-color: var(--router-text-muted);
+    opacity: 0.8;
+  }
+  .route-row-scheduled {
+    border-left-color: #06B6D4; /* Cyan */
+  }
+  .route-row-planned {
+    border-left-color: var(--router-primary);
   }
 }
 

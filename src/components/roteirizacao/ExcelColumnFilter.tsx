@@ -110,10 +110,10 @@ export default function ExcelColumnFilter({
           onClick={() => setIsOpen(!isOpen)}
           className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9.5px] md:text-[10.5px] font-extrabold uppercase transition-all duration-150 cursor-pointer ${
             hasActiveFilter
-              ? 'bg-indigo-600/15 border-indigo-500 text-indigo-700 dark:text-indigo-300 shadow-[0_0_6px_rgba(99,102,241,0.15)] animate-pulse-slow'
+              ? 'bg-indigo-600/15 border-indigo-500 text-[var(--router-primary)] shadow-[0_0_6px_rgba(99,102,241,0.15)] animate-pulse-slow'
               : isSortedActiveAsc || isSortedActiveDesc
               ? 'bg-teal-600/10 border-teal-500/50 text-teal-700 dark:text-teal-300'
-              : 'bg-white dark:bg-[#060c16] border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-white'
+              : 'bg-[var(--router-surface)] border-[var(--router-border)] text-[var(--router-text-muted)] hover:border-[var(--router-border-strong)] hover:text-[var(--router-text)]'
           }`}
         >
           <span>{label}</span>
@@ -147,7 +147,7 @@ export default function ExcelColumnFilter({
           </div>
 
           {/* Quick Sort Options */}
-          <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0c1322]">
+          <div className="grid grid-cols-2 divide-x divide-[var(--router-border)] border-b border-[var(--router-border)] bg-[var(--router-surface)]">
             <button
               onClick={() => {
                 onSortAsc();
@@ -197,7 +197,7 @@ export default function ExcelColumnFilter({
           )}
 
           {/* Multi-selection Toggle Actions */}
-          <div className="px-3 py-1.5 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F172A] select-none text-[10.5px]">
+          <div className="px-3 py-1.5 flex items-center gap-2 border-b border-[var(--router-border)] bg-[var(--router-surface-2)] select-none text-[10.5px]">
             <button
               onClick={handleSelectAll}
               className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-bold uppercase transition-colors cursor-pointer"
@@ -232,9 +232,9 @@ export default function ExcelColumnFilter({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleValue(val)}
-                      className="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-500 focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5 accent-indigo-600"
+                      className="rounded border-[var(--router-border)] bg-[var(--router-surface)] text-[var(--router-primary)] focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5 accent-[var(--router-primary)]"
                     />
-                    <span className={isChecked ? 'text-slate-900 dark:text-white font-extrabold' : 'text-slate-600 dark:text-slate-400 font-medium'}>
+                    <span className={isChecked ? 'text-[var(--router-text)] font-extrabold' : 'text-[var(--router-text-muted)] font-medium'}>
                       {val || 'SEM VALOR'}
                     </span>
                   </label>
