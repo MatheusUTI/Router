@@ -42,7 +42,8 @@ interface OcorrenciasViewProps {
   onAddOccurrence: (occurrence: DeliveryOccurrence) => void;
   onUpdateOccurrence: (occurrence: DeliveryOccurrence) => void;
   onRemoveOccurrence: (codigo: string) => void;
-  onBulkImportOccurrences: (list: DeliveryOccurrence[]) => void;
+  onBulkImportOccurrences: (list: DeliveryOccurrence[], replaceMode?: boolean) => void;
+  onClearAllOccurrences?: () => void;
   isSyncing?: boolean;
   isMaster?: boolean;
 }
@@ -53,6 +54,7 @@ export default function OcorrenciasView({
   onUpdateOccurrence,
   onRemoveOccurrence,
   onBulkImportOccurrences,
+  onClearAllOccurrences,
   isSyncing = false,
   isMaster = false
 }: OcorrenciasViewProps) {
@@ -60,6 +62,9 @@ export default function OcorrenciasView({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterResponsabilidade, setFilterResponsabilidade] = useState('Todos');
   const [filterTipo, setFilterTipo] = useState('Todos');
+
+  const [selectedCodigos, setSelectedCodigos] = useState<string[]>([]);
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
 
   // Check for corrupted occurrences (with  symbol)
   const hasCorruptedOccurrences = occurrences.some(occ => 
@@ -70,6 +75,50 @@ export default function OcorrenciasView({
     (occ.setor_ocorr && (occ.setor_ocorr.includes('') || occ.setor_ocorr.includes('\uFFFD'))) || 
     (occ.tratativa_solucao && (occ.tratativa_solucao.includes('') || occ.tratativa_solucao.includes('\uFFFD')))
   );
+
+  const corruptedList = occurrences.filter(occ => 
+    occ.codigo.includes('') || occ.codigo.includes('\uFFFD') || 
+    occ.descricao.includes('') || occ.descricao.includes('\uFFFD') || 
+    (occ.responsabilidade && (occ.responsabilidade.includes('') || occ.responsabilidade.includes('\uFFFD'))) || 
+    (occ.tipo && (occ.tipo.includes('') || occ.tipo.includes('\uFFFD'))) || 
+    (occ.setor_ocorr && (occ.setor_ocorr.includes('') || occ.setor_ocorr.includes('\uFFFD'))) || 
+    (occ.tratativa_solucao && (occ.tratativa_solucao.includes('') || occ.tratativa_solucao.includes('\uFFFD')))
+  );
+
+  const handleRemoveCorrupted = async () => {
+    if (corruptedList.length === 0) return;
+    if (window.confirm(`Você está prestes a excluir todos os ${corruptedList.length} registros contendo caracteres corrompidos (). Esta ação não poderá ser desfeita. Deseja continuar?`)) {
+      for (const occ of corruptedList) {
+        await onRemoveOccurrence(occ.codigo);
+      }
+      setSelectedCodigos(prev => prev.filter(code => !corruptedList.some(c => c.codigo === code)));
+    }
+  };
+
+  const handleRemoveSelected = async () => {
+    if (selectedCodigos.length === 0) return;
+    if (window.confirm(`Excluir as ${selectedCodigos.length} ocorrências selecionadas? Esta ação não poderá ser desfeita.`)) {
+      for (const code of selectedCodigos) {
+        await onRemoveOccurrence(code);
+      }
+      setSelectedCodigos([]);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (window.confirm("Você está prestes a apagar TODA a base de Ocorrências. Recomenda-se exportar um backup antes. Deseja continuar?")) {
+      if (onClearAllOccurrences) {
+        await onClearAllOccurrences();
+      } else {
+        // Fallback
+        for (const occ of occurrences) {
+          await onRemoveOccurrence(occ.codigo);
+        }
+      }
+      setSelectedCodigos([]);
+      alert("Base de Ocorrências limpa com sucesso.");
+    }
+  };
 
   // Form states (Add/Edit)
   const [showForm, setShowForm] = useState(false);
@@ -252,11 +301,24 @@ export default function OcorrenciasView({
       alert('Nenhum registro de ocorrência válido pôde ser extraído.');
       return;
     }
-    onBulkImportOccurrences(importedPreview);
-    alert(`Sucesso! Foram importados e gravados com sucesso ${importedPreview.length} ocorrências no banco de dados!`);
-    setShowImporter(false);
-    setImportFileName(null);
-    setImportedPreview([]);
+
+    if (importMode === 'replace') {
+      if (window.confirm("Substituir a base atual de Ocorrências pelo arquivo importado? Os registros atuais serão apagados.")) {
+        onBulkImportOccurrences(importedPreview, true);
+        alert(`Sucesso! Foram importados e gravados com sucesso ${importedPreview.length} ocorrências. A base anterior foi substituída.`);
+        setShowImporter(false);
+        setImportFileName(null);
+        setImportedPreview([]);
+        setSelectedCodigos([]);
+      }
+    } else {
+      onBulkImportOccurrences(importedPreview, false);
+      alert(`Sucesso! Foram mesclados/atualizados com sucesso ${importedPreview.length} ocorrências no banco de dados.`);
+      setShowImporter(false);
+      setImportFileName(null);
+      setImportedPreview([]);
+      setSelectedCodigos([]);
+    }
   };
 
   const loadDemoCsv = () => {
@@ -359,6 +421,15 @@ export default function OcorrenciasView({
           {isMaster ? (
             <>
               <button
+                onClick={handleClearAll}
+                className="px-4 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-bold rounded-lg border border-rose-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Limpar toda a base de ocorrências"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+                Limpar Base
+              </button>
+
+              <button
                 onClick={() => {
                   setShowImporter(!showImporter);
                   setShowForm(false);
@@ -399,18 +470,29 @@ export default function OcorrenciasView({
       </div>
 
       {hasCorruptedOccurrences && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 text-amber-300">
-          <span className="material-symbols-outlined text-[20px] mt-0.5 shrink-0 text-amber-400">warning</span>
-          <div className="text-xs space-y-1 text-left">
-            <p className="font-bold uppercase tracking-wider text-amber-400">Atenção: Caracteres corrompidos detectados na base atual</p>
-            <p className="opacity-90">
-              Foram detectados caracteres de substituição (<span className="font-mono bg-amber-950/40 px-1 py-0.5 rounded text-amber-200"></span>) nos registros de ocorrências salvos. 
-              Isso costuma ocorrer quando uma importação anterior foi feita utilizando uma codificação incorreta (ex: UTF-8 ao invés de Windows-1252).
-            </p>
-            <p className="font-semibold mt-1 text-amber-200">
-              Recomendamos reimportar seu arquivo de ocorrências. O importador foi atualizado e agora possui detecção inteligente que lê corretamente UTF-8, Windows-1252 e ISO-8859-1 sem corromper acentos.
-            </p>
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-amber-300">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-[20px] mt-0.5 shrink-0 text-amber-400">warning</span>
+            <div className="text-xs space-y-1 text-left">
+              <p className="font-bold uppercase tracking-wider text-amber-400">Atenção: Caracteres corrompidos detectados na base atual</p>
+              <p className="opacity-90">
+                Foram detectados caracteres de substituição (<span className="font-mono bg-amber-950/40 px-1 py-0.5 rounded text-amber-200"></span>) nos registros de ocorrências salvos. 
+                Isso costuma ocorrer quando uma importação anterior foi feita utilizando uma codificação incorreta (ex: UTF-8 ao invés de Windows-1252).
+              </p>
+              <p className="font-semibold mt-1 text-amber-200">
+                Recomendamos reimportar seu arquivo de ocorrências. O importador foi atualizado e agora possui detecção inteligente que lê corretamente UTF-8, Windows-1252 e ISO-8859-1 sem corromper acentos.
+              </p>
+            </div>
           </div>
+          {isMaster && (
+            <button
+              onClick={handleRemoveCorrupted}
+              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shrink-0 uppercase shadow-md"
+            >
+              <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+              Excluir corrompidos ({corruptedList.length})
+            </button>
+          )}
         </div>
       )}
 
@@ -487,6 +569,36 @@ export default function OcorrenciasView({
                 <option value=";">Ponto-e-vírgula ( ; )</option>
                 <option value=",">Vírgula ( , )</option>
               </select>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#dae2fd] block">Modo de Importação</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setImportMode('replace')}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
+                      importMode === 'replace'
+                        ? 'bg-primary/20 border-primary text-white font-extrabold'
+                        : 'bg-[#1b2540] border-[var(--router-border)]/60 text-[#9cb4e4] hover:text-white'
+                    }`}
+                  >
+                    <span>Substituir Base</span>
+                    <span className="text-[9px] opacity-75 font-normal mt-0.5">Apagar registros antigos (Padrão)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImportMode('merge')}
+                    className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
+                      importMode === 'merge'
+                        ? 'bg-primary/20 border-primary text-white font-extrabold'
+                        : 'bg-[#1b2540] border-[var(--router-border)]/60 text-[#9cb4e4] hover:text-white'
+                    }`}
+                  >
+                    <span>Mesclar / Atualizar</span>
+                    <span className="text-[9px] opacity-75 font-normal mt-0.5">Atualizar por código / manter existentes</span>
+                  </button>
+                </div>
+              </div>
               
               {importFileName && (
                 <div className="p-3 bg-[#111624] rounded-lg border border-[var(--router-border)]/40 text-[11px] font-mono flex items-center justify-between">
@@ -687,12 +799,57 @@ export default function OcorrenciasView({
         </div>
       </div>
 
+      {/* SELECTED ITEMS ACTIONS BAR */}
+      {selectedCodigos.length > 0 && (
+        <div className="bg-indigo-950/90 border border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-xs font-sans">
+          <div className="flex items-center gap-2 text-white">
+            <span className="bg-indigo-500 text-white rounded-full px-2 py-0.5 font-mono font-bold">
+              {selectedCodigos.length}
+            </span>
+            <span>selecionados</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedCodigos([])}
+              className="text-indigo-300 hover:text-white font-semibold cursor-pointer underline"
+            >
+              Limpar seleção
+            </button>
+            {isMaster && (
+              <button
+                onClick={handleRemoveSelected}
+                className="bg-rose-500 hover:bg-rose-400 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-all"
+              >
+                <span className="material-symbols-outlined text-[14px]">delete</span>
+                Excluir selecionados
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* OCCURRENCES SELECTION LIST GRID */}
       <div className="router-card rounded-xl border border-[var(--router-border)] p-5">
         <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
           <table className="w-full text-left text-xs font-sans">
             <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
               <tr>
+                <th className="px-5 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && filtered.every(occ => selectedCodigos.includes(occ.codigo))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        const visibleCodes = filtered.map(o => o.codigo);
+                        setSelectedCodigos(prev => Array.from(new Set([...prev, ...visibleCodes])));
+                      } else {
+                        const visibleCodes = filtered.map(o => o.codigo);
+                        setSelectedCodigos(prev => prev.filter(c => !visibleCodes.includes(c)));
+                      }
+                    }}
+                    className="scale-110 cursor-pointer accent-indigo-500"
+                  />
+                </th>
                 <th className="px-5 py-3">Cód</th>
                 <th className="px-5 py-3">Motivo / Descrição</th>
                 <th className="px-5 py-3">Responsabilidade</th>
@@ -714,7 +871,21 @@ export default function OcorrenciasView({
                 };
 
                 return (
-                  <tr key={occ.codigo} className="hover:bg-[var(--router-surface-2)]/30 border-b border-[var(--router-border)]/30 transition-colors">
+                  <tr key={occ.codigo} className={`hover:bg-[var(--router-surface-2)]/30 border-b border-[var(--router-border)]/30 transition-colors ${selectedCodigos.includes(occ.codigo) ? 'bg-indigo-500/10' : ''}`}>
+                    <td className="px-5 py-3.5 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedCodigos.includes(occ.codigo)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCodigos(prev => [...prev, occ.codigo]);
+                          } else {
+                            setSelectedCodigos(prev => prev.filter(c => c !== occ.codigo));
+                          }
+                        }}
+                        className="scale-110 cursor-pointer accent-indigo-500"
+                      />
+                    </td>
                     <td className="px-5 py-3.5 font-bold font-mono text-primary text-[12px]">{occ.codigo}</td>
                     <td className="px-5 py-3.5 font-medium text-white max-w-[200px] truncate">{occ.descricao}</td>
                     <td className="px-5 py-3.5">
@@ -762,7 +933,7 @@ export default function OcorrenciasView({
               })}
               {filtered.length === 0 && (
                 <tr>
-                   <td colSpan={isMaster ? 7 : 6} className="text-center py-20 text-[#9cb4e4]">
+                   <td colSpan={isMaster ? 8 : 7} className="text-center py-20 text-[#9cb4e4]">
                     Nenhuma ocorrência encontrada.
                   </td>
                 </tr>

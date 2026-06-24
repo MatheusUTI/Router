@@ -34,7 +34,8 @@ interface BaseDadosViewProps {
   onAddOccurrence: (o: DeliveryOccurrence) => void;
   onUpdateOccurrence: (o: DeliveryOccurrence) => void;
   onRemoveOccurrence: (codigo: string) => void;
-  onBulkImportOccurrences: (list: DeliveryOccurrence[]) => void;
+  onBulkImportOccurrences: (list: DeliveryOccurrence[], replaceMode?: boolean) => void;
+  onClearAllOccurrences?: () => void;
   curvaAClients: CurvaAClient[];
   onAddCurvaA: (c: CurvaAClient) => void;
   onUpdateCurvaA: (c: CurvaAClient) => void;
@@ -76,6 +77,7 @@ export default function BaseDadosView({
   onUpdateOccurrence,
   onRemoveOccurrence,
   onBulkImportOccurrences,
+  onClearAllOccurrences,
   curvaAClients,
   onAddCurvaA,
   onUpdateCurvaA,
@@ -763,6 +765,7 @@ export default function BaseDadosView({
             onUpdateOccurrence={onUpdateOccurrence}
             onRemoveOccurrence={onRemoveOccurrence}
             onBulkImportOccurrences={onBulkImportOccurrences}
+            onClearAllOccurrences={onClearAllOccurrences}
             isSyncing={false}
             isMaster={isMaster}
           />

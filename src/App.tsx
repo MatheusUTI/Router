@@ -465,19 +465,37 @@ export default function App() {
     setIsSyncing(false);
   };
 
-  const handleBulkImportOccurrences = async (list: DeliveryOccurrence[]) => {
-    setOccurrences((prev) => {
-      const filteredPrev = prev.filter(p => !list.some(l => l.codigo === p.codigo));
-      return [...filteredPrev, ...list];
-    });
-    for (const o of list) {
-      await OccurrenceRepository.put(o);
+  const handleBulkImportOccurrences = async (list: DeliveryOccurrence[], replaceMode?: boolean) => {
+    if (replaceMode) {
+      setOccurrences(list);
+      await OccurrenceRepository.clearAll();
+      for (const o of list) {
+        await OccurrenceRepository.put(o, true);
+      }
+      setIsSyncing(true);
+      for (const o of list) {
+        await syncOccurrenceToSupabase(o);
+      }
+      setIsSyncing(false);
+    } else {
+      setOccurrences((prev) => {
+        const filteredPrev = prev.filter(p => !list.some(l => l.codigo === p.codigo));
+        return [...filteredPrev, ...list];
+      });
+      for (const o of list) {
+        await OccurrenceRepository.put(o);
+      }
+      setIsSyncing(true);
+      for (const o of list) {
+        await syncOccurrenceToSupabase(o);
+      }
+      setIsSyncing(false);
     }
-    setIsSyncing(true);
-    for (const o of list) {
-      await syncOccurrenceToSupabase(o);
-    }
-    setIsSyncing(false);
+  };
+
+  const handleClearAllOccurrences = async () => {
+    setOccurrences([]);
+    await OccurrenceRepository.clearAll();
   };
 
   const handleAddCurvaA = async (c: CurvaAClient) => {
@@ -1007,7 +1025,9 @@ export default function App() {
             onUpdateOccurrence={handleUpdateOccurrence}
             onRemoveOccurrence={handleRemoveOccurrence}
             onBulkImportOccurrences={handleBulkImportOccurrences}
+            onClearAllOccurrences={handleClearAllOccurrences}
             isSyncing={isSyncing}
+            isMaster={adminProfile.is_master}
           />
         );
       case 'curva_a':
@@ -1019,6 +1039,7 @@ export default function App() {
             onRemoveClient={handleRemoveCurvaA}
             onBulkImportClients={handleBulkImportCurvaA}
             isSyncing={isSyncing}
+            isMaster={adminProfile.is_master}
           />
         );
       case 'cidades_rotas':
@@ -1042,6 +1063,7 @@ export default function App() {
             onUpdateOccurrence={handleUpdateOccurrence}
             onRemoveOccurrence={handleRemoveOccurrence}
             onBulkImportOccurrences={handleBulkImportOccurrences}
+            onClearAllOccurrences={handleClearAllOccurrences}
             curvaAClients={curvaAClients}
             onAddCurvaA={handleAddCurvaA}
             onUpdateCurvaA={handleUpdateCurvaA}
