@@ -388,14 +388,8 @@ export default function CargaItem({
             <div className="flex items-center gap-1 leading-none truncate w-full select-text" style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}>
               <span className="text-slate-400 dark:text-slate-500 font-bold select-none tracking-tight mr-0.5" style={{ fontSize: 'calc(9px * var(--mesa-scale, 1))' }}>DST:</span>
               <span 
-                className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border ${
-                  item.isFob 
-                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black' 
-                    : item.isCurvaA
-                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black'
-                    : 'text-slate-800 dark:text-slate-200 border-transparent'
-                }`}
-                style={{ fontSize: item.isFob || item.isCurvaA ? 'calc(11px * var(--mesa-scale, 1))' : 'calc(11.5px * var(--mesa-scale, 1))' }}
+                className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border text-slate-800 dark:text-slate-200 border-transparent`}
+                style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}
                 title={`${item.destinatario || ''}${item.isFob ? ' [FOB]' : ''}${item.isCurvaA ? ' [CURVA A]' : ''}`}
               >
                 {item.destinatario || 'SEM DESTINATÁRIO'}
@@ -416,12 +410,8 @@ export default function CargaItem({
             <div className="flex items-center gap-1 leading-none truncate w-full select-text text-slate-550 dark:text-slate-450" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
               <span className="text-slate-400 dark:text-slate-500 font-bold select-none" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>REM:</span>
               <span 
-                className={`font-semibold truncate uppercase ${
-                  item.isCurvaA 
-                    ? 'text-[#9D174D] bg-[#FCE7F3]/40 border-[#FBCFE8]/30 px-1 rounded border font-black' 
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-                style={{ fontSize: item.isCurvaA ? 'calc(9.5px * var(--mesa-scale, 1))' : 'calc(10.5px * var(--mesa-scale, 1))' }}
+                className={`font-semibold truncate uppercase text-slate-500 dark:text-slate-400`}
+                style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}
                 title={item.remetente}
               >
                 {item.remetente || 'S/ R'}
@@ -469,18 +459,18 @@ export default function CargaItem({
             {(() => {
               const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
               
-              let prevStyles = 'bg-[#F1F5F9] text-[#64748B] border border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
+              let prevStyles = 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
               let label = 'S/ PREV';
               let weekday = '';
               
               if (!hasNoPrev) {
                 label = item.prev_ent;
                 if (item.slaStatus?.isDelayed) {
-                  prevStyles = 'bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40';
+                  prevStyles = 'bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA] dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40';
                 } else if (item.slaStatus?.isToday) {
-                  prevStyles = 'bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40';
+                  prevStyles = 'bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40';
                 } else {
-                  prevStyles = 'bg-[#FEF3C7] text-[#92400E] border border-[#FCD34D] dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40';
+                  prevStyles = 'bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A] dark:bg-amber-950/20 dark:text-amber-500 dark:border-amber-900/40';
                 }
                 
                 // Clean-up date to DD/MM
@@ -528,7 +518,12 @@ export default function CargaItem({
                     statusStyles = { bg: 'bg-[#FFE4E6] dark:bg-red-950/20', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-900/30' };
                   }
                 } else if (statusText === 'DISPONÍVEL') {
-                  statusStyles = { bg: 'bg-[#F1F5F9] dark:bg-slate-900/30', text: 'text-[#475569] dark:text-slate-400', border: 'border-[#E2E8F0] dark:border-slate-800' };
+                  statusStyles = { bg: 'bg-transparent', text: 'text-[#475569] dark:text-slate-400', border: 'border-transparent' };
+                  return (
+                    <span className={`font-sans font-bold uppercase shrink-0 leading-none truncate max-w-full flex items-center gap-1 ${statusStyles.text}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/50"></span> {statusText}
+                    </span>
+                  );
                 } else if (statusText === 'AGENDAMENTO' || item.planningStatus === 'AGENDADO' || item.status === 'Agendamento') {
                   statusText = 'AGENDAMENTO';
                   statusStyles = { bg: 'bg-[#E0E7FF] dark:bg-indigo-950/20', text: 'text-[#3730A3] dark:text-indigo-400', border: 'border-[#C7D2FE] dark:border-indigo-900/30' };
@@ -593,11 +588,11 @@ export default function CargaItem({
             {/* Linha 1: Valor Mercadoria */}
             {(() => {
               const v = item.valor || 0;
-              let vClass = 'text-slate-700 dark:text-slate-300 font-bold';
+              let vClass = 'text-slate-600 dark:text-slate-400 font-medium';
               if (v >= 20000 && v < 100000) {
-                vClass = 'text-emerald-600 dark:text-emerald-400 font-semibold';
+                vClass = 'text-emerald-700 dark:text-emerald-500 font-semibold';
               } else if (v >= 100000) {
-                vClass = 'text-rose-600 dark:text-rose-450 font-bold';
+                vClass = 'text-amber-600 dark:text-amber-500 font-bold';
               }
               return (
                 <span className={vClass} title="Valor da Mercadoria">
@@ -620,13 +615,13 @@ export default function CargaItem({
             {/* Linha 1: Peso */}
             {(() => {
               const p = item.peso_r || item.weight || 0;
-              let pClass = 'text-slate-700 dark:text-slate-300 font-bold';
+              let pClass = 'text-slate-600 dark:text-slate-400 font-bold';
               if (p > 10 && p <= 100) {
-                pClass = 'text-slate-700 dark:text-slate-300 font-semibold';
+                pClass = 'text-slate-600 dark:text-slate-400 font-semibold';
               } else if (p > 100 && p <= 500) {
-                pClass = 'text-amber-600 dark:text-amber-400 font-semibold';
+                pClass = 'text-amber-600 dark:text-amber-500 font-semibold';
               } else if (p > 500) {
-                pClass = 'text-rose-600 dark:text-rose-450 font-bold';
+                pClass = 'text-orange-600 dark:text-orange-500 font-bold';
               }
               return (
                 <span className={pClass} title="Peso">
@@ -650,7 +645,7 @@ export default function CargaItem({
             <div className="w-full text-center">
               {item.operationalNote ? (
                 <span 
-                  className="bg-amber-50/70 border border-amber-100/50 text-amber-800 dark:bg-amber-950/10 dark:border-amber-900/20 dark:text-amber-300 rounded px-1.5 py-0.2 font-medium block truncate max-w-full" 
+                  className="bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-400 rounded px-1.5 py-0.2 font-medium block truncate max-w-full" 
                   style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}
                   title={item.operationalNote}
                 >
@@ -668,15 +663,15 @@ export default function CargaItem({
                 const isAgendado = item.status?.toLowerCase().includes('agend') || item.availabilityLabel?.toLowerCase().includes('agend') || flowStatusLabel?.toLowerCase().includes('agend');
                 
                 if (availStatus === 'disponivel' || availStatus === 'disponível' || !availStatus) {
-                  return <span className="text-emerald-600 dark:text-emerald-500 font-bold" title="Disponível">✓ Disp.</span>;
+                  return <span className="text-emerald-700 dark:text-emerald-500 font-medium flex items-center gap-0.5" title="Disponível"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Disp.</span>;
                 } else if (availStatus === 'retido') {
-                  return <span className="text-rose-600 dark:text-rose-400 font-bold" title="Retido">Retido</span>;
+                  return <span className="text-rose-600 dark:text-rose-400 font-medium" title="Retido">Retido</span>;
                 } else if (availStatus === 'problema') {
-                  return <span className="text-red-500 dark:text-red-400 font-bold" title="Pendente">Pendente</span>;
+                  return <span className="text-red-500 dark:text-red-400 font-medium" title="Pendente">Pendente</span>;
                 } else if (isAgendado) {
-                  return <span className="text-indigo-600 dark:text-indigo-400 font-bold" title="Agendado">Agendado</span>;
+                  return <span className="text-indigo-600 dark:text-indigo-400 font-medium" title="Agendado">Agendado</span>;
                 } else if (availStatus === 'aguardando') {
-                  return <span className="text-amber-600 dark:text-amber-400 font-bold" title="Aguardar">Aguardar</span>;
+                  return <span className="text-amber-600 dark:text-amber-500 font-medium" title="Aguardar">Aguardar</span>;
                 } else {
                   return <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px]" title={item.availabilityLabel || availStatus}>{item.availabilityLabel || availStatus}</span>;
                 }
