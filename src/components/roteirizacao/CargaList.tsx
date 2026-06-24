@@ -697,31 +697,31 @@ export default function CargaList({
       {/* Legend Footer Block */}
       <div className="bg-slate-50 dark:bg-[#060c15] border-t border-slate-200 dark:border-[#14203a] px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium font-sans text-slate-500 shrink-0 relative z-30">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold font-mono text-[9.5px] text-slate-400 mr-2 uppercase tracking-wide">Filtros e Legenda:</span>
+          <span className="font-bold font-mono text-[9.5px] text-slate-400 mr-2 uppercase tracking-wide">Legenda:</span>
           <div className="flex items-center gap-3.5 flex-wrap">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title="Verde">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#DCFCE7] dark:bg-emerald-500/10 border border-[#BBF7D0] dark:border-emerald-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Disponível</span>
+            </span>
+            <span className="flex items-center gap-1" title="Azul / Índigo">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#DBEAFE] dark:bg-indigo-950/40 border border-[#BFDBFE] dark:border-indigo-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Agendamento / Operacional</span>
+            </span>
+            <span className="flex items-center gap-1" title="Amarelo">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF3C7] dark:bg-amber-550/10 border border-[#FDE68A] dark:border-amber-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atenção Leve / FOB</span>
+            </span>
+            <span className="flex items-center gap-1" title="Laranja">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#FFEDD5] dark:bg-orange-500/10 border border-[#FED7AA] dark:border-orange-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atenção Op / Hold</span>
+            </span>
+            <span className="flex items-center gap-1" title="Vermelho / Rosa">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FFE4E6] dark:bg-red-500/10 border border-[#FECDD3] dark:border-red-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">P0 / URGENTE</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atraso / Curva A / Retido</span>
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF3C7] dark:bg-amber-500/10 border border-[#FDE68A] dark:border-amber-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">P1 / PRIORIDADE</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500/10 border border-indigo-500/25" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">AGENDAMENTO</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/15 border border-amber-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">SOLUÇÃO</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-blue-500/10 border border-blue-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">EM ROTA / TRANSF.</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-red-500/10 border border-red-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">RETIDO</span>
+            <span className="flex items-center gap-1" title="Cinza">
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Neutro</span>
             </span>
           </div>
         </div>

@@ -648,10 +648,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       <div>
         <h2 className="text-3xl font-extrabold text-[#dae2fd] tracking-tight">Importação & Governança de Manifestos</h2>
         <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
-          <p className="text-sm text-[#9cb4e4] leading-relaxed max-w-2xl">
+          <p className="text-sm text-slate-500 dark:text-[#9cb4e4] leading-relaxed max-w-2xl">
             Mapeie as colunas na primeira vez e o layout continuará salvo! Use qualquer ERP corporativo de mercadoria (formato CSV/TXT), localize a linha de cabeçalhos e realize a harmonização de-para com o nosso banco relacional de forma imediata.
           </p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#101524] border border-primary/20 text-xs font-semibold text-primary shadow-inner">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#101524] border border-primary/20 text-xs font-semibold text-primary shadow-inner">
             <span className="material-symbols-outlined text-[16px] animate-pulse">pin_drop</span>
             <span>Unidade Operativa:</span> 
             <span className="font-mono bg-primary text-on-primary px-2 py-0.5 rounded text-xs font-bold shadow-sm">{adminUser?.unid || DEFAULT_OPERATIONAL_UNIT}</span>
@@ -666,8 +666,8 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
             verified_user
           </span>
           <div>
-            <p className="text-xs font-bold text-white">Banco de Dados Complementado</p>
-            <p className="text-[11px] text-[#9cb4e4] mt-0.5 leading-normal">{successMsg}</p>
+            <p className="text-xs font-bold text-slate-800 dark:text-white">Banco de Dados Complementado</p>
+            <p className="text-[11px] text-slate-650 dark:text-[#9cb4e4] mt-0.5 leading-normal">{successMsg}</p>
           </div>
         </div>
       )}
@@ -676,10 +676,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* STEP 1 & 2: Load File & Choose Header Row */}
-        <div className="lg:col-span-7 bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="lg:col-span-7 bg-white dark:bg-[#161d30] border border-slate-200 dark:border-outline-variant rounded-2xl p-6 shadow-xl space-y-6">
           
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-bold text-slate-850 dark:text-white flex items-center gap-2 mb-1">
               <span className="w-5 h-5 rounded bg-primary-container text-on-primary-container text-[11px] flex items-center justify-center font-bold">1</span>
               Carregar Arquivo Sistema ERP
             </h3>
@@ -696,7 +696,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
                 dragActive
                   ? 'border-primary bg-primary-container/10 scale-[0.99]'
-                  : 'border-outline-variant hover:border-[#4d8eff]/50 hover:bg-[#1f2945]'
+                  : 'border-slate-200 dark:border-outline-variant hover:border-[#4d8eff]/50 hover:bg-slate-50 dark:hover:bg-[#1f2945]'
               }`}
             >
               <input
@@ -707,14 +707,14 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                 onChange={handleFileChange}
               />
               
-              <div className="w-12 h-12 rounded-full bg-[#1b2540] flex items-center justify-center border border-outline-variant mb-3 text-primary shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#1b2540] flex items-center justify-center border border-slate-200 dark:border-outline-variant mb-3 text-primary shadow-inner">
                 <span className="material-symbols-outlined text-[24px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                   upload_file
                 </span>
               </div>
               
-              <p className="text-[11px] font-semibold text-white">Solte o arquivo do manifesto bruto aqui</p>
-              <p className="text-[10px] text-[#9cb4e4] mt-1 font-mono">Formato CSV ou TXT (Separadores comuns carregados automaticamente)</p>
+              <p className="text-[11px] font-semibold text-slate-800 dark:text-white">Solte o arquivo do manifesto bruto aqui</p>
+              <p className="text-[10px] text-slate-500 dark:text-[#9cb4e4] mt-1 font-mono">Formato CSV ou TXT (Separadores comuns carregados automaticamente)</p>
 
               <div className="flex gap-2.5 mt-4">
                 <button
@@ -736,10 +736,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
             </div>
 
             {fileName && (
-              <div className="mt-3 bg-[#111624] p-3 rounded-xl border border-outline-variant/60 flex items-center justify-between">
+              <div className="mt-3 bg-slate-50 dark:bg-[#111624] p-3 rounded-xl border border-slate-200 dark:border-outline-variant/60 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="material-symbols-outlined text-primary text-[18px]">lab_profile</span>
-                  <span className="text-xs font-mono text-white truncate font-semibold">{fileName}</span>
+                  <span className="text-xs font-mono text-slate-800 dark:text-white truncate font-semibold">{fileName}</span>
                 </div>
                 <div className="flex items-center gap-1 text-[10px] text-primary bg-[#4d8eff]/10 px-2 py-0.5 rounded-full font-mono">
                   {lines.length} linhas
@@ -752,25 +752,25 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
           {lines.length > 0 && (
             <div className="pt-4 border-t border-outline-variant/40 space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-bold text-slate-850 dark:text-white flex items-center gap-2 mb-1">
                   <span className="w-5 h-5 rounded bg-primary-container text-on-primary-container text-[11px] flex items-center justify-center font-bold">2</span>
                   Selecione a Linha de Cabeçalho do Arquivo
                 </h3>
-                <p className="text-[11px] text-[#9cb4e4] leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-[#9cb4e4] leading-relaxed">
                   Toque na linha do documento que discrimina os nomes das colunas físicas.
                 </p>
               </div>
 
               {/* Parsing global settings config */}
-              <div className="bg-[#111624] p-3 rounded-lg border border-outline-variant/50 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-[#111624] p-3 rounded-lg border border-slate-200 dark:border-outline-variant/50 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-[#dae2fd] block mb-1">Separador de Colunas</label>
+                  <label className="text-[10px] font-bold text-slate-700 dark:text-[#dae2fd] block mb-1">Separador de Colunas</label>
                   <select
                     value={delimiter}
                     onChange={(e) => {
                       setDelimiter(e.target.value);
                     }}
-                    className="w-full bg-[#1b2540] border border-outline-variant/60 rounded px-2.5 py-1 text-xs text-[#dae2fd] focus:outline-none"
+                    className="w-full bg-white dark:bg-[#1b2540] border border-slate-200 dark:border-outline-variant/60 rounded px-2.5 py-1 text-xs text-slate-800 dark:text-[#dae2fd] focus:outline-none"
                   >
                     <option value=";">Ponto-e-vírgula ( ; )</option>
                     <option value=",">Vírgula ( , )</option>
@@ -778,12 +778,12 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                   </select>
                 </div>
                 <div className="flex items-center pt-4">
-                  <label className="flex items-center gap-2 text-[11px] font-semibold text-[#dae2fd] cursor-pointer">
+                  <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-700 dark:text-[#dae2fd] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={removePrefix}
                       onChange={(e) => setRemovePrefix(e.target.checked)}
-                      className="w-4 h-4 bg-[#1b2540] border border-outline-variant/60 rounded accent-primary cursor-pointer"
+                      className="w-4 h-4 bg-white dark:bg-[#1b2540] border border-slate-200 dark:border-outline-variant/60 rounded accent-primary cursor-pointer"
                     />
                     <span>Remover ID de controle de Linha (ex: \'1;\', \'2;\')</span>
                   </label>
@@ -791,7 +791,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               </div>
 
               {/* Rows List Selector */}
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 select-none border border-outline-variant/40 rounded-xl p-2.5 bg-[#121828]">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 select-none border border-slate-200 dark:border-outline-variant/40 rounded-xl p-2.5 bg-slate-50 dark:bg-[#121828]">
                 {lines.slice(0, 10).map((line, idx) => {
                   const isSelected = headerLineIndex === idx;
                   const displayLine = line.length > 100 ? `${line.substring(0, 100)}...` : line;
@@ -801,8 +801,8 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                       onClick={() => setHeaderLineIndex(idx)}
                       className={`p-2.5 rounded-lg border cursor-pointer transition-all flex items-center md:items-start gap-3 justify-between ${
                         isSelected
-                          ? 'bg-[#1b2b4d] border-primary text-white shadow-md'
-                          : 'bg-[#181f33] border-outline-variant/30 hover:border-outline-variant text-[#9cb4e4] hover:bg-[#1a233b]'
+                          ? 'bg-indigo-550/10 dark:bg-[#1b2b4d] border-primary text-slate-800 dark:text-white shadow-md'
+                          : 'bg-white dark:bg-[#181f33] border border-slate-200 dark:border-outline-variant/30 hover:border-outline-variant text-slate-600 dark:text-[#9cb4e4] hover:bg-slate-50 dark:hover:bg-[#1a233b]'
                       }`}
                     >
                       <div className="flex items-start gap-2.5">
@@ -831,10 +831,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         </div>
 
         {/* STEP 3: Attribute De-Para Column Pairing Map */}
-        <div className="lg:col-span-5 bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl flex flex-col justify-between self-stretch">
+        <div className="lg:col-span-5 bg-white dark:bg-[#161d30] border border-slate-200 dark:border-outline-variant rounded-2xl p-6 shadow-xl flex flex-col justify-between self-stretch">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-850 dark:text-white flex items-center gap-2">
                 <span className="w-5 h-5 rounded bg-primary-container text-on-primary-container text-[11px] flex items-center justify-center font-bold">3</span>
                 De-Para de Atributos do Schema
               </h3>
@@ -860,9 +860,9 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
             </p>
 
             {extractedHeaders.length === 0 ? (
-              <div className="py-24 text-center text-[#9cb4e4] bg-[#111624] border border-outline-variant/50 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-inner">
+              <div className="py-24 text-center text-slate-500 dark:text-[#9cb4e4] bg-slate-50 dark:bg-[#111624] border border-slate-200 dark:border-outline-variant/50 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-inner">
                 <span className="material-symbols-outlined text-[36px] text-slate-600 animate-pulse">border_all</span>
-                <span className="text-xs font-semibold text-white">De-Para Desativado</span>
+                <span className="text-xs font-semibold text-slate-850 dark:text-white">De-Para Desativado</span>
                 <span className="text-[10px] text-[#9cb4e4]/70 max-w-[220px]">Indique acima qual linha representa o cabeçalho para carregar as colunas.</span>
               </div>
             ) : (
@@ -885,14 +885,14 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                 </div>
 
                 {MAPPABLE_FIELDS.map((field) => (
-                  <div key={field.key} className="space-y-1 bg-[#111624]/60 p-2.5 rounded-lg border border-outline-variant/35">
-                    <label className="text-[11.5px] font-bold text-[#dae2fd] flex items-center gap-1">
+                  <div key={field.key} className="space-y-1 bg-slate-50/50 dark:bg-[#111624]/60 p-2.5 rounded-lg border border-slate-200 dark:border-outline-variant/35">
+                    <label className="text-[11.5px] font-bold text-slate-750 dark:text-[#dae2fd] flex items-center gap-1">
                       {field.label} {field.required && <span className="text-rose-500 font-mono">*</span>}
                     </label>
                     <select
                       value={mappings[field.key] || ''}
                       onChange={(e) => handleMapChange(field.key, e.target.value)}
-                      className="w-full bg-[#1b2540] border border-outline-variant/60 hover:border-slate-500 rounded px-2 py-1 text-xs text-[#dae2fd] focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-[#1b2540] border border-slate-200 dark:border-outline-variant/60 hover:border-slate-400 rounded px-2 py-1 text-xs text-slate-800 dark:text-[#dae2fd] focus:outline-none focus:border-primary"
                     >
                       <option value="">{field.required ? '-- Campo Obrigatório --' : '-- Ignorar este campo --'}</option>
                       {extractedHeaders.map((h, i) => (
@@ -917,7 +917,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                   <span>Possível erro de mapeamento: Destinatário está igual à cidade.</span>
                 </div>
                 <p className="leading-relaxed text-[11px]">
-                  Detectamos que <strong className="font-mono text-white">{uiContaminatedCount}</strong> de <strong className="font-mono text-white">{uiTotalParsed}</strong> registros ({uiInfectedPercentage.toFixed(1)}%) possuem exatamente o mesmo valor para destinatário e cidade.
+                  Detectamos que <strong className="font-mono text-slate-800 dark:text-white">{uiContaminatedCount}</strong> de <strong className="font-mono text-slate-800 dark:text-white">{uiTotalParsed}</strong> registros ({uiInfectedPercentage.toFixed(1)}%) possuem exatamente o mesmo valor para destinatário e cidade.
                 </p>
                 {isContaminatedInBulk ? (
                   <p className="text-[10px] bg-rose-500/10 text-rose-300 border border-rose-500/20 px-2 py-1 rounded font-semibold">
@@ -932,7 +932,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
             )}
 
             <div className="flex justify-between items-center gap-4">
-              <span className="text-[10px] text-[#9cb4e4] font-mono leading-tight">
+              <span className="text-[10px] text-slate-500 dark:text-[#9cb4e4] font-mono leading-tight">
                 {parsedRecords.length > 0 ? (
                   <span className="text-emerald-400 font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
@@ -962,25 +962,25 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
 
       {/* STEP 4: Live Simulated CTRC database Preview */}
       {previewCollection.length > 0 && (
-        <div className="bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
+        <div className="bg-white dark:bg-[#161d30] border border-slate-200 dark:border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-850 dark:text-white flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[18px]">quick_reference_all</span>
                 Visualização de Amostra Operacional (Primeiros 5 Linhas Extraídas)
               </h3>
-              <p className="text-[11px] text-[#9cb4e4] mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-[#9cb4e4] mt-0.5">
                 Valide os de-paras aplicados visualizando os atributos brutos extraídos do seu ERP.
               </p>
             </div>
-            <div className="text-[10px] font-mono bg-[#111624] border border-outline-variant px-3 py-1 rounded-xl text-[#dae2fd]">
+            <div className="text-[10px] font-mono bg-slate-50 dark:bg-[#111624] border border-slate-200 dark:border-outline-variant px-3 py-1 rounded-xl text-slate-650 dark:text-[#dae2fd]">
               UTF-8 CSV Decoder
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-outline-variant/50 bg-[#111624]">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-outline-variant/50 bg-slate-50 dark:bg-[#111624]">
             <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-[#12192a] border-b border-outline-variant/60 text-[#dae2fd]/70 text-[10px] uppercase font-bold tracking-widest">
+              <thead className="bg-slate-100 dark:bg-[#12192a] border-b border-slate-200 dark:border-outline-variant/60 text-slate-600 dark:text-[#dae2fd]/70 text-[10px] uppercase font-bold tracking-widest">
                 <tr>
                   <th className="px-4 py-3">Código CTRC</th>
                   <th className="px-4 py-3">Cliente Destinatário</th>
@@ -993,10 +993,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal font-mono text-[11px]">
                 {previewCollection.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={idx} className="hover:bg-slate-100/65 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3 text-[#4d8eff] font-bold">{row.id}</td>
-                    <td className="px-4 py-3 text-white truncate max-w-[220px] font-sans font-medium">{row.destinatario}</td>
-                    <td className="px-4 py-3 text-[#dae2fd] font-sans">{row.cidade}</td>
+                    <td className="px-4 py-3 text-slate-800 dark:text-white truncate max-w-[220px] font-sans font-medium">{row.destinatario}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-[#dae2fd] font-sans">{row.cidade}</td>
                     <td className="px-4 py-3 text-right text-amber-200 font-bold">{row.weight.toLocaleString('pt-BR')} Kg</td>
                     <td className="px-4 py-3 text-right text-sky-200">{row.volume} vol</td>
                     <td className="px-4 py-3 text-center font-sans text-neutral-300">{row.setor || '-'}</td>

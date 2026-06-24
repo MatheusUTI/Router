@@ -703,13 +703,13 @@ export default function FinalizacaoView({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   
                   {/* Card 1: Pré-romaneios */}
-                  <div className="bg-[#12192c] border border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-indigo-500/30 transition-all">
+                  <div className="bg-white dark:bg-[#12192c] border border-slate-200 dark:border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-indigo-500/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-wider font-mono">Pré-Romaneios</span>
                       <ClipboardList className="w-4 h-4 text-indigo-400" />
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-white font-mono">{programacaoRows.length} <span className="text-xs text-on-surface-variant font-normal">Rotas</span></div>
+                      <div className="text-2xl font-black text-slate-800 dark:text-white font-mono">{programacaoRows.length} <span className="text-xs text-on-surface-variant font-normal">Rotas</span></div>
                       <div className="mt-1 text-[10px] text-on-surface-variant font-mono">
                         Definidos: {vehiclesDefined} plc / {driversDefined} mtr
                       </div>
@@ -717,13 +717,13 @@ export default function FinalizacaoView({
                   </div>
 
                   {/* Card 2: Documentação */}
-                  <div className="bg-[#12192c] border border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-sky-500/30 transition-all">
+                  <div className="bg-white dark:bg-[#12192c] border border-slate-200 dark:border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-sky-500/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-wider font-mono">Documentação</span>
                       <FileText className="w-4 h-4 text-sky-400" />
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-white font-mono">{totalCtrcs} <span className="text-xs text-on-surface-variant font-normal">CTRCs</span></div>
+                      <div className="text-2xl font-black text-slate-800 dark:text-white font-mono">{totalCtrcs} <span className="text-xs text-on-surface-variant font-normal">CTRCs</span></div>
                       <div className="mt-1 text-[10px] text-sky-400 font-mono">
                         {totalNfs} NFs estimadas
                       </div>
@@ -731,7 +731,7 @@ export default function FinalizacaoView({
                   </div>
 
                   {/* Card 3: Peso Consolidado */}
-                  <div className="bg-[#12192c] border border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+                  <div className="bg-white dark:bg-[#12192c] border border-slate-200 dark:border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-wider font-mono">Peso Consolidado</span>
                       <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -739,7 +739,7 @@ export default function FinalizacaoView({
                       </svg>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-emerald-400 font-mono">
+                      <div className="text-2xl font-black text-emerald-500 dark:text-emerald-450 font-mono">
                         {totalPeso.toLocaleString('pt-BR')} <span className="text-xs text-on-surface-variant font-normal">kg</span>
                       </div>
                       <div className="mt-1 text-[10px] text-on-surface-variant font-mono">
@@ -749,13 +749,13 @@ export default function FinalizacaoView({
                   </div>
 
                   {/* Card 4: Volumetria */}
-                  <div className="bg-[#12192c] border border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/30 transition-all">
+                  <div className="bg-white dark:bg-[#12192c] border border-slate-200 dark:border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/30 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-wider font-mono">Qtd Volumes</span>
                       <Truck className="w-4 h-4 text-amber-400" />
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-amber-400 font-mono">{totalVolumes} <span className="text-xs text-on-surface-variant font-normal">vol</span></div>
+                      <div className="text-2xl font-black text-amber-500 dark:text-amber-450 font-mono">{totalVolumes} <span className="text-xs text-on-surface-variant font-normal">vol</span></div>
                       <div className="mt-1 text-[10px] text-on-surface-variant font-mono">
                         Média: {(totalVolumes / (programacaoRows.length || 1)).toFixed(0)} vol / rota
                       </div>
@@ -763,7 +763,7 @@ export default function FinalizacaoView({
                   </div>
 
                   {/* Card 5: Financeiro (Uso Interno) */}
-                  <div className="bg-[#12192c] border border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-purple-500/30 transition-all relative overflow-hidden">
+                  <div className="bg-white dark:bg-[#12192c] border border-slate-200 dark:border-outline-variant/40 rounded-xl p-4 flex flex-col justify-between hover:border-purple-500/30 transition-all relative overflow-hidden">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-wider font-mono flex items-center gap-1">
                         Carga & Receita <span className="text-[9px] text-purple-400 font-black tracking-widest">(INT)</span>
@@ -774,20 +774,20 @@ export default function FinalizacaoView({
                       </svg>
                     </div>
                     <div>
-                      <div className="text-base font-black text-white font-mono leading-tight">{formatCurrency(totalValor)}</div>
-                      <div className="text-xs font-bold text-purple-400 font-mono">Frete: {formatCurrency(totalFrete)}</div>
+                      <div className="text-base font-black text-slate-800 dark:text-white font-mono leading-tight">{formatCurrency(totalValor)}</div>
+                      <div className="text-xs font-bold text-purple-500 dark:text-purple-400 font-mono">Frete: {formatCurrency(totalFrete)}</div>
                     </div>
                   </div>
 
                 </div>
 
                 {/* Status Breakdown & Alerts Compact Flex Bar */}
-                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-[#101524] border border-outline-variant/40 px-5 py-3 rounded-xl text-xs font-mono">
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-slate-50 dark:bg-[#101524] border border-slate-200 dark:border-outline-variant/40 px-5 py-3 rounded-xl text-xs font-mono">
                   <div className="flex flex-wrap items-center gap-6">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-slate-400"></span>
                       <span className="text-on-surface-variant">Rascunhos:</span>
-                      <span className="text-white font-bold">{programacaoRows.filter(r => r.status === 'RASCUNHO').length}</span>
+                      <span className="text-slate-800 dark:text-white font-bold">{programacaoRows.filter(r => r.status === 'RASCUNHO').length}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
@@ -916,19 +916,19 @@ export default function FinalizacaoView({
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: accentColor }}></span>
                               {groupTitle}
                             </h2>
-                            <span className="text-[10px] text-on-surface-variant font-mono bg-[#111625] px-2 py-0.5 border border-outline-variant/30 rounded">
+                            <span className="text-[10px] text-on-surface-variant font-mono bg-slate-50 dark:bg-[#111625] px-2 py-0.5 border border-slate-200 dark:border-outline-variant/30 rounded">
                               Ativos nesta data: {rowsList.length}
                             </span>
                           </div>
 
                           {rowsList.length === 0 ? (
-                            <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-[#101524] rounded-xl border border-dashed border-outline-variant/40">
+                            <div className="text-center py-8 text-on-surface-variant/40 text-xs italic bg-slate-50 dark:bg-[#101524] rounded-xl border border-dashed border-slate-200 dark:border-outline-variant/40">
                               {emptyText}
                             </div>
                           ) : (
-                            <div className="overflow-x-auto rounded-xl border border-outline-variant/50">
+                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-outline-variant/50">
                               <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
-                                <thead className="bg-[#12192c] border-b border-outline-variant/50">
+                                <thead className="bg-slate-100 dark:bg-[#12192c] border-b border-slate-200 dark:border-outline-variant/50">
                                   <tr className="text-on-surface-variant font-mono text-[10px] tracking-wider uppercase">
                                     <th className="py-3 px-3 w-[100px]">ROTA</th>
                                     <th className="py-3 px-3 w-[120px]">PLACA</th>
@@ -958,7 +958,7 @@ export default function FinalizacaoView({
                                     }, 0);
 
                                     return (
-                                      <tr key={row.id || rIdx} className="hover:bg-[#12192c]/40 font-medium">
+                                      <tr key={row.id || rIdx} className="hover:bg-slate-50/75 dark:hover:bg-[#12192c]/40 font-medium">
                                         
                                         {/* ROTA */}
                                         <td className="py-2.5 px-3">
@@ -974,7 +974,7 @@ export default function FinalizacaoView({
                                               type="text"
                                               value={row.vehiclePlate || ''}
                                               onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
-                                              className={`w-full bg-[#111625] border ${row.vehiclePlate ? 'border-outline-variant/40' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white font-mono text-xs focus:outline-none uppercase text-center`}
+                                              className={`w-full bg-white dark:bg-[#111625] border ${row.vehiclePlate ? 'border-slate-200 dark:border-outline-variant/40' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-slate-800 dark:text-white font-mono text-xs focus:outline-none uppercase text-center`}
                                               placeholder="Placa"
                                             />
                                             {renderGrFeedback(row, valSum)}
@@ -994,7 +994,7 @@ export default function FinalizacaoView({
                                               type="text"
                                               value={row.driverName || ''}
                                               onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
-                                              className={`w-full bg-[#111625] border ${row.driverName ? 'border-outline-variant/40' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white text-xs focus:outline-none`}
+                                              className={`w-full bg-white dark:bg-[#111625] border ${row.driverName ? 'border-slate-200 dark:border-outline-variant/40' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-slate-800 dark:text-white text-xs focus:outline-none`}
                                               placeholder="Motorista"
                                             />
                                             {!row.driverName && (
@@ -1012,7 +1012,7 @@ export default function FinalizacaoView({
                                             type="text"
                                             value={row.helperName || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
-                                            className="w-full bg-[#111625] border border-outline-variant/40 hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                                            className="w-full bg-white dark:bg-[#111625] border border-slate-200 dark:border-outline-variant/40 hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-slate-800 dark:text-white text-xs focus:outline-none"
                                             placeholder="Ajudante"
                                           />
                                         </td>
@@ -1023,7 +1023,7 @@ export default function FinalizacaoView({
                                             type="text"
                                             value={row.gate || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
-                                            className="w-full bg-[#111625] border border-outline-variant/40 hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white text-xs text-center font-mono focus:outline-none"
+                                            className="w-full bg-white dark:bg-[#111625] border border-slate-200 dark:border-outline-variant/40 hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-slate-800 dark:text-white text-xs text-center font-mono focus:outline-none"
                                             placeholder="Doca"
                                           />
                                         </td>
@@ -1078,7 +1078,7 @@ export default function FinalizacaoView({
                                           <select
                                             value={row.status}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
-                                            className="bg-[#111625] hover:bg-[#161d31] focus:bg-[#161d31] border border-outline-variant/40 focus:border-indigo-500 rounded px-1.5 py-1 text-white text-[11px] font-bold focus:outline-none cursor-pointer w-full"
+                                            className="bg-white dark:bg-[#111625] hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] border border-slate-200 dark:border-outline-variant/40 focus:border-indigo-500 rounded px-1.5 py-1 text-slate-800 dark:text-white text-[11px] font-bold focus:outline-none cursor-pointer w-full"
                                           >
                                             <option value="RASCUNHO">Rascunho</option>
                                             <option value="EM_SEPARACAO">Separando</option>
@@ -1095,7 +1095,7 @@ export default function FinalizacaoView({
                                             type="text"
                                             value={row.observations || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
-                                            className="w-full bg-[#111625] border border-outline-variant/40 hover:bg-[#161d31] focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                                            className="w-full bg-white dark:bg-[#111625] border border-slate-200 dark:border-outline-variant/40 hover:bg-slate-50 dark:hover:bg-[#161d31] focus:bg-white dark:focus:bg-[#161d31] focus:border-indigo-500 rounded px-2 py-1 text-slate-800 dark:text-white text-xs focus:outline-none"
                                             placeholder="Observações..."
                                           />
                                         </td>
@@ -1233,14 +1233,14 @@ export default function FinalizacaoView({
               </div>
 
               {/* Doca Stats Card */}
-              <div className="bg-[#12192a] border border-[#22304d] p-4 rounded-xl space-y-3.5">
-                <span className="block text-[11px] font-mono font-bold text-[#9cb4e4] uppercase tracking-wider">
+              <div className="bg-slate-50 dark:bg-[#12192a] border border-slate-200 dark:border-[#22304d] p-4 rounded-xl space-y-3.5">
+                <span className="block text-[11px] font-mono font-bold text-slate-500 dark:text-[#9cb4e4] uppercase tracking-wider">
                   Status de Separação de Doca
                 </span>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-surface p-2 rounded-lg border border-outline-variant/40">
                     <span className="block text-[9px] text-on-surface-variant">CTRCs</span>
-                    <span className="text-xs font-bold text-white font-mono">{totalCtrcs}</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-white font-mono">{totalCtrcs}</span>
                   </div>
                   <div className="bg-surface p-2 rounded-lg border border-outline-variant/40">
                     <span className="block text-[9px] text-on-surface-variant">Volumes</span>
