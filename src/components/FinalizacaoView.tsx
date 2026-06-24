@@ -246,6 +246,36 @@ export default function FinalizacaoView({
     }
   };
 
+  
+  const handleDeletePreRomaneioAction = async (pr: PreRomaneio) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o pré-romaneio da rota ${pr.route}?\nOs CTRCs vinculados retornarão para a Mesa.`)) {
+      return;
+    }
+    
+    try {
+      if (pr.ctrcIds && pr.ctrcIds.length > 0) {
+        const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+        const updated = prCtrcs.map(c => ({ 
+          ...c, 
+          status: 'Disponível' as const,
+          preRomaneioId: undefined 
+        }));
+        await CtrcRepository.putMany(updated);
+      }
+      
+      await PreRomaneioRepository.delete(pr.id);
+      
+      triggerToast('Pré-romaneio excluído com sucesso.');
+      loadPreRomaneiosData();
+      if (onRefreshCtrcs) {
+        await onRefreshCtrcs();
+      }
+    } catch (err) {
+      console.error('[FinalizacaoView] Erro ao excluir pré-romaneio:', err);
+      triggerToast('Erro ao excluir pré-romaneio.');
+    }
+  };
+
   const programacaoRows: any[] = [];
 
   // Active planning views link to the exact same pre-romaneios list, fully sync'd
@@ -942,6 +972,7 @@ export default function FinalizacaoView({
                                     <th className="py-3 px-3 text-right w-[160px]">FINANCEIRO (INT)</th>
                                     <th className="py-3 px-3 w-[130px]">STATUS</th>
                                     <th className="py-3 px-3 w-[180px]">OBSERVAÇÕES</th>
+                                    <th className="py-3 px-3 w-[40px]"></th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant/30 bg-surface/30">
@@ -1099,6 +1130,18 @@ export default function FinalizacaoView({
                                             placeholder="Observações..."
                                           />
                                         </td>
+
+                                        {/* AÇÕES */}
+                                        <td className="py-2.5 px-3 text-right">
+                                          <button
+                                            onClick={() => { const pr = preRomaneios.find(p => p.id === row.id); if (pr) handleDeletePreRomaneioAction(pr); }}
+                                            className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                            title="Excluir Pré-Romaneio"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </td>
+
 
                                       </tr>
                                     );
@@ -1952,6 +1995,14 @@ export default function FinalizacaoView({
                     </div>
 
                     <div className="flex items-center gap-2 mt-2">
+                      <button
+                        onClick={() => handleDeletePreRomaneioAction(pr)}
+                        className="px-3 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                        title="Excluir Pré-Romaneio"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
                       <button
                         onClick={() => handlePrintPreRomaneio(pr)}
                         className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-555 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"

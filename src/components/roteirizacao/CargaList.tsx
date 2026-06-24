@@ -142,7 +142,7 @@ export default function CargaList({
     <div className="flex-1 flex flex-col min-w-0 bg-[var(--router-bg-soft)] border border-[var(--router-border)] rounded-xl overflow-hidden relative shadow-sm">
 
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
-      {filteredCtrcs.length > 0 && (
+      {totalCtrcsCount > 0 && (
         densityMode === 'planilha_operacional' ? (
           <div 
             className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-[var(--router-text-muted)] py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
