@@ -413,11 +413,11 @@ export const RoteirizacaoEnrichmentService = {
       let rowClass = 'border-l-[3px] border-l-transparent';
       
       if (isCritic) {
-        rowClass = 'border-l-[4px] border-l-violet-500 bg-violet-950/[0.015] shadow-[0_0_8px_rgba(139,92,246,0.04)]';
+        rowClass = 'border-l-[4px] border-l-[var(--router-danger)]';
       } else if (isCurvaA) {
-        rowClass = 'border-l-[3px] border-l-red-500/65 shadow-[0_0_6px_rgba(239,68,68,0.03)] bg-red-950/[0.01]';
+        rowClass = 'border-l-[3px] border-l-[var(--router-badge-critical)]';
       } else if (isFob) {
-        rowClass = 'border-l-[3px] border-l-amber-500/50 bg-amber-950/[0.01]';
+        rowClass = 'border-l-[3px] border-l-[var(--router-badge-light-warning)]';
       }
 
       // 10. Planning override lookup

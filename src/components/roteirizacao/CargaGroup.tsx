@@ -89,9 +89,9 @@ export default function CargaGroup({
   const padY = densityMode === 'compact' ? 'py-1' : 'py-1.5';
 
   return (
-    <div className="border-b border-[var(--router-border)] bg-[#080d19]">
+    <div className="border-b border-[var(--router-border)] bg-[var(--router-surface)]">
       {/* Excel Style continuous Group Header Row */}
-      <div className={`sticky top-0 z-20 bg-[#0d1425] hover:bg-[#121c32] ${padY} px-3 flex items-center justify-between gap-2 border-b border-[var(--router-border)] border-l-[3px] border-[var(--router-border)]/60 select-none transition-all shadow-md`}>
+      <div className={`sticky top-0 z-20 bg-[var(--router-table-header)] hover:bg-[var(--router-surface-3)] ${padY} px-3 flex items-center justify-between gap-2 border-b border-[var(--router-border)] border-l-[3px] border-[var(--router-border)]/60 select-none transition-all shadow-md`}>
         {/* Toggle + Checkbox + Group Name + Single Line Summary */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {/* Arrow */}
@@ -107,14 +107,14 @@ export default function CargaGroup({
             type="checkbox"
             checked={allGroupChecked}
             onChange={() => onToggleGroupSelection(itemIds)}
-            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-[var(--router-border)] bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all shrink-0"
+            className="w-3.5 h-3.5 cursor-pointer rounded-sm border-[var(--router-border)] bg-[var(--router-input-bg)] focus:ring-0 accent-indigo-500 transition-all shrink-0"
           />
 
           <div className="flex items-center gap-2 min-w-0 flex-wrap py-0.5 leading-none">
-            <span className="font-extrabold text-[#f1f5f9] uppercase tracking-wide text-[13px] truncate">
+            <span className="font-extrabold text-[var(--router-text)] uppercase tracking-wide text-[13px] truncate">
               {groupKey}
               {subRouteLabel && groupKey !== subRouteLabel && (
-                <span className="text-gray-400 font-semibold text-[11px] ml-1.5 font-mono">
+                <span className="text-[var(--router-text-muted)] font-semibold text-[11px] ml-1.5 font-mono">
                   • {subRouteLabel}
                 </span>
               )}
@@ -128,19 +128,19 @@ export default function CargaGroup({
             
             <span className="text-[var(--router-text-soft)] font-sans text-[10px] font-bold select-none">•</span>
             
-            <span className="text-[#10b981] font-black font-mono text-[11px] shrink-0">
+            <span className="text-[var(--router-success)] font-black font-mono text-[11px] shrink-0">
               {totalWeightTons}
             </span>
             
             <span className="text-[var(--router-text-soft)] font-sans text-[10px] font-bold select-none">•</span>
             
-            <span className="text-amber-400 font-black font-mono text-[11px] shrink-0">
+            <span className="text-[var(--router-warning)] font-black font-mono text-[11px] shrink-0">
               {totalVolume} {totalVolume === 1 ? 'vol' : 'vols'}
             </span>
             
             <span className="text-[var(--router-text-soft)] font-sans text-[10px] font-bold select-none">•</span>
             
-            <span className="text-indigo-305 font-bold font-mono text-[11px] shrink-0">
+            <span className="text-[var(--router-info)] font-bold font-mono text-[11px] shrink-0">
               R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
             </span>
 
@@ -150,7 +150,7 @@ export default function CargaGroup({
                 return (
                   <>
                     <span className="text-[var(--router-text-soft)] font-sans text-[10px] font-bold select-none">•</span>
-                    <span className="text-red-405 font-black font-mono text-[11px] shrink-0 flex items-center gap-0.5">
+                    <span className="text-[var(--router-danger)] font-black font-mono text-[11px] shrink-0 flex items-center gap-0.5">
                       ⚠️ {attentionCount} {attentionCount === 1 ? 'atenção' : 'atenções'}
                     </span>
                   </>

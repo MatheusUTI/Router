@@ -106,31 +106,38 @@ const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
 const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; border: string } => {
   const norm = statusLabel.toUpperCase();
   if (norm === 'DISPONÍVEL' || norm === 'DISPONIVEL' || norm === 'NA MESA') {
-    return { bg: 'bg-[#F1F5F9] dark:bg-[var(--router-surface-2)]/40', text: 'text-[#475569] dark:text-[var(--router-text-soft)]', border: 'border-[#E2E8F0] dark:border-[var(--router-border)]/30' };
+    return { bg: 'bg-[var(--router-badge-available)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
   if (norm === 'PRÉ-ROMANEIO') {
-    return { bg: 'bg-[#E0E7FF] dark:bg-indigo-950/40', text: 'text-[#3730A3] dark:text-indigo-300', border: 'border-[#C7D2FE] dark:border-indigo-500/20' };
+    return { bg: 'bg-[var(--router-badge-scheduled)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
   if (norm === 'PROGRAMADO' || norm === 'CONSOLIDADO') {
-    return { bg: 'bg-[#DBEAFE] dark:bg-blue-950/40', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
+    return { bg: 'bg-[var(--router-badge-scheduled)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
   if (norm.includes('URGENTE') || norm.includes('PRIORITÁRIO') || norm.includes('RETIDO') || norm.includes('AUDIT') || norm.includes('PENDÊNCIA') || norm.includes('RETIDO/AUDIT')) {
-    return { bg: 'bg-[#FFE4E6] dark:bg-red-950/40', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-500/20' };
+    return { bg: 'bg-[var(--router-badge-critical)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
   if (norm === 'HOLD') {
-    return { bg: 'bg-[#FEF3C7] dark:bg-amber-950/40', text: 'text-[#92400E] dark:text-amber-300', border: 'border-[#FDE68A] dark:border-amber-500/20' };
+    return { bg: 'bg-[var(--router-badge-light-warning)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
   if (norm === 'EM TRÂNSITO') {
-    return { bg: 'bg-[#DBEAFE] dark:bg-blue-950/40', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
+    return { bg: 'bg-[var(--router-info)]', text: 'text-[#0F172A]', border: 'border-transparent' };
   }
-  return { bg: 'bg-[#F1F5F9] bg-[var(--router-surface-2)]', text: 'text-[#475569] dark:text-[var(--router-text-soft)]', border: 'border-[#E2E8F0] dark:border-[var(--router-border)]' };
+  return { bg: 'bg-[var(--router-badge-neutral)]', text: 'text-[var(--router-badge-neutral-text)]', border: 'border-transparent' };
 };
 
+
 const SSW_SERIES_BY_UNIT: Record<string, string> = {
-  'RCS - VGA': 'BCA',
-  'RCS - VGS': 'BCA',
-  VGA: 'BCA',
-  VGS: 'BCA',
+  'SPO': 'SPO',
+  'VGA': 'BCA',
+  'VGS': 'BCA',
+  'BHZ': 'BHZ',
+  'CWB': 'CWB',
+  'TNE': 'TNE',
+  'EXT': 'EXT',
+  'POU': 'POU',
+  'SJE': 'SJE',
+  'VCP': 'VCP'
 };
 
 const parseSswCtrcCode = (rawId: string): { series: string | null; number: string | null } => {
@@ -645,7 +652,7 @@ export default function CargaItem({
             <div className="w-full text-center">
               {item.operationalNote ? (
                 <span 
-                  className="bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-400 rounded px-1.5 py-0.2 font-medium block truncate max-w-full" 
+                  className="bg-[var(--router-badge-light-warning)] text-[#0F172A] rounded px-1.5 py-0.2 font-medium block truncate max-w-full" 
                   style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}
                   title={item.operationalNote}
                 >
@@ -723,12 +730,12 @@ export default function CargaItem({
               {item.effectiveRoute || 'SEM ROTA'}
             </span>
             {item.isManualRoute && (
-              <span className="text-orange-700 bg-orange-50 border border-orange-200 dark:text-orange-400 dark:bg-orange-950/20 dark:border-orange-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+              <span className="bg-[var(--router-badge-operational-warning)] text-[#0F172A] font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
                 MANUAL
               </span>
             )}
             {item.planningStatus === 'SEGURAR' && (
-              <span className="text-red-700 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-500/15 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+              <span className="bg-[var(--router-badge-critical)] text-[#0F172A] font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
                 SEGURAR
               </span>
             )}
@@ -794,7 +801,7 @@ export default function CargaItem({
           <span>NF: {item.nf || 'S/N'}</span>
           {item.isCriticClient && (
             <span 
-              className="bg-[var(--router-primary)]/10 text-[var(--router-primary)] font-black text-[9.5px] px-1 py-0.2 rounded border border-[var(--router-primary)]/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
+              className="bg-[var(--router-primary)] text-[#0F172A] font-black text-[9.5px] px-1 py-0.2 rounded shrink-0 select-none leading-none flex items-center gap-0.5"
               title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
             >
               👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
@@ -918,7 +925,7 @@ export default function CargaItem({
                 Setor: Disponível
               </span>
             ) : (
-              <span className="font-extrabold text-[var(--router-primary)] bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+              <span className="font-extrabold bg-[var(--router-badge-scheduled)] text-[#0F172A] px-1 rounded-sm text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
                 Setor: {item.occurrenceSector}
               </span>
             )
