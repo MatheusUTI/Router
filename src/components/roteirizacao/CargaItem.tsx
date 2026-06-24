@@ -330,7 +330,7 @@ export default function CargaItem({
           : pStyle.cardBg
       } group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''} ${densityMode === 'planilha_operacional' ? '' : 'grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)]'}`}
       style={{ 
-        gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(60px, calc(68px * var(--mesa-scale, 1)), 80px), 0.36fr)' : undefined,
+        gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(78px, calc(86px * var(--mesa-scale, 1)), 100px), 0.38fr)' : undefined,
         height: densityMode === 'planilha_operacional' ? 'calc(52px * var(--mesa-scale, 1))' : undefined,
       } as React.CSSProperties}
     >
@@ -693,23 +693,23 @@ export default function CargaItem({
               {(() => {
                 const sector = (item.occurrenceSector || '').toUpperCase();
                 if (sector === 'DISPONÍVEL' || sector === 'DISPONIVEL' || sector === 'DISPONÍVEL COBRANÇA' || sector === 'DISPONÍVEL TRANSFERÊNCIA' || sector === 'DISPONÍVEL PENDÊNCIA') {
-                  return <span className="text-emerald-700 dark:text-emerald-500 font-medium flex items-center gap-0.5" title={item.occurrenceSector || 'Disponível'}><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Disp.</span>;
+                  return <span className="text-emerald-700 dark:text-emerald-500 font-medium flex items-center gap-0.5 whitespace-nowrap" title={item.occurrenceSector || 'Disponível'}><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Disp.</span>;
                 } else if (sector === 'EM ROTA') {
-                  return <span className="text-blue-600 dark:text-blue-400 font-medium flex items-center gap-0.5" title="Em Rota"><span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Em Rota</span>;
+                  return <span className="text-blue-600 dark:text-blue-400 font-medium flex items-center gap-0.5 whitespace-nowrap" title="Em Rota"><span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Em Rota</span>;
                 } else if (sector === 'TRANSFERÊNCIA' || sector === 'TRANSFERENCIA') {
-                  return <span className="text-[var(--router-text-soft)] font-medium flex items-center gap-0.5" title="Transferência"><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Transf.</span>;
+                  return <span className="text-[var(--router-text-soft)] font-medium flex items-center gap-0.5 whitespace-nowrap" title="Transferência"><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Transf.</span>;
                 } else if (sector === 'AGENDAMENTO') {
-                  return <span className="text-[var(--router-primary)] font-medium flex items-center gap-0.5" title="Agendamento"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Agend.</span>;
+                  return <span className="text-[var(--router-primary)] font-medium flex items-center gap-0.5 whitespace-nowrap" title="Agendamento"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Agend.</span>;
                 } else if (sector === 'SOLUÇÃO' || sector === 'SOLUCAO') {
-                  return <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-0.5" title="Solução"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Solução</span>;
+                  return <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-0.5 whitespace-nowrap" title="Solução"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Solução</span>;
                 } else if (sector === 'RETIDOS' || sector === 'RETIDO') {
-                  return <span className="text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5" title="Retido"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Retido</span>;
+                  return <span className="text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5 whitespace-nowrap" title="Retido"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Retido</span>;
                 } else if (sector === 'COBRANÇA' || sector === 'COBRANCA') {
-                  return <span className="text-orange-600 dark:text-orange-500 font-medium flex items-center gap-0.5" title="Cobrança"><span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span> Cobrança</span>;
+                  return <span className="text-orange-600 dark:text-orange-500 font-medium flex items-center gap-0.5 whitespace-nowrap" title="Cobrança"><span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span> Cobrança</span>;
                 } else if (sector === 'FRETE') {
-                  return <span className="text-sky-600 dark:text-sky-400 font-medium flex items-center gap-0.5" title="Frete"><span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span> Frete</span>;
+                  return <span className="text-sky-600 dark:text-sky-400 font-medium flex items-center gap-0.5 whitespace-nowrap" title="Frete"><span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span> Frete</span>;
                 } else {
-                  return <span className="text-[var(--router-text-muted)] font-bold flex items-center gap-0.5" title={item.occurrenceSector || 'Indefinido'}><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Indef.</span>;
+                  return <span className="text-[var(--router-text-muted)] font-bold flex items-center gap-0.5 whitespace-nowrap" title={item.occurrenceSector || 'Indefinido'}><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Indef.</span>;
                 }
               })()}
             </div>

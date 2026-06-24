@@ -147,7 +147,7 @@ export default function CargaList({
           <div 
             className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-[var(--router-text-muted)] py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
             style={{ 
-              gridTemplateColumns: '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(60px, calc(68px * var(--mesa-scale, 1)), 80px), 0.36fr)',
+              gridTemplateColumns: '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(78px, calc(86px * var(--mesa-scale, 1)), 100px), 0.38fr)',
               fontSize: 'calc(10px * var(--mesa-scale, 1))',
               height: 'calc(32px * var(--mesa-scale, 1))'
             } as React.CSSProperties}
@@ -430,8 +430,8 @@ export default function CargaList({
                 isSortedActiveDesc={false}
                 alignRight={true}
                 customTrigger={
-                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
-                    <span>OBS / DISP</span>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center justify-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 whitespace-nowrap break-keep leading-none text-center ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
+                    <span className="whitespace-nowrap break-keep">OBS/DISP</span>
                     <Filter size={8.5} className={excelOcorrSectorFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
