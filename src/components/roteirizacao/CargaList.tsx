@@ -142,7 +142,7 @@ export default function CargaList({
         densityMode === 'planilha_operacional' ? (
           <div 
             className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30"
-            style={{ gridTemplateColumns: '24px minmax(145px, 0.75fr) minmax(280px, 1.65fr) minmax(150px, 0.85fr) minmax(95px, 0.45fr) minmax(210px, 1.1fr) minmax(105px, 0.55fr) minmax(100px, 0.5fr) minmax(90px, 0.45fr)' }}
+            style={{ gridTemplateColumns: '24px minmax(115px, 0.6fr) minmax(270px, 1.5fr) minmax(110px, 0.65fr) minmax(85px, 0.4fr) minmax(275px, 1.55fr) minmax(105px, 0.55fr) minmax(95px, 0.5fr) minmax(80px, 0.4fr)' }}
           >
             {/* Col 1: Master Checkbox */}
             <div className="w-6 shrink-0 flex items-center justify-center">

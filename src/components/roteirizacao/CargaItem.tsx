@@ -322,7 +322,7 @@ export default function CargaItem({
           ? 'bg-indigo-50/50 dark:bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
       } hover:shadow-[0_1px_5px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''} ${densityMode === 'planilha_operacional' ? '' : 'grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)]'}`}
-      style={{ gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(145px, 0.75fr) minmax(280px, 1.65fr) minmax(150px, 0.85fr) minmax(95px, 0.45fr) minmax(210px, 1.1fr) minmax(105px, 0.55fr) minmax(100px, 0.5fr) minmax(90px, 0.45fr)' : undefined }}
+      style={{ gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(115px, 0.6fr) minmax(270px, 1.5fr) minmax(110px, 0.65fr) minmax(85px, 0.4fr) minmax(275px, 1.55fr) minmax(105px, 0.55fr) minmax(95px, 0.5fr) minmax(80px, 0.4fr)' : undefined }}
     >
       {densityMode === 'planilha_operacional' ? (
         <>
@@ -356,8 +356,8 @@ export default function CargaItem({
             <span className="text-slate-900 dark:text-white font-extrabold text-[12px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
               {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
             </span>
-            <div className="flex items-center gap-1 text-[10.5px] font-mono leading-none">
-              <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase">
+            <div className="flex items-center gap-1 text-[10px] font-sans leading-none">
+              <span className="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase">
                 {item.effectiveRoute || 'SEM ROTA'}
               </span>
               {item.isManualRoute && (
@@ -374,17 +374,17 @@ export default function CargaItem({
           </div>
 
           {/* Col 3: Destinatário / Remetente */}
-          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px]">
+          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans">
             {/* Linha 1: Destinatário */}
             <div className="flex items-center gap-1 leading-none truncate w-full text-[11.5px] select-text">
               <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[9px] tracking-tight mr-0.5">DST:</span>
               <span 
                 className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border ${
                   item.isFob 
-                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black text-[11.5px]' 
+                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black text-[11px]' 
                     : item.isCurvaA
-                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black text-[11.5px]'
-                    : 'text-slate-950 dark:text-slate-50 border-transparent text-[11.5px]'
+                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black text-[11px]'
+                    : 'text-slate-800 dark:text-slate-200 border-transparent text-[11.5px]'
                 }`}
                 title={`${item.destinatario || ''}${item.isFob ? ' [FOB]' : ''}${item.isCurvaA ? ' [CURVA A]' : ''}`}
               >
@@ -403,7 +403,7 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Remetente */}
-            <div className="flex items-center gap-1 leading-none truncate w-full text-[10.5px] font-mono select-text text-slate-550 dark:text-slate-450">
+            <div className="flex items-center gap-1 leading-none truncate w-full text-[10.5px] select-text text-slate-550 dark:text-slate-450">
               <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[8.5px]">REM:</span>
               <span 
                 className={`font-semibold truncate uppercase ${
@@ -476,7 +476,7 @@ export default function CargaItem({
               }
 
               return (
-                <div className={`font-mono px-2 py-1 rounded border text-[10px] text-center font-bold flex flex-col items-center justify-center leading-none ${prevStyles}`} style={{ minWidth: '76px' }}>
+                <div className={`font-sans px-2 py-1 rounded border text-[10px] text-center font-bold flex flex-col items-center justify-center leading-none ${prevStyles}`} style={{ minWidth: '76px' }}>
                   <span className="font-extrabold uppercase">{label}</span>
                   {weekday && <span className="text-[8.5px] mt-0.5 opacity-80">{weekday}</span>}
                 </div>
@@ -496,7 +496,7 @@ export default function CargaItem({
                 if (item.occurrenceCode) {
                   const code = String(item.occurrenceCode);
                   let occName = item.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : item.occurrenceDescription.toUpperCase();
-                  statusText = `OC ${code} • ${occName}`;
+                  statusText = `OC ${code} · ${occName}`;
                   
                   if (code === '57') {
                     statusStyles = { bg: 'bg-[#DCFCE7] dark:bg-emerald-950/20', text: 'text-[#166534] dark:text-emerald-400', border: 'border-[#BBF7D0] dark:border-emerald-900/30' };
@@ -517,7 +517,7 @@ export default function CargaItem({
                 }
 
                 return (
-                  <span className={`font-mono font-extrabold uppercase px-1.5 py-0.5 rounded border text-[9px] shrink-0 leading-none truncate max-w-full ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} title={statusText}>
+                  <span className={`font-sans font-bold uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none truncate max-w-full ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} title={statusText}>
                     {statusText}
                   </span>
                 );
@@ -525,21 +525,38 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Localização */}
-            <div className="flex items-center gap-1 text-[10px] leading-none w-full min-w-0 mt-0.5 text-slate-500 dark:text-slate-400 font-mono truncate">
+            <div className="flex items-center gap-1 text-[11px] leading-none w-full min-w-0 mt-0.5 text-slate-500 dark:text-slate-400 font-sans truncate">
               {(() => {
                 const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
-                const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
+                let displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
                 
-                // Check if Sector is relevant and not "Disponível"
+                // Safe abbreviation
+                if (displayLoc.toUpperCase() === 'NO ARMAZEM DA UNIDADE VARGINHA' || displayLoc.toUpperCase() === 'NO ARMAZÉM DA UNIDADE VARGINHA') {
+                  displayLoc = 'Armazém VGA';
+                } else if (displayLoc.toUpperCase() === 'UNIDADE DESTINO') {
+                  displayLoc = 'Unidade destino';
+                } else if (displayLoc.toUpperCase() === 'COBRANCA' || displayLoc.toUpperCase() === 'COBRANÇA') {
+                  displayLoc = 'Cobrança';
+                } else {
+                  // general titlecase/clean replacements
+                  displayLoc = displayLoc
+                    .replace(/NO ARMAZEM DA UNIDADE/ig, 'Armazém')
+                    .replace(/NO ARMAZÉM DA UNIDADE/ig, 'Armazém')
+                    .replace(/ARMAZEM/ig, 'Armazém')
+                    .replace(/ARMAZÉM/ig, 'Armazém');
+                }
+                
                 const sector = item.occurrenceSector || '';
                 const showSector = sector && sector.toUpperCase() !== 'DISPONÍVEL' && sector.toUpperCase() !== 'DISPONIVEL';
                 
+                const fullTooltip = `${item.locationLabel || 'NÃO INFORMADO'}${showSector ? ` · Setor: ${sector}` : ''}`;
+                
                 return (
-                  <span className="truncate" title={`${item.locationLabel || 'NÃO INFORMADO'}${showSector ? ` • Setor: ${sector}` : ''}`}>
-                    📍 {displayLoc.toUpperCase()}
+                  <span className="truncate" title={fullTooltip}>
+                    📍 {displayLoc}
                     {showSector && (
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold ml-1">
-                        • {sector.toUpperCase()}
+                      <span className="text-indigo-600 dark:text-indigo-400 font-medium ml-1">
+                        · {sector}
                       </span>
                     )}
                   </span>
@@ -549,17 +566,15 @@ export default function CargaItem({
           </div>
 
           {/* Col 7: Valor / Frete */}
-          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-mono text-[10.5px]">
+          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans text-[11px]">
             {/* Linha 1: Valor Mercadoria */}
             {(() => {
               const v = item.valor || 0;
-              let vClass = 'text-slate-800 dark:text-slate-200 font-bold';
-              if (v >= 5000 && v < 20000) {
-                vClass = 'text-emerald-700 dark:text-emerald-400 font-bold';
-              } else if (v >= 20000 && v < 100000) {
-                vClass = 'text-emerald-800 dark:text-emerald-350 font-extrabold bg-emerald-550/10 dark:bg-emerald-950/20 px-1 rounded';
+              let vClass = 'text-slate-700 dark:text-slate-300 font-bold';
+              if (v >= 20000 && v < 100000) {
+                vClass = 'text-emerald-600 dark:text-emerald-400 font-semibold';
               } else if (v >= 100000) {
-                vClass = 'text-rose-700 dark:text-rose-400 font-extrabold bg-rose-500/10 dark:bg-rose-950/20 px-1 rounded';
+                vClass = 'text-rose-600 dark:text-rose-450 font-bold';
               }
               return (
                 <span className={vClass} title="Valor da Mercadoria">
@@ -569,65 +584,71 @@ export default function CargaItem({
             })()}
 
             {/* Linha 2: Frete */}
-            <span className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5" title="Frete">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none" title="Frete">
               Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
 
           {/* Col 8: Peso / Volumes */}
-          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-mono text-[10.5px]">
+          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans text-[11px]">
             {/* Linha 1: Peso */}
             {(() => {
               const p = item.peso_r || item.weight || 0;
-              let pClass = 'text-slate-800 dark:text-slate-200 font-bold';
+              let pClass = 'text-slate-700 dark:text-slate-300 font-bold';
               if (p > 10 && p <= 100) {
-                pClass = 'text-emerald-700 dark:text-emerald-400 font-bold';
+                pClass = 'text-slate-700 dark:text-slate-300 font-semibold';
               } else if (p > 100 && p <= 500) {
-                pClass = 'text-amber-700 dark:text-amber-450 font-bold';
+                pClass = 'text-amber-600 dark:text-amber-400 font-semibold';
               } else if (p > 500) {
-                pClass = 'text-red-700 dark:text-red-400 font-extrabold bg-red-500/10 dark:bg-red-950/20 px-1 rounded';
+                pClass = 'text-rose-600 dark:text-rose-450 font-bold';
               }
               return (
                 <span className={pClass} title="Peso">
-                  {p.toLocaleString('pt-BR')} kg
+                  {p.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })} kg
                 </span>
               );
             })()}
 
             {/* Linha 2: Volumes */}
-            <span className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5" title="Volumes">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none" title="Volumes">
               {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
             </span>
           </div>
 
           {/* Col 9: OBS / Disponível */}
-          <div className="min-w-0 flex flex-col justify-center items-center py-1 px-2.5 gap-0.5 h-[52px]">
+          <div className="min-w-0 flex flex-col justify-center items-center py-1 px-2.5 gap-0.5 h-[52px] font-sans">
             {/* Linha 1: OBS */}
             <div className="w-full text-center">
               {item.operationalNote ? (
                 <span 
-                  className="bg-[#FFF9E6] text-[#92400E] border border-[#FDE68A] dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40 rounded px-1 text-[9px] font-semibold block truncate max-w-full font-sans" 
+                  className="bg-amber-50/70 border border-amber-100/50 text-amber-800 dark:bg-amber-950/10 dark:border-amber-900/20 dark:text-amber-300 rounded px-1.5 py-0.2 text-[10px] font-medium block truncate max-w-full" 
                   title={item.operationalNote}
                 >
                   {item.operationalNote}
                 </span>
               ) : (
-                <span className="text-slate-300 dark:text-slate-600 font-bold">-</span>
+                <span className="text-slate-300 dark:text-slate-650 font-bold">-</span>
               )}
             </div>
 
             {/* Linha 2: Disponibilidade */}
             <div className="flex items-center justify-center leading-none mt-0.5 text-[10px]">
               {(() => {
-                const status = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
-                if (status === 'disponível' || status === 'disponivel' || !status) {
-                  return <span className="text-emerald-600 font-extrabold text-[11px]" title="Disponível">✓</span>;
-                } else if (status === 'retido') {
-                  return <span className="text-red-600 dark:text-red-400 font-mono font-extrabold text-[9px] uppercase tracking-wider" title="Retido">RETIDO</span>;
-                } else if (status === 'aguardando') {
-                  return <span className="text-amber-600 dark:text-amber-400 font-mono font-extrabold text-[9px] uppercase tracking-wider" title="Aguardando">AGUARDA</span>;
+                const availStatus = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
+                const isAgendado = item.status?.toLowerCase().includes('agend') || item.availabilityLabel?.toLowerCase().includes('agend') || flowStatusLabel?.toLowerCase().includes('agend');
+                
+                if (availStatus === 'disponivel' || availStatus === 'disponível' || !availStatus) {
+                  return <span className="text-emerald-600 dark:text-emerald-500 font-bold text-[10px]" title="Disponível">✓ Disp.</span>;
+                } else if (availStatus === 'retido') {
+                  return <span className="text-rose-600 dark:text-rose-400 font-bold text-[10px]" title="Retido">Retido</span>;
+                } else if (availStatus === 'problema') {
+                  return <span className="text-red-500 dark:text-red-400 font-bold text-[10px]" title="Pendente">Pendente</span>;
+                } else if (isAgendado) {
+                  return <span className="text-indigo-600 dark:text-indigo-400 font-bold text-[10px]" title="Agendado">Agendado</span>;
+                } else if (availStatus === 'aguardando') {
+                  return <span className="text-amber-600 dark:text-amber-400 font-bold text-[10px]" title="Aguardar">Aguardar</span>;
                 } else {
-                  return <span className="text-slate-500 font-mono font-bold text-[9px] uppercase tracking-wider truncate max-w-[70px]" title={status}>{status.toUpperCase()}</span>;
+                  return <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px]" title={item.availabilityLabel || availStatus}>{item.availabilityLabel || availStatus}</span>;
                 }
               })()}
             </div>
