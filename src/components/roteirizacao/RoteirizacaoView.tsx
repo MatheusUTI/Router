@@ -290,6 +290,7 @@ export default function RoteirizacaoView({
   const {
     selectedUnit,
     setSelectedUnit,
+    uniqueUnits,
     selectedSector,
     setSelectedSector,
     selectedLocationFilter,
@@ -887,6 +888,7 @@ export default function RoteirizacaoView({
         adminUser={adminUser}
         selectedUnit={selectedUnit}
         setSelectedUnit={setSelectedUnit}
+        uniqueUnits={uniqueUnits}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         totalCtrcsCount={unassignedCtrcs.length}
@@ -996,6 +998,8 @@ export default function RoteirizacaoView({
             setExcelSenderFilter={setExcelSenderFilter}
             excelOcorrSectorFilter={excelOcorrSectorFilter}
             setExcelOcorrSectorFilter={setExcelOcorrSectorFilter}
+            onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
+            diagnostics={diagnostics}
           />
         )}
       </div>

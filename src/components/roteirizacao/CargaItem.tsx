@@ -508,14 +508,21 @@ export default function CargaItem({
                   let occName = item.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : item.occurrenceDescription.toUpperCase();
                   statusText = `OC ${code} · ${occName}`;
                   
-                  if (code === '57') {
+                  const sector = (item.occurrenceSector || '').toUpperCase();
+                  if (sector === 'DISPONÍVEL' || sector === 'DISPONIVEL' || sector === 'DISPONÍVEL COBRANÇA' || sector === 'DISPONÍVEL TRANSFERÊNCIA' || sector === 'DISPONÍVEL PENDÊNCIA') {
                     statusStyles = { bg: 'bg-[#DCFCE7] dark:bg-emerald-950/20', text: 'text-[#166534] dark:text-emerald-400', border: 'border-[#BBF7D0] dark:border-emerald-900/30' };
-                  } else if (code === '59') {
+                  } else if (sector === 'EM ROTA') {
                     statusStyles = { bg: 'bg-[#DBEAFE] dark:bg-blue-950/20', text: 'text-[#1D4ED8] dark:text-blue-400', border: 'border-[#BFDBFE] dark:border-blue-900/30' };
-                  } else if (code === '70') {
+                  } else if (sector === 'COBRANÇA' || sector === 'SOLUÇÃO' || sector === 'SOLUCAO' || sector === 'COBRANCA') {
                     statusStyles = { bg: 'bg-[#FEF3C7] dark:bg-amber-950/20', text: 'text-[#92400E] dark:text-amber-400', border: 'border-[#FDE68A] dark:border-amber-900/30' };
-                  } else {
+                  } else if (sector === 'TRANSFERÊNCIA' || sector === 'TRANSFERENCIA') {
+                    statusStyles = { bg: 'bg-slate-100 dark:bg-slate-900/50', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-800' };
+                  } else if (sector === 'AGENDAMENTO') {
+                    statusStyles = { bg: 'bg-[#E0E7FF] dark:bg-indigo-950/20', text: 'text-[#3730A3] dark:text-indigo-400', border: 'border-[#C7D2FE] dark:border-indigo-900/30' };
+                  } else if (sector === 'RETIDOS' || sector === 'RETIDO') {
                     statusStyles = { bg: 'bg-[#FFE4E6] dark:bg-red-950/20', text: 'text-[#BE123C] dark:text-red-400', border: 'border-[#FECDD3] dark:border-red-900/30' };
+                  } else {
+                    statusStyles = { bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-500 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-800' };
                   }
                 } else if (statusText === 'DISPONÍVEL') {
                   statusStyles = { bg: 'bg-transparent', text: 'text-[#475569] dark:text-slate-400', border: 'border-transparent' };
@@ -659,21 +666,25 @@ export default function CargaItem({
             {/* Linha 2: Disponibilidade */}
             <div className="flex items-center justify-center leading-none mt-0.5" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}>
               {(() => {
-                const availStatus = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
-                const isAgendado = item.status?.toLowerCase().includes('agend') || item.availabilityLabel?.toLowerCase().includes('agend') || flowStatusLabel?.toLowerCase().includes('agend');
-                
-                if (availStatus === 'disponivel' || availStatus === 'disponível' || !availStatus) {
-                  return <span className="text-emerald-700 dark:text-emerald-500 font-medium flex items-center gap-0.5" title="Disponível"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Disp.</span>;
-                } else if (availStatus === 'retido') {
-                  return <span className="text-rose-600 dark:text-rose-400 font-medium" title="Retido">Retido</span>;
-                } else if (availStatus === 'problema') {
-                  return <span className="text-red-500 dark:text-red-400 font-medium" title="Pendente">Pendente</span>;
-                } else if (isAgendado) {
-                  return <span className="text-indigo-600 dark:text-indigo-400 font-medium" title="Agendado">Agendado</span>;
-                } else if (availStatus === 'aguardando') {
-                  return <span className="text-amber-600 dark:text-amber-500 font-medium" title="Aguardar">Aguardar</span>;
+                const sector = (item.occurrenceSector || '').toUpperCase();
+                if (sector === 'DISPONÍVEL' || sector === 'DISPONIVEL' || sector === 'DISPONÍVEL COBRANÇA' || sector === 'DISPONÍVEL TRANSFERÊNCIA' || sector === 'DISPONÍVEL PENDÊNCIA') {
+                  return <span className="text-emerald-700 dark:text-emerald-500 font-medium flex items-center gap-0.5" title={item.occurrenceSector || 'Disponível'}><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Disp.</span>;
+                } else if (sector === 'EM ROTA') {
+                  return <span className="text-blue-600 dark:text-blue-400 font-medium flex items-center gap-0.5" title="Em Rota"><span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Em Rota</span>;
+                } else if (sector === 'TRANSFERÊNCIA' || sector === 'TRANSFERENCIA') {
+                  return <span className="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-0.5" title="Transferência"><span className="h-1.5 w-1.5 rounded-full bg-slate-500"></span> Transf.</span>;
+                } else if (sector === 'AGENDAMENTO') {
+                  return <span className="text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-0.5" title="Agendamento"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Agend.</span>;
+                } else if (sector === 'SOLUÇÃO' || sector === 'SOLUCAO') {
+                  return <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-0.5" title="Solução"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Solução</span>;
+                } else if (sector === 'RETIDOS' || sector === 'RETIDO') {
+                  return <span className="text-rose-600 dark:text-rose-400 font-medium flex items-center gap-0.5" title="Retido"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Retido</span>;
+                } else if (sector === 'COBRANÇA' || sector === 'COBRANCA') {
+                  return <span className="text-orange-600 dark:text-orange-500 font-medium flex items-center gap-0.5" title="Cobrança"><span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span> Cobrança</span>;
+                } else if (sector === 'FRETE') {
+                  return <span className="text-sky-600 dark:text-sky-400 font-medium flex items-center gap-0.5" title="Frete"><span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span> Frete</span>;
                 } else {
-                  return <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px]" title={item.availabilityLabel || availStatus}>{item.availabilityLabel || availStatus}</span>;
+                  return <span className="text-slate-500 dark:text-slate-400 font-bold flex items-center gap-0.5" title={item.occurrenceSector || 'Indefinido'}><span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Indef.</span>;
                 }
               })()}
             </div>

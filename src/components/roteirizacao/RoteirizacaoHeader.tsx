@@ -6,6 +6,7 @@ interface RoteirizacaoHeaderProps {
   adminUser: AppUser;
   selectedUnit: string;
   setSelectedUnit: (unit: string) => void;
+  uniqueUnits?: string[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   totalCtrcsCount: number;
@@ -33,6 +34,7 @@ export default function RoteirizacaoHeader({
   adminUser,
   selectedUnit,
   setSelectedUnit,
+  uniqueUnits = [],
   searchQuery,
   setSearchQuery,
   totalCtrcsCount,
@@ -96,8 +98,8 @@ export default function RoteirizacaoHeader({
                   className="bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1d2a45] rounded px-1 py-0.5 text-slate-800 dark:text-white font-mono font-bold focus:outline-none cursor-pointer text-[9px] h-4 leading-none transition-all hover:bg-slate-150 dark:hover:bg-slate-900 border-none select-none"
                 >
                   <option value="TODAS" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">TODAS</option>
-                  {getOperationalUnits().filter(u => u.active).map(u => (
-                    <option key={u.code} value={u.code} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">{u.code}</option>
+                  {uniqueUnits.map(u => (
+                    <option key={u} value={u} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white">{u}</option>
                   ))}
                 </select>
               ) : (
@@ -127,59 +129,6 @@ export default function RoteirizacaoHeader({
       {/* 3. Controls (Buttons & Selects) */}
       <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto xl:overflow-visible pb-1 xl:pb-0 hide-scrollbar w-full xl:w-auto order-2 xl:order-3">
         
-        {/* Consolidar */}
-        {onOpenFleetDrawer && (
-          <button onClick={onOpenFleetDrawer} className={btnClass} title="Consolidar Cargas">
-            <span>🚚</span>
-            <span className="hidden lg:inline">Consolidar</span>
-            {draftCount > 0 && (
-              <span className="bg-amber-400 text-[#080c14] font-bold px-1 rounded-full text-[9px] min-w-[12px] text-center ml-0.5">
-                {draftCount}
-              </span>
-            )}
-          </button>
-        )}
-
-        {/* Diagnóstico */}
-        {onOpenDiagnostics && (
-          <button
-            onClick={onOpenDiagnostics}
-            className={`rounded font-extrabold text-[11px] px-2 py-1 h-8 transition-all cursor-pointer select-none leading-none flex items-center gap-1 shrink-0 border shadow-sm ${
-              hasVisibilityAlert
-                ? 'bg-amber-600 hover:bg-amber-550 border-amber-500 text-white animate-pulse'
-                : warningsCount > 0
-                ? 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-905/45 border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-305'
-                : 'bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-705/85 border-slate-200 dark:border-slate-700/40 text-indigo-650 dark:text-indigo-400'
-            }`}
-            title="Diagnóstico de Visibilidade da Mesa"
-          >
-            {hasVisibilityAlert ? (
-              <>
-                <span>⚠️</span>
-                <span className="hidden lg:inline">Oculto</span>
-                {warningsCount > 0 && (
-                  <span className="bg-amber-950/60 text-amber-205 text-[9px] font-black px-1 py-0.5 rounded-full border border-amber-700/30">
-                    {warningsCount}
-                  </span>
-                )}
-              </>
-            ) : warningsCount > 0 ? (
-              <>
-                <span>⚠️</span>
-                <span className="hidden lg:inline">Diag.</span>
-                <span className="bg-amber-900/50 text-amber-205 text-[9px] font-black px-1 py-0.5 rounded-full border border-amber-700/30">
-                  {warningsCount}
-                </span>
-              </>
-            ) : (
-              <>
-                <span>📊</span>
-                <span className="hidden lg:inline">Diag.</span>
-              </>
-            )}
-          </button>
-        )}
-
         {/* Avisos Operacionais */}
         {!isAvisosOpen && noticesCount > 0 && (
           <button

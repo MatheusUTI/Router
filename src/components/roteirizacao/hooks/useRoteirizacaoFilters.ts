@@ -357,27 +357,16 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
 
   const excelUniqueStatuses = useMemo(() => {
     const list = afterUnitCtrcs.map(c => {
-      const pStatus = c.planningStatus;
-      if (pStatus === 'CONSOLIDADO') return 'PROGRAMADO';
-      if (pStatus === 'PLANEJADO') return 'PRÉ-ROMANEIO';
-      if (pStatus === 'URGENTE') return 'URGENTE';
-      if (pStatus === 'PRIORIDADE') return 'PRIORITÁRIO';
-      if (pStatus === 'SEGURAR') return 'HOLD';
-      if (pStatus === 'NAO_SAI_HOJE') return 'CORTE';
-
-      const rawStatus = (c.availabilityLabel || c.status || '').toUpperCase();
-      if (rawStatus.includes('AGUARDANDO') || rawStatus === 'DISPONÍVEL' || rawStatus === 'DISPONIVEL' || rawStatus === 'LIBERADO') {
-        return 'NA MESA';
+      if (c.occurrenceCode) {
+        const code = String(c.occurrenceCode);
+        const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
+        return `OC ${code} · ${occName}`;
       }
-      if (rawStatus.includes('EM ROTA') || rawStatus.includes('S SPO') || rawStatus.includes('TRÂNSITO') || rawStatus.includes('TRANSIT')) {
-        return 'EM TRÂNSITO';
-      }
-      if (rawStatus.includes('RETIDO') || rawStatus.includes('PROBLEMA') || rawStatus.includes('AVERIGUA') || rawStatus.includes('VISTORIA')) {
-        return 'RETIDO/AUDIT';
-      }
-      return rawStatus || 'SEM STATUS';
+      const sector = (c.occurrenceSector || '').toUpperCase();
+      if (sector) return sector;
+      return 'INDEFINIDO';
     });
-    return Array.from(new Set(list)).map((s: string) => s.toUpperCase().trim()).sort();
+    return Array.from(new Set(list)).sort();
   }, [afterUnitCtrcs]);
 
   const excelUniqueLocs = useMemo(() => {
@@ -506,29 +495,18 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
           return excelPrevFilter.includes(val);
         });
 
-    // Excel Status Filter
+    // Excel Status Filter (Now Occurrence/Sector Filter)
     const excelAfterStatusState = excelStatusFilter === null 
       ? excelAfterPrev 
       : excelAfterPrev.filter(c => {
-          const pStatus = c.planningStatus;
           let label = '';
-          if (pStatus === 'CONSOLIDADO') label = 'PROGRAMADO';
-          else if (pStatus === 'PLANEJADO') label = 'PRÉ-ROMANEIO';
-          else if (pStatus === 'URGENTE') label = 'URGENTE';
-          else if (pStatus === 'PRIORIDADE') label = 'PRIORITÁRIO';
-          else if (pStatus === 'SEGURAR') label = 'HOLD';
-          else if (pStatus === 'NAO_SAI_HOJE') label = 'CORTE';
-          else {
-            const rawStatus = (c.availabilityLabel || c.status || '').toUpperCase();
-            if (rawStatus.includes('AGUARDANDO') || rawStatus === 'DISPONÍVEL' || rawStatus === 'DISPONIVEL' || rawStatus === 'LIBERADO') {
-              label = 'NA MESA';
-            } else if (rawStatus.includes('EM ROTA') || rawStatus.includes('S SPO') || rawStatus.includes('TRÂNSITO') || rawStatus.includes('TRANSIT')) {
-              label = 'EM TRÂNSITO';
-            } else if (rawStatus.includes('RETIDO') || rawStatus.includes('PROBLEMA') || rawStatus.includes('AVERIGUA') || rawStatus.includes('VISTORIA')) {
-              label = 'RETIDO/AUDIT';
-            } else {
-              label = rawStatus || 'SEM STATUS';
-            }
+          if (c.occurrenceCode) {
+            const code = String(c.occurrenceCode);
+            const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
+            label = `OC ${code} · ${occName}`;
+          } else {
+            const sector = (c.occurrenceSector || '').toUpperCase();
+            label = sector ? sector : 'INDEFINIDO';
           }
           return excelStatusFilter.includes(label.toUpperCase().trim());
         });
@@ -598,9 +576,15 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     }
   };
 
+  const uniqueUnits = useMemo(() => {
+    const list = ctrcs.map(c => (c.unid || 'DESCONHECIDA').toUpperCase().trim());
+    return Array.from(new Set(list)).filter(u => u !== '' && u !== 'TODAS').sort();
+  }, [ctrcs]);
+
   return {
     selectedUnit,
     setSelectedUnit,
+    uniqueUnits,
     selectedSector,
     setSelectedSector,
     selectedLocationFilter,

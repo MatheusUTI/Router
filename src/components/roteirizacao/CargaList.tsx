@@ -66,6 +66,8 @@ interface CargaListProps {
   setExcelSenderFilter: (filter: string[] | null) => void;
   excelOcorrSectorFilter: string[] | null;
   setExcelOcorrSectorFilter: (filter: string[] | null) => void;
+  onOpenDiagnostics?: () => void;
+  diagnostics?: any; // To avoid changing types right away
 }
 
 export default function CargaList({
@@ -129,6 +131,8 @@ export default function CargaList({
   setExcelSenderFilter,
   excelOcorrSectorFilter,
   setExcelOcorrSectorFilter,
+  onOpenDiagnostics,
+  diagnostics,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -314,10 +318,10 @@ export default function CargaList({
               />
             </div>
 
-            {/* Col 6: Status / Localização */}
+            {/* Col 6: Ocorrência / Localização */}
             <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none">
               <ExcelColumnFilter
-                label="Status"
+                label="Ocorrência"
                 uniqueValues={excelUniqueStatuses}
                 selectedValues={excelStatusFilter}
                 onApply={setExcelStatusFilter}
@@ -333,7 +337,7 @@ export default function CargaList({
                 isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
                 customTrigger={
                   <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                    <span>STATUS</span>
+                    <span>OCORR.</span>
                     <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
                   </div>
                 }
@@ -356,7 +360,7 @@ export default function CargaList({
                 isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
                 customTrigger={
                   <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                    <span>LOC</span>
+                    <span>LOCAL.</span>
                     <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
                   </div>
                 }
@@ -687,25 +691,35 @@ export default function CargaList({
               <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">P1 / PRIORIDADE</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#E0E7FF] dark:bg-cyan-500/10 border border-[#C7D2FE] dark:border-cyan-500/25" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">AGENDADO</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500/10 border border-indigo-500/25" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">AGENDAMENTO</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-orange-50 dark:bg-orange-500/15 border border-orange-200 dark:border-orange-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">HOLD</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/15 border border-amber-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">SOLUÇÃO</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-slate-100 dark:bg-slate-900/35 border border-slate-200 dark:border-slate-705/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">CORTE</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-blue-500/10 border border-blue-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">EM ROTA / TRANSF.</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#DCFCE7] dark:bg-emerald-500/10 border border-[#BBF7D0] dark:border-emerald-500/15" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">PROGRAMADO</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-500/10 border border-red-500/20" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">RETIDO</span>
             </span>
           </div>
         </div>
-        <div className="text-[10px] font-mono font-bold text-slate-400 uppercase select-none">
-          Total: {filteredCtrcs.length} CTRCs
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] font-mono font-bold text-slate-400 uppercase select-none">
+            Total: {filteredCtrcs.length} CTRCs
+          </div>
+          {onOpenDiagnostics && (
+            <button
+              onClick={onOpenDiagnostics}
+              className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-500 hover:text-indigo-500 transition-colors cursor-pointer border border-slate-200 dark:border-[#1a2440] rounded px-2 py-0.5"
+            >
+              Dev: Diagnóstico
+            </button>
+          )}
         </div>
       </div>
 

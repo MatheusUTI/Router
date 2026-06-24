@@ -348,10 +348,10 @@ export const RoteirizacaoEnrichmentService = {
 
       const eligibilityInfo = resolveRoutingEligibility(ctrc, foundOcc);
 
-      let occurrenceSector = 'Sem setor';
+      let occurrenceSector = 'Indefinido';
       if (foundOcc) {
         const rawSector = foundOcc.setor_ocorr.trim();
-        if (rawSector === 'Disponível Cobranca' || rawSector === 'Cobrança') {
+        if (rawSector === 'Disponível Cobranca') {
           occurrenceSector = 'Disponível Cobrança';
         } else if (rawSector === 'Disponível Transferencia') {
           occurrenceSector = 'Disponível Transferência';
@@ -369,6 +369,10 @@ export const RoteirizacaoEnrichmentService = {
           occurrenceSector = 'Solução';
         } else if (rawSector === 'Transferência' || rawSector === 'Transferencia') {
           occurrenceSector = 'Transferência';
+        } else if (rawSector === 'Cobrança' || rawSector === 'Cobranca') {
+          occurrenceSector = 'Cobrança';
+        } else if (rawSector === 'Frete') {
+          occurrenceSector = 'Frete';
         } else {
           occurrenceSector = rawSector;
         }
@@ -377,7 +381,7 @@ export const RoteirizacaoEnrichmentService = {
         if (!codeUpper || codeUpper === '0' || codeUpper === '00' || codeUpper === 'PENDENTE') {
           occurrenceSector = 'Disponível';
         } else {
-          occurrenceSector = 'Sem setor';
+          occurrenceSector = 'Indefinido';
         }
       }
 
