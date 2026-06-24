@@ -1,6 +1,42 @@
 import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
 import { DeliveryOccurrence } from '../types';
 
+function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): string {
+  const uint8Array = new Uint8Array(arrayBuffer);
+  
+  // 1. Try UTF-8 first
+  const utf8Decoder = new TextDecoder('utf-8');
+  const utf8Text = utf8Decoder.decode(uint8Array);
+  
+  // Check if the decoded UTF-8 contains the replacement character ''
+  if (!utf8Text.includes('')) {
+    return utf8Text;
+  }
+  
+  // 2. Try Windows-1252 if UTF-8 contains ''
+  try {
+    const win1252Decoder = new TextDecoder('windows-1252');
+    const win1252Text = win1252Decoder.decode(uint8Array);
+    if (!win1252Text.includes('')) {
+      return win1252Text;
+    }
+  } catch (e) {
+    console.error('Windows-1252 decoding failed:', e);
+  }
+  
+  // 3. Try ISO-8859-1 as fallback
+  try {
+    const isoDecoder = new TextDecoder('iso-8859-1');
+    const isoText = isoDecoder.decode(uint8Array);
+    return isoText;
+  } catch (e) {
+    console.error('ISO-8859-1 decoding failed:', e);
+  }
+  
+  // Absolute fallback
+  return utf8Text;
+}
+
 interface OcorrenciasViewProps {
   occurrences: DeliveryOccurrence[];
   onAddOccurrence: (occurrence: DeliveryOccurrence) => void;
@@ -24,6 +60,16 @@ export default function OcorrenciasView({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterResponsabilidade, setFilterResponsabilidade] = useState('Todos');
   const [filterTipo, setFilterTipo] = useState('Todos');
+
+  // Check for corrupted occurrences (with  symbol)
+  const hasCorruptedOccurrences = occurrences.some(occ => 
+    occ.codigo.includes('') || occ.codigo.includes('\uFFFD') || 
+    occ.descricao.includes('') || occ.descricao.includes('\uFFFD') || 
+    (occ.responsabilidade && (occ.responsabilidade.includes('') || occ.responsabilidade.includes('\uFFFD'))) || 
+    (occ.tipo && (occ.tipo.includes('') || occ.tipo.includes('\uFFFD'))) || 
+    (occ.setor_ocorr && (occ.setor_ocorr.includes('') || occ.setor_ocorr.includes('\uFFFD'))) || 
+    (occ.tratativa_solucao && (occ.tratativa_solucao.includes('') || occ.tratativa_solucao.includes('\uFFFD')))
+  );
 
   // Form states (Add/Edit)
   const [showForm, setShowForm] = useState(false);
@@ -178,9 +224,11 @@ export default function OcorrenciasView({
       
       const reader = new FileReader();
       reader.onload = (event) => {
-        loadCsvContent(event.target?.result as string);
+        const arrayBuffer = event.target?.result as ArrayBuffer;
+        const decodedText = decodeBufferWithBestEncoding(arrayBuffer);
+        loadCsvContent(decodedText);
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     }
   };
 
@@ -191,9 +239,11 @@ export default function OcorrenciasView({
 
       const reader = new FileReader();
       reader.onload = (event) => {
-        loadCsvContent(event.target?.result as string);
+        const arrayBuffer = event.target?.result as ArrayBuffer;
+        const decodedText = decodeBufferWithBestEncoding(arrayBuffer);
+        loadCsvContent(decodedText);
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     }
   };
 
@@ -347,6 +397,22 @@ export default function OcorrenciasView({
           )}
         </div>
       </div>
+
+      {hasCorruptedOccurrences && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 text-amber-300">
+          <span className="material-symbols-outlined text-[20px] mt-0.5 shrink-0 text-amber-400">warning</span>
+          <div className="text-xs space-y-1 text-left">
+            <p className="font-bold uppercase tracking-wider text-amber-400">Atenção: Caracteres corrompidos detectados na base atual</p>
+            <p className="opacity-90">
+              Foram detectados caracteres de substituição (<span className="font-mono bg-amber-950/40 px-1 py-0.5 rounded text-amber-200"></span>) nos registros de ocorrências salvos. 
+              Isso costuma ocorrer quando uma importação anterior foi feita utilizando uma codificação incorreta (ex: UTF-8 ao invés de Windows-1252).
+            </p>
+            <p className="font-semibold mt-1 text-amber-200">
+              Recomendamos reimportar seu arquivo de ocorrências. O importador foi atualizado e agora possui detecção inteligente que lê corretamente UTF-8, Windows-1252 e ISO-8859-1 sem corromper acentos.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* CSV IMPORT SHOWER */}
       {showImporter && (
