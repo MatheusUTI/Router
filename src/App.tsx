@@ -343,6 +343,69 @@ export default function App() {
 
         const localAuditLogs = await AuditLogRepository.getAll();
         setAuditLogs(localAuditLogs);
+        
+        // CR-MVP-SUPABASE-06: Sincronização Inicial do Supabase para Regras, Veículos e Clientes
+        setTimeout(async () => {
+          try {
+            const { vehicleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleSupabaseRepository');
+            const { vehicleGrRuleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleGrRuleSupabaseRepository');
+            const { criticalClientSupabaseRepository } = await import('./infrastructure/supabase/repositories/criticalClientSupabaseRepository');
+            
+            // Sync GR Rules
+            const remoteRulesRes = await vehicleGrRuleSupabaseRepository.getAllRules();
+            if (remoteRulesRes.success && remoteRulesRes.data && remoteRulesRes.data.length > 0) {
+              const remoteRules = remoteRulesRes.data.map(r => ({
+                id: r.id,
+                vehicleType: r.vehicle_type,
+                maxValueWithoutGr: Number(r.max_value_without_gr),
+                requiresTrackingAboveValue: Number(r.requires_tracking_above_value),
+                requiresAuthorizationAboveLimit: r.requires_authorization_above_limit,
+                blocksRoutingAboveLimit: r.blocks_routing_above_limit
+              }));
+              await VehicleGrRuleRepository.clearAll();
+              for (const r of remoteRules) await VehicleGrRuleRepository.put(r);
+              setGrRules(await VehicleGrRuleRepository.getAll());
+            }
+
+            // Sync Vehicles
+            const remoteVehiclesRes = await vehicleSupabaseRepository.getAllVehicles();
+            if (remoteVehiclesRes.success && remoteVehiclesRes.data && remoteVehiclesRes.data.length > 0) {
+              const remoteVehicles = remoteVehiclesRes.data.map(v => ({
+                id: v.id,
+                plate: v.plate || undefined,
+                driverName: v.driver_name,
+                capacity: v.capacity,
+                type: v.type,
+                status: v.status
+              }));
+              for (const v of remoteVehicles) await VehicleRepository.put(v);
+              setVehicles(await VehicleRepository.getAll());
+            }
+
+            // Sync Critical Clients (CriticClient)
+            const remoteClientsRes = await criticalClientSupabaseRepository.getAllClients();
+            if (remoteClientsRes.success && remoteClientsRes.data && remoteClientsRes.data.length > 0) {
+              const remoteClients = remoteClientsRes.data.map(c => ({
+                id: c.id,
+                name: c.name,
+                prefix: c.prefix,
+                score: c.score,
+                rejections30d: 0,
+                avgQueueTime: '-',
+                address: '',
+                recurrentIssues: [],
+                auditUser: '',
+                auditAvatar: '',
+                auditTime: '',
+                auditDetail: c.reason || ''
+              }));
+              // Since CriticClient local state is normally mocked, we update the React state directly
+              setClients(remoteClients);
+            }
+          } catch (e) {
+            console.warn('[Sync] Supabase sync initialization failed (offline mode):', e);
+          }
+        }, 0);
 
         const localDrivers = await DriverRepository.getAll();
         if (localDrivers.length > 0) {
@@ -401,7 +464,10 @@ export default function App() {
     setVehicles((prev) => [...prev, v]);
     await VehicleRepository.put(v);
     setIsSyncing(true);
-    await syncVehicleToSupabase(v);
+    try {
+      const { vehicleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleSupabaseRepository');
+      await vehicleSupabaseRepository.upsertVehicle(v);
+    } catch (e) { console.warn(e) }
     setIsSyncing(false);
   };
 
@@ -409,7 +475,10 @@ export default function App() {
     setVehicles((prev) => prev.map((item) => (item.id === v.id ? v : item)));
     await VehicleRepository.put(v);
     setIsSyncing(true);
-    await syncVehicleToSupabase(v);
+    try {
+      const { vehicleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleSupabaseRepository');
+      await vehicleSupabaseRepository.upsertVehicle(v);
+    } catch (e) { console.warn(e) }
     setIsSyncing(false);
   };
 
@@ -503,6 +572,16 @@ export default function App() {
     await VehicleGrRuleRepository.put(rule);
     const updated = await VehicleGrRuleRepository.getAll();
     setGrRules(updated);
+
+    // CR-MVP-SUPABASE-06: Sync GR Rule
+    setTimeout(async () => {
+      try {
+        const { vehicleGrRuleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleGrRuleSupabaseRepository');
+        await vehicleGrRuleSupabaseRepository.upsertRule(rule);
+      } catch (e) {
+        console.warn('Failed to sync GR rule to Supabase:', e);
+      }
+    }, 0);
 
     if (oldRule) {
       if (oldRule.maxValueWithoutGr !== rule.maxValueWithoutGr) {
@@ -855,6 +934,67 @@ export default function App() {
         setAllImportedCtrcs([]);
       }
       console.log(`[Importacao] Memória reidratada explicitamente com ${allLocalCtres.length} CTRCs do banco.`);
+      
+      // CR-MVP-SUPABASE-06: Sincronização com Supabase (Em Background)
+      setTimeout(async () => {
+        try {
+          const { importBatchSupabaseRepository } = await import('./infrastructure/supabase/repositories/importBatchSupabaseRepository');
+          const { shipmentSupabaseRepository } = await import('./infrastructure/supabase/repositories/shipmentSupabaseRepository');
+          
+          const adminUnid = adminProfile?.unid || DEFAULT_OPERATIONAL_UNIT;
+          const adminUsername = adminProfile?.username || 'admin';
+          
+          // 1. Criar Lote de Importação
+          await importBatchSupabaseRepository.createBatch({
+            id: importBatchId,
+            imported_at: new Date().toISOString(),
+            imported_by: adminUsername,
+            source_filename: `importacao_${planningDate}.csv`,
+            total_rows: mergedCtrcs.length,
+            inserted_count: newCtrcs.length,
+            updated_count: mergedCtrcs.length - newCtrcs.length,
+            rejected_count: 0
+          });
+
+          // 2. Converter CTRCs para Formato Shipment
+          const shipmentsToSync = mergedCtrcs.map(c => ({
+            id: c.id,
+            company_code: adminUnid,
+            ctrc_number: c.id.replace(/\D/g, '').substring(0, 8) || c.id,
+            ctrc_series: '1',
+            unique_key: `${adminUnid}_1_${c.id}`,
+            issue_date: c.data_ocorrencia || undefined,
+            forecast_delivery_date: c.prev_ent || undefined,
+            unit_arrival_date: c.data_ocorrencia || undefined,
+            sender_name: c.remetente || undefined,
+            recipient_name: c.destinatario || undefined,
+            payer_name: c.pagador || undefined,
+            destination_city: c.cidade || undefined,
+            destination_state: 'MG', // Default for now
+            total_value: c.valor || undefined,
+            weight: c.weight || undefined,
+            volume_count: c.volume || undefined,
+            status: c.status || undefined,
+            is_delivered: c.status === 'Entregue',
+            is_curve_a: c.type === 'CURVA A',
+            is_critical_client: false,
+            last_import_batch_id: importBatchId,
+            raw_payload: c,
+            updated_at: new Date().toISOString()
+          }));
+
+          // 3. Upsert shipments
+          const BATCH_SIZE = 500;
+          for (let i = 0; i < shipmentsToSync.length; i += BATCH_SIZE) {
+            const batch = shipmentsToSync.slice(i, i + BATCH_SIZE);
+            await shipmentSupabaseRepository.upsertShipments(batch);
+          }
+          console.log(`[Importacao] Sincronização Supabase concluída (${shipmentsToSync.length} shipments)`);
+        } catch (syncErr) {
+          console.error('[Importacao] Falha na sincronização Supabase (fallback ativo):', syncErr);
+        }
+      }, 0);
+
     } catch (rehydrateErr) {
       console.error('[Importacao] Falha na recarga explícita pós-importação:', rehydrateErr);
     }
@@ -994,12 +1134,24 @@ export default function App() {
     setClients((prev) =>
       prev.map((c) => {
         if (c.id === clientId) {
-          return {
+          const updatedClient = {
             ...c,
             auditUser: author,
             auditTime: 'Há poucos segundos',
             auditDetail: note,
           };
+          
+          // CR-MVP-SUPABASE-06: Sincronizar atualização de auditoria do cliente crítico
+          setTimeout(async () => {
+            try {
+              const { criticalClientSupabaseRepository } = await import('./infrastructure/supabase/repositories/criticalClientSupabaseRepository');
+              await criticalClientSupabaseRepository.upsertClient(updatedClient);
+            } catch (err) {
+              console.warn('Falha ao sincronizar cliente crítico:', err);
+            }
+          }, 0);
+
+          return updatedClient;
         }
         return c;
       })

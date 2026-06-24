@@ -1,5 +1,6 @@
 import { db } from '../db';
 import { AuditLog } from '../../../types';
+import { addToSyncQueue } from './syncQueueRepository';
 
 export const AuditLogRepository = {
   async getAll(): Promise<AuditLog[]> {
@@ -15,6 +16,22 @@ export const AuditLogRepository = {
       id,
     };
     await db.audit_logs.put(newLog);
+
+    // CR-MVP-SUPABASE-06: Sincronização
+    setTimeout(async () => {
+      try {
+        const { auditLogSupabaseRepository } = await import('../../supabase/repositories/auditLogSupabaseRepository');
+        const res = await auditLogSupabaseRepository.insertLog(newLog);
+        if (!res.success) {
+          // Mantém pendente localmente para tentar depois
+          await addToSyncQueue('audit_log', 'CREATE', newLog);
+        }
+      } catch (err) {
+        console.warn('Erro na sync do audit log', err);
+        await addToSyncQueue('audit_log', 'CREATE', newLog);
+      }
+    }, 0);
+
     return id;
   },
 

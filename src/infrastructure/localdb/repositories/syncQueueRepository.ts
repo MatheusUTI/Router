@@ -4,7 +4,7 @@ import { db, SyncQueueItem } from '../db';
  * Adiciona uma ação operativa pendente na fila de sincronização secundária.
  */
 export async function addToSyncQueue(
-  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota',
+  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota' | 'audit_log',
   operation: 'CREATE' | 'UPDATE' | 'DELETE',
   payload: any
 ): Promise<number> {

@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Ctrc, CriticClient } from '../types';
 import { calculateDashboardMetrics } from '../services/dashboardMetricsService';
+import { shipmentSupabaseRepository } from '../infrastructure/supabase/repositories/shipmentSupabaseRepository';
 
 interface DashboardProps {
   onNavigateToView: (view: 'importacao' | 'frota' | 'roteirizacao') => void;
@@ -10,11 +11,52 @@ interface DashboardProps {
 }
 
 export default function DashboardView({ onNavigateToView, searchValue, allImportedCtrcs = [], criticClients = [] }: DashboardProps) {
+  const [supabaseCtrcs, setSupabaseCtrcs] = useState<Ctrc[] | null>(null);
+  const [isFetchingSupabase, setIsFetchingSupabase] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchSupabaseData() {
+      setIsFetchingSupabase(true);
+      const result = await shipmentSupabaseRepository.getRecentShipments(31);
+      if (mounted) {
+        if (result.success && result.data) {
+          const mapped: Ctrc[] = result.data.map(s => ({
+            id: s.raw_payload?.id || `${s.ctrc_number}`,
+            destinatario: s.recipient_name || '',
+            cidade: s.destination_city || '',
+            weight: s.weight || 0,
+            volume: s.volume_count || 0,
+            type: s.is_curve_a ? 'CURVA A' : 'NORMAL',
+            status: (s.status as any) || 'Pendente',
+            remetente: s.sender_name || undefined,
+            pagador: s.payer_name || undefined,
+            data_ocorrencia: s.issue_date || undefined,
+            prev_ent: s.forecast_delivery_date || undefined,
+            valor: s.total_value || undefined,
+            // Re-inject the raw payload safely
+            ...(s.raw_payload || {})
+          }));
+          setSupabaseCtrcs(mapped);
+        } else {
+          setSupabaseCtrcs(null);
+        }
+        setIsFetchingSupabase(false);
+      }
+    }
+    fetchSupabaseData();
+    return () => { mounted = false; };
+  }, []);
+
   const criticNames = useMemo(() => criticClients.map(c => c.name), [criticClients]);
   
+  const activeCtrcs = useMemo(() => {
+    return supabaseCtrcs !== null ? supabaseCtrcs : allImportedCtrcs;
+  }, [supabaseCtrcs, allImportedCtrcs]);
+
   const metrics = useMemo(() => {
-    return calculateDashboardMetrics(allImportedCtrcs, criticNames);
-  }, [allImportedCtrcs, criticNames]);
+    return calculateDashboardMetrics(activeCtrcs, criticNames);
+  }, [activeCtrcs, criticNames]);
 
   const {
     operationToday,
@@ -25,7 +67,21 @@ export default function DashboardView({ onNavigateToView, searchValue, allImport
     alerts
   } = metrics;
 
-  if (allImportedCtrcs.length === 0) {
+  if (isFetchingSupabase) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-[var(--router-text)] animate-fade-in">
+        <span className="material-symbols-outlined text-[64px] text-primary animate-spin mb-4">
+          sync
+        </span>
+        <h2 className="text-xl font-bold mb-2">Sincronizando BI...</h2>
+        <p className="text-sm text-[var(--router-text-muted)] text-center max-w-md mb-6">
+          Aguarde enquanto conectamos ao Supabase para trazer os dados mais recentes.
+        </p>
+      </div>
+    );
+  }
+
+  if (activeCtrcs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-[var(--router-text)] animate-fade-in">
         <span className="material-symbols-outlined text-[64px] text-[var(--router-text-muted)] opacity-50 mb-4 select-none">
