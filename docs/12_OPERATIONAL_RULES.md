@@ -52,3 +52,8 @@ A disponibilidade é mapeada para os seguintes valores de Setor:
 ## 7. Regra de Fallback
 - Não usar "Aguardar" como fallback geral.
 - Ocorrência não mapeada deve aparecer como "Indefinido" ou "Sem Ocorrência".
+
+## 8. Errata e Correções (Atualização da Mesa)
+- `pracaHub` **não** deve ser usado como primeira fonte se representar localização atual.
+- A filial operacional (unidade) deve ser resolvida obrigatoriamente por **destino/cidade/rota**.
+- Localização física (armazém atual) é sempre um filtro separado e não dita a filial da Mesa.

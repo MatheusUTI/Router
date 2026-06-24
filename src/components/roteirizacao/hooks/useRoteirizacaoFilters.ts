@@ -158,27 +158,82 @@ export function sortRoteirizacaoItems(
   });
 }
 
+export function resolveMesaOperationalUnit(ctrc: any): { unit: string, source: string, evidence: string } {
+  // 1. Explicit destination fields
+  const explicitFields = [
+    'unidadeDestino', 'filialDestino', 'unidDestino', 
+    'destinoUnidade', 'operationalUnit', 'mesaOperationalUnit', 'deliveryUnit'
+  ];
+  
+  for (const field of explicitFields) {
+    if (ctrc[field] && typeof ctrc[field] === 'string' && ctrc[field].trim() !== '') {
+      let val = ctrc[field].trim().toUpperCase();
+      if (val === 'VAG' || val === 'VGS') val = 'VGA';
+      return { unit: val, source: 'explicit_destination', evidence: `${field}: ${val}` };
+    }
+  }
+
+  // 2. pracaDestino
+  if (ctrc.pracaDestino && typeof ctrc.pracaDestino === 'string' && ctrc.pracaDestino.trim() !== '') {
+    let val = ctrc.pracaDestino.trim().toUpperCase();
+    if (val === 'VAG' || val === 'VGS') val = 'VGA';
+    return { unit: val, source: 'pracaDestino', evidence: `pracaDestino: ${ctrc.pracaDestino}` };
+  }
+
+  // 3. Mapeamento por cidade/rota (base temporária hardcoded para o caso BHZ/VGA, ou geral)
+  const normCidade = (ctrc.normCidade || ctrc.cidade || ctrc.cidade_ent || '').toUpperCase().trim();
+  const normRota = (ctrc.effectiveRoute || ctrc.normRota || '').toUpperCase().trim();
+
+  // Mapeamento operacional conhecido temporário:
+  // TODO: Em fase futura, usar base de Cidades/Rotas associada à operação
+  const vgaCities = [
+    'TRES CORACOES', 'TRÊS CORAÇÕES',
+    'CAXAMBU',
+    'VARGINHA',
+    'LAVRAS',
+    'ALFENAS',
+    'POUSO ALEGRE',
+    'SAO LOURENCO', 'SÃO LOURENÇO',
+    'EXTREMA',
+    'ITAJUBA', 'ITAJUBÁ',
+    'PASSOS',
+    'BOA ESPERANCA', 'BOA ESPERANÇA',
+    'CAMBUQUIRA',
+    'LAMBARI',
+    'POCOS DE CALDAS', 'POÇOS DE CALDAS'
+  ];
+  
+  if (normCidade && vgaCities.includes(normCidade)) {
+    return { unit: 'VGA', source: 'cidade_rota', evidence: `cidade: ${normCidade}` };
+  }
+
+  if (normCidade === 'BELO HORIZONTE' || normCidade === 'CONTAGEM' || normCidade === 'BETIM' || normCidade === 'NOVA LIMA') {
+    return { unit: 'BHZ', source: 'cidade_rota', evidence: `cidade: ${normCidade}` };
+  }
+
+  // 4. Fallback por série/unid do documento originador
+  const unid = (ctrc.unid || '').toUpperCase().trim();
+  if (unid) {
+    let val = unid;
+    if (val === 'VGS' || val === 'VAG') val = 'VGA';
+    return { unit: val, source: 'unid_fallback', evidence: `unid: ${unid}` };
+  }
+  
+  // 5. Fallback por pracaHub, sendo a última opção pois pode ser apenas local de passagem
+  const hub = (ctrc.pracaHub || '').toUpperCase().trim();
+  if (hub) {
+    let val = hub;
+    if (val === 'VAG' || val === 'VGS') val = 'VGA';
+    return { unit: val, source: 'pracaHub_fallback', evidence: `pracaHub: ${hub}` };
+  }
+
+  // 6. Fallback final
+  return { unit: 'DESCONHECIDA', source: 'unknown', evidence: 'nenhuma informação de destino encontrada' };
+}
+
 export function getMesaOperationalUnit(ctrc: RoteirizacaoItem): string {
-  // A filial operacional responsável pela entrega/destino da carga.
-  // Prioriza praça/hub de destino (onde a entrega operacional acontece).
-  const hub = (ctrc.pracaHub || '').toUpperCase();
-  const dest = (ctrc.pracaDestino || '').toUpperCase();
-
-  if (hub && hub !== '') {
-    if (hub === 'VAG') return 'VGA';
-    return hub;
-  }
-  if (dest && dest !== '') {
-    if (dest === 'VAG') return 'VGA';
-    return dest;
-  }
-
-  // Fallback: se não há hub, usamos a unidade de origem/documento
-  const unid = (ctrc.unid || '').toUpperCase();
-  // VGS (Subcontrato Varginha) ou VAG pertencem à operação VGA
-  if (unid === 'VAG' || unid === 'VGS') return 'VGA';
-
-  return unid || 'DESCONHECIDA';
+  const result = resolveMesaOperationalUnit(ctrc);
+  return result.unit;
 }
 
 export function isEligibleForUnit(ctrc: RoteirizacaoItem, targetUnit: string): boolean {
