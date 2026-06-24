@@ -360,3 +360,12 @@ npm run build
 ---
 
 > **Filosofia do Produto**: "O Router não foi projetado meramente para conectar dados de transporte à nuvem, mas para garantir robustez implacável e processamento de decisão na doca logística. Operações rodoviárias não param por causa de pacotes de dados perdidos; o Router garante que a sua expedição continue rodando de forma soberana."
+
+---
+
+## Status Atual
+Status atual: V1.25.x
+- Ver [docs/03_CURRENT_STATE.md](docs/03_CURRENT_STATE.md)
+- Ver [docs/08_DOGFOODING_PLAN.md](docs/08_DOGFOODING_PLAN.md)
+- Ver [docs/11_ROUTER_DESIGN_SYSTEM.md](docs/11_ROUTER_DESIGN_SYSTEM.md)
+- Ver [docs/12_OPERATIONAL_RULES.md](docs/12_OPERATIONAL_RULES.md)
