@@ -7,6 +7,10 @@ interface DecodedResult {
   hasCorrupted: boolean;
 }
 
+const hasReplacementChar = (value?: string | null): boolean => {
+  return typeof value === 'string' && value.includes('\uFFFD');
+};
+
 function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): DecodedResult {
   const uint8Array = new Uint8Array(arrayBuffer);
   
@@ -15,14 +19,14 @@ function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): DecodedResult {
     const sliced = uint8Array.slice(3);
     const utf8Decoder = new TextDecoder('utf-8');
     const text = utf8Decoder.decode(sliced);
-    const hasCorrupted = text.includes('\uFFFD') || text.includes('');
+    const hasCorrupted = hasReplacementChar(text);
     return { text, encoding: 'UTF-8 BOM', hasCorrupted };
   }
   
   // 2. Try standard UTF-8
   const utf8Decoder = new TextDecoder('utf-8');
   const utf8Text = utf8Decoder.decode(uint8Array);
-  if (!utf8Text.includes('\uFFFD') && !utf8Text.includes('')) {
+  if (!hasReplacementChar(utf8Text)) {
     return { text: utf8Text, encoding: 'UTF-8', hasCorrupted: false };
   }
   
@@ -30,7 +34,7 @@ function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): DecodedResult {
   try {
     const win1252Decoder = new TextDecoder('windows-1252');
     const win1252Text = win1252Decoder.decode(uint8Array);
-    if (!win1252Text.includes('\uFFFD') && !win1252Text.includes('')) {
+    if (!hasReplacementChar(win1252Text)) {
       return { text: win1252Text, encoding: 'Windows-1252', hasCorrupted: false };
     }
   } catch (e) {
@@ -41,14 +45,14 @@ function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): DecodedResult {
   try {
     const isoDecoder = new TextDecoder('iso-8859-1');
     const isoText = isoDecoder.decode(uint8Array);
-    const hasCorrupted = isoText.includes('\uFFFD') || isoText.includes('');
+    const hasCorrupted = hasReplacementChar(isoText);
     return { text: isoText, encoding: 'ISO-8859-1', hasCorrupted };
   } catch (e) {
     console.error('ISO-8859-1 decoding failed:', e);
   }
   
   // Fallback to UTF-8
-  const hasCorrupted = utf8Text.includes('\uFFFD') || utf8Text.includes('');
+  const hasCorrupted = hasReplacementChar(utf8Text);
   return { text: utf8Text, encoding: 'UTF-8 (com erro)', hasCorrupted };
 }
 
@@ -83,26 +87,26 @@ export default function OcorrenciasView({
 
   // Check for corrupted occurrences (with  symbol)
   const hasCorruptedOccurrences = occurrences.some(occ => 
-    occ.codigo.includes('') || occ.codigo.includes('\uFFFD') || 
-    occ.descricao.includes('') || occ.descricao.includes('\uFFFD') || 
-    (occ.responsabilidade && (occ.responsabilidade.includes('') || occ.responsabilidade.includes('\uFFFD'))) || 
-    (occ.tipo && (occ.tipo.includes('') || occ.tipo.includes('\uFFFD'))) || 
-    (occ.setor_ocorr && (occ.setor_ocorr.includes('') || occ.setor_ocorr.includes('\uFFFD'))) || 
-    (occ.tratativa_solucao && (occ.tratativa_solucao.includes('') || occ.tratativa_solucao.includes('\uFFFD')))
+    hasReplacementChar(occ.codigo) || 
+    hasReplacementChar(occ.descricao) || 
+    (occ.responsabilidade && hasReplacementChar(occ.responsabilidade)) || 
+    (occ.tipo && hasReplacementChar(occ.tipo)) || 
+    (occ.setor_ocorr && hasReplacementChar(occ.setor_ocorr)) || 
+    (occ.tratativa_solucao && hasReplacementChar(occ.tratativa_solucao))
   );
 
   const corruptedList = occurrences.filter(occ => 
-    occ.codigo.includes('') || occ.codigo.includes('\uFFFD') || 
-    occ.descricao.includes('') || occ.descricao.includes('\uFFFD') || 
-    (occ.responsabilidade && (occ.responsabilidade.includes('') || occ.responsabilidade.includes('\uFFFD'))) || 
-    (occ.tipo && (occ.tipo.includes('') || occ.tipo.includes('\uFFFD'))) || 
-    (occ.setor_ocorr && (occ.setor_ocorr.includes('') || occ.setor_ocorr.includes('\uFFFD'))) || 
-    (occ.tratativa_solucao && (occ.tratativa_solucao.includes('') || occ.tratativa_solucao.includes('\uFFFD')))
+    hasReplacementChar(occ.codigo) || 
+    hasReplacementChar(occ.descricao) || 
+    (occ.responsabilidade && hasReplacementChar(occ.responsabilidade)) || 
+    (occ.tipo && hasReplacementChar(occ.tipo)) || 
+    (occ.setor_ocorr && hasReplacementChar(occ.setor_ocorr)) || 
+    (occ.tratativa_solucao && hasReplacementChar(occ.tratativa_solucao))
   );
 
   const handleRemoveCorrupted = async () => {
     if (corruptedList.length === 0) return;
-    if (window.confirm(`Você está prestes a excluir todos os ${corruptedList.length} registros contendo caracteres corrompidos (). Esta ação não poderá ser desfeita. Deseja continuar?`)) {
+    if (window.confirm(`Você está prestes a excluir todos os ${corruptedList.length} registros contendo caractere de substituição Unicode (). Esta ação não poderá ser desfeita. Deseja continuar?`)) {
       for (const occ of corruptedList) {
         await onRemoveOccurrence(occ.codigo);
       }
@@ -283,7 +287,7 @@ export default function OcorrenciasView({
 
       // Audit cells for replacement character
       cells.forEach(cell => {
-        if (cell.includes('\uFFFD') || cell.includes('')) {
+        if (hasReplacementChar(cell)) {
           hasCorruptedField = true;
         }
       });
@@ -517,7 +521,7 @@ export default function OcorrenciasView({
             <div className="text-xs space-y-1 text-left">
               <p className="font-bold uppercase tracking-wider text-amber-400">Atenção: Caracteres corrompidos detectados na base atual</p>
               <p className="opacity-90">
-                Foram detectados caracteres de substituição (<span className="font-mono bg-amber-950/40 px-1 py-0.5 rounded text-amber-200"></span>) nos registros de ocorrências salvos. 
+                Foram detectados caracteres de substituição (<span className="font-mono bg-amber-950/40 px-1 py-0.5 rounded text-amber-200">caractere de substituição Unicode ()</span>) nos registros de ocorrências salvos. 
                 Isso costuma ocorrer quando uma importação anterior foi feita utilizando uma codificação incorreta (ex: UTF-8 ao invés de Windows-1252).
               </p>
               <p className="font-semibold mt-1 text-amber-200">
@@ -661,7 +665,7 @@ export default function OcorrenciasView({
                     BLOQUEIO DE CORRUPÇÃO DE CARACTERES
                   </div>
                   <p>
-                    O arquivo importado contém caracteres corrompidos (<strong className="bg-rose-500/20 px-1 py-0.2 rounded text-white"></strong>).
+                    O arquivo importado contém caracteres corrompidos (<strong className="bg-rose-500/20 px-1 py-0.2 rounded text-white">caractere de substituição Unicode ()</strong>).
                   </p>
                   <p className="text-[10px] leading-relaxed opacity-90">
                     A importação foi bloqueada preventivamente para preservar a integridade da Mesa de Roteirização. Por favor, exporte ou salve seu arquivo CSV usando codificação <strong>UTF-8</strong> (com ou sem BOM) e tente novamente.
