@@ -1018,17 +1018,17 @@ export default function FinalizacaoView({
                           const isHighValViolation = valSum > 300000;
                           return (
                             <div className="mt-1.5 flex flex-col gap-1 text-[10px] font-mono leading-none">
-                              <div className="text-amber-500 italic border-t border-outline-variant/20 pt-1 flex items-center justify-between gap-1">
-                                <span>Não Cadastrado</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenQuickRegisterModal(row.vehiclePlate)}
-                                  className="px-1 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 hover:text-amber-400 border border-amber-500/20 rounded font-black transition-all text-[8px] uppercase tracking-wide cursor-pointer ml-1"
-                                  title="Cadastrar veículo"
-                                >
-                                  + Cadastrar
-                                </button>
+                              <div className="text-amber-500 italic border-t border-outline-variant/20 pt-1 text-center font-bold">
+                                Não Cadastrado
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenQuickRegisterModal(row.vehiclePlate)}
+                                className="w-full py-1 px-1.5 bg-amber-500 hover:bg-amber-600 dark:bg-amber-500/20 dark:hover:bg-amber-500/35 text-neutral-900 dark:text-amber-400 font-extrabold border border-amber-500/40 dark:border-amber-500/20 rounded transition-all text-[9px] uppercase tracking-wider cursor-pointer text-center mt-0.5"
+                                title="Cadastrar veículo"
+                              >
+                                + Cadastrar
+                              </button>
                               {isHighValViolation && (
                                 <div className="text-amber-500 font-bold bg-amber-950/20 border border-amber-500/20 rounded px-1 py-0.5 mt-0.5 text-center flex items-center justify-center gap-0.5">
                                   ⚠️ Risco {'>'} 300k
