@@ -74,6 +74,43 @@ export default function ConfiguracoesView({
   onSyncFromSupabase,
   onRefreshAllLocalData,
 }: ConfiguracoesViewProps) {
+  // --- States for Theme Engine ---
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('router_theme');
+    return saved === 'light' || saved === 'dark' ? saved : 'dark';
+  });
+  const [density, setDensity] = useState<'compact' | 'normal' | 'comfortable'>(() => {
+    const saved = localStorage.getItem('router_density');
+    return saved === 'compact' || saved === 'normal' || saved === 'comfortable' ? saved : 'normal';
+  });
+  const [contrast, setContrast] = useState<'standard' | 'high'>(() => {
+    const saved = localStorage.getItem('router_contrast');
+    return saved === 'standard' || saved === 'high' ? saved : 'standard';
+  });
+
+  const handleUpdateTheme = (newTheme: 'light' | 'dark') => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem('router_theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    window.dispatchEvent(new Event('router-theme-change'));
+  };
+
+  const handleUpdateDensity = (newDensity: 'compact' | 'normal' | 'comfortable') => {
+    setDensity(newDensity);
+    localStorage.setItem('router_density', newDensity);
+    document.documentElement.setAttribute('data-density', newDensity);
+    document.documentElement.classList.toggle('density-compact', newDensity === 'compact');
+    document.documentElement.classList.toggle('density-comfortable', newDensity === 'comfortable');
+  };
+
+  const handleUpdateContrast = (newContrast: 'standard' | 'high') => {
+    setContrast(newContrast);
+    localStorage.setItem('router_contrast', newContrast);
+    document.documentElement.setAttribute('data-contrast', newContrast);
+    document.documentElement.classList.toggle('contrast-high', newContrast === 'high');
+  };
+
   // --- States for Sincronização Operacional V1 ---
   const [isOperationalSyncing, setIsOperationalSyncing] = useState(false);
   const [operationalSyncMessage, setOperationalSyncMessage] = useState<string | null>(null);
@@ -1016,6 +1053,108 @@ export default function ConfiguracoesView({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Seção Aparência / Tema (Router Theme Engine) */}
+      <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left">
+        <div>
+          <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[19px]">palette</span>
+            Aparência e Tema (Router Theme Engine)
+          </h3>
+          <p className="text-xs text-on-surface-variant">
+            Personalize a visualização operacional do sistema. O motor de temas central sincroniza suas preferências instantaneamente.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface p-4 rounded-xl border border-outline-variant/60">
+          {/* Tema */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
+              Tema Visual
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleUpdateTheme('light')}
+                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                  currentTheme === 'light'
+                    ? 'bg-primary text-on-primary border-transparent'
+                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">light_mode</span>
+                Claro
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdateTheme('dark')}
+                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                  currentTheme === 'dark'
+                    ? 'bg-primary text-on-primary border-transparent'
+                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">dark_mode</span>
+                Escuro
+              </button>
+            </div>
+          </div>
+
+          {/* Densidade */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
+              Densidade Operacional
+            </label>
+            <select
+              value={density}
+              onChange={(e) => handleUpdateDensity(e.target.value as any)}
+              className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:ring-1 focus:ring-primary focus:outline-none font-bold"
+            >
+              <option value="compact">Compacta (Alta Densidade)</option>
+              <option value="normal">Normal</option>
+              <option value="comfortable">Confortável (Espaçosa)</option>
+            </select>
+          </div>
+
+          {/* Contraste */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
+              Contraste
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleUpdateContrast('standard')}
+                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1 ${
+                  contrast === 'standard'
+                    ? 'bg-primary text-on-primary border-transparent'
+                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
+                }`}
+              >
+                Padrão
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdateContrast('high')}
+                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1 ${
+                  contrast === 'high'
+                    ? 'bg-primary text-on-primary border-transparent'
+                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
+                }`}
+              >
+                Alto Contraste
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3 bg-primary-container/10 border border-primary/20 rounded-lg text-[11px] text-on-surface-variant flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary text-[16px]">info</span>
+          <span>
+            <strong>Motor de temas inicial:</strong> As preferências de aparência são salvas localmente no navegador para preservar seu fluxo de trabalho de despacho. Personalização avançada será evoluída depois.
+          </span>
         </div>
       </div>
 

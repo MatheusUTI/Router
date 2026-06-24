@@ -64,34 +64,34 @@ export default function RoteirizacaoHeader({
   const hasVisibilityAlert = !!(diagnostics && diagnostics.totalAfterEnrichment > 0 && (diagnostics.totalFinalVisible === 0 || (diagnostics.totalFinalVisible / diagnostics.totalAfterEnrichment) < 0.05));
   const warningsCount = diagnostics?.warnings?.length ?? 0;
 
-  const titleClass = "font-black text-[#2563EB] dark:text-slate-100 tracking-tight text-xs md:text-sm uppercase leading-none truncate";
-  const subtitleClass = "font-sans text-indigo-600 dark:text-indigo-400 font-bold tracking-wider text-[9px] leading-none mt-0.5 flex items-center gap-1.5 flex-wrap";
+  const titleClass = "font-black text-[var(--router-primary)] dark:text-[var(--router-text)] tracking-tight text-xs md:text-sm uppercase leading-none truncate";
+  const subtitleClass = "font-sans text-[var(--router-primary)] dark:text-[var(--router-text-muted)] font-bold tracking-wider text-[9px] leading-none mt-0.5 flex items-center gap-1.5 flex-wrap";
 
-  const btnClass = "bg-indigo-650 hover:bg-indigo-600 text-white border border-indigo-500/20 rounded font-bold text-[11px] px-2 py-1 h-8 transition-all flex items-center gap-1 cursor-pointer select-none leading-none shrink-0";
-  const btnSecondaryClass = "bg-slate-100 dark:bg-[#1a2440] hover:bg-slate-200 dark:hover:bg-[#253359] text-slate-700 dark:text-gray-200 border border-slate-300 dark:border-[#2d3a5e] rounded font-bold text-[11px] px-2 py-1 h-8 transition-all cursor-pointer select-none leading-none flex items-center justify-center gap-1 shrink-0";
-  const badgeClass = "bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded font-mono text-indigo-600 dark:text-indigo-300 text-[11px] px-1.5 py-1 h-8 items-center leading-none shrink-0 hidden 2xl:flex";
+  const btnClass = "bg-[var(--router-primary)] hover:opacity-90 text-white border border-transparent rounded font-bold text-[11px] px-2 py-1 h-8 transition-all flex items-center gap-1 cursor-pointer select-none leading-none shrink-0";
+  const btnSecondaryClass = "bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text)] border border-[var(--router-border)] rounded font-bold text-[11px] px-2 py-1 h-8 transition-all cursor-pointer select-none leading-none flex items-center justify-center gap-1 shrink-0";
+  const badgeClass = "bg-[var(--router-surface)] border border-[var(--router-border)] rounded font-mono text-[var(--router-primary)] text-[11px] px-1.5 py-1 h-8 items-center leading-none shrink-0 hidden 2xl:flex";
 
-  const searchInputClass = "w-full bg-slate-50 dark:bg-[#070c14] border border-slate-200 dark:border-[#1a2440] rounded-md pl-6 pr-2 py-1 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-[11px] h-8 transition-all uppercase";
-  const rightStatusClass = "font-sans bg-slate-50 dark:bg-[#070c14] rounded border border-slate-200 dark:border-[#16223f] px-1.5 py-1 h-8 flex items-center text-[10px] text-slate-550 dark:text-slate-450 leading-none shrink-0";
+  const searchInputClass = "w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-md pl-6 pr-2 py-1 text-[var(--router-text)] placeholder-[var(--router-text-muted)] focus:outline-none focus:border-[var(--router-primary)] text-[11px] h-8 transition-all uppercase";
+  const rightStatusClass = "font-sans bg-[var(--router-surface-2)] rounded border border-[var(--router-border)] px-1.5 py-1 h-8 flex items-center text-[10px] text-[var(--router-text-muted)] leading-none shrink-0";
 
   return (
-    <div className="bg-white dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#1a2440] py-1.5 px-2 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2 shrink-0 select-none min-h-[44px]">
+    <div className="router-header py-1.5 px-2 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2 shrink-0 select-none min-h-[44px]">
       
       {/* 1. Brand, Plan, Filial */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
         <div className="flex items-center shrink-0">
           {adminUser.is_master ? (
-            <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded px-2 py-1 shadow-sm h-8 cursor-pointer relative transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30">
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
+            <div className="flex items-center gap-1 bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded px-2 py-1 shadow-sm h-8 cursor-pointer relative transition-colors">
+              <span className="text-[var(--router-text-muted)] font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
               <select
                 id="header-unit-selector"
                 value={selectedUnit}
                 onChange={(e) => setSelectedUnit(e.target.value)}
-                className="bg-transparent text-indigo-900 dark:text-indigo-200 font-black focus:outline-none cursor-pointer text-[12px] leading-none transition-all border-none select-none uppercase appearance-none pr-3"
+                className="bg-transparent text-[var(--router-text)] font-black focus:outline-none cursor-pointer text-[12px] leading-none transition-all border-none select-none uppercase appearance-none pr-3"
               >
-                <option value="TODAS" className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white font-semibold">TODAS</option>
+                <option value="TODAS" className="bg-[var(--router-surface-2)] text-[var(--router-text)] font-semibold">TODAS</option>
                 {uniqueUnits.map(u => (
-                  <option key={u} value={u} className="bg-white dark:bg-[#0b1322] text-slate-800 dark:text-white font-bold">{u}</option>
+                  <option key={u} value={u} className="bg-[var(--router-surface-2)] text-[var(--router-text)] font-bold">{u}</option>
                 ))}
               </select>
               <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2">
@@ -99,9 +99,9 @@ export default function RoteirizacaoHeader({
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/20 rounded px-2 py-1 shadow-sm h-8" title="Unidade restrita">
-              <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
-              <span className="text-slate-800 dark:text-white font-black text-[12px] leading-none flex items-center gap-1 select-none">
+            <div className="flex items-center gap-1.5 bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded px-2 py-1 shadow-sm h-8" title="Unidade restrita">
+              <span className="text-[var(--router-text-muted)] font-bold text-[10px] uppercase tracking-wider select-none">FILIAL:</span>
+              <span className="text-[var(--router-text)] font-black text-[12px] leading-none flex items-center gap-1 select-none">
                 🔒 {(adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase()}
               </span>
             </div>

@@ -139,13 +139,13 @@ export default function CargaList({
   const allVisibleChecked = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#16223f] rounded-xl overflow-hidden relative shadow-sm">
+    <div className="flex-1 flex flex-col min-w-0 bg-[var(--router-bg-soft)] border border-[var(--router-border)] rounded-xl overflow-hidden relative shadow-sm">
 
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
       {filteredCtrcs.length > 0 && (
         densityMode === 'planilha_operacional' ? (
           <div 
-            className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid items-center text-slate-500 py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
+            className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-slate-500 dark:text-slate-400 py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
             style={{ 
               gridTemplateColumns: '24px minmax(calc(115px * var(--mesa-scale, 1)), 0.6fr) minmax(calc(270px * var(--mesa-scale, 1)), 1.5fr) minmax(calc(110px * var(--mesa-scale, 1)), 0.65fr) minmax(calc(85px * var(--mesa-scale, 1)), 0.4fr) minmax(calc(275px * var(--mesa-scale, 1)), 1.55fr) minmax(calc(105px * var(--mesa-scale, 1)), 0.55fr) minmax(calc(95px * var(--mesa-scale, 1)), 0.5fr) minmax(calc(80px * var(--mesa-scale, 1)), 0.4fr)',
               fontSize: 'calc(10px * var(--mesa-scale, 1))',
@@ -439,7 +439,7 @@ export default function CargaList({
             </div>
           </div>
         ) : (
-          <div className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
+          <div className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 dark:text-slate-400 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
             
             {/* Col 1: Master Checkbox */}
             <div className="w-6 shrink-0 flex items-center justify-center">
@@ -664,7 +664,7 @@ export default function CargaList({
             <span className="text-3xl">📦</span>
             <p className="text-xs font-bold uppercase font-mono">Nenhuma carga pendente corresponde ao filtro selecionado</p>
             {totalCtrcsCount > 0 && onClearFilters && (
-              <div className="mt-2 bg-slate-50 dark:bg-[#0e1726]/80 border border-slate-200 dark:border-[#1e2e4f] rounded-lg p-3 max-w-sm animate-pulse w-full">
+              <div className="mt-2 bg-slate-50 dark:bg-[#0b1322] border border-slate-200 dark:border-[#1f2a44] rounded-lg p-3 max-w-sm animate-pulse w-full">
                 <p className="text-xs text-indigo-600 dark:text-indigo-300 font-sans leading-relaxed mb-2">
                   Há CTRCs importados, mas nenhum visível com os filtros atuais. Limpar filtros da Mesa?
                 </p>
@@ -695,44 +695,44 @@ export default function CargaList({
       </div>
 
       {/* Legend Footer Block */}
-      <div className="bg-slate-50 dark:bg-[#060c15] border-t border-slate-200 dark:border-[#14203a] px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium font-sans text-slate-500 shrink-0 relative z-30">
+      <div className="bg-[var(--router-surface-2)] border-t border-[var(--router-border)] px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium font-sans text-[var(--router-text-muted)] shrink-0 relative z-30">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold font-mono text-[9.5px] text-slate-400 mr-2 uppercase tracking-wide">Legenda:</span>
+          <span className="font-bold font-mono text-[9.5px] text-[var(--router-text-muted)] mr-2 uppercase tracking-wide">Legenda:</span>
           <div className="flex items-center gap-3.5 flex-wrap">
             <span className="flex items-center gap-1" title="Verde">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#DCFCE7] dark:bg-emerald-500/10 border border-[#BBF7D0] dark:border-emerald-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Disponível</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Disponível</span>
             </span>
             <span className="flex items-center gap-1" title="Azul / Índigo">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#DBEAFE] dark:bg-indigo-950/40 border border-[#BFDBFE] dark:border-indigo-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Agendamento / Operacional</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Agendamento / Operacional</span>
             </span>
             <span className="flex items-center gap-1" title="Amarelo">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF3C7] dark:bg-amber-550/10 border border-[#FDE68A] dark:border-amber-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atenção Leve / FOB</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atenção Leve / FOB</span>
             </span>
             <span className="flex items-center gap-1" title="Laranja">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FFEDD5] dark:bg-orange-500/10 border border-[#FED7AA] dark:border-orange-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atenção Op / Hold</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atenção Op / Hold</span>
             </span>
             <span className="flex items-center gap-1" title="Vermelho / Rosa">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FFE4E6] dark:bg-red-500/10 border border-[#FECDD3] dark:border-red-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Atraso / Curva A / Retido</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atraso / Curva A / Retido</span>
             </span>
             <span className="flex items-center gap-1" title="Cinza">
-              <span className="w-2.5 h-2.5 rounded-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Neutro</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-150 dark:bg-slate-850 border border-slate-300 dark:border-slate-700" />
+              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Neutro</span>
             </span>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-[10px] font-mono font-bold text-slate-400 uppercase select-none">
+          <div className="text-[10px] font-mono font-bold text-[var(--router-text-muted)] uppercase select-none">
             Total: {filteredCtrcs.length} CTRCs
           </div>
           {onOpenDiagnostics && (
             <button
               onClick={onOpenDiagnostics}
-              className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-500 hover:text-indigo-500 transition-colors cursor-pointer border border-slate-200 dark:border-[#1a2440] rounded px-2 py-0.5"
+              className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--router-text-muted)] hover:text-[var(--router-primary)] transition-colors cursor-pointer border border-[var(--router-border)] rounded px-2 py-0.5 bg-[var(--router-surface)]"
             >
               Dev: Diagnóstico
             </button>

@@ -96,7 +96,7 @@ export default function Sidebar({
       />
 
       <nav
-        className={`fixed left-0 top-0 h-full bg-surface-container-low border-r border-outline-variant flex flex-col p-4 md:px-3 md:py-6 hover:md:px-5 overflow-y-auto overflow-x-hidden z-50 transition-all duration-300 ease-out transform group ${
+        className={`fixed left-0 top-0 h-full router-sidebar flex flex-col p-4 md:px-3 md:py-6 hover:md:px-5 overflow-y-auto overflow-x-hidden z-50 transition-all duration-300 ease-out transform group ${
           isOpen ? 'translate-x-0 w-[280px]' : '-translate-x-full w-[280px]'
         } md:translate-x-0 md:w-[72px] hover:md:w-[280px]`}
       >

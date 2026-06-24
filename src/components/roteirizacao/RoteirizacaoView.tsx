@@ -932,7 +932,7 @@ export default function RoteirizacaoView({
       >
         {/* Cargo Fila Column */}
         {isNormalizing ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#16223f] rounded-xl font-mono">
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#1a2440] rounded-xl font-mono">
             <span className="animate-spin text-xl">⏳</span>
             <p className="text-xs font-bold uppercase">Correlacionando dicionários e rotas da malha...</p>
           </div>

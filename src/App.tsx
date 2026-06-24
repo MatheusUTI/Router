@@ -144,8 +144,36 @@ export default function App() {
     localStorage.setItem('router_theme', theme);
   }, [theme]);
 
+  // Load and apply initial density & contrast on mount
+  useEffect(() => {
+    const savedDensity = localStorage.getItem('router_density') || 'normal';
+    document.documentElement.setAttribute('data-density', savedDensity);
+    document.documentElement.classList.toggle('density-compact', savedDensity === 'compact');
+    document.documentElement.classList.toggle('density-comfortable', savedDensity === 'comfortable');
+
+    const savedContrast = localStorage.getItem('router_contrast') || 'standard';
+    document.documentElement.setAttribute('data-contrast', savedContrast);
+    document.documentElement.classList.toggle('contrast-high', savedContrast === 'high');
+
+    // Sync theme if changed externally (e.g. from ConfiguracoesView)
+    const handleThemeChange = () => {
+      const savedTheme = localStorage.getItem('router_theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        setTheme(savedTheme);
+      }
+    };
+    window.addEventListener('router-theme-change', handleThemeChange);
+    return () => {
+      window.removeEventListener('router-theme-change', handleThemeChange);
+    };
+  }, []);
+
   const handleToggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => {
+      const nextTheme = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('router_theme', nextTheme);
+      return nextTheme;
+    });
   };
   
   // Operator profile state
@@ -1046,7 +1074,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-background text-on-surface font-sans antialiased ${currentView === 'roteirizacao' ? 'pt-0' : 'pt-16'} md:pl-[72px] transition-all duration-300`}>
+    <div className={`router-app font-sans antialiased ${currentView === 'roteirizacao' ? 'pt-0' : 'pt-16'} md:pl-[72px] transition-all duration-300`}>
       {/* Collapsible overlay sidebar */}
       <Sidebar
         currentView={currentView}

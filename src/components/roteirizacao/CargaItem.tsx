@@ -19,7 +19,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-red-500',
         badgeBg: 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15 font-black',
         textClass: 'text-[#BE123C] dark:text-red-400',
-        cardBg: 'bg-red-50/20 dark:bg-[#1a0e12]/15 hover:bg-red-50/50 dark:hover:bg-[#1a0e12]/30',
+        cardBg: 'bg-red-50/20 dark:bg-[#201014] hover:bg-red-50/50 dark:hover:bg-[#2a141a]',
       };
     case 'PRIORIDADE':
       return {
@@ -27,7 +27,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-amber-500',
         badgeBg: 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15 font-bold',
         textClass: 'text-[#92400E] dark:text-amber-400',
-        cardBg: 'bg-amber-50/15 dark:bg-[#1c140e]/15 hover:bg-amber-50/40 dark:hover:bg-[#1c140e]/30',
+        cardBg: 'bg-amber-50/15 dark:bg-[#22170d] hover:bg-amber-50/40 dark:hover:bg-[#2e1f10]',
       };
     case 'SEGURAR':
       return {
@@ -35,7 +35,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-orange-500',
         badgeBg: 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20 font-black',
         textClass: 'text-orange-700 dark:text-orange-450',
-        cardBg: 'bg-orange-50/20 dark:bg-orange-950/[0.018] hover:bg-orange-50/50 dark:hover:bg-orange-950/[0.045]',
+        cardBg: 'bg-orange-50/20 dark:bg-[#25150c] hover:bg-orange-50/50 dark:hover:bg-[#331c0f]',
       };
     case 'NAO_SAI_HOJE':
       return {
@@ -43,7 +43,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-slate-400 dark:border-slate-700',
         badgeBg: 'bg-slate-100 dark:bg-slate-900/35 text-slate-500 border-slate-200 dark:border-slate-705/20',
         textClass: 'text-slate-400 dark:text-slate-500 line-through',
-        cardBg: 'bg-slate-100/30 dark:bg-slate-950/20 hover:bg-slate-100/50 dark:hover:bg-slate-900/15 opacity-55 saturate-[45%]',
+        cardBg: 'bg-slate-100/30 dark:bg-[#121620] hover:bg-slate-100/50 dark:hover:bg-[#1a202d] opacity-55 saturate-[45%]',
       };
     case 'AGENDADO':
       return {
@@ -51,7 +51,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-cyan-500',
         badgeBg: 'bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border-[#C7D2FE] dark:border-cyan-500/15',
         textClass: 'text-[#3730A3] dark:text-cyan-300',
-        cardBg: 'bg-cyan-50/15 dark:bg-cyan-950/[0.008] hover:bg-cyan-50/40 dark:hover:bg-cyan-950/[0.03]',
+        cardBg: 'bg-cyan-50/15 dark:bg-[#0d1d28] hover:bg-cyan-50/40 dark:hover:bg-[#122837]',
       };
     case 'CONSOLIDADO':
       return {
@@ -59,7 +59,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-emerald-500',
         badgeBg: 'bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15 font-black',
         textClass: 'text-[#166534] dark:text-emerald-400',
-        cardBg: 'bg-emerald-50/15 dark:bg-emerald-950/[0.01] hover:bg-emerald-50/45 dark:hover:bg-emerald-950/[0.03]',
+        cardBg: 'bg-emerald-50/15 dark:bg-[#081e15] hover:bg-emerald-50/45 dark:hover:bg-[#0c2a1e]',
       };
     case 'PLANEJADO':
       return {
@@ -67,7 +67,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-emerald-400',
         badgeBg: 'bg-[#DCFCE7] dark:bg-emerald-400/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-400/15',
         textClass: 'text-[#166534] dark:text-emerald-405',
-        cardBg: 'bg-emerald-50/10 dark:bg-emerald-950/[0.005] hover:bg-emerald-50/30 dark:hover:bg-emerald-950/[0.018]',
+        cardBg: 'bg-emerald-50/10 dark:bg-[#081e15]/70 hover:bg-emerald-50/30 dark:hover:bg-[#0c2a1e]/70',
       };
     case 'A_PLANEJAR':
     default:
@@ -76,7 +76,7 @@ const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
         borderClass: 'border-l-slate-200 dark:border-indigo-500/15',
         badgeBg: 'bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800',
         textClass: 'text-slate-500 dark:text-slate-400',
-        cardBg: 'bg-white dark:bg-slate-950/10 hover:bg-slate-50 dark:hover:bg-slate-950/18',
+        cardBg: 'bg-white dark:bg-[#0b1220] hover:bg-slate-50 dark:hover:bg-[#101a2e]',
       };
   }
 };
@@ -317,9 +317,9 @@ export default function CargaItem({
         }
       }}
       onContextMenu={handleContextMenu}
-      className={`border-b border-slate-200 dark:border-[#14203a]/45 grid items-stretch select-none transition-all duration-150 cursor-pointer ${
+      className={`border-b border-slate-200 dark:border-[#1f2a44]/50 grid items-stretch select-none transition-all duration-150 cursor-pointer ${
         isSelected 
-          ? 'bg-indigo-50/50 dark:bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
+          ? 'bg-indigo-50/50 dark:bg-[#101c3a] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
       } hover:shadow-[0_1px_5px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''} ${densityMode === 'planilha_operacional' ? '' : 'grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)]'}`}
       style={{ 
@@ -331,7 +331,7 @@ export default function CargaItem({
         <>
           {/* Col 1: Seleção */}
           <div 
-            className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-100/30 dark:bg-indigo-600/10' : 'bg-slate-100 dark:bg-slate-900/10'}`}
+            className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-100/30 dark:bg-[#101c3a]' : 'bg-slate-100 dark:bg-[#0b1322]'}`}
             style={{ minWidth: '24px', maxWidth: '24px' }}
           >
             <div 
@@ -395,12 +395,12 @@ export default function CargaItem({
                 {item.destinatario || 'SEM DESTINATÁRIO'}
               </span>
               {item.isFob && (
-                <span className="bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
+                <span className="bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20 px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
                   FOB
                 </span>
               )}
               {item.isCurvaA && (
-                <span className="bg-[#FCE7F3] text-[#9D174D] border border-[#FBCFE8] px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
+                <span className="bg-[#FCE7F3] text-[#9D174D] border border-[#FBCFE8] dark:bg-pink-500/10 dark:text-pink-300 dark:border-pink-500/20 px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
                   ★ CURVA A
                 </span>
               )}
@@ -687,7 +687,7 @@ export default function CargaItem({
         <>
           {/* Block 1: [FAIXA LATERAL COMPACTA SEM TEXTO REDUNDANTE] (24px) */}
           <div 
-            className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-100/30 dark:bg-indigo-600/10' : 'bg-slate-100 dark:bg-slate-900/10'}`}
+            className={`shrink-0 flex items-center justify-center border-l-[3.5px] ${pStyle.borderClass} ${isSelected ? 'bg-indigo-100/30 dark:bg-[#101c3a]' : 'bg-slate-100 dark:bg-[#0b1322]'}`}
             style={{ minWidth: '24px', maxWidth: '24px' }}
           >
             <div 
@@ -759,13 +759,13 @@ export default function CargaItem({
           <span 
             className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
               item.isCurvaA 
-                ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-[#d8b4fe] dark:bg-purple-950/40 px-1 py-0.2 rounded border dark:border-purple-500/25 font-black text-[12px]' 
+                ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-pink-300 dark:bg-pink-500/10 px-1 py-0.2 rounded border dark:border-pink-500/20 font-black text-[12px]' 
                 : 'text-slate-500 dark:text-slate-400'
             }`}
             title={item.remetente || 'SEM REMETENTE'}
           >
             {item.remetente || 'SEM REMETENTE'}
-            {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-purple-400 ml-1 select-none">★ CURVA A</span>}
+            {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-pink-400 ml-1 select-none">★ CURVA A</span>}
           </span>
         </div>
 
@@ -801,7 +801,7 @@ export default function CargaItem({
             </span>
           )}
           {item.isFob && (
-            <span className="bg-amber-550/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
+            <span className="bg-amber-50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
               FOB
             </span>
           )}

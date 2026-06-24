@@ -49,7 +49,7 @@ export default function Header({
   const { title, placeholder } = getViewTitleAndPlaceholder(currentView);
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-[72px] h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-4 md:px-8 z-40 backdrop-blur-md bg-opacity-95 transition-all duration-300">
+    <header className="fixed top-0 right-0 left-0 md:left-[72px] h-16 router-header flex justify-between items-center px-4 md:px-8 z-40 backdrop-blur-md bg-opacity-95 transition-all duration-300">
       {/* Title & Burger Menu block */}
       <div className="flex items-center gap-3 shrink-0">
         <button
