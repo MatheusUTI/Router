@@ -31,12 +31,12 @@
 }
 
 :root {
-  --app-bg: #F6F8FC;
+  --app-bg: #F5F7FA;
   --app-surface: #FFFFFF;
-  --app-surface-muted: #EEF2F7;
+  --app-surface-muted: #F8FAFC;
   --app-card: #FFFFFF;
-  --app-border: #D8DEE9;
-  --app-text: #172033;
+  --app-border: #E2E8F0;
+  --app-text: #1E293B;
   --app-text-muted: #64748B;
   --app-primary: #3157D5;
   --app-primary-soft: #E2E8FF;

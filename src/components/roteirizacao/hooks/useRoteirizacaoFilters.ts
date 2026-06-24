@@ -158,33 +158,40 @@ export function sortRoteirizacaoItems(
   });
 }
 
+export function getMesaOperationalUnit(ctrc: RoteirizacaoItem): string {
+  // A filial operacional responsável pela entrega/destino da carga.
+  // Prioriza praça/hub de destino (onde a entrega operacional acontece).
+  const hub = (ctrc.pracaHub || '').toUpperCase();
+  const dest = (ctrc.pracaDestino || '').toUpperCase();
+
+  if (hub && hub !== '') {
+    if (hub === 'VAG') return 'VGA';
+    return hub;
+  }
+  if (dest && dest !== '') {
+    if (dest === 'VAG') return 'VGA';
+    return dest;
+  }
+
+  // Fallback: se não há hub, usamos a unidade de origem/documento
+  const unid = (ctrc.unid || '').toUpperCase();
+  // VGS (Subcontrato Varginha) ou VAG pertencem à operação VGA
+  if (unid === 'VAG' || unid === 'VGS') return 'VGA';
+
+  return unid || 'DESCONHECIDA';
+}
+
 export function isEligibleForUnit(ctrc: RoteirizacaoItem, targetUnit: string): boolean {
   const unitUpper = (targetUnit || '').toUpperCase();
   if (unitUpper === 'TODAS') return true;
 
-  const currentUnid = (ctrc.unid || '').toUpperCase();
-  // Se a unidade do CTRC bater de forma direta com a filial ativa
-  const isDirectUnit = currentUnid === unitUpper || 
-    (unitUpper === 'VGA' && currentUnid === 'VAG') ||
-    (unitUpper === 'VAG' && currentUnid === 'VGA');
-
-  if (isDirectUnit) return true;
-
-  // Se a localização atual do CTRC for no pátio ou custódia física da filial ativa
-  const locUpper = (ctrc.locationLabel || ctrc.localizacao || '').toUpperCase();
-  const isPhysicallyHere = locUpper.includes(unitUpper) ||
-    (unitUpper === 'VGA' && (locUpper.includes('VAG') || locUpper.includes('VARGINHA')));
+  const operationalUnit = getMesaOperationalUnit(ctrc);
   
-  if (isPhysicallyHere) return true;
-
-  // Se o CTRC está sob responsabilidade de entrega (aguardando entrega pela filial ativa)
-  const hubUpper = (ctrc.pracaHub || '').toUpperCase();
-  const destUpper = (ctrc.pracaDestino || '').toUpperCase();
-  const isAwaitingDeliveryFromHere = hubUpper === unitUpper || 
-    destUpper === unitUpper ||
-    (unitUpper === 'VGA' && (hubUpper === 'VAG' || destUpper === 'VAG'));
-
-  if (isAwaitingDeliveryFromHere) return true;
+  if (operationalUnit === unitUpper) return true;
+  
+  // Aliases safety just in case
+  if (unitUpper === 'VGA' && operationalUnit === 'VAG') return true;
+  if (unitUpper === 'VAG' && operationalUnit === 'VGA') return true;
 
   return false;
 }
@@ -572,7 +579,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
   };
 
   const uniqueUnits = useMemo(() => {
-    const list = ctrcs.map(c => (c.unid || 'DESCONHECIDA').toUpperCase().trim());
+    const list = ctrcs.map(c => getMesaOperationalUnit(c));
     return Array.from(new Set(list)).filter(u => u !== '' && u !== 'TODAS').sort();
   }, [ctrcs]);
 
