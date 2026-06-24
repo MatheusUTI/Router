@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio, VehicleRegistry } from './types';
+import React, { useState, useEffect } from 'react';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio, VehicleRegistry, VehicleGrRule } from './types';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import { IS_DEMO_MODE } from './constants/runtimeMode';
 import {
@@ -30,6 +30,7 @@ import { runCompatibilityMigration } from './infrastructure/localdb/adapters/loc
 import { CtrcRepository } from './infrastructure/localdb/repositories/ctrcRepository';
 import { VehicleRepository } from './infrastructure/localdb/repositories/vehicleRepository';
 import { VehicleRegistryRepository } from './infrastructure/localdb/repositories/vehicleRegistryRepository';
+import { VehicleGrRuleRepository } from './infrastructure/localdb/repositories/vehicleGrRuleRepository';
 import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
@@ -59,6 +60,8 @@ import OcorrenciasView from './components/OcorrenciasView';
 import CurvaAView from './components/CurvaAView';
 import CidadesRotasView from './components/CidadesRotasView';
 import BaseDadosView from './components/BaseDadosView';
+import CtrcSswView from './components/CtrcSswView';
+import RegrasGrView from './components/RegrasGrView';
 
 // Helper to determine if a status is "available"
 export const notAvailableStatuses = new Set<string>([
@@ -201,9 +204,22 @@ export default function App() {
     unid: DEFAULT_OPERATIONAL_UNIT
   });
 
+  // Master Session Control & Intercept States
+  const [isSessionUnlocked, setIsSessionUnlocked] = useState(false);
+  const [showMasterUnlockModal, setShowMasterUnlockModal] = useState(false);
+  const [pendingTargetView, setPendingTargetView] = useState<ViewType | null>(null);
+  const [unlockPasswordInput, setUnlockPasswordInput] = useState('');
+  const [unlockError, setUnlockError] = useState('');
+
+  // Automatically unlock master screens for logged-in master users
+  useEffect(() => {
+    setIsSessionUnlocked(adminProfile?.is_master === true);
+  }, [adminProfile]);
+
   // Global Operational Databases State
   const [vehicles, setVehicles] = useState<Vehicle[]>(IS_DEMO_MODE ? initialVehicles : []);
   const [vehicleRegistries, setVehicleRegistries] = useState<VehicleRegistry[]>([]);
+  const [grRules, setGrRules] = useState<VehicleGrRule[]>([]);
   const [drivers, setDrivers] = useState<DriverScore[]>(IS_DEMO_MODE ? initialDrivers : []);
   const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialAvailableCtrcs : []);
   const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialLinkedCtrcs : []);
@@ -319,6 +335,9 @@ export default function App() {
         const localVehicleRegistries = await VehicleRegistryRepository.getAll();
         setVehicleRegistries(localVehicleRegistries);
 
+        const localGrRules = await VehicleGrRuleRepository.getAll();
+        setGrRules(localGrRules);
+
         const localDrivers = await DriverRepository.getAll();
         if (localDrivers.length > 0) {
           setDrivers(localDrivers);
@@ -412,6 +431,12 @@ export default function App() {
     await VehicleRegistryRepository.delete(placa);
     const updated = await VehicleRegistryRepository.getAll();
     setVehicleRegistries(updated);
+  };
+
+  const handleUpdateGrRule = async (rule: VehicleGrRule) => {
+    await VehicleGrRuleRepository.put(rule);
+    const updated = await VehicleGrRuleRepository.getAll();
+    setGrRules(updated);
   };
 
   const handleAddDriver = async (d: DriverScore) => {
@@ -930,9 +955,122 @@ export default function App() {
   };
 
   // ---------------------------------------------------------
+  // SECURE ADMINISTRATION VIEW REORGANIZATION & GUARD
+  // ---------------------------------------------------------
+  const ADMIN_VIEWS = new Set<ViewType>([
+    'frota',
+    'desempenho',
+    'solucao',
+    'clientes',
+    'ocorrencias',
+    'curva_a',
+    'base_dados',
+    'configuracoes',
+    'regras_gr'
+  ]);
+
+  const handleDirectUnlockSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (unlockPasswordInput === '123') {
+      setIsSessionUnlocked(true);
+      setUnlockPasswordInput('');
+      setUnlockError('');
+    } else {
+      setUnlockError('Senha mestre incorreta. Tente novamente.');
+    }
+  };
+
+  const handleSidebarUnlockSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (unlockPasswordInput === '123') {
+      setIsSessionUnlocked(true);
+      setShowMasterUnlockModal(false);
+      setUnlockPasswordInput('');
+      setUnlockError('');
+      if (pendingTargetView) {
+        setCurrentView(pendingTargetView);
+        setPendingTargetView(null);
+      }
+    } else {
+      setUnlockError('Senha mestre incorreta. Tente novamente.');
+    }
+  };
+
+  const handleViewChange = (view: ViewType) => {
+    if (ADMIN_VIEWS.has(view) && !isSessionUnlocked) {
+      setPendingTargetView(view);
+      setUnlockPasswordInput('');
+      setUnlockError('');
+      setShowMasterUnlockModal(true);
+    } else {
+      setCurrentView(view);
+    }
+  };
+
+  // ---------------------------------------------------------
   // CONDITIONAL VIEW DISPATCHER
   // ---------------------------------------------------------
   const renderActiveView = () => {
+    // Route-level security guard: block rendering if trying to access restricted view without unlocking
+    if (ADMIN_VIEWS.has(currentView) && !isSessionUnlocked) {
+      return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4 py-8">
+          <div className="bg-surface-container border border-outline-variant max-w-md w-full rounded-2xl p-6 md:p-8 text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-amber-500" />
+            
+            <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-[36px] select-none">lock</span>
+            </div>
+
+            <h2 className="text-xl font-bold text-on-surface mb-2 tracking-tight">
+              Área Administrativa Protegida
+            </h2>
+            
+            <p className="text-xs text-[var(--router-text-soft)] mb-6 leading-relaxed">
+              Você está tentando acessar uma tela de configuração ou auditoria restrita. Insira a senha mestre para desbloquear o acesso.
+            </p>
+
+            <form onSubmit={handleDirectUnlockSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  placeholder="Senha Mestre (padrão: 123)"
+                  value={unlockPasswordInput}
+                  onChange={(e) => {
+                    setUnlockPasswordInput(e.target.value);
+                    setUnlockError('');
+                  }}
+                  className="w-full bg-[var(--router-input-bg)] border border-[var(--router-input-border)] text-on-surface text-center rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--router-primary)] focus:ring-1 focus:ring-[var(--router-primary)]/30 font-sans tracking-widest placeholder:tracking-normal placeholder:font-sans"
+                  autoFocus
+                />
+                {unlockError && (
+                  <p className="text-[11px] text-[var(--router-danger)] font-semibold mt-2">
+                    ⚠️ {unlockError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('dashboard')}
+                  className="w-1/2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-on-surface-variant font-medium py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Voltar ao Painel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Desbloquear
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'dashboard':
         return (
@@ -944,6 +1082,8 @@ export default function App() {
         );
       case 'importacao':
         return <ImportacaoView onAddCtrcs={handleAddCtrcs} adminUser={adminProfile} />;
+      case 'ctrcs_ssw':
+        return <CtrcSswView onRefreshCtrcs={rehydrateCtrcsOnly} />;
       case 'frota':
         return (
           <FrotaView
@@ -956,11 +1096,12 @@ export default function App() {
             onUpdateDriver={handleUpdateDriver}
             onRemoveDriver={handleRemoveDriver}
             searchValue={searchValue}
-            isMaster={adminProfile.is_master}
+            isMaster={isSessionUnlocked}
             vehicleRegistries={vehicleRegistries}
             onAddVehicleRegistry={handleAddVehicleRegistry}
             onUpdateVehicleRegistry={handleUpdateVehicleRegistry}
             onRemoveVehicleRegistry={handleRemoveVehicleRegistry}
+            grRules={grRules}
           />
         );
       case 'roteirizacao':
@@ -998,6 +1139,7 @@ export default function App() {
             onRefreshCtrcs={rehydrateCtrcsOnly}
             vehicleRegistries={vehicleRegistries}
             onAddVehicleRegistry={handleAddVehicleRegistry}
+            grRules={grRules}
           />
         );
       case 'desempenho':
@@ -1028,7 +1170,7 @@ export default function App() {
             onBulkImportOccurrences={handleBulkImportOccurrences}
             onClearAllOccurrences={handleClearAllOccurrences}
             isSyncing={isSyncing}
-            isMaster={adminProfile.is_master}
+            isMaster={isSessionUnlocked}
           />
         );
       case 'curva_a':
@@ -1040,17 +1182,26 @@ export default function App() {
             onRemoveClient={handleRemoveCurvaA}
             onBulkImportClients={handleBulkImportCurvaA}
             isSyncing={isSyncing}
-            isMaster={adminProfile.is_master}
+            isMaster={isSessionUnlocked}
           />
         );
       case 'cidades_rotas':
         return (
-          <CidadesRotasView />
+          <CidadesRotasView isMaster={isSessionUnlocked} />
+        );
+      case 'regras_gr':
+        return (
+          <RegrasGrView
+            adminUser={adminProfile ? { ...adminProfile, is_master: isSessionUnlocked } : null}
+            rules={grRules}
+            onUpdateRule={handleUpdateGrRule}
+            isSyncing={isSyncing}
+          />
         );
       case 'base_dados':
         return (
           <BaseDadosView
-            adminUser={adminProfile}
+            adminUser={{ ...adminProfile, is_master: isSessionUnlocked }}
             vehicles={vehicles}
             onAddVehicle={handleAddVehicle}
             onUpdateVehicle={handleUpdateVehicle}
@@ -1086,7 +1237,7 @@ export default function App() {
             onResetOP01={handleResetOP01}
             onResetOP02={handleResetOP02}
             onResetOP03={handleResetOP03}
-            adminUser={adminProfile}
+            adminUser={{ ...adminProfile, is_master: isSessionUnlocked }}
             onUpdateAdminUser={(user) => setAdminProfile(user)}
             vehicles={vehicles}
             drivers={drivers}
@@ -1127,12 +1278,13 @@ export default function App() {
       {/* Collapsible overlay sidebar */}
       <Sidebar
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={handleViewChange}
         adminName={adminProfile.name}
         adminRole={adminProfile.role}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isSessionUnlocked={isSessionUnlocked}
       />
 
       {/* Global page top-header */}
@@ -1153,6 +1305,69 @@ export default function App() {
       <main className={currentView === 'roteirizacao' ? 'p-1 w-full max-w-none' : 'p-4 sm:p-6 md:p-8 max-w-7xl mx-auto min-h-[calc(100vh-4rem)]'}>
         {renderActiveView()}
       </main>
+
+      {/* Master Unlock Modal Overlay */}
+      {showMasterUnlockModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-surface-container border border-outline-variant max-w-sm w-full rounded-2xl p-6 md:p-8 text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-amber-500" />
+            
+            <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-[24px] select-none">lock</span>
+            </div>
+
+            <h3 className="text-lg font-bold text-on-surface mb-1 tracking-tight">
+              Acesso Restrito Mestre
+            </h3>
+            
+            <p className="text-xs text-[var(--router-text-soft)] mb-5 leading-normal">
+              Insira a senha de usuário master para habilitar os recursos administrativos.
+            </p>
+
+            <form onSubmit={handleSidebarUnlockSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  placeholder="Senha Mestre"
+                  value={unlockPasswordInput}
+                  onChange={(e) => {
+                    setUnlockPasswordInput(e.target.value);
+                    setUnlockError('');
+                  }}
+                  className="w-full bg-[var(--router-input-bg)] border border-[var(--router-input-border)] text-on-surface text-center rounded-xl px-3 py-2 text-sm outline-none focus:border-[var(--router-primary)] focus:ring-1 focus:ring-[var(--router-primary)]/30 font-sans tracking-widest placeholder:tracking-normal placeholder:font-sans"
+                  autoFocus
+                />
+                {unlockError && (
+                  <p className="text-[11px] text-[var(--router-danger)] font-semibold mt-1.5">
+                    ⚠️ {unlockError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMasterUnlockModal(false);
+                    setPendingTargetView(null);
+                    setUnlockPasswordInput('');
+                    setUnlockError('');
+                  }}
+                  className="w-1/2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-on-surface-variant font-medium py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Desbloquear
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

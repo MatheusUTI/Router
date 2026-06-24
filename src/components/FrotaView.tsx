@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Vehicle, DriverScore, VehicleRegistry } from '../types';
+import { Vehicle, DriverScore, VehicleRegistry, VehicleGrRule } from '../types';
 import { calculateSuggestedGrLimit } from '../utils/grUtils';
 
 interface FrotaViewProps {
@@ -17,6 +17,7 @@ interface FrotaViewProps {
   onAddVehicleRegistry: (vr: VehicleRegistry) => void;
   onUpdateVehicleRegistry: (vr: VehicleRegistry) => void;
   onRemoveVehicleRegistry: (placa: string) => void;
+  grRules?: VehicleGrRule[];
 }
 
 export default function FrotaView({
@@ -34,6 +35,7 @@ export default function FrotaView({
   onAddVehicleRegistry,
   onUpdateVehicleRegistry,
   onRemoveVehicleRegistry,
+  grRules = [],
 }: FrotaViewProps) {
   const [subTab, setSubTab] = useState<'cadastro_gr' | 'veiculos' | 'motoristas'>('cadastro_gr');
   const [showForm, setShowForm] = useState<boolean>(false);
@@ -53,12 +55,12 @@ export default function FrotaView({
   const [vrStatusOperacional, setVrStatusOperacional] = useState<'ATIVO' | 'MANUTENCAO' | 'MANUTENÇÃO' | 'INATIVO'>('ATIVO');
   const [vrObservacoes, setVrObservacoes] = useState('');
 
-  // Auto-update suggested limit when type or tracking changes (only in non-editing mode, so we don't overwrite manual edits)
+  // Auto-update suggested limit when type or tracking changes
   useEffect(() => {
-    if (!editingId) {
-      setVrLimiteGrSugerido(calculateSuggestedGrLimit(vrTipo, vrRastreado));
+    if (!editingId || !isMaster) {
+      setVrLimiteGrSugerido(calculateSuggestedGrLimit(vrTipo, vrRastreado, grRules));
     }
-  }, [vrTipo, vrRastreado, editingId]);
+  }, [vrTipo, vrRastreado, editingId, grRules, isMaster]);
 
   // Form Fields for Vehicle
   const [vehiclePlaca, setVehiclePlaca] = useState('');
@@ -116,11 +118,17 @@ export default function FrotaView({
         alert("Preencha a placa do veículo.");
         return;
       }
+      let finalLimit = Number(vrLimiteGrSugerido) || 0;
+      // Logical blocking: operators cannot override corporative GR limits manually (RF03 / RF05)
+      if (!isMaster) {
+        finalLimit = calculateSuggestedGrLimit(vrTipo, vrRastreado, grRules);
+      }
+
       const vr: VehicleRegistry = {
         placa: vrPlaca.toUpperCase().trim(),
         tipo: vrTipo,
         rastreado: vrRastreado,
-        limiteGrSugerido: Number(vrLimiteGrSugerido) || 0,
+        limiteGrSugerido: finalLimit,
         motoristaPadrao: vrMotoristaPadrao || undefined,
         ajudantePadrao: vrAjudantePadrao || undefined,
         statusOperacional: vrStatusOperacional,
@@ -458,16 +466,31 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Limite GR Sugerido (R$)</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1 flex items-center gap-1">
+                  Limite GR Sugerido (R$)
+                  {!isMaster && (
+                    <span className="material-symbols-outlined text-[14px] text-amber-400 select-none cursor-help" title="Campo protegido: Calculado automaticamente para Operadores">lock</span>
+                  )}
+                </label>
                 <select
                   value={vrLimiteGrSugerido}
                   onChange={(e) => setVrLimiteGrSugerido(Number(e.target.value))}
-                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={!isMaster}
                 >
                   <option value={300000}>Até R$ 300.000 (Padrão)</option>
                   <option value={500000}>Até R$ 500.000 (Avançado)</option>
                   <option value={1000000}>Até R$ 1.000.000 (Especial)</option>
+                  {![300000, 500000, 1000000].includes(vrLimiteGrSugerido) && (
+                    <option value={vrLimiteGrSugerido}>R$ {vrLimiteGrSugerido.toLocaleString('pt-BR')}</option>
+                  )}
                 </select>
+                {!isMaster && (
+                  <p className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-[10px]">info</span>
+                    Regra corporativa protegida (GR).
+                  </p>
+                )}
               </div>
 
               <div className="text-left">

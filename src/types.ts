@@ -12,7 +12,9 @@ export type ViewType =
   | 'curva_a'
   | 'cidades_rotas'
   | 'configuracoes'
-  | 'base_dados';
+  | 'base_dados'
+  | 'ctrcs_ssw'
+  | 'regras_gr';
 
 export interface Vehicle {
   id: string; // Placa
@@ -521,6 +523,15 @@ export interface VehicleRegistry {
   observacoes?: string;
   updated_at?: string;
   created_at?: string;
+}
+
+export interface VehicleGrRule {
+  id: string; // classification type: e.g. 'PROPRIO', 'AGREGADO', 'APOIO', 'TERCEIRO'
+  vehicleType: string; // e.g., 'PROPRIO', 'AGREGADO', 'APOIO', 'TERCEIRO'
+  maxValueWithoutGr: number;
+  requiresTrackingAboveValue: boolean;
+  requiresAuthorizationAboveLimit: boolean;
+  blocksRoutingAboveLimit: boolean;
 }
 
 

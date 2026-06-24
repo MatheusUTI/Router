@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ViewType } from '../types';
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
+  isSessionUnlocked?: boolean;
 }
 
 export default function Sidebar({
@@ -19,35 +20,59 @@ export default function Sidebar({
   onLogout,
   isOpen,
   onClose,
+  isSessionUnlocked = false,
 }: SidebarProps) {
-  const coreItems = [
+  const [adminGroupExpanded, setAdminGroupExpanded] = useState(true);
+
+  // Operação views
+  const operationItems = [
     { view: 'dashboard' as ViewType, label: 'Painel Central', icon: 'dashboard', fillIcon: true },
     { view: 'importacao' as ViewType, label: 'Importação CSV', icon: 'upload_file', fillIcon: true },
     { view: 'roteirizacao' as ViewType, label: 'Roteirização', icon: 'route', fillIcon: false },
     { view: 'finalizacao' as ViewType, label: 'Programação do Dia', icon: 'assignment', fillIcon: false },
+    { view: 'cidades_rotas' as ViewType, label: 'Rotas / Cidades', icon: 'map', fillIcon: false },
+    { view: 'ctrcs_ssw' as ViewType, label: 'CTRCs / Consulta SSW', icon: 'find_in_page', fillIcon: false },
   ];
 
-  const adminItems = [
-    { view: 'base_dados' as ViewType, label: 'Base de Dados', icon: 'database', fillIcon: true },
-    { view: 'configuracoes' as ViewType, label: 'Sincronia / Cloud', icon: 'settings', fillIcon: false },
-  ];
-
-  const futureItems = [
-    { view: 'desempenho' as ViewType, label: 'Desempenho Kpi', icon: 'assessment', fillIcon: false, roadmap: true },
-    { view: 'solucao' as ViewType, label: 'Problemas de Rua', icon: 'report_problem', fillIcon: false, roadmap: true },
-  ];
-
-  const [futureExpanded, setFutureExpanded] = useState(false);
-  const isFutureActive = futureItems.some(i => i.view === currentView);
-
-  // Expand audit if one of them is currently selected
-  useEffect(() => {
-    if (isFutureActive) {
-      setFutureExpanded(true);
+  // Administração views grouped by the specified RF05 sub-menus
+  const adminCategories = [
+    {
+      groupLabel: 'Cadastros',
+      items: [
+        { view: 'frota' as ViewType, label: 'Frota & Motoristas', icon: 'local_shipping', fillIcon: true }
+      ]
+    },
+    {
+      groupLabel: 'Regras de Negócio',
+      items: [
+        { view: 'curva_a' as ViewType, label: 'Curva A', icon: 'analytics', fillIcon: false },
+        { view: 'ocorrencias' as ViewType, label: 'Ocorrências', icon: 'warning', fillIcon: false },
+        { view: 'clientes' as ViewType, label: 'Clientes Especiais', icon: 'folder_shared', fillIcon: false },
+        { view: 'regras_gr' as ViewType, label: 'Regras de GR', icon: 'security', fillIcon: false }
+      ]
+    },
+    {
+      groupLabel: 'Integrações',
+      items: [
+        { view: 'configuracoes' as ViewType, label: 'Sincronia / Cloud', icon: 'settings', fillIcon: false }
+      ]
+    },
+    {
+      groupLabel: 'Auditoria / Logs',
+      items: [
+        { view: 'desempenho' as ViewType, label: 'Desempenho KPI', icon: 'assessment', fillIcon: false },
+        { view: 'solucao' as ViewType, label: 'Problemas de Rua', icon: 'report_problem', fillIcon: false }
+      ]
+    },
+    {
+      groupLabel: 'Sistema / Banco',
+      items: [
+        { view: 'base_dados' as ViewType, label: 'Base de Dados', icon: 'database', fillIcon: true }
+      ]
     }
-  }, [currentView, isFutureActive]);
+  ];
 
-  const renderItem = (item: any) => {
+  const renderItem = (item: any, isAdm: boolean = false) => {
     const isActive = currentView === item.view;
     return (
       <li key={item.view}>
@@ -56,30 +81,34 @@ export default function Sidebar({
             onViewChange(item.view);
             onClose();
           }}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
+          className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-left transition-all duration-200 active:scale-[0.98] cursor-pointer ${
             isActive
               ? 'bg-surface-container-highest text-primary font-bold shadow-[inset_2px_0_0_currentColor]'
               : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
           }`}
         >
-          <span
-            className="material-symbols-outlined select-none text-[20px] shrink-0"
-            style={
-              item.fillIcon && isActive
-                ? { fontVariationSettings: "'FILL' 1" }
-                : undefined
-            }
-          >
-            {item.icon}
-          </span>
-          <span className="text-xs font-sans transition-all duration-300 opacity-100 md:opacity-0 group-hover:md:opacity-100 md:w-0 group-hover:md:w-auto overflow-hidden whitespace-nowrap flex items-center justify-between w-full">
-            <span>{item.label}</span>
-            {item.roadmap && (
-              <span className="text-[8px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1 py-0.2 rounded font-mono font-semibold uppercase tracking-wide">
-                Ref
-              </span>
-            )}
-          </span>
+          <div className="flex items-center gap-3 min-w-0">
+            <span
+              className="material-symbols-outlined select-none text-[18px] shrink-0"
+              style={
+                item.fillIcon && isActive
+                  ? { fontVariationSettings: "'FILL' 1" }
+                  : undefined
+              }
+            >
+              {item.icon}
+            </span>
+            <span className="text-xs font-sans transition-all duration-300 opacity-100 md:opacity-0 group-hover:md:opacity-100 md:w-0 group-hover:md:w-auto overflow-hidden whitespace-nowrap truncate">
+              {item.label}
+            </span>
+          </div>
+
+          {/* Secure lock badge for Admin items when locked */}
+          {isAdm && !isSessionUnlocked && (
+            <span className="material-symbols-outlined text-[13px] text-amber-500/70 select-none shrink-0 transition-all duration-300 opacity-100 md:opacity-0 group-hover:md:opacity-100">
+              lock
+            </span>
+          )}
         </button>
       </li>
     );
@@ -131,43 +160,48 @@ export default function Sidebar({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex-grow flex flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-none pb-4">
+        <div className="flex-grow flex flex-col gap-5 overflow-y-auto overflow-x-hidden scrollbar-none pb-4">
           
-          {/* Section: Core Operacional */}
-          <div>
-            <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-on-surface-variant/40 mb-1.5 px-3 md:hidden group-hover:md:block">
-              Core Operacional
+          {/* Section: Operação */}
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/70 mb-2 px-3 md:hidden group-hover:md:block">
+              Operação
             </p>
-            <ul className="flex flex-col gap-0.5">
-              {coreItems.map(renderItem)}
+            <ul className="flex flex-col gap-1">
+              {operationItems.map(item => renderItem(item, false))}
             </ul>
           </div>
 
-          {/* Section: Gestão de Ativos */}
-          <div>
-            <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-on-surface-variant/40 mb-1.5 px-3 md:hidden group-hover:md:block">
-              Ativos e Controle
-            </p>
-            <ul className="flex flex-col gap-0.5">
-              {adminItems.map(renderItem)}
-            </ul>
-          </div>
-
-          {/* Collapsible Section: Auditoria e Roadmap */}
-          <div className="border-t border-outline-variant/30 pt-3">
+          {/* Section: Administração (Collapsible & Secure) */}
+          <div className="border-t border-outline-variant/30 pt-4 space-y-1.5">
             <button
-              onClick={() => setFutureExpanded(!futureExpanded)}
-              className="w-full flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-widest text-on-surface-variant/40 mb-1.5 px-3 hover:text-on-surface transition-colors cursor-pointer select-none md:hidden group-hover:md:flex"
+              onClick={() => setAdminGroupExpanded(!adminGroupExpanded)}
+              className="w-full flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-amber-500 mb-2 px-3 hover:text-amber-400 transition-colors cursor-pointer select-none md:hidden group-hover:md:flex"
             >
-              <span>Auditoria & Supabase</span>
+              <span className="flex items-center gap-1.5">
+                <span>Administração</span>
+                {!isSessionUnlocked && (
+                  <span className="material-symbols-outlined text-[12px] text-amber-500">lock</span>
+                )}
+              </span>
               <span className="material-symbols-outlined text-[14px]">
-                {futureExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
+                {adminGroupExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
               </span>
             </button>
-            <div className={`${futureExpanded ? 'block' : 'hidden md:hidden'} space-y-0.5`}>
-              <ul className="flex flex-col gap-0.5">
-                {futureItems.map(renderItem)}
-              </ul>
+
+            {/* If sidebar is collapsed on desktop, we show admin items. Otherwise, we respect expansion */}
+            <div className={`${adminGroupExpanded ? 'block' : 'hidden md:block group-hover:md:hidden'} space-y-3`}>
+              {adminCategories.map((group) => (
+                <div key={group.groupLabel} className="space-y-1">
+                  {/* Sub-menu title */}
+                  <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-on-surface-variant/40 px-3 md:hidden group-hover:md:block">
+                    {group.groupLabel}
+                  </p>
+                  <ul className="flex flex-col gap-0.5">
+                    {group.items.map(item => renderItem(item, true))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
-import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal, VehicleRegistry } from '../types';
+import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal, VehicleRegistry, VehicleGrRule } from '../types';
 import { calculateSuggestedGrLimit } from '../utils/grUtils';
 import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
@@ -40,6 +40,7 @@ interface FinalizacaoViewProps {
   onRefreshCtrcs?: () => Promise<void>;
   vehicleRegistries?: VehicleRegistry[];
   onAddVehicleRegistry?: (vr: VehicleRegistry) => Promise<void>;
+  grRules?: VehicleGrRule[];
 }
 
 export default function FinalizacaoView({
@@ -53,6 +54,7 @@ export default function FinalizacaoView({
   onRefreshCtrcs,
   vehicleRegistries = [],
   onAddVehicleRegistry,
+  grRules = [],
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
   const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('preromaneio');
@@ -153,15 +155,15 @@ export default function FinalizacaoView({
 
   useEffect(() => {
     if (quickRegisterPlate) {
-      setQuickLimiteGrSugerido(calculateSuggestedGrLimit(quickTipo, quickRastreado));
+      setQuickLimiteGrSugerido(calculateSuggestedGrLimit(quickTipo, quickRastreado, grRules));
     }
-  }, [quickTipo, quickRastreado, quickRegisterPlate]);
+  }, [quickTipo, quickRastreado, quickRegisterPlate, grRules]);
 
   const handleOpenQuickRegisterModal = (plate: string) => {
     setQuickRegisterPlate(plate.toUpperCase().replace(/\s/g, '').trim());
     setQuickTipo('PROPRIO');
     setQuickRastreado(true);
-    setQuickLimiteGrSugerido(calculateSuggestedGrLimit('PROPRIO', true));
+    setQuickLimiteGrSugerido(calculateSuggestedGrLimit('PROPRIO', true, grRules));
     setQuickMotoristaPadrao('');
     setQuickAjudantePadrao('');
     setQuickStatusOperacional('ATIVO');
