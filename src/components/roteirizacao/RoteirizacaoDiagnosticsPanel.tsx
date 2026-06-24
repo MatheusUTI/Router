@@ -99,18 +99,18 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
   };
 
   return (
-    <div className="absolute top-14 right-3 z-50 w-[calc(100%-24px)] md:w-[480px] bg-[#0b1322]/98 border border-[#1e2e4f]/90 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col max-h-[80vh] animate-fade-in backdrop-blur-md">
+    <div className="absolute top-14 right-3 z-[60] w-[calc(100%-24px)] md:w-[480px] bg-white/95 dark:bg-[#0b1322]/98 border border-slate-200 dark:border-[#1e2e4f]/90 rounded-xl shadow-lg dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col max-h-[80vh] animate-fade-in backdrop-blur-md">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#14203a] bg-[#0e1726] flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-indigo-400">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-[#14203a] bg-slate-50 dark:bg-[#0e1726] flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400">
             <BarChart2 className="w-5 h-5 text-indigo-500 animate-pulse" />
-            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-100">
+            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100">
               Diagnóstico Operacional da Mesa de Roteirização
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-100 bg-[#14203a] rounded hover:bg-[#1e2e4f] transition-all"
+            className="p-1 text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 bg-slate-100 dark:bg-[#14203a] rounded hover:bg-slate-200 dark:hover:bg-[#1e2e4f] transition-all"
             title="Fechar"
           >
             <X className="w-4 h-4" />
@@ -118,17 +118,17 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
         </div>
 
         {/* Contents scrollable */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-indigo-550 scrollbar-track-[#080c14]">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-indigo-550 scrollbar-track-transparent dark:scrollbar-track-[#080c14]">
           
           {/* Smart Alerts */}
           {diagnostics.warnings.length > 0 && (
-            <div className="bg-amber-950/40 border border-amber-900/60 p-4 rounded-lg flex gap-3">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 rounded-lg flex gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <p className="font-sans text-xs font-bold uppercase text-amber-400 tracking-wider mb-1">
+                <p className="font-sans text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider mb-1">
                   Alertas Inteligentes de Roteirização
                 </p>
-                <ul className="text-[11px] font-sans text-amber-300 leading-relaxed list-disc list-inside space-y-1">
+                <ul className="text-[11px] font-sans text-amber-800 dark:text-amber-300 leading-relaxed list-disc list-inside space-y-1">
                   {diagnostics.warnings.map((warn, i) => (
                     <li key={i}>{warn}</li>
                   ))}
@@ -139,10 +139,10 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
           {/* Audit & Clean-up Contaminated CTRCs Panel */}
           {(diagnostics.contaminationCount ?? 0) > 0 && (
-            <div className="bg-rose-950/20 border border-rose-500/30 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2 text-rose-400">
+            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-pulse" />
-                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-rose-300">
+                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
                   Auditoria de Integridade Semântica (Destinatário = Cidade)
                 </h4>
               </div>
@@ -228,7 +228,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           )}
 
           {/* Funnel Pipeline Visualization */}
-          <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-4">
+          <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-4">
             <p className="font-mono text-[11px] font-bold uppercase text-indigo-300 tracking-wide mb-3">
               Funil do Processo de Filtro (Pipeline)
             </p>
@@ -273,8 +273,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           {/* Detailed distribution breakdowns counts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Unit */}
-            <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-300 block mb-2">
+            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Filtro de Filiais / Unidades
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
@@ -292,8 +292,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Occurrence Sector */}
-            <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-300 block mb-2">
+            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Setores de Ocorrência
               </span>
               <div className="space-y-1.5 font-mono text-[11px] max-h-48 overflow-y-auto pr-1">
@@ -311,8 +311,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Status counts */}
-            <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-300 block mb-2">
+            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Status Operacional da Carga (Fase)
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
@@ -330,8 +330,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </div>
 
             {/* Eligibility */}
-            <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-300 block mb-2">
+            <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
                 Elegibilidade de Roteirização
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
@@ -350,8 +350,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           </div>
 
           {/* Depot Compatibility counts */}
-          <div className="bg-[#0e1726] border border-[#14203a] rounded-lg p-3.5">
-            <span className="font-mono text-[10px] font-bold uppercase text-indigo-300 block mb-2">
+          <div className="bg-slate-50 dark:bg-[#0e1726] border border-slate-200 dark:border-[#14203a] rounded-lg p-3.5">
+            <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
               Compatibilidade de Box / Depósito
             </span>
             <div className="grid grid-cols-2 gap-4 font-mono text-xs">

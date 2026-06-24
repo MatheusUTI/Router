@@ -428,6 +428,7 @@ export default function CargaList({
                 onSortDesc={() => {}}
                 isSortedActiveAsc={false}
                 isSortedActiveDesc={false}
+                alignRight={true}
                 customTrigger={
                   <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
                     <span>OBS / DISP</span>
@@ -618,6 +619,7 @@ export default function CargaList({
                 }}
                 isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
+                alignRight={true}
                 customTrigger={
                   <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
                     <span>LOCALIZAÇÃO</span>

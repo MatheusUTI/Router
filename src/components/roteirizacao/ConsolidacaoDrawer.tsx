@@ -120,20 +120,20 @@ export default function ConsolidacaoDrawer({
       />
 
       {/* Drawer Body Sliding-in */}
-      <div className="fixed top-0 right-0 h-full w-[460px] max-w-full bg-[#080c14] border-l border-[#1a2440] shadow-2xl z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
+      <div className="fixed top-0 right-0 h-full w-[460px] max-w-full bg-white dark:bg-[#080c14] border-l border-slate-200 dark:border-[#1a2440] shadow-2xl z-50 flex flex-col overflow-hidden animate-[slide-in_200ms_ease-out]">
         
         {/* Header Section */}
-        <div className="bg-[#0b1322] px-4 py-3 border-b border-[#1a2440] flex items-center justify-between shrink-0 select-none">
+        <div className="bg-slate-50 dark:bg-[#0b1322] px-4 py-3 border-b border-slate-200 dark:border-[#1a2440] flex items-center justify-between shrink-0 select-none">
           <div className="flex items-center gap-2">
             <span className="text-base">🚛</span>
             <div>
-              <h2 className="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
-              <p className="text-[10px] text-indigo-400 font-bold uppercase font-mono mt-0.5">ALOCAÇÃO DE VEÍCULO EM PÁTIO</p>
+              <h2 className="text-[13px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
+              <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase font-mono mt-0.5">ALOCAÇÃO DE VEÍCULO EM PÁTIO</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-white font-black text-lg p-1.5 hover:bg-[#1a2440] rounded transition-all cursor-pointer leading-none"
+            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-black text-lg p-1.5 hover:bg-slate-200 dark:hover:bg-[#1a2440] rounded transition-all cursor-pointer leading-none"
             title="Fechar Painel"
           >
             &times;
@@ -141,36 +141,36 @@ export default function ConsolidacaoDrawer({
         </div>
 
         {/* Selected Cargo Mini Summary Metrics inside the Drawer */}
-        <div className="bg-[#0e1629] border-b border-[#14203a] p-3 text-xs shrink-0 select-none">
+        <div className="bg-slate-100 dark:bg-[#0e1629] border-b border-slate-200 dark:border-[#14203a] p-3 text-xs shrink-0 select-none">
           {selectedIds.length > 0 ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-indigo-300 font-black uppercase text-[12px] tracking-wider">Carga Consolidada Pronta:</span>
-                <span className="bg-indigo-650 text-white font-black px-1.5 py-0.3 rounded text-[11px]">
+                <span className="text-indigo-700 dark:text-indigo-300 font-black uppercase text-[12px] tracking-wider">Carga Consolidada Pronta:</span>
+                <span className="bg-indigo-600 dark:bg-indigo-650 text-white font-black px-1.5 py-0.3 rounded text-[11px]">
                   {selectedIds.length} CTRCs
                 </span>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-[12.5px] font-mono border-t border-indigo-950/40 pt-1.5 text-slate-300">
+              <div className="grid grid-cols-2 gap-2 text-[12.5px] font-mono border-t border-slate-200 dark:border-indigo-950/40 pt-1.5 text-slate-600 dark:text-slate-300">
                 <div>
-                  PESO: <span className="text-emerald-400 font-bold">{selectedWeight >= 1000 ? `${(selectedWeight / 1000).toFixed(2)}t` : `${selectedWeight} kg`}</span>
+                  PESO: <span className="text-emerald-600 dark:text-emerald-400 font-bold">{selectedWeight >= 1000 ? `${(selectedWeight / 1000).toFixed(2)}t` : `${selectedWeight} kg`}</span>
                 </div>
                 <div>
-                  VOLUMES: <span className="text-yellow-400 font-bold">{selectedVolume}</span>
+                  VOLUMES: <span className="text-amber-600 dark:text-yellow-400 font-bold">{selectedVolume}</span>
                 </div>
                 <div>
-                  CIDADES: <span className="text-sky-400 font-bold">{uniqueCities}</span>
+                  CIDADES: <span className="text-sky-600 dark:text-sky-400 font-bold">{uniqueCities}</span>
                 </div>
                 <div>
-                  ATRASADOS: <span className={`font-bold ${delayedCount > 0 ? 'text-red-400' : 'text-slate-400'}`}>{delayedCount}</span>
+                  ATRASADOS: <span className={`font-bold ${delayedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-400'}`}>{delayedCount}</span>
                 </div>
               </div>
 
               {recommendedVehicleId && (
-                <div className="mt-1 bg-amber-500/10 border border-amber-500/25 rounded p-1.5 text-[11.5px] text-amber-300 flex items-start gap-1 font-sans leading-relaxed">
+                <div className="mt-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded p-1.5 text-[11.5px] text-amber-800 dark:text-amber-300 flex items-start gap-1 font-sans leading-relaxed">
                   <span>💡</span>
                   <p className="font-bold">
-                    Veículo <span className="font-mono bg-amber-500/10 px-1 rounded">{recommendedVehicleId}</span> é recomendado para este lote por eficiência de aproveitamento de carga.
+                    Veículo <span className="font-mono bg-amber-100 dark:bg-amber-500/10 px-1 rounded">{recommendedVehicleId}</span> é recomendado para este lote por eficiência de aproveitamento de carga.
                   </p>
                 </div>
               )}
@@ -184,12 +184,12 @@ export default function ConsolidacaoDrawer({
         </div>
 
         {/* Vehicles Scrolling Panel Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 scrollbar-thin scrollbar-track-[#080c14] scrollbar-thumb-indigo-550 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-[#080c14] scrollbar-thumb-indigo-500 dark:scrollbar-thumb-indigo-550 scroll-smooth">
           {finalVehiclesList.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-1.5 p-4 text-center">
               <span className="text-3xl">📭</span>
               <p className="text-xs font-bold uppercase font-mono">Nenhum veículo disponível no pátio logístico</p>
-              <p className="text-[10px] text-slate-600 uppercase">Verifique o cadastro de frotas e certifique-se de que há veículos ativos com status Pátio.</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-600 uppercase">Verifique o cadastro de frotas e certifique-se de que há veículos ativos com status Pátio.</p>
             </div>
           ) : (
             finalVehiclesList.map((vehicle) => {
@@ -224,7 +224,7 @@ export default function ConsolidacaoDrawer({
         </div>
 
         {/* Footer Area with informative message */}
-        <div className="bg-[#0b1322] border-t border-[#1a2440] p-3 text-center text-[9.5px] text-slate-500 select-none uppercase font-mono shrink-0">
+        <div className="bg-slate-50 dark:bg-[#0b1322] border-t border-slate-200 dark:border-[#1a2440] p-3 text-center text-[9.5px] text-slate-400 dark:text-slate-500 select-none uppercase font-mono shrink-0">
           <span>Soberania Offline · Router Expedição</span>
         </div>
 

@@ -1006,7 +1006,7 @@ export default function RoteirizacaoView({
 
       {/* Persistent Overlay Toast alerts */}
       {toastMessage && (
-        <div className="absolute top-16 right-4 z-50 bg-[#0d1527] border-l-4 border-indigo-500 border-y border-r border-[#1a2440] text-indigo-300 text-xs p-3 rounded-lg shadow-2xl flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
+        <div className="absolute top-16 right-4 z-[70] bg-white dark:bg-[#0d1527] border-l-4 border-l-indigo-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-[#1a2440] dark:border-r-[#1a2440] text-indigo-700 dark:text-indigo-300 text-xs p-3 rounded-lg shadow-xl flex items-center gap-2 max-w-sm animate-bounce font-sans font-bold">
           {toastMessage.startsWith('📌') || toastMessage.startsWith('📝') ? (
             <span>📌</span>
           ) : (

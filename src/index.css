@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+@layer components {
+  .mesa-popover {
+    @apply bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-md shadow-slate-200/50 dark:shadow-xl dark:shadow-slate-900/50 rounded-xl overflow-hidden z-[60] text-slate-800 dark:text-slate-200 flex flex-col;
+  }
+  .mesa-popover-header {
+    @apply px-3 py-2 bg-slate-50 dark:bg-[#111827] border-b border-slate-200 dark:border-slate-700 flex items-center justify-between;
+  }
+  .mesa-popover-header-title {
+    @apply font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-[9.5px];
+  }
+  .mesa-popover-search {
+    @apply px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-1.5 bg-white dark:bg-[#0F172A];
+  }
+  .mesa-popover-input {
+    @apply bg-transparent border-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 w-full text-[11px] font-bold font-sans;
+  }
+  .mesa-popover-option {
+    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-[11px] transition-colors leading-tight truncate uppercase;
+  }
+  .mesa-popover-footer {
+    @apply p-2 bg-slate-50 dark:bg-[#111827] border-t border-slate-200 dark:border-slate-700 flex items-center gap-2;
+  }
+  .mesa-btn-clear {
+    @apply px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-[10.5px] font-black uppercase rounded disabled:opacity-35 select-none cursor-pointer transition-all flex-1 text-center;
+  }
+  .mesa-btn-apply {
+    @apply px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-[10.5px] font-black uppercase rounded select-none cursor-pointer shadow-sm transition-all flex-1 text-center;
+  }
+}
+
 :root {
   --app-bg: #F6F8FC;
   --app-surface: #FFFFFF;
