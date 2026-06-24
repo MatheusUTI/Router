@@ -978,6 +978,7 @@ export default function App() {
             onRefreshCtrcs={rehydrateCtrcsOnly}
             theme={theme}
             onToggleTheme={handleToggleTheme}
+            occurrences={occurrences}
           />
         );
       case 'finalizacao':

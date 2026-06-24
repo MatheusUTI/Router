@@ -1,40 +1,55 @@
-import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
+import { useState, useRef, DragEvent, ChangeEvent, FormEvent, useMemo } from 'react';
 import { DeliveryOccurrence } from '../types';
 
-function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): string {
+interface DecodedResult {
+  text: string;
+  encoding: string;
+  hasCorrupted: boolean;
+}
+
+function decodeBufferWithBestEncoding(arrayBuffer: ArrayBuffer): DecodedResult {
   const uint8Array = new Uint8Array(arrayBuffer);
   
-  // 1. Try UTF-8 first
-  const utf8Decoder = new TextDecoder('utf-8');
-  const utf8Text = utf8Decoder.decode(uint8Array);
-  
-  // Check if the decoded UTF-8 contains the replacement character ''
-  if (!utf8Text.includes('')) {
-    return utf8Text;
+  // 1. First check UTF-8 BOM (0xEF, 0xBB, 0xBF)
+  if (uint8Array.length >= 3 && uint8Array[0] === 0xEF && uint8Array[1] === 0xBB && uint8Array[2] === 0xBF) {
+    const sliced = uint8Array.slice(3);
+    const utf8Decoder = new TextDecoder('utf-8');
+    const text = utf8Decoder.decode(sliced);
+    const hasCorrupted = text.includes('\uFFFD') || text.includes('');
+    return { text, encoding: 'UTF-8 BOM', hasCorrupted };
   }
   
-  // 2. Try Windows-1252 if UTF-8 contains ''
+  // 2. Try standard UTF-8
+  const utf8Decoder = new TextDecoder('utf-8');
+  const utf8Text = utf8Decoder.decode(uint8Array);
+  if (!utf8Text.includes('\uFFFD') && !utf8Text.includes('')) {
+    return { text: utf8Text, encoding: 'UTF-8', hasCorrupted: false };
+  }
+  
+  // 3. Try Windows-1252
   try {
     const win1252Decoder = new TextDecoder('windows-1252');
     const win1252Text = win1252Decoder.decode(uint8Array);
-    if (!win1252Text.includes('')) {
-      return win1252Text;
+    if (!win1252Text.includes('\uFFFD') && !win1252Text.includes('')) {
+      return { text: win1252Text, encoding: 'Windows-1252', hasCorrupted: false };
     }
   } catch (e) {
     console.error('Windows-1252 decoding failed:', e);
   }
   
-  // 3. Try ISO-8859-1 as fallback
+  // 4. Try ISO-8859-1
   try {
     const isoDecoder = new TextDecoder('iso-8859-1');
     const isoText = isoDecoder.decode(uint8Array);
-    return isoText;
+    const hasCorrupted = isoText.includes('\uFFFD') || isoText.includes('');
+    return { text: isoText, encoding: 'ISO-8859-1', hasCorrupted };
   } catch (e) {
     console.error('ISO-8859-1 decoding failed:', e);
   }
   
-  // Absolute fallback
-  return utf8Text;
+  // Fallback to UTF-8
+  const hasCorrupted = utf8Text.includes('\uFFFD') || utf8Text.includes('');
+  return { text: utf8Text, encoding: 'UTF-8 (com erro)', hasCorrupted };
 }
 
 interface OcorrenciasViewProps {
@@ -138,7 +153,19 @@ export default function OcorrenciasView({
   const [importDelimiter, setImportDelimiter] = useState(';');
   const [importedPreview, setImportedPreview] = useState<DeliveryOccurrence[]>([]);
   const [importFileName, setImportFileName] = useState<string | null>(null);
+  const [detectedEncoding, setDetectedEncoding] = useState<string>('');
+  const [previewHasCorrupted, setPreviewHasCorrupted] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uniqueSectorsInPreview = useMemo(() => {
+    const sectorsSet = new Set<string>();
+    importedPreview.forEach(o => {
+      if (o.setor_ocorr) {
+        sectorsSet.add(o.setor_ocorr.trim());
+      }
+    });
+    return Array.from(sectorsSet);
+  }, [importedPreview]);
 
   // Filter lists
   const responsabilidades = ['Todos', 'Transportador', 'Remetente', 'Destinatário', 'Cliente', 'Ajudante', 'Alheio'];
@@ -213,8 +240,11 @@ export default function OcorrenciasView({
     }
   };
 
-  const loadCsvContent = (text: string) => {
-    const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const loadCsvContent = (decoded: DecodedResult) => {
+    setDetectedEncoding(decoded.encoding);
+    setPreviewHasCorrupted(decoded.hasCorrupted);
+
+    const rawLines = decoded.text.split(/\r?\n/).map(l => l.trim().replace(/^\uFEFF/, '')).filter(l => l.length > 0);
     setImportLines(rawLines);
 
     // Auto-detect delimiter Semicolon vs Comma
@@ -225,12 +255,13 @@ export default function OcorrenciasView({
       if (commas > semicolons) detected = ',';
     }
     setImportDelimiter(detected);
-    parseList(rawLines, detected);
+    parseList(rawLines, detected, decoded.hasCorrupted);
   };
 
-  const parseList = (rawLines: string[], delim: string) => {
+  const parseList = (rawLines: string[], delim: string, hasCorruptedFromDecode: boolean = false) => {
     if (rawLines.length < 2) {
       setImportedPreview([]);
+      setPreviewHasCorrupted(hasCorruptedFromDecode);
       return;
     }
 
@@ -240,6 +271,8 @@ export default function OcorrenciasView({
     const records = isHeader ? rawLines.slice(1) : rawLines;
 
     const list: DeliveryOccurrence[] = [];
+    let hasCorruptedField = hasCorruptedFromDecode;
+
     records.forEach((line) => {
       const cells = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
       if (cells.length < 2 || cells.every(c => c === '')) return;
@@ -247,6 +280,13 @@ export default function OcorrenciasView({
       const codeVal = cells[0].toUpperCase();
       const descVal = cells[1];
       if (!codeVal || !descVal) return;
+
+      // Audit cells for replacement character
+      cells.forEach(cell => {
+        if (cell.includes('\uFFFD') || cell.includes('')) {
+          hasCorruptedField = true;
+        }
+      });
 
       list.push({
         codigo: codeVal,
@@ -260,6 +300,7 @@ export default function OcorrenciasView({
     });
 
     setImportedPreview(list);
+    setPreviewHasCorrupted(hasCorruptedField);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -274,8 +315,8 @@ export default function OcorrenciasView({
       const reader = new FileReader();
       reader.onload = (event) => {
         const arrayBuffer = event.target?.result as ArrayBuffer;
-        const decodedText = decodeBufferWithBestEncoding(arrayBuffer);
-        loadCsvContent(decodedText);
+        const decodedResult = decodeBufferWithBestEncoding(arrayBuffer);
+        loadCsvContent(decodedResult);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -289,8 +330,8 @@ export default function OcorrenciasView({
       const reader = new FileReader();
       reader.onload = (event) => {
         const arrayBuffer = event.target?.result as ArrayBuffer;
-        const decodedText = decodeBufferWithBestEncoding(arrayBuffer);
-        loadCsvContent(decodedText);
+        const decodedResult = decodeBufferWithBestEncoding(arrayBuffer);
+        loadCsvContent(decodedResult);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -328,7 +369,7 @@ export default function OcorrenciasView({
 04;AVARIA DE MERCADORIA NO RATEIO;Transportador;Avaria;Qualidade;Sim;Recusa parcial com devolução imediata
 09;DIVERGENCIA DE PREÇOS NA NF;Remetente;Fiscal;Comercial;Não;Aprovação de desconto com filial emissora`;
     setImportFileName("exemplo_ocorrencias.csv");
-    loadCsvContent(demo);
+    loadCsvContent({ text: demo, encoding: 'Simulado (UTF-8)', hasCorrupted: false });
   };
 
   const handleExportJson = () => {
@@ -601,17 +642,40 @@ export default function OcorrenciasView({
               </div>
               
               {importFileName && (
-                <div className="p-3 bg-[#111624] rounded-lg border border-[var(--router-border)]/40 text-[11px] font-mono flex items-center justify-between">
-                  <span className="truncate text-white">{importFileName}</span>
-                  <span className="text-emerald-400 font-bold shrink-0">{importedPreview.length} registros</span>
+                <div className="p-3 bg-[#111624] rounded-lg border border-[var(--router-border)]/40 text-[11px] font-mono space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="truncate text-white font-bold">{importFileName}</span>
+                    <span className="text-emerald-400 font-bold shrink-0">{importedPreview.length} registros</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-[#9cb4e4]">Codificação Detectada:</span>
+                    <span className="px-2 py-0.5 rounded font-bold bg-[#1b2540] text-primary">{detectedEncoding || 'Desconhecido'}</span>
+                  </div>
+                </div>
+              )}
+
+              {previewHasCorrupted && (
+                <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-[11px] text-[#fca5a5] space-y-2 text-left">
+                  <div className="flex items-center gap-1.5 font-bold text-rose-400">
+                    <span className="material-symbols-outlined text-[16px]">warning</span>
+                    BLOQUEIO DE CORRUPÇÃO DE CARACTERES
+                  </div>
+                  <p>
+                    O arquivo importado contém caracteres corrompidos (<strong className="bg-rose-500/20 px-1 py-0.2 rounded text-white"></strong>).
+                  </p>
+                  <p className="text-[10px] leading-relaxed opacity-90">
+                    A importação foi bloqueada preventivamente para preservar a integridade da Mesa de Roteirização. Por favor, exporte ou salve seu arquivo CSV usando codificação <strong>UTF-8</strong> (com ou sem BOM) e tente novamente.
+                  </p>
                 </div>
               )}
 
               <button
-                disabled={importedPreview.length === 0}
+                disabled={importedPreview.length === 0 || previewHasCorrupted}
                 onClick={handleApplyCsvImport}
                 className={`w-full py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-transform ${
-                  importedPreview.length === 0 ? 'bg-[var(--router-surface-2)] text-[var(--router-text-muted)] cursor-not-allowed' : 'bg-primary hover:bg-[#4d8eff] text-white'
+                  (importedPreview.length === 0 || previewHasCorrupted)
+                    ? 'bg-[var(--router-surface-2)] text-[var(--router-text-muted)] cursor-not-allowed'
+                    : 'bg-primary hover:bg-[#4d8eff] text-white'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">verified_user</span>
@@ -621,23 +685,43 @@ export default function OcorrenciasView({
           </div>
 
           {importedPreview.length > 0 && (
-            <div className="border border-[var(--router-border)]/40 rounded-xl overflow-hidden mt-4">
-              <div className="bg-[#12192a] px-4 py-2 border-b border-[var(--router-border)]/40 text-[10px] font-bold text-white uppercase tracking-wider">
-                Amostra das ocorrências identificadas
+            <div className="space-y-4">
+              <div className="border border-[var(--router-border)]/40 rounded-xl overflow-hidden mt-4">
+                <div className="bg-[#12192a] px-4 py-2 border-b border-[var(--router-border)]/40 text-[10px] font-bold text-white uppercase tracking-wider flex justify-between items-center">
+                  <span>Amostra das ocorrências identificadas (Primeiras 5 linhas)</span>
+                  <span className="text-[9px] font-mono opacity-75">Exibindo {Math.min(5, importedPreview.length)} de {importedPreview.length}</span>
+                </div>
+                <div className="max-h-[160px] overflow-y-auto font-mono text-[10px] divide-y divide-outline-variant/20 bg-[#111624]">
+                  {importedPreview.slice(0, 5).map((row, i) => (
+                    <div key={i} className="p-2.5 flex items-center justify-between hover:bg-[var(--router-surface-2)]/10 gap-4">
+                      <div className="truncate text-left">
+                        <span className="text-primary font-bold mr-2">[{row.codigo}]</span>
+                        <span className="text-white font-sans">{row.descricao}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-[#9cb4e4] bg-[#161d30] px-1.5 py-0.5 rounded text-[9px]">{row.responsabilidade}</span>
+                        <span className="text-amber-200 bg-amber-500/10 px-1.5 py-0.5 rounded text-[9px]">{row.tipo}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="max-h-[140px] overflow-y-auto font-mono text-[10px] divide-y divide-outline-variant/20 bg-[#111624]">
-                {importedPreview.slice(0, 4).map((row, i) => (
-                  <div key={i} className="p-2.5 flex items-center justify-between hover:bg-[var(--router-surface-2)]/10 gap-4">
-                    <div className="truncate text-left">
-                      <span className="text-primary font-bold mr-2">[{row.codigo}]</span>
-                      <span className="text-white font-sans">{row.descricao}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-[#9cb4e4] bg-[#161d30] px-1.5 py-0.5 rounded text-[9px]">{row.responsabilidade}</span>
-                      <span className="text-amber-200 bg-amber-500/10 px-1.5 py-0.5 rounded text-[9px]">{row.tipo}</span>
-                    </div>
-                  </div>
-                ))}
+
+              {/* Unique Sectors detected */}
+              <div className="p-3 bg-[#111624]/60 border border-[var(--router-border)]/30 rounded-xl text-left">
+                <span className="text-[10px] font-bold text-[#9cb4e4] uppercase tracking-wider block mb-2">
+                  Setores de Ocorrência Detectados ({uniqueSectorsInPreview.length})
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueSectorsInPreview.map((sec, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#1b2540] text-[#9cb4e4] border border-[var(--router-border)]/20"
+                    >
+                      {sec || 'Não Definido'}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           )}

@@ -41,6 +41,7 @@ interface RoteirizacaoViewProps {
   onRefreshCtrcs?: () => void;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
+  occurrences?: DeliveryOccurrence[];
 }
 
 export default function RoteirizacaoView({
@@ -56,6 +57,7 @@ export default function RoteirizacaoView({
   onRefreshCtrcs,
   theme,
   onToggleTheme,
+  occurrences = [],
 }: RoteirizacaoViewProps) {
   // Operational caching of enrichment bases
   const [dbOccurrencesList, setDbOccurrencesList] = useState<DeliveryOccurrence[]>([]);
@@ -346,6 +348,15 @@ export default function RoteirizacaoView({
     ctrcs: unassignedCtrcs,
     adminUser,
   });
+
+  // Keep dbOccurrencesList in sync with occurrences prop
+  useEffect(() => {
+    if (occurrences) {
+      setDbOccurrencesList(occurrences);
+      // Reset selected occurrence sectors filter when occurrences are replaced or updated to clear old/stale filters (e.g. COBRANA)
+      setSelectedOccurrenceSectors([]);
+    }
+  }, [occurrences, setSelectedOccurrenceSectors]);
 
   // Operational Diagnostics calculation
   const diagnostics: RoteirizacaoDiagnostics = useMemo(() => {
