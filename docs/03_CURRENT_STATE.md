@@ -29,3 +29,4 @@ Importação -> Mesa -> Seleção -> Pré-separação -> Programação do Dia
 - Subcontratos como documentos operacionais.
 - Ocorrência e Localização separadas.
 - Disponibilidade baseada em Setor Ocorrencia.
+- Filial da Mesa baseada nas 3 primeiras letras de Praça Destino (e não em localização atual).

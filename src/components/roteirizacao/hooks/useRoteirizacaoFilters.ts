@@ -158,8 +158,41 @@ export function sortRoteirizacaoItems(
   });
 }
 
+export function extractUnitFromPracaDestino(value?: string): string | null {
+  if (!value || typeof value !== 'string') return null;
+  
+  // Normalizar: uppercase e remover tudo que não for alfanumérico
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  if (normalized.length < 3) return null;
+  
+  let unit = normalized.slice(0, 3);
+  
+  // Aliases de segurança conforme regra de negócio
+  if (unit === 'VAG' || unit === 'VGS') {
+    unit = 'VGA';
+  }
+  
+  return unit;
+}
+
 export function resolveMesaOperationalUnit(ctrc: any): { unit: string, source: string, evidence: string } {
-  // 1. Explicit destination fields
+  // 1. pracaDestino ou variações no objeto importado usando a extração das 3 primeiras letras
+  const pracaDestinoFields = [
+    'pracaDestino', 'praçaDestino', 'praca_destino', 'praça_destino',
+    'destinoPraca', 'destino_praca', 'praca_dest', 'praca', 'destino'
+  ];
+
+  for (const field of pracaDestinoFields) {
+    if (ctrc[field] && typeof ctrc[field] === 'string' && ctrc[field].trim() !== '') {
+      const extracted = extractUnitFromPracaDestino(ctrc[field]);
+      if (extracted) {
+        return { unit: extracted, source: 'pracaDestino', evidence: `${field}: ${ctrc[field]}` };
+      }
+    }
+  }
+
+  // 2. Explicit destination fields
   const explicitFields = [
     'unidadeDestino', 'filialDestino', 'unidDestino', 
     'destinoUnidade', 'operationalUnit', 'mesaOperationalUnit', 'deliveryUnit'
@@ -171,13 +204,6 @@ export function resolveMesaOperationalUnit(ctrc: any): { unit: string, source: s
       if (val === 'VAG' || val === 'VGS') val = 'VGA';
       return { unit: val, source: 'explicit_destination', evidence: `${field}: ${val}` };
     }
-  }
-
-  // 2. pracaDestino
-  if (ctrc.pracaDestino && typeof ctrc.pracaDestino === 'string' && ctrc.pracaDestino.trim() !== '') {
-    let val = ctrc.pracaDestino.trim().toUpperCase();
-    if (val === 'VAG' || val === 'VGS') val = 'VGA';
-    return { unit: val, source: 'pracaDestino', evidence: `pracaDestino: ${ctrc.pracaDestino}` };
   }
 
   // 3. Mapeamento por cidade/rota (base temporária hardcoded para o caso BHZ/VGA, ou geral)

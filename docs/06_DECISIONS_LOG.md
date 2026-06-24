@@ -7,7 +7,7 @@
 - **Tailwind** + tokens próprios permanecem como base de estilo visual e design system.
 - Codex / AI Studio podem ser usados como agentes alternativos, sempre utilizando prompts curtos e fechados.
 - **Vercel** é o ambiente de preview operacional oficial após o commit.
-- **Filial da Mesa:** A filial filtrada na mesa é a filial operacional/destino responsável, não a localização física atual do pacote.
+- **Filial da Mesa:** A filial filtrada na mesa é a filial operacional/destino responsável, extraída das 3 primeiras letras da Praça Destino, e não a localização física atual do pacote.
 - **Setor Ocorrencia** é o que define a disponibilidade da carga.
 - O **Diagnóstico** tornou-se uma ferramenta de desenvolvimento (dev-only ou debug) e foi movido para o rodapé.
 - O botão **Consolidar** foi removido do cabeçalho.

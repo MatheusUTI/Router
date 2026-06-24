@@ -55,5 +55,7 @@ A disponibilidade é mapeada para os seguintes valores de Setor:
 
 ## 8. Errata e Correções (Atualização da Mesa)
 - `pracaHub` **não** deve ser usado como primeira fonte se representar localização atual.
-- A filial operacional (unidade) deve ser resolvida obrigatoriamente por **destino/cidade/rota**.
-- Localização física (armazém atual) é sempre um filtro separado e não dita a filial da Mesa.
+- A filial operacional (unidade) deve ser resolvida obrigatoriamente pelas **3 primeiras letras de Praça Destino** (ou variações como `pracaDestino`, `destino_praca`, etc).
+  - Exemplos: `VGAP` -> `VGA`, `VGAR` -> `VGA`, `BHZP` -> `BHZ`, `BHZR` -> `BHZ`.
+- O fallback para cidade/rota só ocorre se a Praça Destino não for fornecida.
+- Localização física (armazém atual) ou textos como `RCS VGA - NO ARMAZEM...` são sempre filtros ou exibições separadas e não definem a filial da Mesa.
