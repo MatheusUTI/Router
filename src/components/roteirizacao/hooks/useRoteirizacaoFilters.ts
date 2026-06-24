@@ -158,6 +158,8 @@ export function sortRoteirizacaoItems(
   });
 }
 
+const DEBUG_PRACA_DESTINO = false;
+
 export function extractUnitFromPracaDestino(value?: string): string | null {
   if (!value || typeof value !== 'string') return null;
   
@@ -180,7 +182,7 @@ export function resolveMesaOperationalUnit(ctrc: any): { unit: string, source: s
   // 1. pracaDestino ou variações no objeto importado usando a extração das 3 primeiras letras
   const pracaDestinoFields = [
     'pracaDestino', 'praçaDestino', 'praca_destino', 'praça_destino',
-    'destinoPraca', 'destino_praca', 'praca_dest', 'praca', 'destino'
+    'destinoPraca', 'destino_praca', 'praca_dest'
   ];
 
   for (const field of pracaDestinoFields) {
@@ -259,6 +261,20 @@ export function resolveMesaOperationalUnit(ctrc: any): { unit: string, source: s
 
 export function getMesaOperationalUnit(ctrc: RoteirizacaoItem): string {
   const result = resolveMesaOperationalUnit(ctrc);
+  
+  if (DEBUG_PRACA_DESTINO && Math.random() < 0.05) {
+    console.log('[DEBUG_PRACA_DESTINO]', {
+      id: ctrc.id,
+      pracaDestino: (ctrc as any).pracaDestino,
+      unid: ctrc.unid,
+      cidade: (ctrc as any).cidade,
+      localizacao: ctrc.localizacao,
+      resolvedUnit: result.unit,
+      source: result.source,
+      evidence: result.evidence
+    });
+  }
+
   return result.unit;
 }
 

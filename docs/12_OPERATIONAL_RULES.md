@@ -54,8 +54,10 @@ A disponibilidade é mapeada para os seguintes valores de Setor:
 - Ocorrência não mapeada deve aparecer como "Indefinido" ou "Sem Ocorrência".
 
 ## 8. Errata e Correções (Atualização da Mesa)
-- `pracaHub` **não** deve ser usado como primeira fonte se representar localização atual.
 - A filial operacional (unidade) deve ser resolvida obrigatoriamente pelas **3 primeiras letras de Praça Destino** (ou variações como `pracaDestino`, `destino_praca`, etc).
   - Exemplos: `VGAP` -> `VGA`, `VGAR` -> `VGA`, `BHZP` -> `BHZ`, `BHZR` -> `BHZ`.
+- O importador deve auto-mapear e persistir a coluna "Praça de Destino" do CSV/TXT.
+- O enriquecimento logístico não pode sobrescrever ou apagar a `pracaDestino` importada.
 - O fallback para cidade/rota só ocorre se a Praça Destino não for fornecida.
+- `pracaHub` **não** deve ser usado como primeira fonte se representar localização atual.
 - Localização física (armazém atual) ou textos como `RCS VGA - NO ARMAZEM...` são sempre filtros ou exibições separadas e não definem a filial da Mesa.

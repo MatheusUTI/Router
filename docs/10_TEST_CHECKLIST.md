@@ -4,6 +4,8 @@
 
 - [ ] Realizar login com usuário `master` / senha `123`.
 - [ ] Importar base contendo múltiplas unidades e subcontratos.
+- [ ] Confirmar que o mapeamento automático detectou "Praça de Destino".
+- [ ] Confirmar que o CTRC importado possui a propriedade `pracaDestino` preservada na tabela.
 - [ ] Testar Filial TODAS (deve exibir visão geral de todas as filiais).
 - [ ] Testar Filial VGA (deve listar CTRCs de operação/destino VGA).
 - [ ] Testar Filial BHZ (deve listar CTRCs de operação/destino BHZ).

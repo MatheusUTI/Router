@@ -48,6 +48,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       id: '',
       destinatario: '',
       cidade: '',
+      pracaDestino: '',
       weight: '',
       volume: '',
       remetente: '',
@@ -180,6 +181,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       id: '',
       destinatario: '',
       cidade: '',
+      pracaDestino: '',
       weight: '',
       volume: '',
       remetente: '',
@@ -198,8 +200,23 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     extractedHeaders.forEach((h) => {
       const lower = h.toLowerCase().trim().replace(/_/g, ' ').replace(/\s+/g, ' ');
 
-      // 1. CÓDIGO OCORRÊNCIA
+      // 0. PRAÇA DE DESTINO
       if (
+        lower === 'praca de destino' ||
+        lower === 'praça de destino' ||
+        lower === 'praca destino' ||
+        lower === 'praça destino' ||
+        lower === 'praca_destino' ||
+        lower === 'praça_destino' ||
+        lower === 'destino praca' ||
+        lower === 'destino_praça' ||
+        (lower.includes('praca') && lower.includes('destino')) ||
+        (lower.includes('praça') && lower.includes('destino'))
+      ) {
+        newMappings.pracaDestino = h;
+      }
+      // 1. CÓDIGO OCORRÊNCIA
+      else if (
         lower === 'cod ocorr' || 
         lower === 'codigo ocorrencia' || 
         lower === 'código de ocorrência' || 
@@ -379,6 +396,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       id: '',
       destinatario: '',
       cidade: '',
+      pracaDestino: '',
       weight: '',
       volume: '',
       remetente: '',
@@ -459,6 +477,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     const destIdx = columnHeaders.indexOf(mappings.destinatario);
     const cityIdx = columnHeaders.indexOf(mappings.cidade);
     
+    const pracaDestinoIdx = mappings.pracaDestino ? columnHeaders.indexOf(mappings.pracaDestino) : -1;
     const weightIdx = mappings.weight ? columnHeaders.indexOf(mappings.weight) : -1;
     const volIdx = mappings.volume ? columnHeaders.indexOf(mappings.volume) : -1;
     const setorIdx = mappings.setor ? columnHeaders.indexOf(mappings.setor) : -1;
@@ -491,6 +510,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       // Skip invalid or trailer rows
       if (!idVal && !destVal) return;
 
+      const pracaDestinoVal = pracaDestinoIdx !== -1 ? cells[pracaDestinoIdx] : '';
       const weightVal = weightIdx !== -1 && cells[weightIdx] ? parsePtBrFloat(cells[weightIdx]) : 180;
       const volumesVal = volIdx !== -1 && cells[volIdx] ? parsePtBrFloat(cells[volIdx]) : 4;
       const setorVal = setorIdx !== -1 ? cells[setorIdx] : '';
@@ -510,6 +530,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         destinatario: destVal || 'Destinatário Desconhecido',
         cidade: cityVal || 'Ponto de Distribuição',
         cidade_ent: cityVal || undefined,
+        pracaDestino: pracaDestinoVal || undefined,
         weight: weightVal || 150,
         volume: volumesVal || 2,
         type: (weightVal > 1000) ? 'CURVA A' : 'NORMAL',
@@ -606,6 +627,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     { key: 'id', label: 'ID ou Número do CTRC / Manifesto', required: true },
     { key: 'destinatario', label: 'Cliente Recebedor / Destinatário', required: true },
     { key: 'cidade', label: 'Cidade de Entrega', required: true },
+    { key: 'pracaDestino', label: 'Praça de Destino', required: false },
     { key: 'weight', label: 'Peso Real em Kg', required: false },
     { key: 'volume', label: 'Quantidade de Volumes', required: false },
     { key: 'remetente', label: 'Cliente Remetente (CNPJ/Parceiro)', required: false },
