@@ -586,8 +586,7 @@ export default function App() {
 
     setLinkedCtrcs((prev) => {
       // Merge updated raw fields for items already inside the linked list
-      const filtered = prev.filter(p => !deletedCtrcIds.includes(p.id));
-      return filtered.map((item) => {
+      return prev.map((item) => {
         const merged = mergedCtrcs.find((m) => m.id === item.id);
         return merged ? merged : item;
       });

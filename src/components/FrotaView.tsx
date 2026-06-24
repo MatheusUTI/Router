@@ -39,14 +39,18 @@ export default function FrotaView({
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Toggle Edit Mode in Consulta Mode
+  const [forceEditMode, setForceEditMode] = useState<boolean>(false);
+  const canEdit = isMaster || forceEditMode;
+
   // Form Fields for VehicleRegistry (GR)
   const [vrPlaca, setVrPlaca] = useState('');
-  const [vrTipo, setVrTipo] = useState<'PROPRIO' | 'AGREGADO' | 'APOIO'>('PROPRIO');
+  const [vrTipo, setVrTipo] = useState<'PROPRIO' | 'PRÓPRIO' | 'AGREGADO' | 'APOIO' | 'TERCEIRO'>('PROPRIO');
   const [vrRastreado, setVrRastreado] = useState<boolean>(true);
   const [vrLimiteGrSugerido, setVrLimiteGrSugerido] = useState<number>(500000);
   const [vrMotoristaPadrao, setVrMotoristaPadrao] = useState('');
   const [vrAjudantePadrao, setVrAjudantePadrao] = useState('');
-  const [vrStatusOperacional, setVrStatusOperacional] = useState<'ATIVO' | 'MANUTENCAO' | 'INATIVO'>('ATIVO');
+  const [vrStatusOperacional, setVrStatusOperacional] = useState<'ATIVO' | 'MANUTENCAO' | 'MANUTENÇÃO' | 'INATIVO'>('ATIVO');
   const [vrObservacoes, setVrObservacoes] = useState('');
 
   // Auto-update suggested limit when type or tracking changes (only in non-editing mode, so we don't overwrite manual edits)
@@ -357,20 +361,40 @@ export default function FrotaView({
             📥 Exportar CSV
           </button>
 
-          {isMaster ? (
-            <button
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
-              className="px-4 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md"
-            >
-              <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              {subTab === 'cadastro_gr' ? 'Cadastrar Veículo GR' : subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
-            </button>
+          {canEdit ? (
+            <div className="flex items-center gap-2">
+              {!isMaster && (
+                <button
+                  type="button"
+                  onClick={() => setForceEditMode(false)}
+                  className="px-3 py-1.5 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-500/30 text-yellow-400 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer shadow-sm"
+                >
+                  🔒 Voltar para Consulta
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowForm(true);
+                }}
+                className="px-4 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                {subTab === 'cadastro_gr' ? 'Cadastrar Veículo GR' : subTab === 'veiculos' ? 'Cadastrar Veículo' : 'Cadastrar Colaborador'}
+              </button>
+            </div>
           ) : (
-            <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none">
-              🔒 Modo Consulta
+            <div className="flex items-center gap-2">
+              <div className="px-3.5 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-450 rounded-lg select-none">
+                🔒 Modo Consulta
+              </div>
+              <button
+                type="button"
+                onClick={() => setForceEditMode(true)}
+                className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
+              >
+                🔓 Habilitar Edição
+              </button>
             </div>
           )}
         </div>
@@ -400,7 +424,7 @@ export default function FrotaView({
                   type="text"
                   placeholder="Ex: RTA3G45"
                   value={vrPlaca}
-                  onChange={(e) => setVrPlaca(e.target.value)}
+                  onChange={(e) => setVrPlaca(e.target.value.toUpperCase().trim())}
                   className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary uppercase font-mono"
                   required
                   disabled={!!editingId}
@@ -414,9 +438,10 @@ export default function FrotaView({
                   onChange={(e) => setVrTipo(e.target.value as any)}
                   className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
-                  <option value="PROPRIO">Frota Própria Estável</option>
-                  <option value="AGREGADO">Agregado</option>
-                  <option value="APOIO">Frota de Apoio/Agregado Eventual</option>
+                  <option value="PROPRIO">PRÓPRIO (Frota Própria Estável)</option>
+                  <option value="AGREGADO">AGREGADO</option>
+                  <option value="APOIO">APOIO (Frota de Apoio)</option>
+                  <option value="TERCEIRO">TERCEIRO</option>
                 </select>
               </div>
 
@@ -474,9 +499,9 @@ export default function FrotaView({
                   onChange={(e) => setVrStatusOperacional(e.target.value as any)}
                   className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
-                  <option value="ATIVO">Ativo</option>
-                  <option value="MANUTENCAO">Manutenção</option>
-                  <option value="INATIVO">Inativo</option>
+                  <option value="ATIVO">ATIVO (Ativo)</option>
+                  <option value="MANUTENCAO">MANUTENÇÃO (Manutenção)</option>
+                  <option value="INATIVO">INATIVO (Inativo)</option>
                 </select>
               </div>
 
@@ -650,33 +675,39 @@ export default function FrotaView({
                   <th className="px-5 py-3">Ajudante Padrão</th>
                   <th className="px-5 py-3 text-center">Status Op.</th>
                   <th className="px-5 py-3">Observações</th>
-                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
+                  {canEdit && <th className="px-5 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal">
                 {filteredVehicleRegistries.map((vr) => {
                   const typeLabel =
-                    vr.tipo === 'PROPRIO'
-                      ? 'Próprio Estável'
+                    vr.tipo === 'PROPRIO' || vr.tipo === 'PRÓPRIO'
+                      ? 'PRÓPRIO'
                       : vr.tipo === 'AGREGADO'
-                      ? 'Agregado'
-                      : 'Apoio/Eventual';
+                      ? 'AGREGADO'
+                      : vr.tipo === 'APOIO'
+                      ? 'APOIO'
+                      : vr.tipo === 'TERCEIRO'
+                      ? 'TERCEIRO'
+                      : vr.tipo;
                   const typeColor =
-                    vr.tipo === 'PROPRIO'
+                    vr.tipo === 'PROPRIO' || vr.tipo === 'PRÓPRIO'
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : vr.tipo === 'AGREGADO'
                       ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                      : vr.tipo === 'APOIO'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
 
                   const trackerLabel = vr.rastreado ? 'Rastreado' : 'Sem Rastreio';
                   const trackerColor = vr.rastreado
-                    ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                    : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+                     ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                     : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
 
                   const statusColor =
                     vr.statusOperacional === 'ATIVO'
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : vr.statusOperacional === 'MANUTENCAO'
+                      : vr.statusOperacional === 'MANUTENCAO' || vr.statusOperacional === 'MANUTENÇÃO'
                       ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
@@ -700,18 +731,18 @@ export default function FrotaView({
                       <td className="px-5 py-3.5 text-[var(--router-text-muted)]">{vr.ajudantePadrao || '-'}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusColor}`}>
-                          {vr.statusOperacional}
+                          {vr.statusOperacional === 'MANUTENCAO' || vr.statusOperacional === 'MANUTENÇÃO' ? 'MANUTENÇÃO' : vr.statusOperacional}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-[var(--router-text-muted)] truncate max-w-[180px]" title={vr.observacoes}>
                         {vr.observacoes || <span className="text-zinc-600 text-[11px] italic">Sem observações</span>}
                       </td>
-                      {isMaster && (
+                      {canEdit && (
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditVehicleRegistry(vr)}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors cursor-pointer"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -722,7 +753,7 @@ export default function FrotaView({
                                   onRemoveVehicleRegistry(vr.placa);
                                 }
                               }}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors cursor-pointer"
                               title="Excluir"
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -735,7 +766,7 @@ export default function FrotaView({
                 })}
                 {filteredVehicleRegistries.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 9 : 8} className="text-center py-10 text-[var(--router-text-muted)]">
+                    <td colSpan={canEdit ? 9 : 8} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum veículo cadastrado no GR correspondente à pesquisa.
                     </td>
                   </tr>
@@ -755,7 +786,7 @@ export default function FrotaView({
                   <th className="px-5 py-3">Capacidade</th>
                   <th className="px-5 py-3">Motorista Atribuído</th>
                   <th className="px-5 py-3 text-center">Status</th>
-                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
+                  {canEdit && <th className="px-5 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -778,22 +809,22 @@ export default function FrotaView({
                           {veh.status}
                         </span>
                       </td>
-                      {isMaster && (
+                      {canEdit && (
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditVehicle(veh)}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors cursor-pointer"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
                             </button>
                             <button
                               disabled={veh.status === 'Em Rota'}
-                              onClick={() => {
-                                if (confirm(`Excluir o veículo ${veh.id}?`)) onRemoveVehicle(veh.id);
-                              }}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error disabled:opacity-30 transition-colors"
+                               onClick={() => {
+                                 if (confirm(`Excluir o veículo ${veh.id}?`)) onRemoveVehicle(veh.id);
+                               }}
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error disabled:opacity-30 transition-colors cursor-pointer"
                               title={veh.status === 'Em Rota' ? 'Não permitido em rota' : 'Excluir'}
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -806,7 +837,7 @@ export default function FrotaView({
                 })}
                 {filteredVehicles.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
+                    <td colSpan={canEdit ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum veículo encontrado correspondente à pesquisa.
                     </td>
                   </tr>
@@ -826,7 +857,7 @@ export default function FrotaView({
                   <th className="px-5 py-3 text-center">Status</th>
                   <th className="px-5 py-3">Melhor Rota</th>
                   <th className="px-5 py-3">Taxa de Sucesso</th>
-                  {isMaster && <th className="px-5 py-3 text-right">Ações</th>}
+                  {canEdit && <th className="px-5 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30 leading-normal">
@@ -881,12 +912,12 @@ export default function FrotaView({
                       </td>
                       <td className="px-5 py-3.5 text-[var(--router-text)] font-semibold font-sans">{driv.bestRoute}</td>
                       <td className="px-5 py-3.5 text-[var(--router-text-muted)] font-mono">{driv.successRate}%</td>
-                      {isMaster && (
+                      {canEdit && (
                         <td className="px-5 py-3.5 text-right font-semibold">
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditDriver(driv)}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors cursor-pointer"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -895,7 +926,7 @@ export default function FrotaView({
                               onClick={() => {
                                 if (confirm(`Excluir o registro de ${driv.name}?`)) onRemoveDriver(driv.id);
                               }}
-                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors cursor-pointer"
                               title="Excluir"
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -908,7 +939,7 @@ export default function FrotaView({
                 })}
                 {filteredDrivers.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
+                    <td colSpan={canEdit ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum colaborador encontrado correspondente à pesquisa.
                     </td>
                   </tr>

@@ -42,7 +42,7 @@ export interface Ctrc {
   weight: number; // kg
   volume: number; // m3 (or volumes count)
   type: 'CURVA A' | 'NORMAL';
-  status: 'Pendente' | 'Entregue' | 'Recusado' | 'Disponível' | 'Em Rota' | 'Transferência' | 'Agendamento' | 'Separando';
+  status: 'Pendente' | 'Entregue' | 'Recusado' | 'Disponível' | 'Em Rota' | 'Transferência' | 'Agendamento' | 'Separando' | 'Finalizado' | 'Cancelado';
   cidade_ent?: string;
   setor?: string;
   prev_ent?: string;
@@ -508,12 +508,12 @@ export interface CidadeAtendidaSSW {
 
 export interface VehicleRegistry {
   placa: string;
-  tipo: 'PROPRIO' | 'AGREGADO' | 'APOIO';
+  tipo: 'PROPRIO' | 'PRÓPRIO' | 'AGREGADO' | 'APOIO' | 'TERCEIRO';
   rastreado: boolean;
   limiteGrSugerido: number;
   motoristaPadrao?: string;
   ajudantePadrao?: string;
-  statusOperacional: 'ATIVO' | 'MANUTENCAO' | 'INATIVO';
+  statusOperacional: 'ATIVO' | 'MANUTENCAO' | 'MANUTENÇÃO' | 'INATIVO';
   observacoes?: string;
   updated_at?: string;
   created_at?: string;
