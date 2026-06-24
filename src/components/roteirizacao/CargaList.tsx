@@ -147,7 +147,7 @@ export default function CargaList({
           <div 
             className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-[var(--router-text-muted)] py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
             style={{ 
-              gridTemplateColumns: '24px minmax(calc(115px * var(--mesa-scale, 1)), 0.6fr) minmax(calc(270px * var(--mesa-scale, 1)), 1.5fr) minmax(calc(110px * var(--mesa-scale, 1)), 0.65fr) minmax(calc(85px * var(--mesa-scale, 1)), 0.4fr) minmax(calc(275px * var(--mesa-scale, 1)), 1.55fr) minmax(calc(105px * var(--mesa-scale, 1)), 0.55fr) minmax(calc(95px * var(--mesa-scale, 1)), 0.5fr) minmax(calc(80px * var(--mesa-scale, 1)), 0.4fr)',
+              gridTemplateColumns: '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(60px, calc(68px * var(--mesa-scale, 1)), 80px), 0.36fr)',
               fontSize: 'calc(10px * var(--mesa-scale, 1))',
               height: 'calc(32px * var(--mesa-scale, 1))'
             } as React.CSSProperties}

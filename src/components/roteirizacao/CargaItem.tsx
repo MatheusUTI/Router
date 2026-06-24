@@ -330,7 +330,7 @@ export default function CargaItem({
           : pStyle.cardBg
       } group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''} ${densityMode === 'planilha_operacional' ? '' : 'grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)]'}`}
       style={{ 
-        gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(calc(115px * var(--mesa-scale, 1)), 0.6fr) minmax(calc(270px * var(--mesa-scale, 1)), 1.5fr) minmax(calc(110px * var(--mesa-scale, 1)), 0.65fr) minmax(calc(85px * var(--mesa-scale, 1)), 0.4fr) minmax(calc(275px * var(--mesa-scale, 1)), 1.55fr) minmax(calc(105px * var(--mesa-scale, 1)), 0.55fr) minmax(calc(95px * var(--mesa-scale, 1)), 0.5fr) minmax(calc(80px * var(--mesa-scale, 1)), 0.4fr)' : undefined,
+        gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(clamp(95px, calc(95px * var(--mesa-scale, 1)), 110px), 0.55fr) minmax(clamp(200px, calc(220px * var(--mesa-scale, 1)), 270px), 1.35fr) minmax(clamp(100px, calc(105px * var(--mesa-scale, 1)), 120px), 0.65fr) minmax(clamp(70px, calc(72px * var(--mesa-scale, 1)), 85px), 0.38fr) minmax(clamp(180px, calc(210px * var(--mesa-scale, 1)), 240px), 1.2fr) minmax(clamp(80px, calc(86px * var(--mesa-scale, 1)), 100px), 0.5fr) minmax(clamp(70px, calc(76px * var(--mesa-scale, 1)), 90px), 0.42fr) minmax(clamp(60px, calc(68px * var(--mesa-scale, 1)), 80px), 0.36fr)' : undefined,
         height: densityMode === 'planilha_operacional' ? 'calc(52px * var(--mesa-scale, 1))' : undefined,
       } as React.CSSProperties}
     >
@@ -392,7 +392,7 @@ export default function CargaItem({
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Destinatário */}
-            <div className="flex items-center gap-1 leading-none truncate w-full select-text" style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}>
+            <div className="flex items-center gap-1 leading-none w-full min-w-0 select-text" style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}>
               <span className="text-[var(--router-text-muted)] font-bold select-none tracking-tight mr-0.5" style={{ fontSize: 'calc(9px * var(--mesa-scale, 1))' }}>DST:</span>
               <span 
                 className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border text-[var(--router-text)] border-transparent`}
@@ -414,7 +414,7 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Remetente */}
-            <div className="flex items-center gap-1 leading-none truncate w-full select-text text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)]" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
+            <div className="flex items-center gap-1 leading-none w-full min-w-0 select-text text-[var(--router-text-muted)]" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
               <span className="text-[var(--router-text-muted)] font-bold select-none" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>REM:</span>
               <span 
                 className={`font-semibold truncate uppercase text-[var(--router-text-muted)]`}
@@ -504,7 +504,7 @@ export default function CargaItem({
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Status principal */}
-            <div className="flex items-center gap-1 leading-none">
+            <div className="flex items-center gap-1 leading-none w-full min-w-0">
               {(() => {
                 let statusText = flowStatusLabel;
                 let statusStyles = flowStatusStyles;
@@ -534,7 +534,7 @@ export default function CargaItem({
                 } else if (statusText === 'DISPONÍVEL') {
                   statusStyles = { bg: '', text: 'text-[var(--router-text-muted)]', border: '' };
                   return (
-                    <span className={`font-sans font-bold uppercase shrink-0 leading-none truncate max-w-full flex items-center gap-1 ${statusStyles.text}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
+                    <span className={`font-sans font-bold uppercase leading-none truncate max-w-full flex items-center gap-1 ${statusStyles.text}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
                       <span className="h-1.5 w-1.5 rounded-full bg-[var(--router-success)] opacity-70"></span> {statusText}
                     </span>
                   );
@@ -546,7 +546,7 @@ export default function CargaItem({
                 }
 
                 return (
-                  <span className={`font-sans font-bold uppercase shrink-0 leading-none truncate max-w-full px-1.5 py-0.5 rounded border ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
+                  <span className={`font-sans font-bold uppercase leading-none truncate max-w-full px-1.5 py-0.5 rounded border ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
                     {statusText}
                   </span>
                 );
@@ -554,7 +554,7 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Localização */}
-            <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5 text-[var(--router-text-muted)] font-sans truncate" style={{ fontSize: 'calc(11px * var(--mesa-scale, 1))' }}>
+            <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5 text-[var(--router-text-muted)] font-sans" style={{ fontSize: 'calc(11px * var(--mesa-scale, 1))' }}>
               {(() => {
                 const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
                 let displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
@@ -753,7 +753,7 @@ export default function CargaItem({
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
       <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text`}>
         {/* Destinatário */}
-        <div className="flex items-center gap-1 leading-none truncate w-full">
+        <div className="flex items-center gap-1 leading-none w-full min-w-0">
           <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
           <span className="text-[var(--router-text)] font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
             {item.destinatario || 'SEM DESTINATÁRIO'}
@@ -761,7 +761,7 @@ export default function CargaItem({
         </div>
 
         {/* Remetente */}
-        <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
+        <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5">
           <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
           <span 
             className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
