@@ -378,9 +378,29 @@ export default function CargaItem({
                   MANUAL
                 </span>
               )}
+              {item.planningStatus === 'URGENTE' && (
+                <span className="router-badge router-badge-danger font-black uppercase rounded shrink-0 leading-none select-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))', padding: '1px 3px' }}>
+                  P0
+                </span>
+              )}
+              {item.planningStatus === 'PRIORIDADE' && (
+                <span className="router-badge router-badge-warning font-black uppercase rounded shrink-0 leading-none select-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))', padding: '1px 3px' }}>
+                  P1
+                </span>
+              )}
               {item.planningStatus === 'SEGURAR' && (
-                <span className="router-badge router-badge-danger font-black uppercase text-[8px] px-1 py-0.2 rounded shrink-0 leading-none select-none">
+                <span className="router-badge router-badge-danger font-black uppercase rounded shrink-0 leading-none select-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))', padding: '1px 3px' }}>
                   SEGURAR
+                </span>
+              )}
+              {item.planningStatus === 'NAO_SAI_HOJE' && (
+                <span className="router-badge router-badge-neutral font-black uppercase rounded shrink-0 leading-none select-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))', padding: '1px 3px' }}>
+                  NÃO SAI
+                </span>
+              )}
+              {item.planningStatus === 'AGENDADO' && (
+                <span className="router-badge router-badge-info font-black uppercase rounded shrink-0 leading-none select-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))', padding: '1px 3px' }}>
+                  AGENDADO
                 </span>
               )}
             </div>
@@ -406,7 +426,7 @@ export default function CargaItem({
                   FOB
                 </span>
               )}
-              {item.isCurvaA && (
+              {(item.isDestinatarioCurvaA || (!item.isRemetenteCurvaA && item.isCurvaA)) && (
                 <span className="router-badge router-badge-danger font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
                   ★ CURVA A
                 </span>
@@ -423,6 +443,11 @@ export default function CargaItem({
               >
                 {item.remetente || 'S/ R'}
               </span>
+              {item.isRemetenteCurvaA && (
+                <span className="router-badge router-badge-danger font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
+                  ★ CURVA A
+                </span>
+              )}
             </div>
           </div>
 
@@ -734,9 +759,29 @@ export default function CargaItem({
                 MANUAL
               </span>
             )}
+            {item.planningStatus === 'URGENTE' && (
+              <span className="bg-[var(--router-badge-critical)] text-[#0F172A] font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+                P0
+              </span>
+            )}
+            {item.planningStatus === 'PRIORIDADE' && (
+              <span className="bg-[var(--router-badge-operational-warning)] text-[#0F172A] font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
+                P1
+              </span>
+            )}
             {item.planningStatus === 'SEGURAR' && (
               <span className="bg-[var(--router-badge-critical)] text-[#0F172A] font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none">
                 SEGURAR
+              </span>
+            )}
+            {item.planningStatus === 'NAO_SAI_HOJE' && (
+              <span className="bg-neutral-500/20 text-neutral-500 dark:text-neutral-400 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none border border-neutral-500/30">
+                NÃO SAI
+              </span>
+            )}
+            {item.planningStatus === 'AGENDADO' && (
+              <span className="bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-black uppercase text-[10px] px-1 py-0.2 rounded select-none shrink-0 leading-none border border-cyan-500/30">
+                AGENDADO
               </span>
             )}
           </div>
@@ -755,8 +800,18 @@ export default function CargaItem({
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none w-full min-w-0">
           <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
-          <span className="text-[var(--router-text)] font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
+          <span 
+            className={`font-bold truncate block uppercase text-[13.5px] tracking-wide ${
+              (item.isDestinatarioCurvaA || (!item.isRemetenteCurvaA && item.isCurvaA))
+                ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-pink-300 dark:bg-pink-500/10 px-1 py-0.2 rounded border dark:border-pink-500/20 font-black text-[13px]'
+                : 'text-[var(--router-text)]'
+            }`} 
+            title={item.destinatario || 'SEM DESTINATÁRIO'}
+          >
             {item.destinatario || 'SEM DESTINATÁRIO'}
+            {(item.isDestinatarioCurvaA || (!item.isRemetenteCurvaA && item.isCurvaA)) && (
+              <span className="text-[10px] font-black text-[#9D174D] dark:text-pink-400 ml-1 select-none">★ CURVA A</span>
+            )}
           </span>
         </div>
 
@@ -765,14 +820,16 @@ export default function CargaItem({
           <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
           <span 
             className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
-              item.isCurvaA 
+              item.isRemetenteCurvaA 
                 ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-pink-300 dark:bg-pink-500/10 px-1 py-0.2 rounded border dark:border-pink-500/20 font-black text-[12px]' 
                 : 'text-[var(--router-text-muted)]'
             }`}
             title={item.remetente || 'SEM REMETENTE'}
           >
             {item.remetente || 'SEM REMETENTE'}
-            {item.isCurvaA && <span className="text-[10px] font-black text-[#9D174D] dark:text-pink-400 ml-1 select-none">★ CURVA A</span>}
+            {item.isRemetenteCurvaA && (
+              <span className="text-[10px] font-black text-[#9D174D] dark:text-pink-400 ml-1 select-none">★ CURVA A</span>
+            )}
           </span>
         </div>
 

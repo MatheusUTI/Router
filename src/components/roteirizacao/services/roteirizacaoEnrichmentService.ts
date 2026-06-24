@@ -400,6 +400,8 @@ export const RoteirizacaoEnrichmentService = {
       const curvaInfo = isClienteCurvaA(ctrc, curvaAClients);
       const isCurvaA = curvaInfo.isCurvaA;
       const curvaAClass = curvaInfo.classification;
+      const isRemetenteCurvaA = curvaInfo.isRemetenteCurvaA;
+      const isDestinatarioCurvaA = curvaInfo.isDestinatarioCurvaA;
 
       // 7.5. Critic Client Detection
       const criticInfo = isClienteCritico(ctrc, criticClients);
@@ -459,6 +461,8 @@ export const RoteirizacaoEnrichmentService = {
         locationLabel,
         isCurvaA,
         curvaAClass,
+        isRemetenteCurvaA,
+        isDestinatarioCurvaA,
         isFob,
         isCriticClient: isCritic,
         criticClientName: criticInfo.criticClientName,
@@ -467,6 +471,8 @@ export const RoteirizacaoEnrichmentService = {
         criticClientReason: criticInfo.criticClientReason,
         visualFlags: {
           isCurvaA,
+          isRemetenteCurvaA,
+          isDestinatarioCurvaA,
           isFob,
           isDelayed: sla.isDelayed,
           statusClass,

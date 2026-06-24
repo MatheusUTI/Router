@@ -307,6 +307,8 @@ export interface RoteirizacaoItem extends Ctrc {
   locationLabel: string;
   isCurvaA: boolean;
   curvaAClass?: string;
+  isRemetenteCurvaA?: boolean;
+  isDestinatarioCurvaA?: boolean;
   isFob: boolean;
   isCriticClient?: boolean;
   criticClientName?: string;
@@ -315,6 +317,8 @@ export interface RoteirizacaoItem extends Ctrc {
   criticClientReason?: string;
   visualFlags: {
     isCurvaA: boolean;
+    isRemetenteCurvaA?: boolean;
+    isDestinatarioCurvaA?: boolean;
     isFob: boolean;
     isDelayed: boolean;
     statusClass: string;
