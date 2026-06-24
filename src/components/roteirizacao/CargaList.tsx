@@ -139,220 +139,497 @@ export default function CargaList({
 
       {/* Excel styled Column headers row - Precision Aligned Sticky Row */}
       {filteredCtrcs.length > 0 && (
-        <div className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
-          
-          {/* Col 1: Master Checkbox */}
-          <div className="w-6 shrink-0 flex items-center justify-center">
-            <input
-              type="checkbox"
-              id="master-cargo-checkbox"
-              checked={allVisibleChecked}
-              ref={(el) => {
-                if (el) {
-                  const someChecked = visibleIds.some((id) => selectedIds.includes(id));
-                  el.indeterminate = someChecked && !allVisibleChecked;
+        densityMode === 'planilha_operacional' ? (
+          <div 
+            className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30"
+            style={{ gridTemplateColumns: '24px minmax(145px, 0.75fr) minmax(280px, 1.65fr) minmax(150px, 0.85fr) minmax(95px, 0.45fr) minmax(210px, 1.1fr) minmax(105px, 0.55fr) minmax(100px, 0.5fr) minmax(90px, 0.45fr)' }}
+          >
+            {/* Col 1: Master Checkbox */}
+            <div className="w-6 shrink-0 flex items-center justify-center">
+              <input
+                type="checkbox"
+                id="master-cargo-checkbox"
+                checked={allVisibleChecked}
+                ref={(el) => {
+                  if (el) {
+                    const someChecked = visibleIds.some((id) => selectedIds.includes(id));
+                    el.indeterminate = someChecked && !allVisibleChecked;
+                  }
+                }}
+                onChange={() => onSelectAllVisible(visibleIds)}
+                className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-300 dark:border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
+              />
+            </div>
+
+            {/* Col 2: Cidade / Rota */}
+            <div className="min-w-0 flex items-center gap-1 px-1 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Cidade"
+                uniqueValues={excelUniqueCities}
+                selectedValues={excelCityFilter}
+                onApply={setExcelCityFilter}
+                onSortAsc={() => {
+                  setSortField('cidade');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('cidade');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>CIDADE</span>
+                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
                 }
-              }}
-              onChange={() => onSelectAllVisible(visibleIds)}
-              className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-300 dark:border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
-            />
-          </div>
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Rota"
+                uniqueValues={excelUniqueRoutes}
+                selectedValues={excelRouteFilter}
+                onApply={setExcelRouteFilter}
+                onSortAsc={() => {
+                  setSortField('rota');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('rota');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>ROTA</span>
+                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
 
-          {/* Col 2: Cidade / Rota */}
-          <div className="min-w-0 flex items-center gap-1.5 px-1 uppercase text-[10px] font-mono select-none">
-            <ExcelColumnFilter
-              label="Cidade"
-              uniqueValues={excelUniqueCities}
-              selectedValues={excelCityFilter}
-              onApply={setExcelCityFilter}
-              onSortAsc={() => {
-                setSortField('cidade');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('cidade');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>CIDADE</span>
-                  <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-            <span className="text-slate-300 dark:text-slate-700">/</span>
-            <ExcelColumnFilter
-              label="Rota"
-              uniqueValues={excelUniqueRoutes}
-              selectedValues={excelRouteFilter}
-              onApply={setExcelRouteFilter}
-              onSortAsc={() => {
-                setSortField('rota');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('rota');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>ROTA</span>
-                  <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-          </div>
+            {/* Col 3: Destinatário / Remetente */}
+            <div className="min-w-0 flex items-center gap-1 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Destinatário"
+                uniqueValues={excelUniqueDests}
+                selectedValues={excelDestFilter}
+                onApply={setExcelDestFilter}
+                onSortAsc={() => {
+                  setSortField('destinatario');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('destinatario');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>DESTINATÁRIO</span>
+                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Remetente"
+                uniqueValues={excelUniqueSenders}
+                selectedValues={excelSenderFilter}
+                onApply={setExcelSenderFilter}
+                onSortAsc={() => {
+                  setSortField('remetente');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('remetente');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>REMETENTE</span>
+                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
 
-          {/* Col 3: Destinatário / Remetente */}
-          <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
-            <ExcelColumnFilter
-              label="Destinatário"
-              uniqueValues={excelUniqueDests}
-              selectedValues={excelDestFilter}
-              onApply={setExcelDestFilter}
-              onSortAsc={() => {
-                setSortField('destinatario');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('destinatario');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>DESTINATÁRIO</span>
-                  <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-            <span className="text-slate-300 dark:text-slate-700">/</span>
-            <ExcelColumnFilter
-              label="Remetente"
-              uniqueValues={excelUniqueSenders}
-              selectedValues={excelSenderFilter}
-              onApply={setExcelSenderFilter}
-              onSortAsc={() => {
-                setSortField('remetente');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('remetente');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>REMETENTE</span>
-                  <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-          </div>
+            {/* Col 4: CTRC / NF */}
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'id' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('id');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'id' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-400'}`}
+              >
+                CTRC {sortField === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'nf' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('nf');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'nf' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-400'}`}
+              >
+                NF {sortField === 'nf' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+            </div>
 
-          {/* Col 4: Previsão / Status / Localização */}
-          <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
-            <ExcelColumnFilter
-              label="Previsão"
-              uniqueValues={excelUniquePrevs}
-              selectedValues={excelPrevFilter}
-              onApply={setExcelPrevFilter}
-              onSortAsc={() => {
-                setSortField('prev_ent');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('prev_ent');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>PREVISÃO</span>
-                  <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-            <span className="text-slate-300 dark:text-slate-700">/</span>
-            <ExcelColumnFilter
-              label="Status"
-              uniqueValues={excelUniqueStatuses}
-              selectedValues={excelStatusFilter}
-              onApply={setExcelStatusFilter}
-              onSortAsc={() => {
-                setSortField('status');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('status');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>STATUS</span>
-                  <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-            <span className="text-slate-300 dark:text-slate-700">/</span>
-            <ExcelColumnFilter
-              label="Localização"
-              uniqueValues={excelUniqueLocs}
-              selectedValues={excelLocationFilter}
-              onApply={setExcelLocationFilter}
-              onSortAsc={() => {
-                setSortField('localizacao');
-                setSortDirection('asc');
-              }}
-              onSortDesc={() => {
-                setSortField('localizacao');
-                setSortDirection('desc');
-              }}
-              isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
-              isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
-              customTrigger={
-                <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
-                  <span>LOCALIZAÇÃO</span>
-                  <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
-                </div>
-              }
-            />
-          </div>
+            {/* Col 5: Previsão */}
+            <div className="min-w-0 flex items-center justify-center px-1 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Previsão"
+                uniqueValues={excelUniquePrevs}
+                selectedValues={excelPrevFilter}
+                onApply={setExcelPrevFilter}
+                onSortAsc={() => {
+                  setSortField('prev_ent');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('prev_ent');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>PREVISÃO</span>
+                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
 
-          {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
-          <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
-            <button
-              onClick={() => {
-                const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
-                setSortField('peso');
-                setSortDirection(targetDir);
-              }}
-              className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
-            >
-              Pes {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-            </button>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <button
-              onClick={() => {
-                const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
-                setSortField('volumes');
-                setSortDirection(targetDir);
-              }}
-              className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
-            >
-              Vol {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-            </button>
+            {/* Col 6: Status / Localização */}
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Status"
+                uniqueValues={excelUniqueStatuses}
+                selectedValues={excelStatusFilter}
+                onApply={setExcelStatusFilter}
+                onSortAsc={() => {
+                  setSortField('status');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('status');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>STATUS</span>
+                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Localização"
+                uniqueValues={excelUniqueLocs}
+                selectedValues={excelLocationFilter}
+                onApply={setExcelLocationFilter}
+                onSortAsc={() => {
+                  setSortField('localizacao');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('localizacao');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>LOC</span>
+                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Col 7: Valor / Frete */}
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1 text-[9px] text-slate-500 font-bold uppercase select-none">
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'valor' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('valor');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'valor' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                VALOR {sortField === 'valor' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'frete' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('frete');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'frete' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                FRETE {sortField === 'frete' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+            </div>
+
+            {/* Col 8: Peso / Volumes */}
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1 text-[9px] text-slate-500 font-bold uppercase select-none">
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('peso');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                PESO {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('volumes');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                VOL {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+            </div>
+
+            {/* Col 9: OBS / Disponível */}
+            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none text-slate-400">
+              <span>OBS / DISP</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-[#0b1322] border-b border-slate-200 dark:border-[#14203a] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
+            
+            {/* Col 1: Master Checkbox */}
+            <div className="w-6 shrink-0 flex items-center justify-center">
+              <input
+                type="checkbox"
+                id="master-cargo-checkbox"
+                checked={allVisibleChecked}
+                ref={(el) => {
+                  if (el) {
+                    const someChecked = visibleIds.some((id) => selectedIds.includes(id));
+                    el.indeterminate = someChecked && !allVisibleChecked;
+                  }
+                }}
+                onChange={() => onSelectAllVisible(visibleIds)}
+                className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-300 dark:border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
+              />
+            </div>
+
+            {/* Col 2: Cidade / Rota */}
+            <div className="min-w-0 flex items-center gap-1.5 px-1 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Cidade"
+                uniqueValues={excelUniqueCities}
+                selectedValues={excelCityFilter}
+                onApply={setExcelCityFilter}
+                onSortAsc={() => {
+                  setSortField('cidade');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('cidade');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>CIDADE</span>
+                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Rota"
+                uniqueValues={excelUniqueRoutes}
+                selectedValues={excelRouteFilter}
+                onApply={setExcelRouteFilter}
+                onSortAsc={() => {
+                  setSortField('rota');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('rota');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>ROTA</span>
+                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Col 3: Destinatário / Remetente */}
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Destinatário"
+                uniqueValues={excelUniqueDests}
+                selectedValues={excelDestFilter}
+                onApply={setExcelDestFilter}
+                onSortAsc={() => {
+                  setSortField('destinatario');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('destinatario');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>DESTINATÁRIO</span>
+                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Remetente"
+                uniqueValues={excelUniqueSenders}
+                selectedValues={excelSenderFilter}
+                onApply={setExcelSenderFilter}
+                onSortAsc={() => {
+                  setSortField('remetente');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('remetente');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>REMETENTE</span>
+                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Col 4: Previsão / Status / Localização */}
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+              <ExcelColumnFilter
+                label="Previsão"
+                uniqueValues={excelUniquePrevs}
+                selectedValues={excelPrevFilter}
+                onApply={setExcelPrevFilter}
+                onSortAsc={() => {
+                  setSortField('prev_ent');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('prev_ent');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>PREVISÃO</span>
+                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Status"
+                uniqueValues={excelUniqueStatuses}
+                selectedValues={excelStatusFilter}
+                onApply={setExcelStatusFilter}
+                onSortAsc={() => {
+                  setSortField('status');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('status');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>STATUS</span>
+                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <ExcelColumnFilter
+                label="Localização"
+                uniqueValues={excelUniqueLocs}
+                selectedValues={excelLocationFilter}
+                onApply={setExcelLocationFilter}
+                onSortAsc={() => {
+                  setSortField('localizacao');
+                  setSortDirection('asc');
+                }}
+                onSortDesc={() => {
+                  setSortField('localizacao');
+                  setSortDirection('desc');
+                }}
+                isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
+                isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
+                customTrigger={
+                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                    <span>LOCALIZAÇÃO</span>
+                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('peso');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                Pes {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <button
+                onClick={() => {
+                  const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
+                  setSortField('volumes');
+                  setSortDirection(targetDir);
+                }}
+                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+              >
+                Vol {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+              </button>
+            </div>
+          </div>
+        )
       )}
 
       {/* Main Items View Area */}

@@ -184,6 +184,8 @@ export interface MesaViewPreferences {
 export type OccurrenceSectorFilter = string[];
 
 export type RoteirizacaoSortField =
+  | 'id'
+  | 'nf'
   | 'prev_ent'
   | 'remetente'
   | 'destinatario'
