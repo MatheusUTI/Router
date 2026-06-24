@@ -356,7 +356,7 @@ export default function CargaItem({
 
           {/* Col 2: Cidade / Rota */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)]"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             <span className="text-[var(--router-text)] dark:text-white font-extrabold uppercase tracking-wide truncate block" style={{ fontSize: 'calc(12px * var(--mesa-scale, 1))' }} title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
@@ -381,7 +381,7 @@ export default function CargaItem({
 
           {/* Col 3: Destinatário / Remetente */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Destinatário */}
@@ -421,7 +421,7 @@ export default function CargaItem({
 
           {/* Col 4: CTRC / NF */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-mono"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 font-mono"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: CTRC com link */}
@@ -453,7 +453,7 @@ export default function CargaItem({
 
           {/* Col 5: Previsão */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-center py-1 px-2 border-r border-[var(--router-border)] border-[var(--router-border)]"
+            className="min-w-0 flex flex-col justify-center items-center py-1 px-2"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {(() => {
@@ -493,7 +493,7 @@ export default function CargaItem({
 
           {/* Col 6: Status / Localização */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)]"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Status principal */}
@@ -582,7 +582,7 @@ export default function CargaItem({
 
           {/* Col 7: Valor / Frete */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Valor Mercadoria */}
@@ -609,7 +609,7 @@ export default function CargaItem({
 
           {/* Col 8: Peso / Volumes */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Peso */}
@@ -711,7 +711,7 @@ export default function CargaItem({
           </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-[var(--router-border)] border-[var(--router-border)]`}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight`}>
         <span className="text-[var(--router-text)] dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
           {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
         </span>
@@ -744,7 +744,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[var(--router-border)]`}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text`}>
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
           <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
@@ -809,7 +809,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 4: [BLOCO OPERACIONAL SIMPLIFICADO EM HIERARQUIA CLARA] */}
-      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[var(--router-border)]`}>
+      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight`}>
         {/* Linha 1: Previsão (data, SLA) */}
         <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-[var(--router-text-muted)] leading-none flex-wrap">
           {(() => {
@@ -934,7 +934,7 @@ export default function CargaItem({
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-[var(--router-border)] bg-[var(--router-surface-2)]`}>
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono bg-[var(--router-surface-2)]`}>
         <span className="text-[var(--router-text)] font-black text-[13px] leading-none">
           {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
         </span>

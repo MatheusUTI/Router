@@ -551,12 +551,12 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#1e2e4f]/50">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-3xl font-extrabold text-on-surface tracking-tight">Exceções e Parâmetros de Rotas</h2>
+            <h2 className="text-3xl font-extrabold text-[var(--router-text)] tracking-tight">Exceções e Parâmetros de Rotas</h2>
             <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800/30 px-2.5 py-0.5 rounded-full font-bold font-mono tracking-wider">
               SSW_COBERTURA + EXCEÇÕES
             </span>
           </div>
-          <p className="text-sm text-on-surface-variant mt-1.5">
+          <p className="text-sm text-[var(--router-text-muted)] mt-1.5">
             O banco de dados oficial de cubagem e prazos vem diretamente do SSW. Os parâmetros abaixo cadastram exceções, aliases de busca, setores personalizados e desvios operacionais.
           </p>
         </div>
@@ -604,13 +604,13 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                 placeholder="Buscar destino..."
                 value={sswSearch}
                 onChange={(e) => setSswSearch(e.target.value)}
-                className="w-56 bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-indigo-400 transition-all font-sans"
+                className="w-56 bg-[var(--router-surface-2)] text-[var(--router-text)] border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-indigo-400 transition-all font-sans"
               />
 
               <select
                 value={sswFilterOrigem}
                 onChange={(e) => setSswFilterOrigem(e.target.value)}
-                className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                className="bg-[var(--router-surface-2)] text-[var(--router-text)] border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
               >
                 <option value="TODAS">Origem: Todas ({sswUniqueOrigens.length})</option>
                 {sswUniqueOrigens.map(o => (
@@ -621,7 +621,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
               <select
                 value={sswFilterUfDest}
                 onChange={(e) => setSswFilterUfDest(e.target.value)}
-                className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                className="bg-[var(--router-surface-2)] text-[var(--router-text)] border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
               >
                 <option value="TODAS">UF Destino: Todas ({sswUniqueUfsDest.length})</option>
                 {sswUniqueUfsDest.map(uf => (
@@ -632,7 +632,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
               <select
                 value={sswFilterAtivo}
                 onChange={(e) => setSswFilterAtivo(e.target.value)}
-                className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                className="bg-[var(--router-surface-2)] text-[var(--router-text)] border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
               >
                 <option value="TODOS">Todos os Status</option>
                 <option value="ATIVOS">Ativas</option>
@@ -760,7 +760,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                           {item.tarifa !== undefined ? `R$ ${item.tarifa.toFixed(2).replace('.', ',')}` : '—'}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-surface text-[#dae2fd] text-[10px] border border-outline-variant/30 font-bold">
+                          <span className="px-2 py-0.5 rounded bg-[var(--router-surface-2)] text-[#dae2fd] text-[10px] border border-[var(--router-border)]/30 font-bold">
                             D+{item.prazo}
                           </span>
                         </td>
@@ -826,46 +826,46 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
         <div className="space-y-6">
           {/* Stats Header */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/60 flex items-center gap-3">
+            <div className="p-4 router-card rounded-xl border border-[var(--router-border)]/60 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                 <span className="material-symbols-outlined">map</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider leading-none">Cidades Modeladas</p>
+                <p className="text-[10px] font-bold text-[var(--router-text-muted)] uppercase tracking-wider leading-none">Cidades Modeladas</p>
                 <p className="text-xl font-extrabold text-white mt-1 font-mono">{cidadeRotas.length}</p>
               </div>
             </div>
 
-            <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/60 flex items-center gap-3">
+            <div className="p-4 router-card rounded-xl border border-[var(--router-border)]/60 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20">
                 <span className="material-symbols-outlined">priority_high</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider leading-none">Praças Críticas </p>
+                <p className="text-[10px] font-bold text-[var(--router-text-muted)] uppercase tracking-wider leading-none">Praças Críticas </p>
                 <p className="text-xl font-extrabold text-[#dae2fd] mt-1 font-mono font-sans">
                   {cidadeRotas.filter(r => r.prioridade_operacional === 'CRÍTICA').length}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/60 flex items-center gap-3">
+            <div className="p-4 router-card rounded-xl border border-[var(--router-border)]/60 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#3ecf8e]/10 flex items-center justify-center text-[#3ecf8e] border border-[#3ecf8e]/20">
                 <span className="material-symbols-outlined">fast_forward</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider leading-none">SLA Rápido (D+1)</p>
+                <p className="text-[10px] font-bold text-[var(--router-text-muted)] uppercase tracking-wider leading-none">SLA Rápido (D+1)</p>
                 <p className="text-xl font-extrabold text-[#dae2fd] mt-1 font-mono font-sans font-medium">
                   {cidadeRotas.filter(r => r.prazo_padrao === 1).length}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/60 flex items-center gap-3">
+            <div className="p-4 router-card rounded-xl border border-[var(--router-border)]/60 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 border border-sky-500/20">
                 <span className="material-symbols-outlined">find_replace</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider leading-none">Sinônimos / Aliases</p>
+                <p className="text-[10px] font-bold text-[var(--router-text-muted)] uppercase tracking-wider leading-none">Sinônimos / Aliases</p>
                 <p className="text-xl font-extrabold text-[#dae2fd] mt-1 font-mono font-sans leading-none font-medium">
                   {cidadeRotas.reduce((acc, curr) => acc + (curr.alias ? curr.alias.split(',').length : 0), 0)}
                 </p>
@@ -883,13 +883,13 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   placeholder="Pesquisar cidade, alias..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-surface border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 font-sans text-xs text-white focus:outline-none focus:border-indigo-400 placeholder-on-surface-variant/60 w-56 uppercase"
+                  className="bg-[var(--router-surface-2)] border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 font-sans text-xs text-white focus:outline-none focus:border-indigo-400 placeholder-on-surface-variant/60 w-56 uppercase"
                 />
 
                 <select
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
-                  className="bg-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 font-sans text-xs text-[#dae2fd] focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
+                  className="bg-[var(--router-surface-2)] border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 font-sans text-xs text-[#dae2fd] focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
                 >
                   <option value="Todos">Todas as prioridades</option>
                   <option value="CRÍTICA">CRÍTICA</option>
@@ -1025,8 +1025,8 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
       {/* MODAL 1: SSW CIDADES ATENDIDAS CRUD */}
       {showSswModal && (
         <div className="fixed inset-0 bg-background/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-[#111625] border border-outline-variant rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col text-left">
-            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-surface">
+          <div className="bg-[#111625] border border-[var(--router-border)] rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col text-left">
+            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-[var(--router-surface-2)]">
               <span className="font-bold text-white text-sm">
                 📌 {editingSsw ? 'Editar Cidade Atendida (SSW)' : 'Nova Cidade Atendida (SSW)'}
               </span>
@@ -1043,7 +1043,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: VGA"
                     value={formSswUnidadeOrigem}
                     onChange={(e) => setFormSswUnidadeOrigem(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1 col-span-2 sm:col-span-1">
@@ -1054,7 +1054,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: MG"
                     value={formSswUfOrigem}
                     onChange={(e) => setFormSswUfOrigem(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
                   />
                 </div>
               </div>
@@ -1066,7 +1066,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     type="text"
                     value={formSswCidadeOrigem}
                     onChange={(e) => setFormSswCidadeOrigem(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1075,7 +1075,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     type="text"
                     value={formSswCodigoIbgeOrigem}
                     onChange={(e) => setFormSswCodigoIbgeOrigem(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
               </div>
@@ -1089,7 +1089,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: Alfenas"
                     value={formSswCidadeDestino}
                     onChange={(e) => setFormSswCidadeDestino(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1100,7 +1100,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: MG"
                     value={formSswUfDestino}
                     onChange={(e) => setFormSswUfDestino(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white uppercase focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1110,7 +1110,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: SUL_ALFENAS"
                     value={formSswPracaDestino}
                     onChange={(e) => setFormSswPracaDestino(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
               </div>
@@ -1122,7 +1122,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     type="text"
                     value={formSswCodigoIbgeDestino}
                     onChange={(e) => setFormSswCodigoIbgeDestino(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1133,7 +1133,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="120"
                     value={formSswDistanciaKm}
                     onChange={(e) => setFormSswDistanciaKm(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1144,7 +1144,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="14.50"
                     value={formSswTarifa}
                     onChange={(e) => setFormSswTarifa(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
               </div>
@@ -1156,7 +1156,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     type="number"
                     value={formSswPrazo}
                     onChange={(e) => setFormSswPrazo(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1 col-span-2">
@@ -1166,7 +1166,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: SEGUNDA A SEXTA"
                     value={formSswFrequencia}
                     onChange={(e) => setFormSswFrequencia(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1175,7 +1175,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     type="number"
                     value={formSswQuantPedagios}
                     onChange={(e) => setFormSswQuantPedagios(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
               </div>
@@ -1187,30 +1187,30 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   placeholder="Ex: REGIAO_SUL_MINAS_A"
                   value={formSswPracaComercial}
                   onChange={(e) => setFormSswPracaComercial(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                 />
               </div>
 
               {/* Rules Checkboxes */}
               <div className="bg-[#101524] p-3 rounded-lg border border-[#14203a] flex flex-wrap gap-4 justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formSswCif} onChange={(e) => setFormSswCif(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary w-4 h-4" />
+                  <input type="checkbox" checked={formSswCif} onChange={(e) => setFormSswCif(e.target.checked)} className="rounded border-[var(--router-border)] bg-[var(--router-surface-2)] text-primary w-4 h-4" />
                   <span className="text-xs text-gray-300 font-bold">Permite CIF</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formSswFob} onChange={(e) => setFormSswFob(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary w-4 h-4" />
+                  <input type="checkbox" checked={formSswFob} onChange={(e) => setFormSswFob(e.target.checked)} className="rounded border-[var(--router-border)] bg-[var(--router-surface-2)] text-primary w-4 h-4" />
                   <span className="text-xs text-gray-300 font-bold">Permite FOB</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formSswRestrito} onChange={(e) => setFormSswRestrito(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary w-4 h-4" />
+                  <input type="checkbox" checked={formSswRestrito} onChange={(e) => setFormSswRestrito(e.target.checked)} className="rounded border-[var(--router-border)] bg-[var(--router-surface-2)] text-primary w-4 h-4" />
                   <span className="text-xs text-gray-300 font-bold">Entrega Restrita</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formSswTda} onChange={(e) => setFormSswTda(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary w-4 h-4" />
+                  <input type="checkbox" checked={formSswTda} onChange={(e) => setFormSswTda(e.target.checked)} className="rounded border-[var(--router-border)] bg-[var(--router-surface-2)] text-primary w-4 h-4" />
                   <span className="text-xs text-gray-300 font-bold">Cobra TDA</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formSswAtivo} onChange={(e) => setFormSswAtivo(e.target.checked)} className="rounded border-outline-variant bg-surface text-primary w-4 h-4" />
+                  <input type="checkbox" checked={formSswAtivo} onChange={(e) => setFormSswAtivo(e.target.checked)} className="rounded border-[var(--router-border)] bg-[var(--router-surface-2)] text-primary w-4 h-4" />
                   <span className="text-xs text-emerald-400 font-bold">Registro Ativo</span>
                 </label>
               </div>
@@ -1238,8 +1238,8 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
       {/* MODAL 2: OPERATIONAL ROTAS CRUD */}
       {showForm && (
         <div className="fixed inset-0 bg-background/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-[#111625] border border-outline-variant rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col text-left">
-            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-surface">
+          <div className="bg-[#111625] border border-[var(--router-border)] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col text-left">
+            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-[var(--router-surface-2)]">
               <span className="font-bold text-white text-sm">
                 {isEditing ? 'Editar Configuração de Praça' : 'Cadastrar Configuração de Praça'}
               </span>
@@ -1256,7 +1256,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: VARGINHA"
                     value={formCidade}
                     onChange={(e) => setFormCidade(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
                   />
                 </div>
 
@@ -1268,7 +1268,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: ROTA 01"
                     value={formSetor}
                     onChange={(e) => setFormSetor(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
                   />
                 </div>
               </div>
@@ -1280,7 +1280,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   placeholder="Ex: VGA, VARGINHA MG"
                   value={formAlias}
                   onChange={(e) => setFormAlias(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
                 />
               </div>
 
@@ -1293,7 +1293,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: SUL-VGA"
                     value={formRota}
                     onChange={(e) => setFormRota(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none uppercase"
                   />
                 </div>
 
@@ -1302,7 +1302,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   <select
                     value={formPrazo}
                     onChange={(e) => setFormPrazo(Number(e.target.value))}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-2 py-2 text-xs text-[#dae2fd] focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-2 py-2 text-xs text-[#dae2fd] focus:border-indigo-400 outline-none"
                   >
                     <option value={1}>D+1 (Expresso)</option>
                     <option value={2}>D+2 (Padrão)</option>
@@ -1316,7 +1316,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   <select
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value as any)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-2 py-2 text-xs text-[#dae2fd] focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-2 py-2 text-xs text-[#dae2fd] focus:border-indigo-400 outline-none"
                   >
                     <option value="CRÍTICA">🔴 CRÍTICA</option>
                     <option value="ALTA">🟡 ALTA</option>
@@ -1334,7 +1334,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     placeholder="Ex: 2"
                     value={formCod}
                     onChange={(e) => setFormCod(e.target.value)}
-                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
+                    className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-400 outline-none"
                   />
                 </div>
 
@@ -1342,23 +1342,23 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Frequência</label>
                   <div className="flex gap-2 pt-1 font-sans">
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={formSegunda} onChange={(e) => setFormSegunda(e.target.checked)} className="rounded bg-surface text-primary w-3.5 h-3.5" />
+                      <input type="checkbox" checked={formSegunda} onChange={(e) => setFormSegunda(e.target.checked)} className="rounded bg-[var(--router-surface-2)] text-primary w-3.5 h-3.5" />
                       <span className="text-[10px] text-gray-300">Seg</span>
                     </label>
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={formTerca} onChange={(e) => setFormTerca(e.target.checked)} className="rounded bg-surface text-primary w-3.5 h-3.5" />
+                      <input type="checkbox" checked={formTerca} onChange={(e) => setFormTerca(e.target.checked)} className="rounded bg-[var(--router-surface-2)] text-primary w-3.5 h-3.5" />
                       <span className="text-[10px] text-gray-300">Ter</span>
                     </label>
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={formQuarta} onChange={(e) => setFormQuarta(e.target.checked)} className="rounded bg-surface text-primary w-3.5 h-3.5" />
+                      <input type="checkbox" checked={formQuarta} onChange={(e) => setFormQuarta(e.target.checked)} className="rounded bg-[var(--router-surface-2)] text-primary w-3.5 h-3.5" />
                       <span className="text-[10px] text-gray-300">Qua</span>
                     </label>
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={formQuinta} onChange={(e) => setFormQuinta(e.target.checked)} className="rounded bg-surface text-primary w-3.5 h-3.5" />
+                      <input type="checkbox" checked={formQuinta} onChange={(e) => setFormQuinta(e.target.checked)} className="rounded bg-[var(--router-surface-2)] text-primary w-3.5 h-3.5" />
                       <span className="text-[10px] text-gray-300">Qui</span>
                     </label>
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={formSexta} onChange={(e) => setFormSexta(e.target.checked)} className="rounded bg-surface text-primary w-3.5 h-3.5" />
+                      <input type="checkbox" checked={formSexta} onChange={(e) => setFormSexta(e.target.checked)} className="rounded bg-[var(--router-surface-2)] text-primary w-3.5 h-3.5" />
                       <span className="text-[10px] text-gray-300">Sex</span>
                     </label>
                   </div>
@@ -1388,8 +1388,8 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
       {/* COLECTIVE CSV IMPORT OVERLAY */}
       {showImporter && (
         <div className="fixed inset-0 bg-background/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-[#111625] border border-outline-variant rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col text-left">
-            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-surface">
+          <div className="bg-[#111625] border border-[var(--router-border)] rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col text-left">
+            <div className="p-4 border-b border-[#14203a] flex justify-between items-center bg-[var(--router-surface-2)]">
               <span className="font-bold text-white text-sm">📥 Importação Lote - Regras de Roteirização</span>
               <button onClick={() => setShowImporter(false)} className="text-gray-400 hover:text-white">✕</button>
             </div>
@@ -1412,7 +1412,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
                   placeholder="ALFENAS;ALFENA;ROTA 01;VGA-ALFENAS;2;ALTA"
-                  className="w-full bg-surface border border-outline-variant rounded-lg p-3 text-xs text-white font-mono focus:border-indigo-400 outline-none"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg p-3 text-xs text-white font-mono focus:border-indigo-400 outline-none"
                 />
               </div>
 

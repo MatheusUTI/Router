@@ -350,8 +350,8 @@ export default function OcorrenciasView({
 
       {/* CSV IMPORT SHOWER */}
       {showImporter && (
-        <div className="bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
-          <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+        <div className="bg-[#161d30] border border-[var(--router-border)] rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
+          <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]/30">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-1">
                 <span className="material-symbols-outlined text-primary text-[18px]">cloud_upload</span>
@@ -376,7 +376,7 @@ export default function OcorrenciasView({
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-                dragActive ? 'border-primary bg-primary-container/10 scale-[0.99]' : 'border-outline-variant hover:border-primary/50'
+                dragActive ? 'border-primary bg-primary-container/10 scale-[0.99]' : 'border-[var(--router-border)] hover:border-primary/50'
               }`}
             >
               <input
@@ -416,14 +416,14 @@ export default function OcorrenciasView({
                   setImportDelimiter(e.target.value);
                   parseList(importLines, e.target.value);
                 }}
-                className="w-full bg-[#1b2540] border border-outline-variant/60 rounded-lg px-3 py-2 text-xs text-white"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)]/60 rounded-lg px-3 py-2 text-xs text-white"
               >
                 <option value=";">Ponto-e-vírgula ( ; )</option>
                 <option value=",">Vírgula ( , )</option>
               </select>
               
               {importFileName && (
-                <div className="p-3 bg-[#111624] rounded-lg border border-outline-variant/40 text-[11px] font-mono flex items-center justify-between">
+                <div className="p-3 bg-[#111624] rounded-lg border border-[var(--router-border)]/40 text-[11px] font-mono flex items-center justify-between">
                   <span className="truncate text-white">{importFileName}</span>
                   <span className="text-emerald-400 font-bold shrink-0">{importedPreview.length} registros</span>
                 </div>
@@ -443,8 +443,8 @@ export default function OcorrenciasView({
           </div>
 
           {importedPreview.length > 0 && (
-            <div className="border border-outline-variant/40 rounded-xl overflow-hidden mt-4">
-              <div className="bg-[#12192a] px-4 py-2 border-b border-outline-variant/40 text-[10px] font-bold text-white uppercase tracking-wider">
+            <div className="border border-[var(--router-border)]/40 rounded-xl overflow-hidden mt-4">
+              <div className="bg-[#12192a] px-4 py-2 border-b border-[var(--router-border)]/40 text-[10px] font-bold text-white uppercase tracking-wider">
                 Amostra das ocorrências identificadas
               </div>
               <div className="max-h-[140px] overflow-y-auto font-mono text-[10px] divide-y divide-outline-variant/20 bg-[#111624]">
@@ -468,8 +468,8 @@ export default function OcorrenciasView({
 
       {/* SINGLE FORM DRAWER (Add/Edit) */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
-          <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+        <form onSubmit={handleSubmit} className="bg-[#161d30] border border-[var(--router-border)] rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
+          <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]/30">
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
               <span className="material-symbols-outlined text-primary">{isEditing ? 'edit_square' : 'add_circle'}</span>
               {isEditing ? `Editar Ocorrência [${formCodigo}]` : 'Cadastrar Nova Ocorrência Operacional'}
@@ -488,7 +488,7 @@ export default function OcorrenciasView({
                 value={formCodigo}
                 disabled={isEditing}
                 onChange={(e) => setFormCodigo(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary disabled:opacity-50"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary disabled:opacity-50"
                 required
               />
             </div>
@@ -499,7 +499,7 @@ export default function OcorrenciasView({
                 placeholder="Ex: CLIENTE ALEGA ENTREGA COM ATRASO"
                 value={formDescricao}
                 onChange={(e) => setFormDescricao(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                 required
               />
             </div>
@@ -508,7 +508,7 @@ export default function OcorrenciasView({
               <select
                 value={formResponsabilidade}
                 onChange={(e) => setFormResponsabilidade(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
               >
                 {responsabilidades.slice(1).map(r => (
                   <option key={r} value={r}>{r}</option>
@@ -523,7 +523,7 @@ export default function OcorrenciasView({
               <select
                 value={formTipo}
                 onChange={(e) => setFormTipo(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
               >
                 {tipos.slice(1).map(t => (
                   <option key={t} value={t}>{t}</option>
@@ -537,7 +537,7 @@ export default function OcorrenciasView({
                 placeholder="Ex: Qualidade, SAC"
                 value={formSetor}
                 onChange={(e) => setFormSetor(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
               />
             </div>
             <div className="text-left">
@@ -545,7 +545,7 @@ export default function OcorrenciasView({
               <select
                 value={formRetorno}
                 onChange={(e) => setFormRetorno(e.target.value as any)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
               >
                 <option value="Sim">Sim (Gera Devolução/Reentrega)</option>
                 <option value="Não">Não (Tratativa em trânsito / Baixado)</option>
@@ -558,7 +558,7 @@ export default function OcorrenciasView({
                 placeholder="Ex: Re-entrega amanhã sem cobrança"
                 value={formTratativa}
                 onChange={(e) => setFormTratativa(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
               />
             </div>
           </div>
@@ -582,7 +582,7 @@ export default function OcorrenciasView({
       )}
 
       {/* FILTER PANEL */}
-      <div className="bg-[#161d30]/60 p-4 rounded-xl border border-outline-variant/40 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-[#161d30]/60 p-4 rounded-xl border border-[var(--router-border)]/40 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <span className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-[#9cb4e4]">search</span>
           <input
@@ -590,7 +590,7 @@ export default function OcorrenciasView({
             placeholder="Pesquisar por Código, Descrição ou Tratativa..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#111624] border border-outline-variant rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-primary"
+            className="w-full bg-[#111624] border border-[var(--router-border)] rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -599,7 +599,7 @@ export default function OcorrenciasView({
             <select
               value={filterResponsabilidade}
               onChange={(e) => setFilterResponsabilidade(e.target.value)}
-              className="w-full bg-[#111624] border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none font-sans"
+              className="w-full bg-[#111624] border border-[var(--router-border)] rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none font-sans"
             >
               {responsabilidades.map(r => (
                 <option key={r} value={r}>Resp: {r}</option>
@@ -611,7 +611,7 @@ export default function OcorrenciasView({
             <select
               value={filterTipo}
               onChange={(e) => setFilterTipo(e.target.value)}
-              className="w-full bg-[#111624] border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none font-sans"
+              className="w-full bg-[#111624] border border-[var(--router-border)] rounded-lg px-2.5 py-1.5 text-xs text-[#dae2fd] focus:outline-none font-sans"
             >
               {tipos.map(t => (
                 <option key={t} value={t}>Tipo: {t}</option>
@@ -622,10 +622,10 @@ export default function OcorrenciasView({
       </div>
 
       {/* OCCURRENCES SELECTION LIST GRID */}
-      <div className="bg-surface-container rounded-xl border border-outline-variant p-5">
-        <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+      <div className="router-card rounded-xl border border-[var(--router-border)] p-5">
+        <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
           <table className="w-full text-left text-xs font-sans">
-            <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+            <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
               <tr>
                 <th className="px-5 py-3">Cód</th>
                 <th className="px-5 py-3">Motivo / Descrição</th>
@@ -648,7 +648,7 @@ export default function OcorrenciasView({
                 };
 
                 return (
-                  <tr key={occ.codigo} className="hover:bg-[var(--router-surface-2)]/30 border-b border-outline-variant/30 transition-colors">
+                  <tr key={occ.codigo} className="hover:bg-[var(--router-surface-2)]/30 border-b border-[var(--router-border)]/30 transition-colors">
                     <td className="px-5 py-3.5 font-bold font-mono text-primary text-[12px]">{occ.codigo}</td>
                     <td className="px-5 py-3.5 font-medium text-white max-w-[200px] truncate">{occ.descricao}</td>
                     <td className="px-5 py-3.5">

@@ -234,8 +234,8 @@ export default function CurvaAView({
 
       {/* CSV IMPORTER DRAWER */}
       {showImporter && (
-        <div className="bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
-          <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+        <div className="bg-[#161d30] border border-[var(--router-border)] rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
+          <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]/30">
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
               <span className="material-symbols-outlined text-primary">cloud_upload</span>
               Importar Clientes Curva A por Texto
@@ -254,7 +254,7 @@ export default function CurvaAView({
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
             placeholder="Exemplo:&#10;12345678000100;ALIMENTOS BRASILEIROS LTDA;A+&#10;98765432000200;LOG TRANSPORTES NACIONAIS SO;A"
-            className="w-full bg-[#111624] border border-outline-variant/65 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-primary"
+            className="w-full bg-[#111624] border border-[var(--router-border)]/65 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-primary"
           />
 
           <div className="flex justify-between items-center">
@@ -284,8 +284,8 @@ export default function CurvaAView({
 
       {/* SINGLE EDIT/ADD CLIENT FORM */}
       {showForm && (
-        <form onSubmit={handleSingleSubmit} className="bg-[#161d30] border border-outline-variant rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
-          <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+        <form onSubmit={handleSingleSubmit} className="bg-[#161d30] border border-[var(--router-border)] rounded-2xl p-6 shadow-xl space-y-4 animate-scale-up">
+          <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]/30">
             <h3 className="text-sm font-bold text-white flex items-center gap-1">
               <span className="material-symbols-outlined text-primary">{isEditing ? 'edit' : 'add_circle'}</span>
               {isEditing ? `Editar Cadastro de Cliente ${formCnpj}` : 'Vincular Novo Cliente Parceiro Curva A'}
@@ -304,7 +304,7 @@ export default function CurvaAView({
                 value={formCnpj}
                 disabled={isEditing}
                 onChange={(e) => setFormCnpj(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary disabled:opacity-50 font-mono"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary disabled:opacity-50 font-mono"
                 required
               />
             </div>
@@ -316,7 +316,7 @@ export default function CurvaAView({
                 placeholder="NOME CORPORATIVO DO REMETENTE OU EXPEDIDOR"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                 required
               />
             </div>
@@ -326,7 +326,7 @@ export default function CurvaAView({
               <select
                 value={formClass}
                 onChange={(e) => setFormClass(e.target.value)}
-                className="w-full bg-[#1b2540] border border-outline-variant rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#1b2540] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
               >
                 <option value="A+">Prioridade Máxima (A+)</option>
                 <option value="A">Prioritário Padrão (A)</option>
@@ -354,7 +354,7 @@ export default function CurvaAView({
       )}
 
       {/* SEARCH AND FILTERS */}
-      <div className="bg-[#161d30]/60 p-4 rounded-xl border border-outline-variant/40 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-[#161d30]/60 p-4 rounded-xl border border-[var(--router-border)]/40 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-grow w-full">
           <span className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-[#9cb4e4]">search</span>
           <input
@@ -362,7 +362,7 @@ export default function CurvaAView({
             placeholder="Pesquisar por Razão Social or CNPJ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#111624] border border-outline-variant rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-primary"
+            className="w-full bg-[#111624] border border-[var(--router-border)] rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -370,7 +370,7 @@ export default function CurvaAView({
           <select
             value={filterClass}
             onChange={(e) => setFilterClass(e.target.value)}
-            className="w-full bg-[#111624] border border-outline-variant/50 rounded-lg px-3 py-2 text-xs text-[#dae2fd] focus:outline-none"
+            className="w-full bg-[#111624] border border-[var(--router-border)]/50 rounded-lg px-3 py-2 text-xs text-[#dae2fd] focus:outline-none"
           >
             <option value="Todos">Todas as Curvas</option>
             <option value="A+">Categoria A+</option>
@@ -381,10 +381,10 @@ export default function CurvaAView({
       </div>
 
       {/* READ TABLE */}
-      <div className="bg-surface-container rounded-xl border border-outline-variant p-5">
-        <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+      <div className="router-card rounded-xl border border-[var(--router-border)] p-5">
+        <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
           <table className="w-full text-left text-xs font-sans">
-            <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+            <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
               <tr>
                 <th className="px-5 py-3">CNPJ Mapeado</th>
                 <th className="px-5 py-3">Razão Social do Cliente Remetente</th>
@@ -402,7 +402,7 @@ export default function CurvaAView({
                 };
 
                 return (
-                  <tr key={`${client.cnpj_remetente}_${idx}`} className="hover:bg-[var(--router-surface-2)]/30 border-b border-outline-variant/30 transition-colors">
+                  <tr key={`${client.cnpj_remetente}_${idx}`} className="hover:bg-[var(--router-surface-2)]/30 border-b border-[var(--router-border)]/30 transition-colors">
                     <td className="px-5 py-3.5 font-mono text-[#dae2fd] font-semibold text-[11.5px]">{client.cnpj_remetente}</td>
                     <td className="px-5 py-3.5 text-white font-sans font-medium uppercase">{client.cliente_remetente}</td>
                     <td className="px-5 py-3.5 text-center">

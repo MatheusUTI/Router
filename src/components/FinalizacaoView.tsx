@@ -586,7 +586,7 @@ export default function FinalizacaoView({
             className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'preromaneio'
                 ? 'bg-primary text-on-primary shadow-md'
-                : 'text-on-surface-variant hover:text-white'
+                : 'text-on-surface-variant hover:text-[var(--router-text)]'
             }`}
           >
             <ClipboardList className="w-3.5 h-3.5" />
@@ -601,7 +601,7 @@ export default function FinalizacaoView({
             className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'programacao'
                 ? 'bg-primary text-on-primary shadow-md'
-                : 'text-on-surface-variant hover:text-white'
+                : 'text-on-surface-variant hover:text-[var(--router-text)]'
             }`}
           >
             <ClipboardList className="w-3.5 h-3.5" />
@@ -616,7 +616,7 @@ export default function FinalizacaoView({
             className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'history'
                 ? 'bg-primary text-on-primary shadow-md'
-                : 'text-on-surface-variant hover:text-white'
+                : 'text-on-surface-variant hover:text-[var(--router-text)]'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -643,13 +643,13 @@ export default function FinalizacaoView({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-white tracking-tight uppercase">PROGRAMAÇÃO DO DIA</h1>
+                  <h1 className="text-2xl font-black text-[var(--router-text)] tracking-tight uppercase">PROGRAMAÇÃO DO DIA</h1>
                   <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-mono font-bold text-[9px] uppercase rounded">
                     Varginha Filial
                   </span>
                 </div>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  Data ativa do planejamento: <span className="font-mono font-bold text-white bg-[var(--router-surface-3)] border border-white/10 px-2 py-0.5 rounded ml-1">{manifestDate}</span>
+                  Data ativa do planejamento: <span className="font-mono font-bold text-[var(--router-text)] bg-[var(--router-surface-3)] border border-white/10 px-2 py-0.5 rounded ml-1">{manifestDate}</span>
                 </p>
               </div>
             </div>
@@ -1042,7 +1042,7 @@ export default function FinalizacaoView({
                                         {/* DOCS (NF/CTRC) */}
                                         <td className="py-2.5 px-3 text-center">
                                           <div className="font-mono text-xs">
-                                            <span className="text-white font-bold">{row.ctrcs.length} CTRCs</span>
+                                            <span className="text-[var(--router-text)] font-bold">{row.ctrcs.length} CTRCs</span>
                                             {nfsCount > 0 && <span className="text-on-surface-variant/70 text-[10px] block font-sans">({nfsCount} NFs)</span>}
                                           </div>
                                         </td>
@@ -1056,7 +1056,7 @@ export default function FinalizacaoView({
 
                                         {/* VOL */}
                                         <td className="py-2.5 px-3 text-right">
-                                          <div className="font-mono text-white text-xs">
+                                          <div className="font-mono text-[var(--router-text)] text-xs">
                                             {volSum}
                                           </div>
                                         </td>
@@ -1064,7 +1064,7 @@ export default function FinalizacaoView({
                                         {/* FINANCEIRO (INTERNO) */}
                                         <td className="py-2.5 px-3 text-right">
                                           <div className="font-mono text-[11px] leading-tight flex flex-col items-end justify-center">
-                                            <span className="text-white font-semibold" title="Valor Mercadoria">
+                                            <span className="text-[var(--router-text)] font-semibold" title="Valor Mercadoria">
                                               📦 {valSum > 0 ? formatCurrency(valSum) : 'R$ 0,00'}
                                             </span>
                                             <span className="text-indigo-400 text-[10px]" title="Valor do Frete">
@@ -1131,8 +1131,8 @@ export default function FinalizacaoView({
 
                   {/* Sub footer totals row inside screen table */}
                   <div className="pt-5 mt-6 border-t border-outline-variant/50 flex flex-wrap gap-4 items-center justify-between font-mono font-semibold text-xs text-on-surface-variant">
-                    <div>VEÍCULOS PROGRAMADOS: <span className="text-white font-bold ml-1">{programacaoRows.length}</span></div>
-                    <div>CTRCs / NOTAS TOTAIS: <span className="text-white font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</span></div>
+                    <div>VEÍCULOS PROGRAMADOS: <span className="text-[var(--router-text)] font-bold ml-1">{programacaoRows.length}</span></div>
+                    <div>CTRCs / NOTAS TOTAIS: <span className="text-[var(--router-text)] font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.length, 0)}</span></div>
                     <div>CUBAGEM DE PESO INTEGRADA: <span className="text-emerald-400 font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.peso_r || c.weight || 0), 0), 0).toLocaleString('pt-BR')} kg</span></div>
                     <div>VOLUMETRIA TOTAL: <span className="text-sky-400 font-bold ml-1">{programacaoRows.reduce((acc, r) => acc + r.ctrcs.reduce((sum: number, c: any) => sum + (c.volume || 0), 0), 0)} vol.</span></div>
                   </div>
@@ -1152,7 +1152,7 @@ export default function FinalizacaoView({
         linkedCtrcs.length === 0 ? (
           <div className="text-center py-20 bg-surface-container rounded-xl border border-dashed border-outline-variant no-print max-w-2xl mx-auto">
             <ClipboardList className="w-12 h-12 mx-auto text-on-surface-variant/40 mb-3" />
-            <h3 className="text-sm font-bold text-white mb-1">Nenhum Romaneio Ativo Sendo Roteirizado</h3>
+            <h3 className="text-sm font-bold text-[var(--router-text)] mb-1">Nenhum Romaneio Ativo Sendo Roteirizado</h3>
             <p className="text-xs text-on-surface-variant max-w-sm mx-auto leading-relaxed">
               Vá até o painel de <b>Roteirização</b>, atribua os CTRCs importados a uma placa e clique em "Consolidar Romaneio" para gerar sua lista de coleta física.
             </p>
@@ -1165,7 +1165,7 @@ export default function FinalizacaoView({
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[var(--router-text)] text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
                 Ver Rotas Prontas
               </button>
@@ -1218,7 +1218,7 @@ export default function FinalizacaoView({
 
                   <div className="pt-2 border-t border-outline-variant/30">
                     <span className="block text-[10px] text-on-surface-variant font-bold uppercase mb-1">Motorista Vinculado</span>
-                    <div className="bg-surface px-3 py-2 border border-outline-variant rounded-lg font-semibold text-white">
+                    <div className="bg-surface px-3 py-2 border border-outline-variant rounded-lg font-semibold text-[var(--router-text)]">
                       {activeVehicle?.driverName || "HIAN THAYRON SOARES DE OLIVEIRA"}
                     </div>
                   </div>
@@ -1294,7 +1294,7 @@ export default function FinalizacaoView({
 
                 <button
                   onClick={handlePrint}
-                  className="w-full py-2 bg-[var(--router-surface-2)] hover:bg-slate-705 border border-outline-variant text-[#dae2fd] hover:text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-2 bg-[var(--router-surface-2)] hover:bg-slate-705 border border-outline-variant text-[#dae2fd] hover:text-[var(--router-text)] text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
                   Imprimir Folha Corrente
@@ -1459,14 +1459,14 @@ export default function FinalizacaoView({
             {filteredHistory.length === 0 ? (
               <div className="text-center py-24 bg-surface-container/60 rounded-xl border border-dashed border-outline-variant/60">
                 <History className="w-10 h-10 mx-auto text-on-surface-variant/30 mb-2" />
-                <h4 className="text-sm font-semibold text-white">Nenhum Romaneio Encontrado</h4>
+                <h4 className="text-sm font-semibold text-[var(--router-text)]">Nenhum Romaneio Encontrado</h4>
                 <p className="text-xs text-on-surface-variant max-w-xs mx-auto mt-1 leading-relaxed">
                   Não existem roteirizações arquivadas que correspondam à sua busca por <b>"{historySearch}"</b>.
                 </p>
                 {historySearch && (
                   <button
                     onClick={() => setHistorySearch('')}
-                    className="mt-4 px-3 py-1.5 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-white text-[11px] font-bold rounded-lg cursor-pointer"
+                    className="mt-4 px-3 py-1.5 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[var(--router-text)] text-[11px] font-bold rounded-lg cursor-pointer"
                   >
                     Limpar Filtro
                   </button>
@@ -1495,18 +1495,18 @@ export default function FinalizacaoView({
                             </span>
                           </div>
 
-                          <div className="font-mono text-base font-bold text-white uppercase flex items-center gap-1">
+                          <div className="font-mono text-base font-bold text-[var(--router-text)] uppercase flex items-center gap-1">
                             <Truck className="w-4 h-4 text-primary shrink-0" />
                             {rom.vehiclePlate}
                           </div>
                           
                           <div className="text-xs text-on-surface-variant">
-                            <span className="font-bold text-white">Mot:</span> {rom.driverName}
+                            <span className="font-bold text-[var(--router-text)]">Mot:</span> {rom.driverName}
                           </div>
                           
                           {rom.helperName && (
                             <div className="text-xs text-on-surface-variant/80">
-                              <span className="font-bold text-white/80">Conf:</span> {rom.helperName}
+                              <span className="font-bold text-[var(--router-text-muted)]">Conf:</span> {rom.helperName}
                             </div>
                           )}
                         </div>
@@ -1531,7 +1531,7 @@ export default function FinalizacaoView({
                         </span>
                         {rom.ctrcs.map((c: any, cI: number) => (
                           <div key={cI} className="flex justify-between items-center text-on-surface-variant gap-2 leading-tight">
-                            <span className="font-mono font-bold text-white shrink-0">{c.id}</span>
+                            <span className="font-mono font-bold text-[var(--router-text)] shrink-0">{c.id}</span>
                             <span className="truncate flex-1 text-right">{c.destinatario}</span>
                           </div>
                         ))}
@@ -1547,7 +1547,7 @@ export default function FinalizacaoView({
                       <div className="flex items-center gap-2 pt-2 border-t border-outline-variant/30">
                         <button
                           onClick={() => setPreviewRomaneio(rom)}
-                          className="flex-1 py-1.5 bg-primary/10 hover:bg-primary/20 hover:text-white border border-primary/30 text-primary text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          className="flex-1 py-1.5 bg-primary/10 hover:bg-primary/20 hover:text-[var(--router-text)] border border-primary/30 text-primary text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           Ver & Re-imprimir
@@ -1577,7 +1577,7 @@ export default function FinalizacaoView({
                   <div className="flex items-center gap-1 bg-[var(--router-surface-3)] border border-outline-variant/50 px-2.5 py-0.5 rounded text-[10px] w-fit text-on-surface-variant font-bold uppercase font-mono">
                     Verificando Registro Histórico
                   </div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-1">
+                  <h3 className="text-sm font-bold text-[var(--router-text)] flex items-center gap-1">
                     Visualização do Romaneio e Coleta #{previewRomaneio.id}
                   </h3>
                   <p className="text-xs text-on-surface-variant">
@@ -1617,12 +1617,12 @@ export default function FinalizacaoView({
                     <div className="space-y-4.5 text-xs text-on-surface-variant font-medium leading-relaxed">
                       <div className="flex justify-between border-b border-outline-variant/20 pb-2">
                         <span>Manifesto ID:</span>
-                        <b className="font-mono text-white text-sm">#{previewRomaneio.id}</b>
+                        <b className="font-mono text-[var(--router-text)] text-sm">#{previewRomaneio.id}</b>
                       </div>
                       
                       <div className="flex justify-between border-b border-outline-variant/20 pb-2">
                         <span>Data Emissão:</span>
-                        <b className="font-mono text-white">{previewRomaneio.date}</b>
+                        <b className="font-mono text-[var(--router-text)]">{previewRomaneio.date}</b>
                       </div>
 
                       <div className="flex justify-between border-b border-outline-variant/20 pb-2">
@@ -1632,12 +1632,12 @@ export default function FinalizacaoView({
 
                       <div className="space-y-0.5 border-b border-outline-variant/20 pb-2">
                         <span className="block text-[10px] text-on-surface-variant/70">Motorista Vinculado:</span>
-                        <b className="block text-white font-sans">{previewRomaneio.driverName}</b>
+                        <b className="block text-[var(--router-text)] font-sans">{previewRomaneio.driverName}</b>
                       </div>
 
                       <div className="space-y-0.5 border-b border-outline-variant/20 pb-2">
                         <span className="block text-[10px] text-on-surface-variant/70">Ajudante na Doca:</span>
-                        <b className="block text-white font-sans">{previewRomaneio.helperName || "-"}</b>
+                        <b className="block text-[var(--router-text)] font-sans">{previewRomaneio.helperName || "-"}</b>
                       </div>
 
                       {previewRomaneio.observations && (
@@ -1806,7 +1806,7 @@ export default function FinalizacaoView({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-white tracking-tight uppercase">Pré-Romaneios de Separação</h1>
+                  <h1 className="text-2xl font-black text-[var(--router-text)] tracking-tight uppercase">Pré-Romaneios de Separação</h1>
                   <span className="px-2 py-0.5 bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono font-bold text-[9px] uppercase rounded">
                     Docas de Separação
                   </span>
@@ -1841,9 +1841,9 @@ export default function FinalizacaoView({
             <div className="text-center py-16 text-on-surface-variant/40 bg-surface-container/50 rounded-2xl border border-dashed border-outline-variant/60">
               <div className="max-w-md mx-auto space-y-3">
                 <ClipboardList className="w-12 h-12 mx-auto text-on-surface-variant/30" />
-                <h3 className="text-base font-bold text-white">Nenhum pré-romaneio localizado</h3>
+                <h3 className="text-base font-bold text-[var(--router-text)]">Nenhum pré-romaneio localizado</h3>
                 <p className="text-xs text-center leading-relaxed">
-                  Não foram encontrados pré-romaneios para o dia de planejamento ativo <span className="font-mono font-bold text-white">{manifestDate}</span>. Vá para a <span className="font-semibold text-primary">Mesa de Roteirização</span> para gerar pré-romaneios de separação.
+                  Não foram encontrados pré-romaneios para o dia de planejamento ativo <span className="font-mono font-bold text-[var(--router-text)]">{manifestDate}</span>. Vá para a <span className="font-semibold text-primary">Mesa de Roteirização</span> para gerar pré-romaneios de separação.
                 </p>
               </div>
             </div>
@@ -1867,7 +1867,7 @@ export default function FinalizacaoView({
                       <div className="flex items-start justify-between">
                         <div>
                           <span className="text-[10px] font-mono text-on-surface-variant block uppercase tracking-wider">ROTA / DESTINO</span>
-                          <span className="text-base font-black text-white uppercase tracking-tight">{pr.route}</span>
+                          <span className="text-base font-black text-[var(--router-text)] uppercase tracking-tight">{pr.route}</span>
                         </div>
                         <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded border ${statusBg}`}>
                           {pr.status.replace('_', ' ')}
@@ -1877,19 +1877,19 @@ export default function FinalizacaoView({
                       <div className="grid grid-cols-2 gap-4 bg-surface/40 p-3 rounded-xl border border-outline-variant/30 font-mono text-xs">
                         <div>
                           <span className="text-[9px] text-on-surface-variant uppercase block">Portão / Doca</span>
-                          <span className="text-white font-bold">{pr.gate || 'Não Definido'}</span>
+                          <span className="text-[var(--router-text)] font-bold">{pr.gate || 'Não Definido'}</span>
                         </div>
                         <div>
                           <span className="text-[9px] text-on-surface-variant uppercase block">Data Planejada</span>
-                          <span className="text-white font-bold">{pr.planningDate}</span>
+                          <span className="text-[var(--router-text)] font-bold">{pr.planningDate}</span>
                         </div>
                         <div>
                           <span className="text-[9px] text-on-surface-variant uppercase block">CTRCs / NFS</span>
-                          <span className="text-white font-bold">{pr.ctrcIds.length} Itens</span>
+                          <span className="text-[var(--router-text)] font-bold">{pr.ctrcIds.length} Itens</span>
                         </div>
                         <div>
                           <span className="text-[9px] text-on-surface-variant uppercase block">Peso / Volume</span>
-                          <span className="text-white font-bold">{totalW.toLocaleString('pt-BR')} kg / {totalVol} vol</span>
+                          <span className="text-[var(--router-text)] font-bold">{totalW.toLocaleString('pt-BR')} kg / {totalVol} vol</span>
                         </div>
                       </div>
 
@@ -1904,7 +1904,7 @@ export default function FinalizacaoView({
                               value={pr.vehiclePlate || ''}
                               onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'vehiclePlate', e.target.value.toUpperCase())}
                               placeholder="Placa (ex: ABC1234)"
-                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-white placeholder-slate-500 font-mono focus:outline-none"
+                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-[var(--router-text)] placeholder-slate-500 font-mono focus:outline-none"
                             />
                           </div>
                           <div>
@@ -1914,7 +1914,7 @@ export default function FinalizacaoView({
                               value={pr.driverName || ''}
                               onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'driverName', e.target.value)}
                               placeholder="Nome Motorista"
-                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-[var(--router-text)] placeholder-slate-500 focus:outline-none"
                             />
                           </div>
                           <div>
@@ -1924,7 +1924,7 @@ export default function FinalizacaoView({
                               value={pr.helperName || ''}
                               onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'helperName', e.target.value)}
                               placeholder="Nome Ajudante"
-                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-[var(--router-text)] placeholder-slate-500 focus:outline-none"
                             />
                           </div>
                           <div>
@@ -1934,7 +1934,7 @@ export default function FinalizacaoView({
                               value={pr.gate || ''}
                               onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'gate', e.target.value)}
                               placeholder="Portão ou Doca"
-                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-[var(--router-text)] placeholder-slate-500 focus:outline-none"
                             />
                           </div>
                           <div className="col-span-2">
@@ -1944,7 +1944,7 @@ export default function FinalizacaoView({
                               value={pr.observations || ''}
                               onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'observations', e.target.value)}
                               placeholder="Obs/Instruções"
-                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-white placeholder-slate-500 focus:outline-none"
+                              className="w-full bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-3)] focus:bg-[var(--router-surface-2)] border border-[var(--router-input-border)] hover:border-[var(--router-primary)] rounded px-2 py-1 text-[var(--router-text)] placeholder-slate-500 focus:outline-none"
                             />
                           </div>
                         </div>
@@ -1964,7 +1964,7 @@ export default function FinalizacaoView({
                       <select
                         value={pr.status}
                         onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'status', e.target.value)}
-                        className="bg-[var(--router-surface-3)] border border-outline-variant/50 hover:border-[var(--router-primary)]-variant rounded-lg px-2 py-2 text-xs text-white font-mono cursor-pointer focus:outline-none"
+                        className="bg-[var(--router-surface-3)] border border-outline-variant/50 hover:border-[var(--router-primary)]-variant rounded-lg px-2 py-2 text-xs text-[var(--router-text)] font-mono cursor-pointer focus:outline-none"
                       >
                         <option value="RASCUNHO">Rascunho</option>
                         <option value="EM_SEPARACAO">Separando</option>

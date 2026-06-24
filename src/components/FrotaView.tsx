@@ -297,7 +297,7 @@ export default function FrotaView({
   return (
     <div className="space-y-6">
       {/* Visual Tab Selection Row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/60 pb-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--router-border)]/60 pb-3">
         <div className="flex gap-2">
           <button
             onClick={() => {
@@ -307,7 +307,7 @@ export default function FrotaView({
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
               subTab === 'cadastro_gr'
                 ? 'bg-primary-container text-on-primary-container shadow-sm border border-primary/20'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:router-card'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">verified_user</span>
@@ -321,7 +321,7 @@ export default function FrotaView({
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
               subTab === 'veiculos'
                 ? 'bg-primary-container text-on-primary-container shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:router-card'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">local_shipping</span>
@@ -335,7 +335,7 @@ export default function FrotaView({
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
               subTab === 'motoristas'
                 ? 'bg-primary-container text-on-primary-container shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:router-card'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">badge</span>
@@ -377,8 +377,8 @@ export default function FrotaView({
       </div>
 
       {showForm && (
-        <form onSubmit={handleSave} className="bg-surface-container-high rounded-xl border border-primary/20 p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-outline-variant/50 pb-2">
+        <form onSubmit={handleSave} className="router-card-high rounded-xl border border-primary/20 p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--router-border)]/50 pb-2">
             <h3 className="text-sm font-bold text-primary flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">edit_note</span>
               {editingId ? 'Editar Detalhes' : 'Novo Cadastro'}
@@ -386,7 +386,7 @@ export default function FrotaView({
             <button
               type="button"
               onClick={resetForm}
-              className="text-on-surface-variant hover:text-on-surface p-1 rounded-md"
+              className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] p-1 rounded-md"
             >
               <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
@@ -395,24 +395,24 @@ export default function FrotaView({
           {subTab === 'cadastro_gr' ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Placa do Veículo</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Placa do Veículo</label>
                 <input
                   type="text"
                   placeholder="Ex: RTA3G45"
                   value={vrPlaca}
                   onChange={(e) => setVrPlaca(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary uppercase font-mono"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary uppercase font-mono"
                   required
                   disabled={!!editingId}
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Classificação de Frota</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Classificação de Frota</label>
                 <select
                   value={vrTipo}
                   onChange={(e) => setVrTipo(e.target.value as any)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="PROPRIO">Frota Própria Estável</option>
                   <option value="AGREGADO">Agregado</option>
@@ -421,11 +421,11 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Rastreamento GR</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Rastreamento GR</label>
                 <select
                   value={vrRastreado ? "true" : "false"}
                   onChange={(e) => setVrRastreado(e.target.value === "true")}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="true">Rastreado (Homologado)</option>
                   <option value="false">Não Rastreado</option>
@@ -433,11 +433,11 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Limite GR Sugerido (R$)</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Limite GR Sugerido (R$)</label>
                 <select
                   value={vrLimiteGrSugerido}
                   onChange={(e) => setVrLimiteGrSugerido(Number(e.target.value))}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value={300000}>Até R$ 300.000 (Padrão)</option>
                   <option value={500000}>Até R$ 500.000 (Avançado)</option>
@@ -446,33 +446,33 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Motorista Padrão</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Motorista Padrão</label>
                 <input
                   type="text"
                   placeholder="Nome do motorista principal"
                   value={vrMotoristaPadrao}
                   onChange={(e) => setVrMotoristaPadrao(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Ajudante Padrão</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Ajudante Padrão</label>
                 <input
                   type="text"
                   placeholder="Nome do ajudante principal"
                   value={vrAjudantePadrao}
                   onChange={(e) => setVrAjudantePadrao(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Status Operacional</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Status Operacional</label>
                 <select
                   value={vrStatusOperacional}
                   onChange={(e) => setVrStatusOperacional(e.target.value as any)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="ATIVO">Ativo</option>
                   <option value="MANUTENCAO">Manutenção</option>
@@ -481,59 +481,59 @@ export default function FrotaView({
               </div>
 
               <div className="text-left md:col-span-1">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Observações Operacionais</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Observações Operacionais</label>
                 <input
                   type="text"
                   placeholder="Ex: Restrições de horário, etc"
                   value={vrObservacoes}
                   onChange={(e) => setVrObservacoes(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
           ) : subTab === 'veiculos' ? (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Placa do Veículo</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Placa do Veículo</label>
                 <input
                   type="text"
                   placeholder="Ex: RTA3G45"
                   value={vehiclePlaca}
                   onChange={(e) => setVehiclePlaca(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary uppercase font-mono"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary uppercase font-mono"
                   required
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Capacidade de Carga</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Capacidade de Carga</label>
                 <input
                   type="text"
                   placeholder="Ex: 3/4 - 4.5t"
                   value={vehicleCap}
                   onChange={(e) => setVehicleCap(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                   required
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Motorista Vinculado</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Motorista Vinculado</label>
                 <input
                   type="text"
                   placeholder="Selecione ou digite..."
                   value={vehicleDriver}
                   onChange={(e) => setVehicleDriver(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Tipo de Carroceria</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Tipo de Carroceria</label>
                 <select
                   value={vehicleType}
                   onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="Baú Seco">Baú Seco</option>
                   <option value="Refrigerado">Refrigerado</option>
@@ -544,11 +544,11 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Status Operacional</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Status Operacional</label>
                 <select
                   value={vehicleStatus}
                   onChange={(e) => setVehicleStatus(e.target.value as any)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="Disponível">Disponível</option>
                   <option value="Em Rota">Em Rota</option>
@@ -559,23 +559,23 @@ export default function FrotaView({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="text-left md:col-span-2">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Nome Completo</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Nome Completo</label>
                 <input
                   type="text"
                   placeholder="Nome do colaborador"
                   value={driverName}
                   onChange={(e) => setDriverName(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                   required
                 />
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Cargo / Função</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Cargo / Função</label>
                 <select
                   value={driverRole}
                   onChange={(e) => setDriverRole(e.target.value as any)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 >
                   <option value="Motorista">Motorista</option>
                   <option value="Ajudante">Ajudante</option>
@@ -583,26 +583,26 @@ export default function FrotaView({
               </div>
 
               <div className="text-left">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Pontuação Score (0-100)</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Pontuação Score (0-100)</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={driverScore}
                   onChange={(e) => setDriverScore(parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div className="text-left md:col-span-2">
-                <label className="text-xs font-semibold text-on-surface block mb-1">Setor Dominante / Melhor Rota</label>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Setor Dominante / Melhor Rota</label>
                 <input
                   type="text"
                   placeholder="Ex: São Paulo - Z. Sul"
                   disabled={driverRole === 'Ajudante'}
                   value={driverRole === 'Ajudante' ? 'Ajudante Operacional' : driverBestRoute}
                   onChange={(e) => setDriverBestRoute(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary disabled:opacity-50"
+                  className="w-full bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary disabled:opacity-50"
                 />
               </div>
             </div>
@@ -612,7 +612,7 @@ export default function FrotaView({
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 bg-surface hover:bg-surface-bright text-on-surface border border-outline-variant text-xs font-bold rounded-lg transition-colors"
+              className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface)] text-[var(--router-text)] border border-[var(--router-border)] text-xs font-bold rounded-lg transition-colors"
             >
               Cancelar
             </button>
@@ -628,19 +628,19 @@ export default function FrotaView({
 
       {/* Lists Row based on subTab */}
       {subTab === 'cadastro_gr' ? (
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-4">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-5 space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h4 className="text-sm font-bold text-on-surface">Mesa Geral de Veículos & Cadastro de Risco (GR)</h4>
-              <p className="text-xs text-on-surface-variant">Classificação de frota e rastreamento para fechamento operacional dos pré-romaneios.</p>
+              <h4 className="text-sm font-bold text-[var(--router-text)]">Mesa Geral de Veículos & Cadastro de Risco (GR)</h4>
+              <p className="text-xs text-[var(--router-text-muted)]">Classificação de frota e rastreamento para fechamento operacional dos pré-romaneios.</p>
             </div>
-            <div className="text-right text-xs text-on-surface-variant">
+            <div className="text-right text-xs text-[var(--router-text-muted)]">
               Total de Veículos Homologados: <span className="font-bold text-primary">{vehicleRegistries.length}</span>
             </div>
           </div>
-          <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+          <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
             <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+              <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
                 <tr>
                   <th className="px-5 py-3">Placa</th>
                   <th className="px-5 py-3">Classificação</th>
@@ -681,7 +681,7 @@ export default function FrotaView({
                       : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
                   return (
-                    <tr key={vr.placa} className="hover:bg-surface border-b border-outline-variant/30 transition-colors">
+                    <tr key={vr.placa} className="hover:bg-[var(--router-surface-2)] border-b border-[var(--router-border)]/30 transition-colors">
                       <td className="px-5 py-3.5 font-bold font-mono text-primary text-sm uppercase">{vr.placa}</td>
                       <td className="px-5 py-3.5">
                         <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${typeColor}`}>
@@ -693,17 +693,17 @@ export default function FrotaView({
                           {trackerLabel}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-semibold text-on-surface">
+                      <td className="px-5 py-3.5 font-semibold text-[var(--router-text)]">
                         {vr.limiteGrSugerido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                       </td>
-                      <td className="px-5 py-3.5 text-on-surface font-semibold">{vr.motoristaPadrao || 'Não Vinculado'}</td>
-                      <td className="px-5 py-3.5 text-on-surface-variant">{vr.ajudantePadrao || '-'}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text)] font-semibold">{vr.motoristaPadrao || 'Não Vinculado'}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text-muted)]">{vr.ajudantePadrao || '-'}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusColor}`}>
                           {vr.statusOperacional}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-on-surface-variant truncate max-w-[180px]" title={vr.observacoes}>
+                      <td className="px-5 py-3.5 text-[var(--router-text-muted)] truncate max-w-[180px]" title={vr.observacoes}>
                         {vr.observacoes || <span className="text-zinc-600 text-[11px] italic">Sem observações</span>}
                       </td>
                       {isMaster && (
@@ -711,7 +711,7 @@ export default function FrotaView({
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditVehicleRegistry(vr)}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -722,7 +722,7 @@ export default function FrotaView({
                                   onRemoveVehicleRegistry(vr.placa);
                                 }
                               }}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors"
                               title="Excluir"
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -735,7 +735,7 @@ export default function FrotaView({
                 })}
                 {filteredVehicleRegistries.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 9 : 8} className="text-center py-10 text-on-surface-variant">
+                    <td colSpan={isMaster ? 9 : 8} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum veículo cadastrado no GR correspondente à pesquisa.
                     </td>
                   </tr>
@@ -745,10 +745,10 @@ export default function FrotaView({
           </div>
         </div>
       ) : subTab === 'veiculos' ? (
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-5">
-          <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-5">
+          <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
             <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+              <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
                 <tr>
                   <th className="px-5 py-3">Placa / Registro</th>
                   <th className="px-5 py-3">Tipo Carroceria</th>
@@ -768,11 +768,11 @@ export default function FrotaView({
                       : 'bg-error/10 text-error border-error/20';
 
                   return (
-                    <tr key={veh.id} className="hover:bg-surface border-b border-outline-variant/30 transition-colors">
+                    <tr key={veh.id} className="hover:bg-[var(--router-surface-2)] border-b border-[var(--router-border)]/30 transition-colors">
                       <td className="px-5 py-3.5 font-bold font-mono text-primary">{veh.id}</td>
-                      <td className="px-5 py-3.5 text-on-surface font-semibold">{veh.type}</td>
-                      <td className="px-5 py-3.5 text-on-surface-variant font-mono">{veh.capacity}</td>
-                      <td className="px-5 py-3.5 text-on-surface font-semibold">{veh.driverName}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text)] font-semibold">{veh.type}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text-muted)] font-mono">{veh.capacity}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text)] font-semibold">{veh.driverName}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusColors}`}>
                           {veh.status}
@@ -783,7 +783,7 @@ export default function FrotaView({
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditVehicle(veh)}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -793,7 +793,7 @@ export default function FrotaView({
                               onClick={() => {
                                 if (confirm(`Excluir o veículo ${veh.id}?`)) onRemoveVehicle(veh.id);
                               }}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error disabled:opacity-30 transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error disabled:opacity-30 transition-colors"
                               title={veh.status === 'Em Rota' ? 'Não permitido em rota' : 'Excluir'}
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -806,7 +806,7 @@ export default function FrotaView({
                 })}
                 {filteredVehicles.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-on-surface-variant">
+                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum veículo encontrado correspondente à pesquisa.
                     </td>
                   </tr>
@@ -816,10 +816,10 @@ export default function FrotaView({
           </div>
         </div>
       ) : (
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-5">
-          <div className="overflow-x-auto rounded-lg border border-outline-variant/60">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-5">
+          <div className="overflow-x-auto rounded-lg border border-[var(--router-border)]/60">
             <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-[#131b2e] border-b border-outline-variant text-[11px] font-bold text-on-surface-variant">
+              <thead className="bg-[#131b2e] border-b border-[var(--router-border)] text-[11px] font-bold text-[var(--router-text-muted)]">
                 <tr>
                   <th className="px-5 py-3">Colaborador</th>
                   <th className="px-5 py-3">Score Global</th>
@@ -838,22 +838,22 @@ export default function FrotaView({
                       : driv.score >= 80
                       ? 'text-primary bg-primary-container/10 border-primary/20'
                       : driv.score >= 60
-                      ? 'text-on-surface bg-surface-container-highest border-outline-variant/30'
+                      ? 'text-[var(--router-text)] router-card-highest border-[var(--router-border)]/30'
                       : 'text-error bg-error-container/10 border-error/20';
 
                   return (
-                    <tr key={driv.id} className="hover:bg-surface border-b border-outline-variant/30 transition-colors">
+                    <tr key={driv.id} className="hover:bg-[var(--router-surface-2)] border-b border-[var(--router-border)]/30 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <img
                             src={driv.avatar}
                             alt=""
-                            className="w-8 h-8 rounded-full border border-outline-variant object-cover"
+                            className="w-8 h-8 rounded-full border border-[var(--router-border)] object-cover"
                             referrerPolicy="no-referrer"
                           />
                           <div>
-                            <p className="font-bold text-on-surface leading-tight">{driv.name}</p>
-                            <p className="text-[10px] font-mono text-on-surface-variant mt-0.5 uppercase tracking-wide">
+                            <p className="font-bold text-[var(--router-text)] leading-tight">{driv.name}</p>
+                            <p className="text-[10px] font-mono text-[var(--router-text-muted)] mt-0.5 uppercase tracking-wide">
                               {isAjudante ? 'Ajudante' : 'Motorista Ativo'}
                             </p>
                           </div>
@@ -872,21 +872,21 @@ export default function FrotaView({
                               : driv.status === 'Bom'
                               ? 'bg-primary/20 text-primary-fixed-dim'
                               : driv.status === 'Regular'
-                              ? 'bg-surface-container-highest text-on-surface-variant'
+                              ? 'router-card-highest text-[var(--router-text-muted)]'
                               : 'bg-error/20 text-error'
                           }`}
                         >
                           {driv.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-on-surface font-semibold font-sans">{driv.bestRoute}</td>
-                      <td className="px-5 py-3.5 text-on-surface-variant font-mono">{driv.successRate}%</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text)] font-semibold font-sans">{driv.bestRoute}</td>
+                      <td className="px-5 py-3.5 text-[var(--router-text-muted)] font-mono">{driv.successRate}%</td>
                       {isMaster && (
                         <td className="px-5 py-3.5 text-right font-semibold">
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEditDriver(driv)}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-primary transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-primary transition-colors"
                               title="Editar"
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -895,7 +895,7 @@ export default function FrotaView({
                               onClick={() => {
                                 if (confirm(`Excluir o registro de ${driv.name}?`)) onRemoveDriver(driv.id);
                               }}
-                              className="p-1 rounded hover:bg-surface-bright text-on-surface-variant hover:text-error transition-colors"
+                              className="p-1 rounded hover:bg-[var(--router-surface)] text-[var(--router-text-muted)] hover:text-error transition-colors"
                               title="Excluir"
                             >
                               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -908,7 +908,7 @@ export default function FrotaView({
                 })}
                 {filteredDrivers.length === 0 && (
                   <tr>
-                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-on-surface-variant">
+                    <td colSpan={isMaster ? 6 : 5} className="text-center py-10 text-[var(--router-text-muted)]">
                       Nenhum colaborador encontrado correspondente à pesquisa.
                     </td>
                   </tr>

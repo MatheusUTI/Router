@@ -219,7 +219,7 @@ export default function CargaList({
             </div>
 
             {/* Col 3: Destinatário / Remetente */}
-            <div className="min-w-0 flex items-center gap-1 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1 px-1.5 uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Destinatário"
                 uniqueValues={excelUniqueDests}
@@ -268,7 +268,7 @@ export default function CargaList({
             </div>
 
             {/* Col 4: CTRC / NF */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 uppercase font-sans select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'id' && sortDirection === 'desc' ? 'asc' : 'desc';
@@ -293,7 +293,7 @@ export default function CargaList({
             </div>
 
             {/* Col 5: Previsão */}
-            <div className="min-w-0 flex items-center justify-center px-1 border-l border-[var(--router-border)] uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center justify-center px-1 uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Previsão"
                 uniqueValues={excelUniquePrevs}
@@ -319,7 +319,7 @@ export default function CargaList({
             </div>
 
             {/* Col 6: Ocorrência / Localização */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Ocorrência"
                 uniqueValues={excelUniqueStatuses}
@@ -368,7 +368,7 @@ export default function CargaList({
             </div>
 
             {/* Col 7: Valor / Frete */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'valor' && sortDirection === 'desc' ? 'asc' : 'desc';
@@ -393,7 +393,7 @@ export default function CargaList({
             </div>
 
             {/* Col 8: Peso / Volumes */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
@@ -418,7 +418,7 @@ export default function CargaList({
             </div>
 
             {/* Col 9: OBS / Disponível */}
-            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none text-[var(--router-text-muted)]">
+            <div className="min-w-0 flex items-center justify-center px-1.5 uppercase font-sans select-none text-[var(--router-text-muted)]">
               <ExcelColumnFilter
                 label="Setor / Disponibilidade"
                 uniqueValues={excelUniqueOcorrSectors}
@@ -508,7 +508,7 @@ export default function CargaList({
             </div>
 
             {/* Col 3: Destinatário / Remetente */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase text-[10px] font-mono select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 uppercase text-[10px] font-mono select-none">
               <ExcelColumnFilter
                 label="Destinatário"
                 uniqueValues={excelUniqueDests}
@@ -557,7 +557,7 @@ export default function CargaList({
             </div>
 
             {/* Col 4: Previsão / Status / Localização */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase text-[10px] font-mono select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 uppercase text-[10px] font-mono select-none">
               <ExcelColumnFilter
                 label="Previsão"
                 uniqueValues={excelUniquePrevs}
@@ -630,7 +630,7 @@ export default function CargaList({
             </div>
 
             {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1.5 text-[9px] text-[var(--router-text-muted)] font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 gap-1.5 text-[9px] text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';

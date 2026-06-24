@@ -32,7 +32,7 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
     {
       name: 'Rota 01',
       curva: 'Curva B',
-      curvaColor: 'bg-surface-container-highest text-on-surface-variant border-outline-variant/30',
+      curvaColor: 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
       weight: '8.1t',
       weightPct: 45,
       ctrc: 28,
@@ -41,7 +41,7 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
     {
       name: 'Zila Leste',
       curva: 'Curva C',
-      curvaColor: 'bg-surface-container-highest text-on-surface-variant border-outline-variant/30',
+      curvaColor: 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
       weight: '3.2t',
       weightPct: 20,
       ctrc: 15,
@@ -60,21 +60,21 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
       {/* Page header controls */}
       <div className="flex justify-between items-end gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-on-surface tracking-tight">Mission Control</h2>
-          <p className="text-sm text-on-surface-variant mt-1">
+          <h2 className="router-title text-3xl">Mission Control</h2>
+          <p className="text-sm text-[var(--router-text-muted)] mt-1">
             Métricas operacionais em tempo real e dominância de setores de entrega.
           </p>
         </div>
         
         {/* Toggle Period and Export button */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="bg-surface-container-low p-1 rounded-lg border border-outline-variant/30 inline-flex">
+          <div className="bg-[var(--router-surface-1)] p-1 rounded-lg border border-[var(--router-border)]/50 inline-flex">
             <button
               onClick={() => setPeriod('today')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                 period === 'today'
-                  ? 'bg-surface-container-highest text-primary shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
+                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
               }`}
             >
               Hoje
@@ -83,8 +83,8 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
               onClick={() => setPeriod('week')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                 period === 'week'
-                  ? 'bg-surface-container-highest text-primary shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
+                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
               }`}
             >
               Semana
@@ -93,8 +93,8 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
               onClick={() => setPeriod('month')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                 period === 'month'
-                  ? 'bg-surface-container-highest text-primary shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
+                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
               }`}
             >
               Mês
@@ -114,70 +114,70 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* KPI 1: Volume/Peso Total */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between group relative overflow-hidden transition-all hover:border-outline duration-300">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group relative overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-on-surface-variant uppercase tracking-wider">
+            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
               Volume/Peso Total
             </span>
-            <span className="material-symbols-outlined text-on-surface-variant text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               open_in_full
             </span>
           </div>
           <div>
             <div className="text-2xl font-bold text-primary">
-              {kpis.volume.peso} <span className="text-xs text-on-surface-variant font-normal">ton</span>
+              {kpis.volume.peso} <span className="text-xs text-[var(--router-text-muted)] font-normal">ton</span>
             </div>
-            <div className="text-sm font-semibold text-on-surface mt-1 border-t border-outline-variant pt-1.5">
-              {kpis.volume.volume} <span className="text-xs text-on-surface-variant font-normal">m³</span>
+            <div className="text-sm font-semibold text-[var(--router-text)] mt-1 border-t border-[var(--router-border)] pt-1.5">
+              {kpis.volume.volume} <span className="text-xs text-[var(--router-text-muted)] font-normal">m³</span>
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-surface-container-highest">
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--router-surface-3)]">
             <div className="h-full bg-primary" style={{ width: '65%' }}></div>
           </div>
         </div>
 
         {/* KPI 2: Entregas */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-outline duration-300">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-on-surface-variant uppercase tracking-wider">
+            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
               Entregas
             </span>
-            <span className="material-symbols-outlined text-on-surface-variant text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               open_in_full
             </span>
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-bold text-tertiary">{kpis.entregas.realizadas}</span>
-              <span className="text-xs text-on-surface-variant">realizadas</span>
+              <span className="text-xs text-[var(--router-text-muted)]">realizadas</span>
             </div>
             <div className="flex items-baseline gap-1.5 mt-1.5">
-              <span className="text-sm font-semibold text-on-surface">{kpis.entregas.remanescentes}</span>
-              <span className="text-xs text-on-surface-variant">remanescentes</span>
+              <span className="text-sm font-semibold text-[var(--router-text)]">{kpis.entregas.remanescentes}</span>
+              <span className="text-xs text-[var(--router-text-muted)]">remanescentes</span>
             </div>
           </div>
-          <div className="w-full flex h-1.5 rounded-full overflow-hidden mt-4 bg-surface-container-highest">
+          <div className="w-full flex h-1.5 rounded-full overflow-hidden mt-4 bg-[var(--router-surface-3)]">
             <div className="bg-tertiary" style={{ width: '85%' }}></div>
-            <div className="bg-surface-bright" style={{ width: '15%' }}></div>
+            <div className="bg-[var(--router-surface)]" style={{ width: '15%' }}></div>
           </div>
         </div>
 
         {/* KPI 3: Faturamento Provisório */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-outline duration-300">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-on-surface-variant uppercase tracking-wider">
+            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
               Faturamento Prev.
             </span>
-            <span className="material-symbols-outlined text-on-surface-variant text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               open_in_full
             </span>
           </div>
           <div>
-            <span className="text-xs text-on-surface-variant font-semibold mr-1">R$</span>
-            <span className="text-2xl font-bold text-on-surface">
+            <span className="text-xs text-[var(--router-text-muted)] font-semibold mr-1">R$</span>
+            <span className="text-2xl font-bold text-[var(--router-text)]">
               {kpis.faturamento.toLocaleString('pt-BR')}
             </span>
-            <span className="text-xs text-on-surface-variant font-normal">,00</span>
+            <span className="text-xs text-[var(--router-text-muted)] font-normal">,00</span>
           </div>
           <div className="flex items-center gap-1 mt-3 text-tertiary text-xs font-mono bg-tertiary-container/10 w-fit px-2 py-0.5 rounded-sm">
             <span className="material-symbols-outlined text-[13px]">trending_up</span>
@@ -186,11 +186,11 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
         </div>
 
         {/* KPI 4: Ocupação da Frota */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between group items-center relative overflow-hidden transition-all hover:border-outline duration-300">
-          <span className="material-symbols-outlined absolute top-4 right-4 text-on-surface-variant text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group items-center relative overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
+          <span className="material-symbols-outlined absolute top-4 right-4 text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             open_in_full
           </span>
-          <span className="text-xs font-bold font-mono text-on-surface-variant uppercase tracking-wider w-full text-left">
+          <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider w-full text-left">
             Ocupação da Frota
           </span>
           <div className="relative w-20 h-20 flex items-center justify-center mt-2">
@@ -209,30 +209,30 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
                 strokeWidth="3.2"
               ></path>
             </svg>
-            <span className="absolute font-sans font-bold text-lg text-on-surface">
-              {kpis.ocupacao}<span className="text-xs text-on-surface-variant">%</span>
+            <span className="absolute font-sans font-bold text-lg text-[var(--router-text)]">
+              {kpis.ocupacao}<span className="text-xs text-[var(--router-text-muted)]">%</span>
             </span>
           </div>
         </div>
 
         {/* KPI 5: Custo vs Receita */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-outline duration-300">
+        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-on-surface-variant uppercase tracking-wider">
+            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
               Custo vs Receita
             </span>
-            <span className="material-symbols-outlined text-on-surface-variant text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               open_in_full
             </span>
           </div>
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-end">
-              <span className="text-xs text-on-surface-variant">Realizado</span>
+              <span className="text-xs text-[var(--router-text-muted)]">Realizado</span>
               <span className="text-lg font-bold text-tertiary-fixed-dim">{kpis.custo}%</span>
             </div>
-            <div className="flex justify-between items-end border-t border-outline-variant pt-2">
-              <span className="text-xs text-on-surface-variant">Meta teto</span>
-              <span className="text-xs font-semibold text-on-surface">7.0%</span>
+            <div className="flex justify-between items-end border-t border-[var(--router-border)] pt-2">
+              <span className="text-xs text-[var(--router-text-muted)]">Meta teto</span>
+              <span className="text-xs font-semibold text-[var(--router-text)]">7.0%</span>
             </div>
           </div>
         </div>
@@ -241,13 +241,13 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
       {/* Bento Grid Sectors (Bottom segment) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left main grid of sectors inside (spans 8) */}
-        <div className="lg:col-span-8 bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col gap-5">
+        <div className="lg:col-span-8 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col gap-5">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[20px]">hub</span>
-              <h3 className="text-base font-bold text-on-surface">Bento Grid de Setores</h3>
+              <h3 className="text-base font-bold text-[var(--router-text)]">Bento Grid de Setores</h3>
             </div>
-            <span className="material-symbols-outlined text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+            <span className="material-symbols-outlined text-[var(--router-text-muted)] hover:text-[var(--router-text)] cursor-pointer select-none">
               more_horiz
             </span>
           </div>
@@ -256,30 +256,30 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
             {filteredSectors.map((sector) => (
               <div
                 key={sector.name}
-                className="bg-surface p-4 rounded-lg border border-outline-variant hover:border-outline transition-colors duration-200 cursor-default"
+                className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] hover:border-[var(--router-primary)] transition-colors duration-200 cursor-default"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-bold text-on-surface">{sector.name}</span>
+                  <span className="text-sm font-bold text-[var(--router-text)]">{sector.name}</span>
                   <span className={`px-2 py-0.5 rounded-sm border text-[9px] font-mono font-medium ${sector.curvaColor}`}>
                     {sector.curva}
                   </span>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <div className="flex justify-between text-[11px] font-mono text-on-surface-variant mb-1.5">
+                    <div className="flex justify-between text-[11px] font-mono text-[var(--router-text-muted)] mb-1.5">
                       <span>Pending Weight</span>
-                      <span className="text-on-surface font-semibold">{sector.weight}</span>
+                      <span className="text-[var(--router-text)] font-semibold">{sector.weight}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
                       <div className="h-full bg-primary" style={{ width: `${sector.weightPct}%` }}></div>
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-[11px] font-mono text-on-surface-variant mb-1.5">
+                    <div className="flex justify-between text-[11px] font-mono text-[var(--router-text-muted)] mb-1.5">
                       <span>CTRC Count</span>
-                      <span className="text-on-surface font-semibold">{sector.ctrc}</span>
+                      <span className="text-[var(--router-text)] font-semibold">{sector.ctrc}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
                       <div className="h-full bg-secondary" style={{ width: `${sector.ctrcPct}%` }}></div>
                     </div>
                   </div>
@@ -287,17 +287,17 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
               </div>
             ))}
             {filteredSectors.length === 0 && (
-              <div className="col-span-3 text-center py-8 text-on-surface-variant">
+              <div className="col-span-3 text-center py-8 text-[var(--router-text-muted)]">
                 Nenhum setor encontrado correspondente à pesquisa.
               </div>
             )}
           </div>
 
           {/* Prompt action to proceed */}
-          <div className="mt-2 bg-surface p-3.5 rounded-lg border border-outline-variant flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div className="mt-2 bg-[var(--router-surface-2)] p-3.5 rounded-lg border border-[var(--router-border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
             <div>
-              <p className="text-xs font-semibold text-on-surface">Importação de Manifestos Disponível</p>
-              <p className="text-[11px] text-on-surface-variant mt-0.5">
+              <p className="text-xs font-semibold text-[var(--router-text)]">Importação de Manifestos Disponível</p>
+              <p className="text-[11px] text-[var(--router-text-muted)] mt-0.5">
                 Faça upload de novos arquivos CSV para atualizar a listagem e os pesos setoriais automaticamente.
               </p>
             </div>
@@ -312,46 +312,46 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
         </div>
 
         {/* Right card: Curva A Dominance (spans 4) */}
-        <div className="lg:col-span-4 bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-4 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <span className="material-symbols-outlined text-tertiary tracking-normal select-none">stars</span>
-              <h3 className="text-xs tracking-wider uppercase font-mono font-bold text-on-surface-variant">
+              <h3 className="text-xs tracking-wider uppercase font-mono font-bold text-[var(--router-text-muted)]">
                 Curva A Dominance
               </h3>
             </div>
-            <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+            <p className="text-xs text-[var(--router-text-muted)] mb-6 leading-relaxed">
               Sectores de alta performance que contribuem com mais de 70% da receita total deste ciclo.
             </p>
 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant text-primary font-mono text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[var(--router-surface-3)] flex items-center justify-center border border-[var(--router-border)] text-primary font-mono text-xs font-bold shrink-0">
                   S
                 </div>
                 <div className="flex-1">
-                  <div className="flex justify-between text-xs text-on-surface mb-1">
+                  <div className="flex justify-between text-xs text-[var(--router-text)] mb-1">
                     <span>Setor Sul</span>
                     <span className="font-bold">45%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
                     <div className="h-full bg-primary" style={{ width: '45%' }}></div>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant text-secondary font-mono text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[var(--router-surface-3)] flex items-center justify-center border border-[var(--router-border)] text-secondary font-mono text-xs font-bold shrink-0">
                   N
                 </div>
                 <div className="flex-1">
-                  <div className="flex justify-between text-xs text-on-surface mb-1">
+                  <div className="flex justify-between text-xs text-[var(--router-text)] mb-1">
                     <span>Setor Norte</span>
                     <span className="font-bold font-mono">28%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
                     <div className="h-full bg-secondary" style={{ width: '28%' }}></div>
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
           <div className="mt-6 relative z-10">
             <button 
               onClick={() => onNavigateToView('roteirizacao')}
-              className="w-full py-2 bg-surface text-xs font-bold text-on-surface border border-outline-variant rounded-lg hover:bg-surface-bright transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2 bg-[var(--router-surface-2)] text-xs font-bold text-[var(--router-text)] border border-[var(--router-border)] rounded-lg hover:bg-[var(--router-surface)] transition-colors flex items-center justify-center gap-2"
             >
               Iniciar Roteirização
               <span className="material-symbols-outlined text-sm">arrow_forward</span>

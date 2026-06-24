@@ -85,7 +85,7 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
     <div className="space-y-6 animate-fade-in text-left">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-on-surface tracking-tight">Clientes Críticos</h2>
+          <h2 className="text-3xl font-bold text-[var(--router-text)] tracking-tight">Clientes Críticos</h2>
           <p className="text-sm text-[#9cb4e4] mt-1">
             Dossiê avançado de recebedores com gargalos operacionais crônicos, restrições físicas de frota ou devoluções sistêmicas.
           </p>
@@ -108,8 +108,8 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left column: Clients List card */}
-        <div className="lg:col-span-6 bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col gap-4">
-          <h3 className="text-sm font-bold text-on-surface flex items-center gap-2 mb-1">
+        <div className="lg:col-span-6 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col gap-4">
+          <h3 className="text-sm font-bold text-[var(--router-text)] flex items-center gap-2 mb-1">
             <span className="material-symbols-outlined text-error text-[18px]">warning</span>
             Alertas de Fornecimento Crítico
           </h3>
@@ -135,8 +135,8 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3.5 ${
                     isSelected
-                      ? 'bg-surface-container-highest border-error/50 shadow-[inset_3px_0_0_#ffdad6]'
-                      : 'bg-surface border-outline-variant/60 hover:border-outline'
+                      ? 'router-card-highest border-error/50 shadow-[inset_3px_0_0_#ffdad6]'
+                      : 'bg-[var(--router-surface-2)] border-[var(--router-border)]/60 hover:border-[var(--router-border)]'
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${badgeColors}`}>
@@ -144,13 +144,13 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-bold text-on-surface text-sm truncate">{client.name}</p>
+                      <p className="font-bold text-[var(--router-text)] text-sm truncate">{client.name}</p>
                       <span className="text-xs font-mono font-bold text-error shrink-0">
                         {client.rejections30d} recusas/30d
                       </span>
                     </div>
-                    <p className="text-xs text-on-surface-variant truncate mt-1">{client.address}</p>
-                    <div className="flex items-center gap-3 mt-3 text-[10px] font-mono text-on-surface-variant">
+                    <p className="text-xs text-[var(--router-text-muted)] truncate mt-1">{client.address}</p>
+                    <div className="flex items-center gap-3 mt-3 text-[10px] font-mono text-[var(--router-text-muted)]">
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-[12px]">schedule</span>
                         Espera: {client.avgQueueTime}
@@ -165,7 +165,7 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
               );
             })}
             {filteredClients.length === 0 && (
-              <div className="text-center py-10 text-on-surface-variant">
+              <div className="text-center py-10 text-[var(--router-text-muted)]">
                 Nenhum cliente crítico encontrado respondente.
               </div>
             )}
@@ -173,16 +173,16 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
         </div>
 
         {/* Right column: Selected Client dossier and Auditing log */}
-        <div className="lg:col-span-6 bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between">
+        <div className="lg:col-span-6 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col justify-between">
           {selectedClient?.id ? (
             <div className="space-y-6">
               {/* Dossier Header */}
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-lg font-bold text-on-surface leading-tight">
+                  <h3 className="text-lg font-bold text-[var(--router-text)] leading-tight">
                     {selectedClient.name}
                   </h3>
-                  <p className="text-xs font-mono text-on-surface-variant mt-1">
+                  <p className="text-xs font-mono text-[var(--router-text-muted)] mt-1">
                     Código Interno CRM: {selectedClient.id}
                   </p>
                 </div>
@@ -193,32 +193,32 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
 
               {/* Recurrent Issues Cards */}
               <div className="space-y-3">
-                <p className="text-xs font-bold text-on-surface flex items-center gap-1.5">
+                <p className="text-xs font-bold text-[var(--router-text)] flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-primary text-[16px]">psychology</span>
                   Histórico de Recorrências Gravadas
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {selectedClient.recurrentIssues.map((issue, i) => (
-                    <div key={i} className="bg-surface p-3 rounded-lg border border-outline-variant/60 flex gap-3">
+                    <div key={i} className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-[var(--router-border)]/60 flex gap-3">
                       <span className="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">
                         {issue.icon}
                       </span>
                       <div>
-                        <p className="text-xs font-semibold text-on-surface">{issue.title}</p>
-                        <p className="text-[11px] text-on-surface-variant mt-1 leading-normal">
+                        <p className="text-xs font-semibold text-[var(--router-text)]">{issue.title}</p>
+                        <p className="text-[11px] text-[var(--router-text-muted)] mt-1 leading-normal">
                           {issue.description}
                         </p>
                       </div>
                     </div>
                   ))}
                   {selectedClient.recurrentIssues.length === 0 && (
-                    <p className="text-[11px] text-on-surface-variant italic">Sem intercorrências graves relatadas.</p>
+                    <p className="text-[11px] text-[var(--router-text-muted)] italic">Sem intercorrências graves relatadas.</p>
                   )}
                 </div>
               </div>
 
               {/* Last Audit Action card */}
-              <div className="bg-surface-container-high border border-outline-variant/80 rounded-xl p-4">
+              <div className="router-card-high border border-[var(--router-border)]/80 rounded-xl p-4">
                 <p className="text-xs font-bold text-secondary flex items-center gap-1.5 mb-3.5">
                   <span className="material-symbols-outlined text-[16px]">verified_user</span>
                   Último Alerta de Auditoria Integrada
@@ -228,15 +228,15 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
                   <img
                     src={selectedClient.auditAvatar}
                     alt=""
-                    className="w-10 h-10 rounded-full border border-outline-variant shrink-0 object-cover"
+                    className="w-10 h-10 rounded-full border border-[var(--router-border)] shrink-0 object-cover"
                     referrerPolicy="no-referrer"
                   />
                   <div>
                     <div className="flex items-baseline justify-between gap-1.5 flex-wrap">
-                      <h4 className="text-xs font-bold text-on-surface">{selectedClient.auditUser}</h4>
-                      <span className="text-[10px] font-mono text-on-surface-variant">{selectedClient.auditTime}</span>
+                      <h4 className="text-xs font-bold text-[var(--router-text)]">{selectedClient.auditUser}</h4>
+                      <span className="text-[10px] font-mono text-[var(--router-text-muted)]">{selectedClient.auditTime}</span>
                     </div>
-                    <p className="text-xs text-on-surface font-semibold mt-1">
+                    <p className="text-xs text-[var(--router-text)] font-semibold mt-1">
                       {selectedClient.auditDetail}
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
               {/* Post Audit note input form under audit trial */}
               {isMaster ? (
                 <form onSubmit={handleAddNote} className="space-y-3">
-                  <label className="text-xs font-bold text-on-surface block">
+                  <label className="text-xs font-bold text-[var(--router-text)] block">
                     Registrar Nova Nota de Governança
                   </label>
                   <div className="flex gap-2.5">
@@ -255,7 +255,7 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
                       value={noteText}
                       onChange={(e) => setNoteText(e.target.value)}
                       placeholder="Adicione orientações de entrega ou acordos comerciais..."
-                      className="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary placeholder-on-surface-variant/70"
+                      className="flex-1 bg-[var(--router-surface-2)] border border-[var(--router-border)] rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none focus:border-primary placeholder-on-surface-variant/70"
                     />
                     <button
                       type="submit"
@@ -272,12 +272,12 @@ export default function ClientesView({ clients, onAddAuditNote, searchValue, isM
               )}
             </div>
           ) : (
-            <div className="h-full flex flex-col justify-center items-center py-16 text-center text-on-surface-variant">
-              <span className="material-symbols-outlined text-[42px] mb-3 text-on-surface-variant/40">
+            <div className="h-full flex flex-col justify-center items-center py-16 text-center text-[var(--router-text-muted)]">
+              <span className="material-symbols-outlined text-[42px] mb-3 text-[var(--router-text-muted)]/40">
                 gpp_bad
               </span>
               <p className="text-xs font-semibold">Nenhum cliente selecionado</p>
-              <p className="text-[10px] mt-1 text-on-surface-variant/70">
+              <p className="text-[10px] mt-1 text-[var(--router-text-muted)]/70">
                 Selecione um cliente crítico na lista para ver o dossiê completo de auditoria
               </p>
             </div>
