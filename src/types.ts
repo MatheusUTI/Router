@@ -14,7 +14,8 @@ export type ViewType =
   | 'configuracoes'
   | 'base_dados'
   | 'ctrcs_ssw'
-  | 'regras_gr';
+  | 'regras_gr'
+  | 'auditoria';
 
 export interface Vehicle {
   id: string; // Placa
@@ -532,6 +533,20 @@ export interface VehicleGrRule {
   requiresTrackingAboveValue: boolean;
   requiresAuthorizationAboveLimit: boolean;
   blocksRoutingAboveLimit: boolean;
+}
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  profile: 'OPERADOR' | 'MASTER';
+  entityType: string;
+  entityId: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  description: string;
 }
 
 

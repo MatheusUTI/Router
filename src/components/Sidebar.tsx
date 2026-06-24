@@ -60,6 +60,7 @@ export default function Sidebar({
     {
       groupLabel: 'Auditoria / Logs',
       items: [
+        { view: 'auditoria' as ViewType, label: 'Auditoria / Logs', icon: 'history', fillIcon: false },
         { view: 'desempenho' as ViewType, label: 'Desempenho KPI', icon: 'assessment', fillIcon: false },
         { view: 'solucao' as ViewType, label: 'Problemas de Rua', icon: 'report_problem', fillIcon: false }
       ]

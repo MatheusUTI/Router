@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio, VehicleRegistry, VehicleGrRule } from './types';
+import { ViewType, Vehicle, DriverScore, Ctrc, Expense, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, CtrcOccurrenceHistoryItem, PreRomaneio, VehicleRegistry, VehicleGrRule, AuditLog } from './types';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import { IS_DEMO_MODE } from './constants/runtimeMode';
 import {
@@ -31,6 +31,7 @@ import { CtrcRepository } from './infrastructure/localdb/repositories/ctrcReposi
 import { VehicleRepository } from './infrastructure/localdb/repositories/vehicleRepository';
 import { VehicleRegistryRepository } from './infrastructure/localdb/repositories/vehicleRegistryRepository';
 import { VehicleGrRuleRepository } from './infrastructure/localdb/repositories/vehicleGrRuleRepository';
+import { AuditLogRepository } from './infrastructure/localdb/repositories/auditLogRepository';
 import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
@@ -62,6 +63,7 @@ import CidadesRotasView from './components/CidadesRotasView';
 import BaseDadosView from './components/BaseDadosView';
 import CtrcSswView from './components/CtrcSswView';
 import RegrasGrView from './components/RegrasGrView';
+import AuditoriaView from './components/AuditoriaView';
 
 // Helper to determine if a status is "available"
 export const notAvailableStatuses = new Set<string>([
@@ -220,6 +222,7 @@ export default function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>(IS_DEMO_MODE ? initialVehicles : []);
   const [vehicleRegistries, setVehicleRegistries] = useState<VehicleRegistry[]>([]);
   const [grRules, setGrRules] = useState<VehicleGrRule[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [drivers, setDrivers] = useState<DriverScore[]>(IS_DEMO_MODE ? initialDrivers : []);
   const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialAvailableCtrcs : []);
   const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialLinkedCtrcs : []);
@@ -338,6 +341,9 @@ export default function App() {
         const localGrRules = await VehicleGrRuleRepository.getAll();
         setGrRules(localGrRules);
 
+        const localAuditLogs = await AuditLogRepository.getAll();
+        setAuditLogs(localAuditLogs);
+
         const localDrivers = await DriverRepository.getAll();
         if (localDrivers.length > 0) {
           setDrivers(localDrivers);
@@ -419,24 +425,149 @@ export default function App() {
     await VehicleRegistryRepository.put(vr);
     const updated = await VehicleRegistryRepository.getAll();
     setVehicleRegistries(updated);
+
+    await AuditLogRepository.log({
+      user: adminProfile.name,
+      isMaster: isSessionUnlocked,
+      entityType: 'VEHICLE_REGISTRY',
+      entityId: vr.placa,
+      action: 'CREATE',
+      description: `Veículo ${vr.placa} cadastrado na frota. Tipo: ${vr.tipo}, Status: ${vr.statusOperacional}`
+    });
+
+    const logs = await AuditLogRepository.getAll();
+    setAuditLogs(logs);
   };
 
   const handleUpdateVehicleRegistry = async (vr: VehicleRegistry) => {
+    const oldVr = vehicleRegistries.find(item => item.placa === vr.placa);
     await VehicleRegistryRepository.put(vr);
     const updated = await VehicleRegistryRepository.getAll();
     setVehicleRegistries(updated);
+
+    if (oldVr) {
+      const changes: string[] = [];
+      if (oldVr.statusOperacional !== vr.statusOperacional) {
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_REGISTRY',
+          entityId: vr.placa,
+          action: 'UPDATE',
+          field: 'statusOperacional',
+          oldValue: oldVr.statusOperacional,
+          newValue: vr.statusOperacional,
+          description: `Status operacional do veículo ${vr.placa} alterado de ${oldVr.statusOperacional} para ${vr.statusOperacional}`
+        });
+      } else {
+        if (oldVr.tipo !== vr.tipo) changes.push(`tipo (${oldVr.tipo} -> ${vr.tipo})`);
+        if (oldVr.limiteGrSugerido !== vr.limiteGrSugerido) changes.push(`limite GR (${oldVr.limiteGrSugerido} -> ${vr.limiteGrSugerido})`);
+        if (oldVr.motoristaPadrao !== vr.motoristaPadrao) changes.push(`motorista (${oldVr.motoristaPadrao || 'Nenhum'} -> ${vr.motoristaPadrao || 'Nenhum'})`);
+        
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_REGISTRY',
+          entityId: vr.placa,
+          action: 'UPDATE',
+          description: `Dados cadastrais do veículo ${vr.placa} atualizados. Alterações: ${changes.join(', ') || 'Sem alterações relevantes'}`
+        });
+      }
+    }
+
+    const logs = await AuditLogRepository.getAll();
+    setAuditLogs(logs);
   };
 
   const handleRemoveVehicleRegistry = async (placa: string) => {
+    const oldVr = vehicleRegistries.find(item => item.placa === placa);
     await VehicleRegistryRepository.delete(placa);
     const updated = await VehicleRegistryRepository.getAll();
     setVehicleRegistries(updated);
+
+    await AuditLogRepository.log({
+      user: adminProfile.name,
+      isMaster: isSessionUnlocked,
+      entityType: 'VEHICLE_REGISTRY',
+      entityId: placa,
+      action: 'DELETE',
+      description: `Veículo ${placa} (${oldVr?.tipo || 'Sem Tipo'}) foi removido administrativamente da frota`
+    });
+
+    const logs = await AuditLogRepository.getAll();
+    setAuditLogs(logs);
   };
 
   const handleUpdateGrRule = async (rule: VehicleGrRule) => {
+    const oldRule = grRules.find(r => r.id === rule.id);
     await VehicleGrRuleRepository.put(rule);
     const updated = await VehicleGrRuleRepository.getAll();
     setGrRules(updated);
+
+    if (oldRule) {
+      if (oldRule.maxValueWithoutGr !== rule.maxValueWithoutGr) {
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_GR_RULE',
+          entityId: rule.id,
+          action: 'UPDATE',
+          field: 'maxValueWithoutGr',
+          oldValue: String(oldRule.maxValueWithoutGr),
+          newValue: String(rule.maxValueWithoutGr),
+          description: `Alterado limite de valor para ${rule.id} de R$ ${oldRule.maxValueWithoutGr.toLocaleString('pt-BR')} para R$ ${rule.maxValueWithoutGr.toLocaleString('pt-BR')}`
+        });
+      }
+      if (oldRule.requiresTrackingAboveValue !== rule.requiresTrackingAboveValue) {
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_GR_RULE',
+          entityId: rule.id,
+          action: 'UPDATE',
+          field: 'requiresTrackingAboveValue',
+          oldValue: String(oldRule.requiresTrackingAboveValue),
+          newValue: String(rule.requiresTrackingAboveValue),
+          description: `Exigência de rastreamento de GR para ${rule.id} alterada de ${oldRule.requiresTrackingAboveValue ? 'Sim' : 'Não'} para ${rule.requiresTrackingAboveValue ? 'Sim' : 'Não'}`
+        });
+      }
+      if (oldRule.requiresAuthorizationAboveLimit !== rule.requiresAuthorizationAboveLimit) {
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_GR_RULE',
+          entityId: rule.id,
+          action: 'UPDATE',
+          field: 'requiresAuthorizationAboveLimit',
+          oldValue: String(oldRule.requiresAuthorizationAboveLimit),
+          newValue: String(rule.requiresAuthorizationAboveLimit),
+          description: `Exigência de autorização especial para ${rule.id} alterada de ${oldRule.requiresAuthorizationAboveLimit ? 'Sim' : 'Não'} para ${rule.requiresAuthorizationAboveLimit ? 'Sim' : 'Não'}`
+        });
+      }
+      if (oldRule.blocksRoutingAboveLimit !== rule.blocksRoutingAboveLimit) {
+        await AuditLogRepository.log({
+          user: adminProfile.name,
+          isMaster: isSessionUnlocked,
+          entityType: 'VEHICLE_GR_RULE',
+          entityId: rule.id,
+          action: 'UPDATE',
+          field: 'blocksRoutingAboveLimit',
+          oldValue: String(oldRule.blocksRoutingAboveLimit),
+          newValue: String(rule.blocksRoutingAboveLimit),
+          description: `Bloqueio operacional acima do limite para ${rule.id} alterado de ${oldRule.blocksRoutingAboveLimit ? 'Sim' : 'Não'} para ${rule.blocksRoutingAboveLimit ? 'Sim' : 'Não'}`
+        });
+      }
+    }
+
+    const logs = await AuditLogRepository.getAll();
+    setAuditLogs(logs);
+  };
+
+  const handleRefreshLogs = async () => {
+    setIsSyncing(true);
+    const updated = await AuditLogRepository.getAll();
+    setAuditLogs(updated);
+    setIsSyncing(false);
   };
 
   const handleAddDriver = async (d: DriverScore) => {
@@ -721,6 +852,7 @@ export default function App() {
       } else {
         setAvailableCtrcs([]);
         setLinkedCtrcs([]);
+        setAllImportedCtrcs([]);
       }
       console.log(`[Importacao] Memória reidratada explicitamente com ${allLocalCtres.length} CTRCs do banco.`);
     } catch (rehydrateErr) {
@@ -966,7 +1098,8 @@ export default function App() {
     'curva_a',
     'base_dados',
     'configuracoes',
-    'regras_gr'
+    'regras_gr',
+    'auditoria'
   ]);
 
   const handleDirectUnlockSubmit = (e: React.FormEvent) => {
@@ -1078,6 +1211,7 @@ export default function App() {
             onNavigateToView={handleNavigateFromDash}
             searchValue={searchValue}
             allImportedCtrcs={allImportedCtrcs}
+            criticClients={clients}
           />
         );
       case 'importacao':
@@ -1195,6 +1329,15 @@ export default function App() {
             adminUser={adminProfile ? { ...adminProfile, is_master: isSessionUnlocked } : null}
             rules={grRules}
             onUpdateRule={handleUpdateGrRule}
+            isSyncing={isSyncing}
+          />
+        );
+      case 'auditoria':
+        return (
+          <AuditoriaView
+            adminUser={adminProfile ? { ...adminProfile, is_master: isSessionUnlocked } : null}
+            logs={auditLogs}
+            onRefreshLogs={handleRefreshLogs}
             isSyncing={isSyncing}
           />
         );

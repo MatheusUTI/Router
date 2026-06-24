@@ -1,470 +1,296 @@
-import { useState, useMemo } from 'react';
-import { Ctrc } from '../types';
+import React, { useMemo } from 'react';
+import { Ctrc, CriticClient } from '../types';
+import { calculateDashboardMetrics } from '../services/dashboardMetricsService';
 
 interface DashboardProps {
   onNavigateToView: (view: 'importacao' | 'frota' | 'roteirizacao') => void;
   searchValue: string;
   allImportedCtrcs?: Ctrc[];
+  criticClients?: CriticClient[];
 }
 
-export default function DashboardView({ onNavigateToView, searchValue, allImportedCtrcs = [] }: DashboardProps) {
-  const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
+export default function DashboardView({ onNavigateToView, searchValue, allImportedCtrcs = [], criticClients = [] }: DashboardProps) {
+  const criticNames = useMemo(() => criticClients.map(c => c.name), [criticClients]);
+  
+  const metrics = useMemo(() => {
+    return calculateDashboardMetrics(allImportedCtrcs, criticNames);
+  }, [allImportedCtrcs, criticNames]);
 
-  // Multipliers based on period
-  const mult = period === 'today' ? 1 : period === 'week' ? 5.8 : 24.5;
+  const {
+    operationToday,
+    last31Days,
+    slaReceipt,
+    slaDelivery,
+    backlog,
+    alerts
+  } = metrics;
 
-  const hasRealData = allImportedCtrcs.length > 0;
-
-  const stats = useMemo(() => {
-    if (!hasRealData) {
-      // Mock data when no real data is imported
-      return {
-        totalCtrcs: Math.round(1850 * mult),
-        pendingCtrcs: Math.round(420 * mult),
-        deliveredCtrcs: Math.round(1350 * mult),
-        inRouteCtrcs: Math.round(80 * mult),
-        weight: Math.round(15420 * mult),
-        volumes: Math.round(4200 * mult),
-        value: 1250000 * mult,
-        frete: 45000 * mult,
-        unids: [
-          { name: 'VGA', pct: 45 },
-          { name: 'POU', pct: 30 },
-          { name: 'TRC', pct: 25 },
-        ]
-      };
-    }
-
-    // Real data processing
-    let total = 0;
-    let pending = 0;
-    let delivered = 0;
-    let inRoute = 0;
-    let weight = 0;
-    let volumes = 0;
-    let value = 0;
-    let frete = 0;
-    const unidMap: Record<string, number> = {};
-
-    allImportedCtrcs.forEach(c => {
-      total++;
-      if (c.status === 'Entregue' || c.status === 'Finalizado') {
-        delivered++;
-      } else if (c.status === 'Em Rota') {
-        inRoute++;
-      } else {
-        pending++;
-      }
-
-      weight += c.weight || 0;
-      volumes += c.volume || 0;
-      value += c.valor || 0;
-      frete += c.frete || 0;
-
-      const u = (c.unid || 'OUTRAS').toUpperCase();
-      unidMap[u] = (unidMap[u] || 0) + 1;
-    });
-
-    const unids = Object.entries(unidMap)
-      .map(([name, count]) => ({ name, pct: Math.round((count / total) * 100) }))
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 3);
-
-    return {
-      totalCtrcs: total,
-      pendingCtrcs: pending,
-      deliveredCtrcs: delivered,
-      inRouteCtrcs: inRoute,
-      weight,
-      volumes,
-      value,
-      frete,
-      unids
-    };
-  }, [allImportedCtrcs, hasRealData, mult]);
-
-  const kpis = {
-    volume: { peso: (stats.weight / 1000).toFixed(1), volume: stats.volumes },
-    entregas: { realizadas: stats.deliveredCtrcs, remanescentes: stats.pendingCtrcs },
-    faturamento: stats.value,
-    ocupacao: period === 'today' ? 82 : period === 'week' ? 87 : 78,
-    custo: period === 'today' ? 6.8 : period === 'week' ? 7.1 : 6.5,
-  };
-
-  const sectors = stats.unids.length > 0 ? stats.unids.map((u, i) => ({
-    name: u.name,
-    curva: i === 0 ? 'Curva A' : i === 1 ? 'Curva B' : 'Curva C',
-    curvaColor: i === 0 ? 'bg-primary/20 text-primary-fixed-dim border-primary/30' : 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
-    weight: `${((stats.weight * (u.pct / 100)) / 1000).toFixed(1)}t`,
-    weightPct: u.pct,
-    ctrc: Math.round(stats.totalCtrcs * (u.pct / 100)),
-    ctrcPct: u.pct,
-  })) : [
-    {
-      name: 'Setor Sul',
-      curva: 'Curva A',
-      curvaColor: 'bg-primary/20 text-primary-fixed-dim border-primary/30',
-      weight: '12.4t',
-      weightPct: 75,
-      ctrc: 42,
-      ctrcPct: 60,
-    },
-    {
-      name: 'Rota 01',
-      curva: 'Curva B',
-      curvaColor: 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
-      weight: '8.1t',
-      weightPct: 45,
-      ctrc: 28,
-      ctrcPct: 40,
-    },
-    {
-      name: 'Zila Leste',
-      curva: 'Curva C',
-      curvaColor: 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
-      weight: '3.2t',
-      weightPct: 20,
-      ctrc: 15,
-      ctrcPct: 25,
-    },
-  ];
-
-  const filteredSectors = sectors.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      s.curva.toLowerCase().includes(searchValue.toLowerCase())
-  );
+  if (allImportedCtrcs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-[var(--router-text)] animate-fade-in">
+        <span className="material-symbols-outlined text-[64px] text-[var(--router-text-muted)] opacity-50 mb-4 select-none">
+          dashboard
+        </span>
+        <h2 className="text-xl font-bold mb-2">Dashboard Indisponível</h2>
+        <p className="text-sm text-[var(--router-text-muted)] text-center max-w-md mb-6">
+          Não há dados operacionais suficientes para gerar indicadores.
+          Por favor, importe um arquivo de CTRCs primeiro.
+        </p>
+        <button
+          onClick={() => onNavigateToView('importacao')}
+          className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+        >
+          <span className="material-symbols-outlined text-[18px]">upload_file</span>
+          Ir para Importação
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 relative">
-      {!hasRealData && (
-        <div className="absolute inset-0 z-10 bg-[var(--router-bg)]/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-[var(--router-border)]">
-          <span className="text-5xl mb-4">📊</span>
-          <h3 className="text-xl font-bold text-[var(--router-text)] font-sans">Sem dados reais importados</h3>
-          <p className="text-sm text-[var(--router-text-muted)] mt-2 max-w-sm text-center font-sans">
-            Importe uma base de operações real na aba de Importação para visualizar os indicadores atualizados da sua filial.
-          </p>
-          <button 
-            onClick={() => onNavigateToView('importacao')}
-            className="mt-6 px-4 py-2 bg-primary hover:bg-primary/90 text-on-primary font-bold rounded shadow-lg transition-all text-sm uppercase tracking-wider"
-          >
-            Ir para Importação
-          </button>
-        </div>
-      )}
-      
-      {/* Page header controls */}
-      <div className="flex justify-between items-end gap-4">
+    <div className="space-y-8 animate-fade-in text-[var(--router-text)]">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--router-border)] pb-6">
         <div>
-          <h2 className="router-title text-3xl">Mission Control</h2>
-          <p className="text-sm text-[var(--router-text-muted)] mt-1">
-            Métricas operacionais em tempo real e dominância de setores de entrega.
+          <div className="flex items-center gap-2 text-[var(--router-text-muted)] text-xs font-mono mb-1">
+            <span className="material-symbols-outlined text-[14px]">bar_chart</span>
+            <span>BI OPERACIONAL</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            Dashboard Gerencial
+          </h1>
+          <p className="text-xs text-[var(--router-text-muted)] mt-1 max-w-2xl">
+            Visão consolidada da operação baseada no histórico de importação.
           </p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
-        {/* Toggle Period and Export button */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="bg-[var(--router-surface-1)] p-1 rounded-lg border border-[var(--router-border)]/50 inline-flex">
-            <button
-              onClick={() => setPeriod('today')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                period === 'today'
-                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
-                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
-              }`}
-            >
-              Hoje
-            </button>
-            <button
-              onClick={() => setPeriod('week')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                period === 'week'
-                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
-                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
-              }`}
-            >
-              Semana
-            </button>
-            <button
-              onClick={() => setPeriod('month')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                period === 'month'
-                  ? 'bg-[var(--router-surface-3)] text-primary shadow-sm'
-                  : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
-              }`}
-            >
-              Mês
-            </button>
+        {/* Left Column */}
+        <div className="xl:col-span-2 space-y-6">
+          
+          {/* Seção 1 - Operação Atual */}
+          <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[18px]">today</span>
+              OPERAÇÃO ATUAL (HOJE)
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-[var(--router-border)]">
+                <p className="text-[10px] text-[var(--router-text-muted)] font-bold mb-1 uppercase tracking-wider">Previstos</p>
+                <p className="text-xl font-mono font-bold">{operationToday.predicted}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-[var(--router-border)]">
+                <p className="text-[10px] text-[var(--router-text-muted)] font-bold mb-1 uppercase tracking-wider">Roteirizados</p>
+                <p className="text-xl font-mono font-bold text-blue-400">{operationToday.routed}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-[var(--router-border)]">
+                <p className="text-[10px] text-[var(--router-text-muted)] font-bold mb-1 uppercase tracking-wider">Entregues</p>
+                <p className="text-xl font-mono font-bold text-emerald-400">{operationToday.delivered}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-[var(--router-border)]">
+                <p className="text-[10px] text-[var(--router-text-muted)] font-bold mb-1 uppercase tracking-wider">Pendentes</p>
+                <p className="text-xl font-mono font-bold text-amber-400">{operationToday.pending}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-3 rounded-lg border border-red-500/20 bg-red-500/5">
+                <p className="text-[10px] text-red-400 font-bold mb-1 uppercase tracking-wider">Vencidos</p>
+                <p className="text-xl font-mono font-bold text-red-500">{operationToday.overdue}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Seção 2 & 5 - Últimos 31 Dias & Backlog */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[18px]">calendar_month</span>
+                ÚLTIMOS 31 DIAS
+              </h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">CTRCs Emitidos</span>
+                  <span className="text-sm font-bold font-mono">{last31Days.emitted}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">CTRCs Entregues</span>
+                  <span className="text-sm font-bold font-mono text-emerald-400">{last31Days.delivered}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">CTRCs Não Entregues</span>
+                  <span className="text-sm font-bold font-mono text-amber-400">{last31Days.notDelivered}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[18px]">inventory_2</span>
+                BACKLOG
+              </h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">Pendentes Dentro do Prazo</span>
+                  <span className="text-sm font-bold font-mono">{backlog.pendingOnTime}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-[var(--router-border)]">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">Pendentes Vencidos</span>
+                  <span className="text-sm font-bold font-mono text-red-500">{backlog.pendingOverdue}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-[var(--router-text-muted)] font-medium">Total Não Entregues</span>
+                  <span className="text-sm font-bold font-mono">{backlog.notDelivered}</span>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <button 
-            onClick={() => alert(`Relatório operacional (${period.toUpperCase()}) exportado com sucesso em XLSX!`)}
-            className="px-4 py-2 bg-primary hover:bg-primary-fixed text-on-primary font-sans text-xs font-bold rounded-lg flex items-center gap-2 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]"
-          >
-            <span className="material-symbols-outlined text-[16px]">download</span>
-            Exportar
-          </button>
-        </div>
-      </div>
+          {/* Seção 3 & 4 - SLAs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px]">local_shipping</span>
+                SLA RECEBIMENTO
+              </h2>
+              <div className="flex items-center gap-6">
+                <div className="relative w-20 h-20 flex shrink-0 items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-[var(--router-surface-3)]"
+                      strokeWidth="4"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={slaReceipt.slaPercentage >= 95 ? "text-emerald-400" : slaReceipt.slaPercentage >= 85 ? "text-amber-400" : "text-red-500"}
+                      strokeWidth="4"
+                      strokeDasharray={`${slaReceipt.slaPercentage}, 100`}
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-bold font-mono">{slaReceipt.slaPercentage.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--router-text-muted)]">No Prazo</span>
+                    <span className="font-mono font-bold text-emerald-400">{slaReceipt.onTime}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--router-text-muted)]">Fora do Prazo</span>
+                    <span className="font-mono font-bold text-red-500">{slaReceipt.late}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-      {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {/* KPI 1: Volume/Peso Total */}
-        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group relative overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
-              Volume/Peso Total
-            </span>
-            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              open_in_full
-            </span>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-primary">
-              {kpis.volume.peso} <span className="text-xs text-[var(--router-text-muted)] font-normal">ton</span>
-            </div>
-            <div className="text-sm font-semibold text-[var(--router-text)] mt-1 border-t border-[var(--router-border)] pt-1.5">
-              {kpis.volume.volume} <span className="text-xs text-[var(--router-text-muted)] font-normal">m³</span>
-            </div>
-          </div>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--router-surface-3)]">
-            <div className="h-full bg-primary" style={{ width: '65%' }}></div>
-          </div>
-        </div>
-
-        {/* KPI 2: Entregas */}
-        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
-              Entregas
-            </span>
-            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              open_in_full
-            </span>
-          </div>
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-tertiary">{kpis.entregas.realizadas}</span>
-              <span className="text-xs text-[var(--router-text-muted)]">realizadas</span>
-            </div>
-            <div className="flex items-baseline gap-1.5 mt-1.5">
-              <span className="text-sm font-semibold text-[var(--router-text)]">{kpis.entregas.remanescentes}</span>
-              <span className="text-xs text-[var(--router-text-muted)]">remanescentes</span>
-            </div>
-          </div>
-          <div className="w-full flex h-1.5 rounded-full overflow-hidden mt-4 bg-[var(--router-surface-3)]">
-            <div className="bg-tertiary" style={{ width: '85%' }}></div>
-            <div className="bg-[var(--router-surface)]" style={{ width: '15%' }}></div>
-          </div>
-        </div>
-
-        {/* KPI 3: Faturamento Provisório */}
-        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
-              Faturamento Prev.
-            </span>
-            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              open_in_full
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-[var(--router-text-muted)] font-semibold mr-1">R$</span>
-            <span className="text-2xl font-bold text-[var(--router-text)]">
-              {kpis.faturamento.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-xs text-[var(--router-text-muted)] font-normal">,00</span>
-          </div>
-          <div className="flex items-center gap-1 mt-3 text-tertiary text-xs font-mono bg-tertiary-container/10 w-fit px-2 py-0.5 rounded-sm">
-            <span className="material-symbols-outlined text-[13px]">trending_up</span>
-            +4.2% vs last
-          </div>
-        </div>
-
-        {/* KPI 4: Ocupação da Frota */}
-        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group items-center relative overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
-          <span className="material-symbols-outlined absolute top-4 right-4 text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-            open_in_full
-          </span>
-          <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider w-full text-left">
-            Ocupação da Frota
-          </span>
-          <div className="relative w-20 h-20 flex items-center justify-center mt-2">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <path
-                className="text-surface-container-highest stroke-current"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                strokeWidth="3.2"
-              ></path>
-              <path
-                className="text-primary-fixed-dim stroke-current"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                strokeDasharray={`${kpis.ocupacao}, 100`}
-                strokeWidth="3.2"
-              ></path>
-            </svg>
-            <span className="absolute font-sans font-bold text-lg text-[var(--router-text)]">
-              {kpis.ocupacao}<span className="text-xs text-[var(--router-text-muted)]">%</span>
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 5: Custo vs Receita */}
-        <div className="router-card rounded-xl border border-[var(--router-border)] p-4 flex flex-col justify-between group overflow-hidden transition-all hover:border-[var(--router-primary)] duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold font-mono text-[var(--router-text-muted)] uppercase tracking-wider">
-              Custo vs Receita
-            </span>
-            <span className="material-symbols-outlined text-[var(--router-text-muted)] text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              open_in_full
-            </span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-end">
-              <span className="text-xs text-[var(--router-text-muted)]">Realizado</span>
-              <span className="text-lg font-bold text-tertiary-fixed-dim">{kpis.custo}%</span>
-            </div>
-            <div className="flex justify-between items-end border-t border-[var(--router-border)] pt-2">
-              <span className="text-xs text-[var(--router-text-muted)]">Meta teto</span>
-              <span className="text-xs font-semibold text-[var(--router-text)]">7.0%</span>
-            </div>
+            <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px]">verified</span>
+                SLA ENTREGA
+              </h2>
+              <div className="flex items-center gap-6">
+                <div className="relative w-20 h-20 flex shrink-0 items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-[var(--router-surface-3)]"
+                      strokeWidth="4"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={slaDelivery.slaPercentage >= 95 ? "text-emerald-400" : slaDelivery.slaPercentage >= 85 ? "text-amber-400" : "text-red-500"}
+                      strokeWidth="4"
+                      strokeDasharray={`${slaDelivery.slaPercentage}, 100`}
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-bold font-mono">{slaDelivery.slaPercentage.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--router-text-muted)]">No Prazo</span>
+                    <span className="font-mono font-bold text-emerald-400">{slaDelivery.onTime}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--router-text-muted)]">Fora do Prazo</span>
+                    <span className="font-mono font-bold text-red-500">{slaDelivery.late}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-      </div>
 
-      {/* Bento Grid Sectors (Bottom segment) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left main grid of sectors inside (spans 8) */}
-        <div className="lg:col-span-8 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col gap-5">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">hub</span>
-              <h3 className="text-base font-bold text-[var(--router-text)]">Bento Grid de Setores</h3>
-            </div>
-            <span className="material-symbols-outlined text-[var(--router-text-muted)] hover:text-[var(--router-text)] cursor-pointer select-none">
-              more_horiz
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {filteredSectors.map((sector) => (
-              <div
-                key={sector.name}
-                className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] hover:border-[var(--router-primary)] transition-colors duration-200 cursor-default"
+        {/* Right Column - Alertas Operacionais */}
+        <div className="xl:col-span-1">
+          <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm h-full flex flex-col">
+            <h2 className="text-sm font-bold text-[var(--router-text)] mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-red-500 text-[18px]">notification_important</span>
+              ALERTAS OPERACIONAIS
+            </h2>
+            
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+              
+              <div 
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-red-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView('roteirizacao')}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-bold text-[var(--router-text)]">{sector.name}</span>
-                  <span className={`px-2 py-0.5 rounded-sm border text-[9px] font-mono font-medium ${sector.curvaColor}`}>
-                    {sector.curva}
-                  </span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">Clientes Críticos Pendentes</span>
+                  <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">{alerts.criticPending.length}</span>
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between text-[11px] font-mono text-[var(--router-text-muted)] mb-1.5">
-                      <span>Pending Weight</span>
-                      <span className="text-[var(--router-text)] font-semibold">{sector.weight}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${sector.weightPct}%` }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-[11px] font-mono text-[var(--router-text-muted)] mb-1.5">
-                      <span>CTRC Count</span>
-                      <span className="text-[var(--router-text)] font-semibold">{sector.ctrc}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
-                      <div className="h-full bg-secondary" style={{ width: `${sector.ctrcPct}%` }}></div>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">Atenção máxima em entregas que impactam nível de serviço corporativo.</p>
               </div>
-            ))}
-            {filteredSectors.length === 0 && (
-              <div className="col-span-3 text-center py-8 text-[var(--router-text-muted)]">
-                Nenhum setor encontrado correspondente à pesquisa.
-              </div>
-            )}
-          </div>
 
-          {/* Prompt action to proceed */}
-          <div className="mt-2 bg-[var(--router-surface-2)] p-3.5 rounded-lg border border-[var(--router-border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-            <div>
-              <p className="text-xs font-semibold text-[var(--router-text)]">Importação de Manifestos Disponível</p>
-              <p className="text-[11px] text-[var(--router-text-muted)] mt-0.5">
-                Faça upload de novos arquivos CSV para atualizar a listagem e os pesos setoriais automaticamente.
-              </p>
+              <div 
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-amber-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView('roteirizacao')}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Curva A Pendentes</span>
+                  <span className="bg-amber-500/10 text-amber-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">{alerts.curvaAPending.length}</span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">Altos volumes aguardando roteirização no pátio.</p>
+              </div>
+
+              <div 
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-red-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView('roteirizacao')}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">CTRCs Vencidos</span>
+                  <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">{alerts.overdue.length}</span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">Cargas cujo prazo de entrega já expirou e não foram entregues.</p>
+              </div>
+
+              <div 
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-blue-400 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView('roteirizacao')}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Recebidos no Dia do Prazo</span>
+                  <span className="bg-blue-500/10 text-blue-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">{alerts.receivedOnDeadlineDay.length}</span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">Fora do SLA de Recebimento. Precisam ser expedidos com urgência hoje.</p>
+              </div>
+              
             </div>
-            <button
-              onClick={() => onNavigateToView('importacao')}
-              className="text-xs font-bold text-primary hover:text-primary-container inline-flex items-center gap-1 shrink-0"
-            >
-              Mapear CSV
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </button>
-          </div>
+          </section>
         </div>
 
-        {/* Right card: Curva A Dominance (spans 4) */}
-        <div className="lg:col-span-4 router-card rounded-xl border border-[var(--router-border)] p-5 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-tertiary tracking-normal select-none">stars</span>
-              <h3 className="text-xs tracking-wider uppercase font-mono font-bold text-[var(--router-text-muted)]">
-                Curva A Dominance
-              </h3>
-            </div>
-            <p className="text-xs text-[var(--router-text-muted)] mb-6 leading-relaxed">
-              Sectores de alta performance que contribuem com mais de 70% da receita total deste ciclo.
-            </p>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[var(--router-surface-3)] flex items-center justify-center border border-[var(--router-border)] text-primary font-mono text-xs font-bold shrink-0">
-                  S
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs text-[var(--router-text)] mb-1">
-                    <span>Setor Sul</span>
-                    <span className="font-bold">45%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
-                    <div className="h-full bg-primary" style={{ width: '45%' }}></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[var(--router-surface-3)] flex items-center justify-center border border-[var(--router-border)] text-secondary font-mono text-xs font-bold shrink-0">
-                  N
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs text-[var(--router-text)] mb-1">
-                    <span>Setor Norte</span>
-                    <span className="font-bold font-mono">28%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[var(--router-surface-3)] rounded-full overflow-hidden">
-                    <div className="h-full bg-secondary" style={{ width: '28%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 relative z-10">
-            <button 
-              onClick={() => onNavigateToView('roteirizacao')}
-              className="w-full py-2 bg-[var(--router-surface-2)] text-xs font-bold text-[var(--router-text)] border border-[var(--router-border)] rounded-lg hover:bg-[var(--router-surface)] transition-colors flex items-center justify-center gap-2"
-            >
-              Iniciar Roteirização
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
