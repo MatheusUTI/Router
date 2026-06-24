@@ -65,6 +65,8 @@ export interface Ctrc {
   isActiveForRouting?: boolean;
   pracaDestino?: string;
   pracaHub?: string;
+  importBatchId?: string;
+  planningDate?: string;
 }
 
 export interface Expense {
@@ -396,6 +398,7 @@ export interface PreRomaneio {
   driverName?: string;
   helperName?: string;
   observations?: string;
+  importBatchId?: string;
 }
 
 export interface OperationalCalendarEvent {

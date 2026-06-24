@@ -77,9 +77,12 @@ export function isStatusAvailable(status?: string | null): boolean {
 }
 
 // Function to partition CTRCs based on their operational phase and pre-romaneio links
-export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: Ctrc[]; linked: Ctrc[] }> {
+export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: Ctrc[]; linked: Ctrc[]; allImported: Ctrc[] }> {
   let activePreRomaneioCtrcIds = new Set<string>();
   let activePreRomaneioIds = new Set<string>();
+  
+  const activeImportBatchId = localStorage.getItem('active_import_batch_id');
+
   try {
     const preRomaneios = await PreRomaneioRepository.getAll();
     preRomaneios.forEach((pr) => {
@@ -96,8 +99,21 @@ export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: C
 
   const available: Ctrc[] = [];
   const linked: Ctrc[] = [];
+  const allImported: Ctrc[] = [];
 
   for (const ctrc of localCtrcs) {
+    // Collect all active import CTRCs for BI/Dashboard
+    if (activeImportBatchId && ctrc.importBatchId === activeImportBatchId) {
+      allImported.push(ctrc);
+    } else if (!activeImportBatchId) {
+      allImported.push(ctrc);
+    }
+
+    // Only process CTRCs belonging to the active import batch for Mesa
+    if (activeImportBatchId && ctrc.importBatchId && ctrc.importBatchId !== activeImportBatchId) {
+      continue;
+    }
+
     const isActive = ctrc.isActiveForRouting !== undefined
       ? ctrc.isActiveForRouting
       : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || (ctrc.status as string) === 'Finalizado' || (ctrc.status as string) === 'Cancelado');
@@ -127,7 +143,7 @@ export async function partitionCtrcs(localCtrcs: Ctrc[]): Promise<{ available: C
     }
   }
 
-  return { available, linked };
+  return { available, linked, allImported };
 }
 
 export default function App() {
@@ -191,6 +207,7 @@ export default function App() {
   const [drivers, setDrivers] = useState<DriverScore[]>(IS_DEMO_MODE ? initialDrivers : []);
   const [availableCtrcs, setAvailableCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialAvailableCtrcs : []);
   const [linkedCtrcs, setLinkedCtrcs] = useState<Ctrc[]>(IS_DEMO_MODE ? initialLinkedCtrcs : []);
+  const [allImportedCtrcs, setAllImportedCtrcs] = useState<Ctrc[]>([]);
   const [savedRomaneios, setSavedRomaneios] = useState<any[]>(() => {
     const saved = localStorage.getItem('saved_romaneios');
     if (saved) {
@@ -320,7 +337,7 @@ export default function App() {
 
         const localCtrcs = await CtrcRepository.getAll();
         if (localCtrcs.length > 0) {
-          const { available, linked } = await partitionCtrcs(localCtrcs);
+          const { available, linked, allImported } = await partitionCtrcs(localCtrcs);
 
           // Diagnostics block for App.tsx mount
           if (ENABLE_ROUTER_DIAGNOSTICS) {
@@ -335,6 +352,7 @@ export default function App() {
               totalCtrcsFromDb: localCtrcs.length,
               availableCount: available.length,
               linkedCount: linked.length,
+              allImportedCount: allImported.length,
               byStatus: statusCounts,
               byUnid: unidCounts,
             });
@@ -342,6 +360,7 @@ export default function App() {
 
           setAvailableCtrcs(available);
           setLinkedCtrcs(linked);
+          setAllImportedCtrcs(allImported);
         }
       } catch (err) {
         console.error('[App] Falha crítica de inicialização IndexedDB, usando memória:', err);
@@ -498,33 +517,33 @@ export default function App() {
   // IMPORTAÇÃO DE CTRC
   // ---------------------------------------------------------
   const handleAddCtrcs = async (newCtrcs: Ctrc[]) => {
-    // 0. Fetch all existing local CTRCs first to find and isolate the active/available queue
+    // 0. Generate new importBatchId and planningDate
+    const nowStr = new Date().toISOString();
+    const planningDate = nowStr.split('T')[0];
+    const importBatchId = nowStr;
+
+    localStorage.setItem('active_import_batch_id', importBatchId);
+    localStorage.setItem('active_planning_date', planningDate);
+
+    // 0.1 Fetch all existing local CTRCs first
     const allExistingCtrcs = await CtrcRepository.getAll();
     const { available: oldAvailable, linked: oldLinked } = await partitionCtrcs(allExistingCtrcs);
     const oldAvailableCount = oldAvailable.length;
 
-    // Remove old active/available CTRCs from DB to prevent merging/growing queue
-    const deletedCtrcIds = oldAvailable.map(c => c.id);
-    if (deletedCtrcIds.length > 0) {
-      await CtrcRepository.deleteMany(deletedCtrcIds);
-      // Clean up planning items for those deleted CTRCs (unconsolidated routing links)
-      try {
-        const planningItemsToDelete = await db.route_planning_items.where('ctrcId').anyOf(deletedCtrcIds).toArray();
-        if (planningItemsToDelete.length > 0) {
-          await db.route_planning_items.bulkDelete(planningItemsToDelete.map(p => p.id));
-        }
-      } catch (err) {
-        console.warn('[Importacao] Falha ao limpar prioridades/vínculos de rota obsoletos:', err);
-      }
-    }
+    // Apply importBatchId and planningDate to newCtrcs
+    const enrichedNewCtrcs = newCtrcs.map(c => ({
+      ...c,
+      importBatchId,
+      planningDate
+    }));
 
     // 1. Load existing CTRCs from the offline database to perform a safe merge
-    const ids = newCtrcs.map(c => c.id);
+    const ids = enrichedNewCtrcs.map(c => c.id);
     const existingCtrcs = await CtrcRepository.getByIds(ids);
     const existingMap = new Map<string, Ctrc>(existingCtrcs.map(c => [c.id, c]));
 
     // 2. Perform safe merge: keep new raw SSW fields but preserve existing local decisions/states (for linked/saved CTRCs)
-    const mergedCtrcs = newCtrcs.map((newCtrc) => {
+    const mergedCtrcs = enrichedNewCtrcs.map((newCtrc) => {
       const existing = existingMap.get(newCtrc.id);
       if (!existing) {
         return newCtrc;
@@ -559,6 +578,7 @@ export default function App() {
     });
 
     // 3. Update memory react states safely replacing the active available queue
+    // We do not delete old CTRCs from DB anymore, we just don't show them in the active available queue
     const oldLinkedIdsSet = new Set(oldLinked.map(l => l.id));
     const toAvailable = mergedCtrcs.filter(c => !oldLinkedIdsSet.has(c.id));
 
@@ -632,7 +652,7 @@ export default function App() {
     try {
       const allLocalCtres = await CtrcRepository.getAll();
       if (allLocalCtres.length > 0) {
-        const { available, linked } = await partitionCtrcs(allLocalCtres);
+        const { available, linked, allImported } = await partitionCtrcs(allLocalCtres);
 
         // Diagnostics block for App.tsx handleAddCtrcs rehydration
         if (ENABLE_ROUTER_DIAGNOSTICS) {
@@ -647,6 +667,7 @@ export default function App() {
             totalCtrcsFromDb: allLocalCtres.length,
             availableCount: available.length,
             linkedCount: linked.length,
+            allImportedCount: allImported.length,
             byStatus: statusCounts,
             byUnid: unidCounts,
           });
@@ -654,6 +675,7 @@ export default function App() {
 
         setAvailableCtrcs(available);
         setLinkedCtrcs(linked);
+        setAllImportedCtrcs(allImported);
       } else {
         setAvailableCtrcs([]);
         setLinkedCtrcs([]);
@@ -833,12 +855,14 @@ export default function App() {
     try {
       const localCtrcs = await CtrcRepository.getAll();
       if (localCtrcs.length > 0) {
-        const { available, linked } = await partitionCtrcs(localCtrcs);
+        const { available, linked, allImported } = await partitionCtrcs(localCtrcs);
         setAvailableCtrcs(available);
         setLinkedCtrcs(linked);
+        setAllImportedCtrcs(allImported);
       } else {
         setAvailableCtrcs([]);
         setLinkedCtrcs([]);
+        setAllImportedCtrcs([]);
       }
     } catch (err) {
       console.error('[App] Erro ao reidratar CTRCs do IndexedDB:', err);
@@ -898,6 +922,7 @@ export default function App() {
           <DashboardView
             onNavigateToView={handleNavigateFromDash}
             searchValue={searchValue}
+            allImportedCtrcs={allImportedCtrcs}
           />
         );
       case 'importacao':
@@ -1064,6 +1089,7 @@ export default function App() {
           <DashboardView
             onNavigateToView={handleNavigateFromDash}
             searchValue={searchValue}
+            allImportedCtrcs={allImportedCtrcs}
           />
         );
     }

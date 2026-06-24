@@ -167,11 +167,20 @@ export default function FinalizacaoView({
   const loadPreRomaneiosData = async () => {
     setLoadingPreRomaneios(true);
     try {
+      const activeImportBatchId = localStorage.getItem('active_import_batch_id');
+      const activePlanningDate = localStorage.getItem('active_planning_date');
       const targetDate = convertManifestDateToPlanningDate(manifestDate);
-      let prs = await PreRomaneioRepository.getByDate(targetDate);
-      if (!prs || prs.length === 0) {
-        prs = await PreRomaneioRepository.getAll();
-      }
+      
+      let prs = await PreRomaneioRepository.getAll();
+      
+      // Filter strictly by selected date OR active import batch if looking at today
+      prs = prs.filter(pr => {
+        // If the user is explicitly looking at a specific date, show items for that date
+        if (pr.planningDate === targetDate) return true;
+        // If the target date matches the active planning date, also include items from the active batch even if they miss the date
+        if (targetDate === activePlanningDate && activeImportBatchId && pr.importBatchId === activeImportBatchId) return true;
+        return false;
+      });
       
       const allCtrcIds = Array.from(new Set(prs.flatMap(p => p.ctrcIds || [])));
       if (allCtrcIds.length > 0) {
@@ -248,7 +257,7 @@ export default function FinalizacaoView({
 
   
   const handleDeletePreRomaneioAction = async (pr: PreRomaneio) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o pré-romaneio da rota ${pr.route}?\nOs CTRCs vinculados retornarão para a Mesa.`)) {
+    if (!window.confirm(`Tem certeza que deseja excluir o pré-romaneio da rota ${pr.route}?\nCargas do ciclo ativo retornarão para a Mesa.`)) {
       return;
     }
     

@@ -84,9 +84,9 @@ export default function RoteirizacaoView({
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
 
-  // Define planning date (defaults to today's date formatted as YYYY-MM-DD)
+  // Define planning date (defaults to active_planning_date or today's date formatted as YYYY-MM-DD)
   const [planningDate, setPlanningDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return localStorage.getItem('active_planning_date') || new Date().toISOString().split('T')[0];
   });
 
   // Toast status notice
@@ -798,6 +798,7 @@ export default function RoteirizacaoView({
 
       const newPreRomaneios: PreRomaneio[] = [];
       const nowStr = new Date().toISOString();
+      const importBatchId = localStorage.getItem('active_import_batch_id') || undefined;
 
       for (const [route, ctrcs] of Object.entries(groupedByRoute)) {
         // Resolve mapped gate
@@ -814,6 +815,7 @@ export default function RoteirizacaoView({
         newPreRomaneios.push({
           id,
           planningDate,
+          importBatchId,
           route,
           gate: gateName,
           status: 'EM_SEPARACAO',

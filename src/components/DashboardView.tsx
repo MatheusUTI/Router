@@ -1,25 +1,105 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Ctrc } from '../types';
 
 interface DashboardProps {
   onNavigateToView: (view: 'importacao' | 'frota' | 'roteirizacao') => void;
   searchValue: string;
+  allImportedCtrcs?: Ctrc[];
 }
 
-export default function DashboardView({ onNavigateToView, searchValue }: DashboardProps) {
+export default function DashboardView({ onNavigateToView, searchValue, allImportedCtrcs = [] }: DashboardProps) {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
 
   // Multipliers based on period
   const mult = period === 'today' ? 1 : period === 'week' ? 5.8 : 24.5;
 
+  const hasRealData = allImportedCtrcs.length > 0;
+
+  const stats = useMemo(() => {
+    if (!hasRealData) {
+      // Mock data when no real data is imported
+      return {
+        totalCtrcs: Math.round(1850 * mult),
+        pendingCtrcs: Math.round(420 * mult),
+        deliveredCtrcs: Math.round(1350 * mult),
+        inRouteCtrcs: Math.round(80 * mult),
+        weight: Math.round(15420 * mult),
+        volumes: Math.round(4200 * mult),
+        value: 1250000 * mult,
+        frete: 45000 * mult,
+        unids: [
+          { name: 'VGA', pct: 45 },
+          { name: 'POU', pct: 30 },
+          { name: 'TRC', pct: 25 },
+        ]
+      };
+    }
+
+    // Real data processing
+    let total = 0;
+    let pending = 0;
+    let delivered = 0;
+    let inRoute = 0;
+    let weight = 0;
+    let volumes = 0;
+    let value = 0;
+    let frete = 0;
+    const unidMap: Record<string, number> = {};
+
+    allImportedCtrcs.forEach(c => {
+      total++;
+      if (c.status === 'Entregue' || c.status === 'Finalizado') {
+        delivered++;
+      } else if (c.status === 'Em Rota') {
+        inRoute++;
+      } else {
+        pending++;
+      }
+
+      weight += c.weight || 0;
+      volumes += c.volume || 0;
+      value += c.valor || 0;
+      frete += c.frete || 0;
+
+      const u = (c.unid || 'OUTRAS').toUpperCase();
+      unidMap[u] = (unidMap[u] || 0) + 1;
+    });
+
+    const unids = Object.entries(unidMap)
+      .map(([name, count]) => ({ name, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 3);
+
+    return {
+      totalCtrcs: total,
+      pendingCtrcs: pending,
+      deliveredCtrcs: delivered,
+      inRouteCtrcs: inRoute,
+      weight,
+      volumes,
+      value,
+      frete,
+      unids
+    };
+  }, [allImportedCtrcs, hasRealData, mult]);
+
   const kpis = {
-    volume: { peso: (45.2 * mult).toFixed(1), volume: Math.round(120 * mult) },
-    entregas: { realizadas: Math.round(85 * mult), remanescentes: Math.round(15 * mult) },
-    faturamento: Math.round(125400 * mult),
+    volume: { peso: (stats.weight / 1000).toFixed(1), volume: stats.volumes },
+    entregas: { realizadas: stats.deliveredCtrcs, remanescentes: stats.pendingCtrcs },
+    faturamento: stats.value,
     ocupacao: period === 'today' ? 82 : period === 'week' ? 87 : 78,
     custo: period === 'today' ? 6.8 : period === 'week' ? 7.1 : 6.5,
   };
 
-  const sectors = [
+  const sectors = stats.unids.length > 0 ? stats.unids.map((u, i) => ({
+    name: u.name,
+    curva: i === 0 ? 'Curva A' : i === 1 ? 'Curva B' : 'Curva C',
+    curvaColor: i === 0 ? 'bg-primary/20 text-primary-fixed-dim border-primary/30' : 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)] border-[var(--router-border)]/50',
+    weight: `${((stats.weight * (u.pct / 100)) / 1000).toFixed(1)}t`,
+    weightPct: u.pct,
+    ctrc: Math.round(stats.totalCtrcs * (u.pct / 100)),
+    ctrcPct: u.pct,
+  })) : [
     {
       name: 'Setor Sul',
       curva: 'Curva A',
@@ -56,7 +136,23 @@ export default function DashboardView({ onNavigateToView, searchValue }: Dashboa
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {!hasRealData && (
+        <div className="absolute inset-0 z-10 bg-[var(--router-bg)]/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-[var(--router-border)]">
+          <span className="text-5xl mb-4">📊</span>
+          <h3 className="text-xl font-bold text-[var(--router-text)] font-sans">Sem dados reais importados</h3>
+          <p className="text-sm text-[var(--router-text-muted)] mt-2 max-w-sm text-center font-sans">
+            Importe uma base de operações real na aba de Importação para visualizar os indicadores atualizados da sua filial.
+          </p>
+          <button 
+            onClick={() => onNavigateToView('importacao')}
+            className="mt-6 px-4 py-2 bg-primary hover:bg-primary/90 text-on-primary font-bold rounded shadow-lg transition-all text-sm uppercase tracking-wider"
+          >
+            Ir para Importação
+          </button>
+        </div>
+      )}
+      
       {/* Page header controls */}
       <div className="flex justify-between items-end gap-4">
         <div>
