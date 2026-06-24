@@ -204,6 +204,7 @@ export type SortDirection = 'asc' | 'desc';
 
 export interface RoteirizacaoPreferences {
   densityMode: DensityMode;
+  mesaScale?: '85%' | '90%' | '100%' | '110%' | '120%';
   groupingMode?: string;
   selectedUnit?: string;
   selectedSector?: string;

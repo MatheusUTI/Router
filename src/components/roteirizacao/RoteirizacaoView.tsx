@@ -78,6 +78,7 @@ export default function RoteirizacaoView({
 
   // User Preferences sync and visual density management
   const [densityMode, setDensityMode] = useState<DensityMode>('default');
+  const [mesaScale, setMesaScale] = useState<'85%' | '90%' | '100%' | '110%' | '120%'>('100%');
   const [isPrefLoaded, setIsPrefLoaded] = useState<boolean>(false);
 
   // Unified running time
@@ -617,6 +618,9 @@ export default function RoteirizacaoView({
           if (rotPref.densityMode) {
             setDensityMode(rotPref.densityMode);
           }
+          if (rotPref.mesaScale) {
+            setMesaScale(rotPref.mesaScale);
+          }
           if (rotPref.groupingMode) {
             setGroupingMode('none');
           }
@@ -656,6 +660,9 @@ export default function RoteirizacaoView({
           const rotPref = syncedPref.preferences.roteirizacao;
           if (rotPref.densityMode) {
             setDensityMode(rotPref.densityMode);
+          }
+          if (rotPref.mesaScale) {
+            setMesaScale(rotPref.mesaScale);
           }
           if (rotPref.groupingMode) {
             setGroupingMode('none');
@@ -701,6 +708,7 @@ export default function RoteirizacaoView({
     
     handleUpdatePreference({
       densityMode,
+      mesaScale,
       groupingMode,
       selectedUnit,
       selectedSector,
@@ -711,7 +719,7 @@ export default function RoteirizacaoView({
       sortDirection,
       showOtherUnits
     });
-  }, [densityMode, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, showOtherUnits, isPrefLoaded, isNormalizing]);
+  }, [densityMode, mesaScale, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, showOtherUnits, isPrefLoaded, isNormalizing]);
 
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
@@ -896,6 +904,8 @@ export default function RoteirizacaoView({
         highestNoticeSeverity={highestNoticeSeverity}
         densityMode={densityMode}
         onUpdateDensity={(density) => setDensityMode(density)}
+        mesaScale={mesaScale}
+        onUpdateMesaScale={setMesaScale}
         theme={theme}
         onToggleTheme={onToggleTheme}
       />
@@ -912,7 +922,12 @@ export default function RoteirizacaoView({
       />
 
       {/* Main Containers: Left List (Full Width) */}
-      <div className="flex-1 flex gap-3 p-3 min-h-0 relative">
+      <div 
+        className="flex-1 flex gap-3 p-3 min-h-0 relative"
+        style={{
+          '--mesa-scale': mesaScale === '85%' ? '0.85' : mesaScale === '90%' ? '0.90' : mesaScale === '110%' ? '1.10' : mesaScale === '120%' ? '1.20' : '1'
+        } as React.CSSProperties}
+      >
         {/* Cargo Fila Column */}
         {isNormalizing ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-1.5 bg-white dark:bg-[#080c14] border border-slate-200 dark:border-[#16223f] rounded-xl font-mono">

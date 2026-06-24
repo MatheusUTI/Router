@@ -322,7 +322,10 @@ export default function CargaItem({
           ? 'bg-indigo-50/50 dark:bg-indigo-650/[0.07] shadow-[inset_2.5px_0_0_#4f46e5,inset_0_0_6px_rgba(99,102,241,0.035)]' 
           : pStyle.cardBg
       } hover:shadow-[0_1px_5px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_1px_5px_rgba(0,0,0,0.3)] group w-full ${dropdownOpen ? 'relative z-40 overflow-visible' : 'relative z-10 overflow-visible'} ${item.visualFlags?.rowClass || ''} ${densityMode === 'planilha_operacional' ? '' : 'grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)]'}`}
-      style={{ gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(115px, 0.6fr) minmax(270px, 1.5fr) minmax(110px, 0.65fr) minmax(85px, 0.4fr) minmax(275px, 1.55fr) minmax(105px, 0.55fr) minmax(95px, 0.5fr) minmax(80px, 0.4fr)' : undefined }}
+      style={{ 
+        gridTemplateColumns: densityMode === 'planilha_operacional' ? '24px minmax(calc(115px * var(--mesa-scale, 1)), 0.6fr) minmax(calc(270px * var(--mesa-scale, 1)), 1.5fr) minmax(calc(110px * var(--mesa-scale, 1)), 0.65fr) minmax(calc(85px * var(--mesa-scale, 1)), 0.4fr) minmax(calc(275px * var(--mesa-scale, 1)), 1.55fr) minmax(calc(105px * var(--mesa-scale, 1)), 0.55fr) minmax(calc(95px * var(--mesa-scale, 1)), 0.5fr) minmax(calc(80px * var(--mesa-scale, 1)), 0.4fr)' : undefined,
+        height: densityMode === 'planilha_operacional' ? 'calc(52px * var(--mesa-scale, 1))' : undefined,
+      } as React.CSSProperties}
     >
       {densityMode === 'planilha_operacional' ? (
         <>
@@ -352,11 +355,14 @@ export default function CargaItem({
           </div>
 
           {/* Col 2: Cidade / Rota */}
-          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px]">
-            <span className="text-slate-900 dark:text-white font-extrabold text-[12px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+          <div 
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
+          >
+            <span className="text-slate-900 dark:text-white font-extrabold uppercase tracking-wide truncate block" style={{ fontSize: 'calc(12px * var(--mesa-scale, 1))' }} title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
               {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
             </span>
-            <div className="flex items-center gap-1 text-[10px] font-sans leading-none">
+            <div className="flex items-center gap-1 font-sans leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}>
               <span className="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase">
                 {item.effectiveRoute || 'SEM ROTA'}
               </span>
@@ -374,43 +380,48 @@ export default function CargaItem({
           </div>
 
           {/* Col 3: Destinatário / Remetente */}
-          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans">
+          <div 
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: Destinatário */}
-            <div className="flex items-center gap-1 leading-none truncate w-full text-[11.5px] select-text">
-              <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[9px] tracking-tight mr-0.5">DST:</span>
+            <div className="flex items-center gap-1 leading-none truncate w-full select-text" style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}>
+              <span className="text-slate-400 dark:text-slate-500 font-bold select-none tracking-tight mr-0.5" style={{ fontSize: 'calc(9px * var(--mesa-scale, 1))' }}>DST:</span>
               <span 
                 className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border ${
                   item.isFob 
-                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black text-[11px]' 
+                    ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] font-black' 
                     : item.isCurvaA
-                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black text-[11px]'
-                    : 'text-slate-800 dark:text-slate-200 border-transparent text-[11.5px]'
+                    ? 'bg-[#FCE7F3] text-[#9D174D] border-[#FBCFE8] font-black'
+                    : 'text-slate-800 dark:text-slate-200 border-transparent'
                 }`}
+                style={{ fontSize: item.isFob || item.isCurvaA ? 'calc(11px * var(--mesa-scale, 1))' : 'calc(11.5px * var(--mesa-scale, 1))' }}
                 title={`${item.destinatario || ''}${item.isFob ? ' [FOB]' : ''}${item.isCurvaA ? ' [CURVA A]' : ''}`}
               >
                 {item.destinatario || 'SEM DESTINATÁRIO'}
               </span>
               {item.isFob && (
-                <span className="bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-1 rounded text-[8px] font-black uppercase tracking-wider select-none shrink-0 leading-none">
+                <span className="bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
                   FOB
                 </span>
               )}
               {item.isCurvaA && (
-                <span className="bg-[#FCE7F3] text-[#9D174D] border border-[#FBCFE8] px-1 rounded text-[8px] font-black uppercase tracking-wider select-none shrink-0 leading-none">
+                <span className="bg-[#FCE7F3] text-[#9D174D] border border-[#FBCFE8] px-1 rounded font-black uppercase tracking-wider select-none shrink-0 leading-none" style={{ fontSize: 'calc(8px * var(--mesa-scale, 1))' }}>
                   ★ CURVA A
                 </span>
               )}
             </div>
 
             {/* Linha 2: Remetente */}
-            <div className="flex items-center gap-1 leading-none truncate w-full text-[10.5px] select-text text-slate-550 dark:text-slate-450">
-              <span className="text-slate-400 dark:text-slate-500 font-bold select-none text-[8.5px]">REM:</span>
+            <div className="flex items-center gap-1 leading-none truncate w-full select-text text-slate-550 dark:text-slate-450" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
+              <span className="text-slate-400 dark:text-slate-500 font-bold select-none" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>REM:</span>
               <span 
                 className={`font-semibold truncate uppercase ${
                   item.isCurvaA 
-                    ? 'text-[#9D174D] bg-[#FCE7F3]/40 border-[#FBCFE8]/30 px-1 rounded border font-black text-[9.5px]' 
+                    ? 'text-[#9D174D] bg-[#FCE7F3]/40 border-[#FBCFE8]/30 px-1 rounded border font-black' 
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
+                style={{ fontSize: item.isCurvaA ? 'calc(9.5px * var(--mesa-scale, 1))' : 'calc(10.5px * var(--mesa-scale, 1))' }}
                 title={item.remetente}
               >
                 {item.remetente || 'S/ R'}
@@ -419,7 +430,10 @@ export default function CargaItem({
           </div>
 
           {/* Col 4: CTRC / NF */}
-          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-mono text-[10.5px]">
+          <div 
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-mono"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: CTRC com link */}
             <div className="font-bold text-indigo-600 dark:text-indigo-400 truncate leading-none">
               <span className="text-slate-400 dark:text-slate-500 font-bold mr-0.5">CTRC:</span>
@@ -448,7 +462,10 @@ export default function CargaItem({
           </div>
 
           {/* Col 5: Previsão */}
-          <div className="min-w-0 flex flex-col justify-center items-center py-1 px-2 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px]">
+          <div 
+            className="min-w-0 flex flex-col justify-center items-center py-1 px-2 border-r border-slate-200 dark:border-[#14203a]/30"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
+          >
             {(() => {
               const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
               
@@ -476,16 +493,19 @@ export default function CargaItem({
               }
 
               return (
-                <div className={`font-sans px-2 py-1 rounded border text-[10px] text-center font-bold flex flex-col items-center justify-center leading-none ${prevStyles}`} style={{ minWidth: '76px' }}>
+                <div className={`font-sans px-2 py-1 rounded border text-center font-bold flex flex-col items-center justify-center leading-none ${prevStyles}`} style={{ minWidth: '76px', fontSize: 'calc(10px * var(--mesa-scale, 1))' }}>
                   <span className="font-extrabold uppercase">{label}</span>
-                  {weekday && <span className="text-[8.5px] mt-0.5 opacity-80">{weekday}</span>}
+                  {weekday && <span className="mt-0.5 opacity-80" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>{weekday}</span>}
                 </div>
               );
             })()}
           </div>
 
           {/* Col 6: Status / Localização */}
-          <div className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px]">
+          <div 
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: Status principal */}
             <div className="flex items-center gap-1 leading-none">
               {(() => {
@@ -517,7 +537,7 @@ export default function CargaItem({
                 }
 
                 return (
-                  <span className={`font-sans font-bold uppercase px-1.5 py-0.5 rounded border text-[10px] shrink-0 leading-none truncate max-w-full ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} title={statusText}>
+                  <span className={`font-sans font-bold uppercase px-1.5 py-0.5 rounded border shrink-0 leading-none truncate max-w-full ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`} style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title={statusText}>
                     {statusText}
                   </span>
                 );
@@ -525,7 +545,7 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Localização */}
-            <div className="flex items-center gap-1 text-[11px] leading-none w-full min-w-0 mt-0.5 text-slate-500 dark:text-slate-400 font-sans truncate">
+            <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5 text-slate-500 dark:text-slate-400 font-sans truncate" style={{ fontSize: 'calc(11px * var(--mesa-scale, 1))' }}>
               {(() => {
                 const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
                 let displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
@@ -566,7 +586,10 @@ export default function CargaItem({
           </div>
 
           {/* Col 7: Valor / Frete */}
-          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans text-[11px]">
+          <div 
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: Valor Mercadoria */}
             {(() => {
               const v = item.valor || 0;
@@ -584,13 +607,16 @@ export default function CargaItem({
             })()}
 
             {/* Linha 2: Frete */}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none" title="Frete">
+            <span className="text-slate-400 dark:text-slate-500 font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Frete">
               Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
 
           {/* Col 8: Peso / Volumes */}
-          <div className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 h-[52px] font-sans text-[11px]">
+          <div 
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: Peso */}
             {(() => {
               const p = item.peso_r || item.weight || 0;
@@ -610,18 +636,22 @@ export default function CargaItem({
             })()}
 
             {/* Linha 2: Volumes */}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-none" title="Volumes">
+            <span className="text-slate-400 dark:text-slate-500 font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Volumes">
               {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
             </span>
           </div>
 
           {/* Col 9: OBS / Disponível */}
-          <div className="min-w-0 flex flex-col justify-center items-center py-1 px-2.5 gap-0.5 h-[52px] font-sans">
+          <div 
+            className="min-w-0 flex flex-col justify-center items-center py-1 px-2.5 gap-0.5 font-sans"
+            style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
+          >
             {/* Linha 1: OBS */}
             <div className="w-full text-center">
               {item.operationalNote ? (
                 <span 
-                  className="bg-amber-50/70 border border-amber-100/50 text-amber-800 dark:bg-amber-950/10 dark:border-amber-900/20 dark:text-amber-300 rounded px-1.5 py-0.2 text-[10px] font-medium block truncate max-w-full" 
+                  className="bg-amber-50/70 border border-amber-100/50 text-amber-800 dark:bg-amber-950/10 dark:border-amber-900/20 dark:text-amber-300 rounded px-1.5 py-0.2 font-medium block truncate max-w-full" 
+                  style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}
                   title={item.operationalNote}
                 >
                   {item.operationalNote}
@@ -632,21 +662,21 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Disponibilidade */}
-            <div className="flex items-center justify-center leading-none mt-0.5 text-[10px]">
+            <div className="flex items-center justify-center leading-none mt-0.5" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}>
               {(() => {
                 const availStatus = item.availabilityStatus ? item.availabilityStatus.toLowerCase() : '';
                 const isAgendado = item.status?.toLowerCase().includes('agend') || item.availabilityLabel?.toLowerCase().includes('agend') || flowStatusLabel?.toLowerCase().includes('agend');
                 
                 if (availStatus === 'disponivel' || availStatus === 'disponível' || !availStatus) {
-                  return <span className="text-emerald-600 dark:text-emerald-500 font-bold text-[10px]" title="Disponível">✓ Disp.</span>;
+                  return <span className="text-emerald-600 dark:text-emerald-500 font-bold" title="Disponível">✓ Disp.</span>;
                 } else if (availStatus === 'retido') {
-                  return <span className="text-rose-600 dark:text-rose-400 font-bold text-[10px]" title="Retido">Retido</span>;
+                  return <span className="text-rose-600 dark:text-rose-400 font-bold" title="Retido">Retido</span>;
                 } else if (availStatus === 'problema') {
-                  return <span className="text-red-500 dark:text-red-400 font-bold text-[10px]" title="Pendente">Pendente</span>;
+                  return <span className="text-red-500 dark:text-red-400 font-bold" title="Pendente">Pendente</span>;
                 } else if (isAgendado) {
-                  return <span className="text-indigo-600 dark:text-indigo-400 font-bold text-[10px]" title="Agendado">Agendado</span>;
+                  return <span className="text-indigo-600 dark:text-indigo-400 font-bold" title="Agendado">Agendado</span>;
                 } else if (availStatus === 'aguardando') {
-                  return <span className="text-amber-600 dark:text-amber-400 font-bold text-[10px]" title="Aguardar">Aguardar</span>;
+                  return <span className="text-amber-600 dark:text-amber-400 font-bold" title="Aguardar">Aguardar</span>;
                 } else {
                   return <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px]" title={item.availabilityLabel || availStatus}>{item.availabilityLabel || availStatus}</span>;
                 }
