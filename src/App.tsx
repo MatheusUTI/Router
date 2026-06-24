@@ -978,6 +978,7 @@ export default function App() {
             adminUser={adminProfile}
             onRefreshCtrcs={rehydrateCtrcsOnly}
             vehicleRegistries={vehicleRegistries}
+            onAddVehicleRegistry={handleAddVehicleRegistry}
           />
         );
       case 'desempenho':

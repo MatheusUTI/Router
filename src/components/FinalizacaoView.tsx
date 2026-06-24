@@ -39,6 +39,7 @@ interface FinalizacaoViewProps {
   adminUser?: AppUser;
   onRefreshCtrcs?: () => Promise<void>;
   vehicleRegistries?: VehicleRegistry[];
+  onAddVehicleRegistry?: (vr: VehicleRegistry) => Promise<void>;
 }
 
 export default function FinalizacaoView({
@@ -51,6 +52,7 @@ export default function FinalizacaoView({
   adminUser,
   onRefreshCtrcs,
   vehicleRegistries = [],
+  onAddVehicleRegistry,
 }: FinalizacaoViewProps) {
   // Navigation tab state: 'programacao' (Programação do Dia), 'active' (Current separation logic), 'history' (Saved routes list & reprint) or 'preromaneio' (Pre-Romaneio listing)
   const [activeTab, setActiveTab] = useState<'programacao' | 'active' | 'history' | 'preromaneio'>('preromaneio');
@@ -72,6 +74,14 @@ export default function FinalizacaoView({
   const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
     const plateUpper = vehiclePlate.toUpperCase().replace(/\s/g, '');
     const driverUpper = driverName.toUpperCase();
+    
+    // Check if registered as non-PROPRIO
+    const registered = (vehicleRegistries || []).find(vr => vr.placa.toUpperCase().replace(/\s/g, '').trim() === plateUpper);
+    if (registered) {
+      if (registered.tipo !== 'PROPRIO' && registered.tipo !== 'PRÓPRIO') {
+        return true;
+      }
+    }
     
     // Spec.md aggregate plates & drivers
     const aggregatePlates = ['BWZ4186', 'GUE3786', 'CSF5246', 'GQZ3157'];
@@ -129,6 +139,78 @@ export default function FinalizacaoView({
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Quick vehicle registration modal state
+  const [quickRegisterPlate, setQuickRegisterPlate] = useState<string | null>(null);
+  const [quickTipo, setQuickTipo] = useState<'PROPRIO' | 'AGREGADO' | 'APOIO' | 'TERCEIRO'>('PROPRIO');
+  const [quickRastreado, setQuickRastreado] = useState<boolean>(true);
+  const [quickLimiteGrSugerido, setQuickLimiteGrSugerido] = useState<number>(500000);
+  const [quickMotoristaPadrao, setQuickMotoristaPadrao] = useState('');
+  const [quickAjudantePadrao, setQuickAjudantePadrao] = useState('');
+  const [quickStatusOperacional, setQuickStatusOperacional] = useState<'ATIVO' | 'MANUTENCAO' | 'INATIVO'>('ATIVO');
+  const [quickObservacoes, setQuickObservacoes] = useState('');
+
+  useEffect(() => {
+    if (quickRegisterPlate) {
+      setQuickLimiteGrSugerido(calculateSuggestedGrLimit(quickTipo, quickRastreado));
+    }
+  }, [quickTipo, quickRastreado, quickRegisterPlate]);
+
+  const handleOpenQuickRegisterModal = (plate: string) => {
+    setQuickRegisterPlate(plate.toUpperCase().replace(/\s/g, '').trim());
+    setQuickTipo('PROPRIO');
+    setQuickRastreado(true);
+    setQuickLimiteGrSugerido(calculateSuggestedGrLimit('PROPRIO', true));
+    setQuickMotoristaPadrao('');
+    setQuickAjudantePadrao('');
+    setQuickStatusOperacional('ATIVO');
+    setQuickObservacoes('');
+  };
+
+  const handleSaveQuickVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickRegisterPlate) return;
+    
+    const cleanPlate = quickRegisterPlate.toUpperCase().replace(/\s/g, '').trim();
+    if (!cleanPlate) {
+      alert('A placa é obrigatória.');
+      return;
+    }
+    
+    const exists = (vehicleRegistries || []).some(
+      (vr) => vr.placa.toUpperCase().replace(/\s/g, '').trim() === cleanPlate
+    );
+    if (exists) {
+      alert(`Veículo com a placa ${cleanPlate} já está cadastrado.`);
+      return;
+    }
+    
+    const newVr: VehicleRegistry = {
+      placa: cleanPlate,
+      tipo: quickTipo,
+      rastreado: quickRastreado,
+      limiteGrSugerido: quickLimiteGrSugerido,
+      motoristaPadrao: quickMotoristaPadrao.trim() || undefined,
+      ajudantePadrao: quickAjudantePadrao.trim() || undefined,
+      statusOperacional: quickStatusOperacional,
+      observacoes: quickObservacoes.trim() || undefined,
+    };
+    
+    try {
+      if (onAddVehicleRegistry) {
+        await onAddVehicleRegistry(newVr);
+        triggerToast(`Veículo ${cleanPlate} cadastrado com sucesso!`);
+      } else {
+        alert('Erro: Função de cadastro de frota não está disponível.');
+      }
+    } catch (err) {
+      console.error('Erro ao cadastrar veículo rápido:', err);
+      alert('Erro ao salvar veículo no repositório.');
+    }
+    
+    // Reset state & close modal
+    setQuickRegisterPlate(null);
   };
 
   const handlePrintPreRomaneio = (pr: PreRomaneio) => {
@@ -897,7 +979,7 @@ export default function FinalizacaoView({
                 </div>
 
                 {/* Main Dense Operational Grid/Matrix Area */}
-                <div className="bg-surface-container border border-outline-variant p-5 rounded-2xl space-y-8">
+                <div className="bg-surface-container border border-outline-variant p-3.5 rounded-xl space-y-5">
                   
                   {/* HELPER FOR RENDERING TRANSIT MATRIX TABLES */}
                   {(() => {
@@ -936,7 +1018,17 @@ export default function FinalizacaoView({
                           const isHighValViolation = valSum > 300000;
                           return (
                             <div className="mt-1.5 flex flex-col gap-1 text-[10px] font-mono leading-none">
-                              <div className="text-amber-500 italic border-t border-outline-variant/20 pt-1">Não Cadastrado</div>
+                              <div className="text-amber-500 italic border-t border-outline-variant/20 pt-1 flex items-center justify-between gap-1">
+                                <span>Não Cadastrado</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenQuickRegisterModal(row.vehiclePlate)}
+                                  className="px-1 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 hover:text-amber-400 border border-amber-500/20 rounded font-black transition-all text-[8px] uppercase tracking-wide cursor-pointer ml-1"
+                                  title="Cadastrar veículo"
+                                >
+                                  + Cadastrar
+                                </button>
+                              </div>
                               {isHighValViolation && (
                                 <div className="text-amber-500 font-bold bg-amber-950/20 border border-amber-500/20 rounded px-1 py-0.5 mt-0.5 text-center flex items-center justify-center gap-0.5">
                                   ⚠️ Risco {'>'} 300k
@@ -947,10 +1039,10 @@ export default function FinalizacaoView({
                         }
                       };
                       return (
-                        <div className="space-y-3 text-left">
+                        <div className="space-y-1.5 text-left">
                           
                           {/* Heading Ribbon */}
-                          <div className="flex items-center justify-between border-b border-[var(--router-input-border)] pb-2">
+                          <div className="flex items-center justify-between border-b border-[var(--router-input-border)] pb-1">
                             <h2 className="text-xs font-black uppercase tracking-wider font-mono flex items-center gap-2" style={{ color: accentColor }}>
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: accentColor }}></span>
                               {groupTitle}
@@ -969,19 +1061,19 @@ export default function FinalizacaoView({
                               <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
                                 <thead className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)]">
                                   <tr className="text-on-surface-variant font-mono text-[10px] tracking-wider uppercase">
-                                    <th className="py-3 px-3 w-[100px]">ROTA</th>
-                                    <th className="py-3 px-3 w-[120px]">PLACA</th>
-                                    <th className="py-3 px-3 w-[160px]">MOTORISTA</th>
-                                    <th className="py-3 px-3 w-[160px]">AJUDANTE</th>
-                                    <th className="py-3 px-3 w-[80px]">DOCA</th>
-                                    <th className="py-3 px-3">CIDADES ATENDIDAS</th>
-                                    <th className="py-3 px-3 text-center w-[120px]">DOCS (NF/CTRC)</th>
-                                    <th className="py-3 px-3 text-right w-[110px]">PESO (KG)</th>
-                                    <th className="py-3 px-3 text-right w-[80px]">VOL</th>
-                                    <th className="py-3 px-3 text-right w-[160px]">FINANCEIRO (INT)</th>
-                                    <th className="py-3 px-3 w-[130px]">STATUS</th>
-                                    <th className="py-3 px-3 w-[180px]">OBSERVAÇÕES</th>
-                                    <th className="py-3 px-3 w-[40px]"></th>
+                                    <th className="py-1.5 px-2 w-[100px]">ROTA</th>
+                                    <th className="py-1.5 px-2 w-[120px]">PLACA</th>
+                                    <th className="py-1.5 px-2 w-[160px]">MOTORISTA</th>
+                                    <th className="py-1.5 px-2 w-[160px]">AJUDANTE</th>
+                                    <th className="py-1.5 px-2 w-[80px]">DOCA</th>
+                                    <th className="py-1.5 px-2">CIDADES ATENDIDAS</th>
+                                    <th className="py-1.5 px-2 text-center w-[120px]">DOCS (NF/CTRC)</th>
+                                    <th className="py-1.5 px-2 text-right w-[110px]">PESO (KG)</th>
+                                    <th className="py-1.5 px-2 text-right w-[80px]">VOL</th>
+                                    <th className="py-1.5 px-2 text-right w-[160px]">FINANCEIRO (INT)</th>
+                                    <th className="py-1.5 px-2 w-[130px]">STATUS</th>
+                                    <th className="py-1.5 px-2 w-[180px]">OBSERVAÇÕES</th>
+                                    <th className="py-1.5 px-2 w-[40px]"></th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant/30 bg-surface/30">
@@ -1001,20 +1093,20 @@ export default function FinalizacaoView({
                                       <tr key={row.id || rIdx} className="hover:bg-[var(--router-surface)]/75 dark:hover:bg-[#12192c]/40 font-medium">
                                         
                                         {/* ROTA */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded font-mono text-[11px] font-black uppercase tracking-wide block text-center truncate">
                                             {row.route || 'Sem Rota'}
                                           </span>
                                         </td>
 
                                         {/* PLACA */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <div className="relative">
                                             <input
                                               type="text"
                                               value={row.vehiclePlate || ''}
                                               onChange={(e) => handleUpdatePreRomaneioField(row.id, 'vehiclePlate', e.target.value.toUpperCase())}
-                                              className={`w-full bg-[var(--router-input-bg)] border ${row.vehiclePlate ? 'border-[var(--router-border)]' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-2 py-1 text-[var(--router-text)] font-mono text-xs focus:outline-none uppercase text-center`}
+                                              className={`w-full bg-[var(--router-input-bg)] border ${row.vehiclePlate ? 'border-[var(--router-border)]' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-1.5 py-0.5 text-[var(--router-text)] font-mono text-xs focus:outline-none uppercase text-center`}
                                               placeholder="Placa"
                                             />
                                             {renderGrFeedback(row, valSum)}
@@ -1028,13 +1120,13 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* MOTORISTA */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <div className="relative">
                                             <input
                                               type="text"
                                               value={row.driverName || ''}
                                               onChange={(e) => handleUpdatePreRomaneioField(row.id, 'driverName', e.target.value)}
-                                              className={`w-full bg-[var(--router-input-bg)] border ${row.driverName ? 'border-[var(--router-border)]' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-2 py-1 text-[var(--router-text)] text-xs focus:outline-none`}
+                                              className={`w-full bg-[var(--router-input-bg)] border ${row.driverName ? 'border-[var(--router-border)]' : 'border-amber-500/30 bg-amber-500/[0.02]'} hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-1.5 py-0.5 text-[var(--router-text)] text-xs focus:outline-none`}
                                               placeholder="Motorista"
                                             />
                                             {!row.driverName && (
@@ -1047,29 +1139,29 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* AJUDANTE */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <input
                                             type="text"
                                             value={row.helperName || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'helperName', e.target.value)}
-                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-2 py-1 text-[var(--router-text)] text-xs focus:outline-none"
+                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-1.5 py-0.5 text-[var(--router-text)] text-xs focus:outline-none"
                                             placeholder="Ajudante"
                                           />
                                         </td>
 
                                         {/* DOCA */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <input
                                             type="text"
                                             value={row.gate || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'gate', e.target.value)}
-                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-2 py-1 text-[var(--router-text)] text-xs text-center font-mono focus:outline-none"
+                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-1.5 py-0.5 text-[var(--router-text)] text-xs text-center font-mono focus:outline-none"
                                             placeholder="Doca"
                                           />
                                         </td>
 
                                         {/* CIDADES ATENDIDAS */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <div className="max-w-[190px] truncate text-xs text-on-surface-variant font-medium leading-tight" title={cities.join(', ')}>
                                             {cities.length === 0 ? (
                                               <span className="text-on-surface-variant/30 italic">Não informado</span>
@@ -1080,7 +1172,7 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* DOCS (NF/CTRC) */}
-                                        <td className="py-2.5 px-3 text-center">
+                                        <td className="py-1.5 px-2 text-center">
                                           <div className="font-mono text-xs">
                                             <span className="text-[var(--router-text)] font-bold">{row.ctrcs.length} CTRCs</span>
                                             {nfsCount > 0 && <span className="text-on-surface-variant/70 text-[10px] block font-sans">({nfsCount} NFs)</span>}
@@ -1088,21 +1180,21 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* PESO */}
-                                        <td className="py-2.5 px-3 text-right">
+                                        <td className="py-1.5 px-2 text-right">
                                           <div className="font-mono font-bold text-emerald-400 text-xs">
                                             {weightSum.toLocaleString('pt-BR')} kg
                                           </div>
                                         </td>
 
                                         {/* VOL */}
-                                        <td className="py-2.5 px-3 text-right">
+                                        <td className="py-1.5 px-2 text-right">
                                           <div className="font-mono text-[var(--router-text)] text-xs">
                                             {volSum}
                                           </div>
                                         </td>
 
                                         {/* FINANCEIRO (INTERNO) */}
-                                        <td className="py-2.5 px-3 text-right">
+                                        <td className="py-1.5 px-2 text-right">
                                           <div className="font-mono text-[11px] leading-tight flex flex-col items-end justify-center">
                                             <span className="text-[var(--router-text)] font-semibold" title="Valor Mercadoria">
                                               📦 {valSum > 0 ? formatCurrency(valSum) : 'R$ 0,00'}
@@ -1114,11 +1206,11 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* STATUS */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <select
                                             value={row.status}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
-                                            className="bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] border border-[var(--router-border)] focus:border-indigo-500 rounded px-1.5 py-1 text-[var(--router-text)] text-[11px] font-bold focus:outline-none cursor-pointer w-full"
+                                            className="bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] border border-[var(--router-border)] focus:border-indigo-500 rounded px-1 py-0.5 text-[var(--router-text)] text-[11px] font-bold focus:outline-none cursor-pointer w-full"
                                           >
                                             <option value="RASCUNHO">Rascunho</option>
                                             <option value="EM_SEPARACAO">Separando</option>
@@ -1130,24 +1222,24 @@ export default function FinalizacaoView({
                                         </td>
 
                                         {/* OBSERVAÇÕES */}
-                                        <td className="py-2.5 px-3">
+                                        <td className="py-1.5 px-2">
                                           <input
                                             type="text"
                                             value={row.observations || ''}
                                             onChange={(e) => handleUpdatePreRomaneioField(row.id, 'observations', e.target.value)}
-                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-2 py-1 text-[var(--router-text)] text-xs focus:outline-none"
+                                            className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded px-1.5 py-0.5 text-[var(--router-text)] text-xs focus:outline-none"
                                             placeholder="Observações..."
                                           />
                                         </td>
 
                                         {/* AÇÕES */}
-                                        <td className="py-2.5 px-3 text-right">
+                                        <td className="py-1.5 px-2 text-right">
                                           <button
                                             onClick={() => { const pr = preRomaneios.find(p => p.id === row.id); if (pr) handleDeletePreRomaneioAction(pr); }}
-                                            className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                            className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                             title="Excluir Pré-Romaneio"
                                           >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3.5 h-3.5" />
                                           </button>
                                         </td>
 
@@ -2409,6 +2501,147 @@ export default function FinalizacaoView({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {quickRegisterPlate !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
+          <div className="bg-[var(--router-surface-3)] border border-[var(--router-border)] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-left">
+            <div className="flex justify-between items-center bg-[var(--router-surface-2)] px-6 py-4 border-b border-[var(--router-border)]">
+              <h3 className="text-sm font-black uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+                <Truck className="w-4 h-4" />
+                Homologação Rápida de Veículo
+              </h3>
+              <button
+                type="button"
+                onClick={() => setQuickRegisterPlate(null)}
+                className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] p-1 rounded-md transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickVehicle} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Placa do Veículo *</label>
+                  <input
+                    type="text"
+                    required
+                    value={quickRegisterPlate}
+                    onChange={(e) => setQuickRegisterPlate(e.target.value.toUpperCase())}
+                    placeholder="Ex: RTA3G45"
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none uppercase font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Classificação de Frota</label>
+                  <select
+                    value={quickTipo}
+                    onChange={(e) => setQuickTipo(e.target.value as any)}
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none cursor-pointer"
+                  >
+                    <option value="PROPRIO">PRÓPRIO (Frota Própria Estável)</option>
+                    <option value="AGREGADO">AGREGADO</option>
+                    <option value="APOIO">APOIO (Frota de Apoio)</option>
+                    <option value="TERCEIRO">TERCEIRO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Rastreamento GR</label>
+                  <select
+                    value={quickRastreado ? 'true' : 'false'}
+                    onChange={(e) => setQuickRastreado(e.target.value === 'true')}
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none cursor-pointer"
+                  >
+                    <option value="true">Rastreado</option>
+                    <option value="false">Sem Rastreio</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Limite GR Sugerido (R$)</label>
+                  <input
+                    type="number"
+                    value={quickLimiteGrSugerido}
+                    onChange={(e) => setQuickLimiteGrSugerido(Number(e.target.value))}
+                    placeholder="Ex: 500000"
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Motorista Padrão</label>
+                  <input
+                    type="text"
+                    value={quickMotoristaPadrao}
+                    onChange={(e) => setQuickMotoristaPadrao(e.target.value)}
+                    placeholder="Nome do motorista"
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Ajudante Padrão</label>
+                  <input
+                    type="text"
+                    value={quickAjudantePadrao}
+                    onChange={(e) => setQuickAjudantePadrao(e.target.value)}
+                    placeholder="Nome do ajudante"
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Status Operacional</label>
+                  <select
+                    value={quickStatusOperacional}
+                    onChange={(e) => setQuickStatusOperacional(e.target.value as any)}
+                    className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none cursor-pointer"
+                  >
+                    <option value="ATIVO">ATIVO</option>
+                    <option value="MANUTENCAO">MANUTENÇÃO</option>
+                    <option value="INATIVO">INATIVO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--router-text)] block mb-1">Observações</label>
+                <textarea
+                  value={quickObservacoes}
+                  onChange={(e) => setQuickObservacoes(e.target.value)}
+                  placeholder="Alguma observação importante..."
+                  rows={2}
+                  className="w-full bg-[var(--router-input-bg)] border border-[var(--router-border)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-[var(--router-text)] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[var(--router-border)] pt-4 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setQuickRegisterPlate(null)}
+                  className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface)] border border-[var(--router-border)] text-[var(--router-text-muted)] hover:text-[var(--router-text)] text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-md"
+                >
+                  Salvar e Validar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
