@@ -954,7 +954,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                     </tr>
                   ) : (
                     filteredData.map((item) => {
-                      let prioColor = 'bg-[#1e2538] text-slate-300 border-slate-700/50';
+                      let prioColor = 'bg-[#1e2538] text-[var(--router-text-soft)] border-[var(--router-border)]/50';
                       if (item.prioridade_operacional === 'CRÍTICA') prioColor = 'bg-[#93000a]/15 text-red-350 border-red-500/20';
                       else if (item.prioridade_operacional === 'ALTA') prioColor = 'bg-amber-500/10 text-amber-300 border-amber-500/20';
                       else if (item.prioridade_operacional === 'NORMAL') prioColor = 'bg-primary/10 text-sky-300 border-primary/20';
@@ -967,14 +967,14 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                             {item.alias ? item.alias.split(',').join(' | ') : 'Nenhum sinônimo parametrizado.'}
                           </td>
                           <td className="px-4 py-3 font-semibold text-indigo-300 font-sans">{item.setor}</td>
-                          <td className="px-4 py-3 text-slate-300">{item.rota}</td>
+                          <td className="px-4 py-3 text-[var(--router-text-soft)]">{item.rota}</td>
                           <td className="px-4 py-3">
                             <div className="flex gap-1 font-sans text-[9px] font-bold">
-                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.segunda ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-slate-800 text-slate-600'}`}>S</span>
-                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.terca ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-slate-800 text-slate-600'}`}>T</span>
-                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quarta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-slate-800 text-slate-600'}`}>Q</span>
-                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quinta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-slate-800 text-slate-600'}`}>Q</span>
-                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.sexta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-slate-800 text-slate-600'}`}>S</span>
+                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.segunda ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-[var(--router-surface-2)] text-[var(--router-text-soft)]'}`}>S</span>
+                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.terca ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-[var(--router-surface-2)] text-[var(--router-text-soft)]'}`}>T</span>
+                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quarta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-[var(--router-surface-2)] text-[var(--router-text-soft)]'}`}>Q</span>
+                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.quinta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-[var(--router-surface-2)] text-[var(--router-text-soft)]'}`}>Q</span>
+                              <span className={`w-5 h-5 flex items-center justify-center rounded-md ${item.sexta ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-extrabold' : 'bg-[var(--router-surface-2)] text-[var(--router-text-soft)]'}`}>S</span>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-center font-bold">
@@ -1399,7 +1399,7 @@ export default function CidadesRotasView({ onNotifyUpdate, isMaster = true }: Ci
                 <p className="font-bold">Formato do Layout esperado para importação (CSV):</p>
                 <p className="font-mono text-[10px]">CIDADE ; ALIASES ; SETOR ; ROTA ; SLA_PRAZO ; PRIORIDADE</p>
                 <p className="font-bold mt-2 font-sans">Exemplo:</p>
-                <p className="font-mono text-[10px] select-all bg-slate-950 px-2 py-1 rounded border border-[#1e3a6c]/30 text-slate-300">
+                <p className="font-mono text-[10px] select-all bg-[var(--router-surface-3)] px-2 py-1 rounded border border-[#1e3a6c]/30 text-[var(--router-text-soft)]">
                   ALFENAS;ALFENA,ALFENAS-MG;ROTA 01;VGA-ALFENAS;2;ALTA<br />
                   LAVRAS;LAVRAS MG,LAVRAS-MG;ROTA 05;VGA-LAVRAS;2;NORMAL
                 </p>

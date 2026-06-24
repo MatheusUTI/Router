@@ -112,10 +112,10 @@ export default function VehicleCard({
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5">
           {/* Placa Badge */}
-          <span className="bg-[#1e293b] text-slate-100 font-mono text-[13px] font-black tracking-widest px-2 py-0.5 rounded border border-slate-700 shadow-xs">
+          <span className="bg-[#1e293b] text-[var(--router-text)] font-mono text-[13px] font-black tracking-widest px-2 py-0.5 rounded border border-[var(--router-border)] shadow-xs">
             {vehicle.id}
           </span>
-          <span className="text-slate-400 text-[11.5px] font-bold uppercase">
+          <span className="text-[var(--router-text-muted)] text-[11.5px] font-bold uppercase">
             {vehicle.type}
           </span>
           <span className="text-slate-650 font-sans">•</span>
@@ -134,11 +134,11 @@ export default function VehicleCard({
           LINHA 2: MOTORISTA
           ---------------------------------------------------- */}
       <div className="flex items-center justify-between text-[13px]">
-        <span className="text-slate-200 font-bold uppercase truncate max-w-[200px]" title={vehicle.driverName}>
+        <span className="text-[var(--router-text)] font-bold uppercase truncate max-w-[200px]" title={vehicle.driverName}>
           👤 {vehicle.driverName || 'NÃO DESIGNADO'}
         </span>
-        <span className="text-slate-400 font-mono text-[11.5px]">
-          Capacidade: <span className="text-slate-200 font-bold">{vehicle.capacity}</span>
+        <span className="text-[var(--router-text-muted)] font-mono text-[11.5px]">
+          Capacidade: <span className="text-[var(--router-text)] font-bold">{vehicle.capacity}</span>
         </span>
       </div>
 
@@ -147,15 +147,15 @@ export default function VehicleCard({
           ---------------------------------------------------- */}
       <div className="w-full flex flex-col gap-1 font-mono">
         {/* Occupancy state details */}
-        <div className="flex justify-between items-center text-[12.5px] text-slate-400 leading-none">
+        <div className="flex justify-between items-center text-[12.5px] text-[var(--router-text-muted)] leading-none">
           <div>
-            <span className="text-slate-200 font-extrabold">{allocatedWeight.toLocaleString('pt-BR')} kg</span>
-            <span className="text-slate-600 font-bold"> / </span>
-            <span className="text-slate-400 font-semibold">{capacityMax.toLocaleString('pt-BR')} kg</span>
-            <span className="text-slate-500"> • </span>
-            <span className="text-slate-300 font-bold">{allocatedVolume} VOL</span>
+            <span className="text-[var(--router-text)] font-extrabold">{allocatedWeight.toLocaleString('pt-BR')} kg</span>
+            <span className="text-[var(--router-text-soft)] font-bold"> / </span>
+            <span className="text-[var(--router-text-muted)] font-semibold">{capacityMax.toLocaleString('pt-BR')} kg</span>
+            <span className="text-[var(--router-text-muted)]"> • </span>
+            <span className="text-[var(--router-text-soft)] font-bold">{allocatedVolume} VOL</span>
           </div>
-          <span className={`font-black ${saturationPct > 100 ? 'text-red-400' : 'text-slate-300'}`}>
+          <span className={`font-black ${saturationPct > 100 ? 'text-red-400' : 'text-[var(--router-text-soft)]'}`}>
             {saturationPct.toFixed(0)}%
           </span>
         </div>
@@ -179,10 +179,10 @@ export default function VehicleCard({
       {/* Selected highlights context (Slices space beautifully if selected) */}
       {isSelectedActive && !isSelectionTooHeavy && (
         <div className="p-2 rounded bg-indigo-950/20 border border-indigo-900/40 text-[12.5px] grid grid-cols-2 gap-x-2 gap-y-0.5 font-mono mt-0.5">
-          <div className="text-slate-400">
+          <div className="text-[var(--router-text-muted)]">
             A alocar: <span className="font-bold text-white">{selectedWeight.toLocaleString('pt-BR')} kg</span>
           </div>
-          <div className="text-slate-400 text-right">
+          <div className="text-[var(--router-text-muted)] text-right">
             Sobra: <span className="font-bold text-teal-400">{(remainingPayload - selectedWeight).toLocaleString('pt-BR')} kg</span>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function VehicleCard({
       {/* Draft elements inside accordion drawer - Keep it super tight! */}
       {draftCtrcs.length > 0 && (
         <div className="bg-[#05080f]/90 rounded-lg border border-[#16223f] p-2 flex flex-col gap-1 max-h-24 overflow-y-auto mt-0.5 scrollbar-none font-sans text-[11px]">
-          <div className="flex items-center justify-between text-slate-505 font-bold uppercase text-[11px] px-1 border-b border-[#16223f]/60 pb-1 shrink-0 select-none">
+          <div className="flex items-center justify-between text-[var(--router-text)]5 font-bold uppercase text-[11px] px-1 border-b border-[#16223f]/60 pb-1 shrink-0 select-none">
             <span>Fila de Rascunho ({draftCtrcs.length})</span>
             <button onClick={onClearDraft} className="text-red-400 hover:text-red-300 cursor-pointer text-[10px]">
               LIMPAR
@@ -200,14 +200,14 @@ export default function VehicleCard({
           <div className="divide-y divide-[#16223f]/30">
             {draftCtrcs.map((c) => (
               <div key={c.id} className="flex justify-between items-center py-1 px-1 leading-none">
-                <span className="truncate max-w-[140px] text-slate-350 uppercase">
+                <span className="truncate max-w-[140px] text-[var(--router-text-soft)] uppercase">
                   {c.id} · {c.destinatario}
                 </span>
                 <div className="flex items-center gap-1.5 font-mono">
-                  <span className="text-slate-405 font-medium">{(c.peso_r || c.weight || 0)}kg</span>
+                  <span className="text-[var(--router-text-muted)] font-medium">{(c.peso_r || c.weight || 0)}kg</span>
                   <button
                      onClick={() => onUnassignCarga(c.id)}
-                     className="text-slate-505 hover:text-red-400 text-[13px] font-bold p-0 leading-none cursor-pointer"
+                     className="text-[var(--router-text)]5 hover:text-red-400 text-[13px] font-bold p-0 leading-none cursor-pointer"
                      title="Excluir do rascunho"
                   >
                     &times;
@@ -229,7 +229,7 @@ export default function VehicleCard({
           className={`text-[12.5px] py-1.5 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
             selectedWeight > 0 && !isSelectionTooHeavy
               ? 'bg-indigo-650 hover:bg-indigo-550 text-white shadow-xs font-black'
-              : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed font-medium'
+              : 'bg-[var(--router-surface-3)] border border-[var(--router-border)] text-[var(--router-text-soft)] cursor-not-allowed font-medium'
           }`}
         >
           Alocar
@@ -241,7 +241,7 @@ export default function VehicleCard({
           className={`text-[12.5px] py-1.5 rounded font-black uppercase tracking-wide cursor-pointer text-center select-none transition-all duration-150 ${
             draftCtrcs.length > 0
               ? 'bg-emerald-650 hover:bg-emerald-555 text-white shadow-xs font-bold'
-              : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed font-medium'
+              : 'bg-[var(--router-surface-3)] border border-[var(--router-border)] text-[var(--router-text-soft)] cursor-not-allowed font-medium'
           }`}
         >
           Emitir

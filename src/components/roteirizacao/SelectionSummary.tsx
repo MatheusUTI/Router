@@ -77,7 +77,7 @@ export default function SelectionSummary({
   }`;
 
   // Badges and text class sizes
-  const metricsOuterClass = `flex flex-wrap items-center text-slate-200 ${
+  const metricsOuterClass = `flex flex-wrap items-center text-[var(--router-text)] ${
     isCompact ? 'gap-2 text-[10.5px]' : 'gap-4.5 text-[13.5px]'
   }`;
 
@@ -87,14 +87,14 @@ export default function SelectionSummary({
       : 'px-2.5 py-1 text-[13px] min-w-[26px] rounded-lg'
   }`;
 
-  const countLabelClass = `text-slate-300 font-extrabold uppercase tracking-wide shrink-0 ${
+  const countLabelClass = `text-[var(--router-text-soft)] font-extrabold uppercase tracking-wide shrink-0 ${
     isCompact ? 'text-[9px]' : 'text-[12px]'
   }`;
 
   const sepClass = `w-px bg-[#1e2d4e] ${isCompact ? 'h-4' : 'h-6'}`;
 
   // Individual parameters fonts
-  const fontAndSizeClass = `font-mono text-slate-300 font-bold shrink-0 ${
+  const fontAndSizeClass = `font-mono text-[var(--router-text-soft)] font-bold shrink-0 ${
     isCompact ? 'text-[10px]' : 'text-[13px]'
   }`;
 
@@ -112,10 +112,10 @@ export default function SelectionSummary({
     isCompact ? 'text-[8.5px] px-1.5 py-0.5' : 'text-[12px] px-2.5 py-1.5'
   }`;
 
-  const btnClearClass = `text-slate-400 hover:text-white uppercase font-black tracking-wider transition-all duration-150 cursor-pointer select-none leading-none ${
+  const btnClearClass = `text-[var(--router-text-muted)] hover:text-white uppercase font-black tracking-wider transition-all duration-150 cursor-pointer select-none leading-none ${
     isCompact 
       ? 'text-[9.5px] px-2 py-1' 
-      : 'text-[12px] px-3.5 py-2.5 hover:bg-slate-800/40 rounded-xl'
+      : 'text-[12px] px-3.5 py-2.5 hover:bg-[var(--router-surface-2)]/40 rounded-xl'
   }`;
 
   const btnConsolidatorClass = `font-black uppercase tracking-wider transition-all duration-150 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg leading-none ${
@@ -190,7 +190,7 @@ export default function SelectionSummary({
             </span>
           )}
           {counts.naoSaiHoje > 0 && (
-            <span className={`${alertBadgeClass} bg-slate-800 text-slate-400 ${isCompact ? '' : 'border-slate-700'}`}>
+            <span className={`${alertBadgeClass} bg-[var(--router-surface-2)] text-[var(--router-text-muted)] ${isCompact ? '' : 'border-[var(--router-border)]'}`}>
               🚫 {counts.naoSaiHoje} DEFERIDOS
             </span>
           )}

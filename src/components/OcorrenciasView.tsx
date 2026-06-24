@@ -313,7 +313,7 @@ export default function OcorrenciasView({
                   setShowImporter(!showImporter);
                   setShowForm(false);
                 }}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-4 py-1.5 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[#dae2fd] text-xs font-bold rounded-lg border border-[var(--router-border)] flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">upload_file</span>
                 Importar CSV
@@ -363,7 +363,7 @@ export default function OcorrenciasView({
             </div>
             <button
               onClick={() => setShowImporter(false)}
-              className="p-1 rounded hover:bg-slate-800 text-[#dae2fd] hover:text-white"
+              className="p-1 rounded hover:bg-[var(--router-surface-2)] text-[#dae2fd] hover:text-white"
             >
               <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
@@ -401,7 +401,7 @@ export default function OcorrenciasView({
                 <button
                   type="button"
                   onClick={loadDemoCsv}
-                  className="px-3.5 py-1.5 bg-slate-800 text-[#dae2fd] text-xs font-semibold rounded-lg hover:bg-slate-700"
+                  className="px-3.5 py-1.5 bg-[var(--router-surface-2)] text-[#dae2fd] text-xs font-semibold rounded-lg hover:bg-[var(--router-surface-2)]"
                 >
                   Carregar Exemplo
                 </button>
@@ -433,7 +433,7 @@ export default function OcorrenciasView({
                 disabled={importedPreview.length === 0}
                 onClick={handleApplyCsvImport}
                 className={`w-full py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-transform ${
-                  importedPreview.length === 0 ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-primary hover:bg-[#4d8eff] text-white'
+                  importedPreview.length === 0 ? 'bg-[var(--router-surface-2)] text-[var(--router-text-muted)] cursor-not-allowed' : 'bg-primary hover:bg-[#4d8eff] text-white'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">verified_user</span>
@@ -449,7 +449,7 @@ export default function OcorrenciasView({
               </div>
               <div className="max-h-[140px] overflow-y-auto font-mono text-[10px] divide-y divide-outline-variant/20 bg-[#111624]">
                 {importedPreview.slice(0, 4).map((row, i) => (
-                  <div key={i} className="p-2.5 flex items-center justify-between hover:bg-slate-800/10 gap-4">
+                  <div key={i} className="p-2.5 flex items-center justify-between hover:bg-[var(--router-surface-2)]/10 gap-4">
                     <div className="truncate text-left">
                       <span className="text-primary font-bold mr-2">[{row.codigo}]</span>
                       <span className="text-white font-sans">{row.descricao}</span>
@@ -474,7 +474,7 @@ export default function OcorrenciasView({
               <span className="material-symbols-outlined text-primary">{isEditing ? 'edit_square' : 'add_circle'}</span>
               {isEditing ? `Editar Ocorrência [${formCodigo}]` : 'Cadastrar Nova Ocorrência Operacional'}
             </h3>
-            <button type="button" onClick={resetForm} className="p-1 rounded hover:bg-slate-800 text-[#dae2fd] hover:text-white">
+            <button type="button" onClick={resetForm} className="p-1 rounded hover:bg-[var(--router-surface-2)] text-[#dae2fd] hover:text-white">
               <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
@@ -567,7 +567,7 @@ export default function OcorrenciasView({
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg"
+              className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[#dae2fd] text-xs font-bold rounded-lg"
             >
               Cancelar
             </button>
@@ -648,7 +648,7 @@ export default function OcorrenciasView({
                 };
 
                 return (
-                  <tr key={occ.codigo} className="hover:bg-slate-850/30 border-b border-outline-variant/30 transition-colors">
+                  <tr key={occ.codigo} className="hover:bg-[var(--router-surface-2)]/30 border-b border-outline-variant/30 transition-colors">
                     <td className="px-5 py-3.5 font-bold font-mono text-primary text-[12px]">{occ.codigo}</td>
                     <td className="px-5 py-3.5 font-medium text-white max-w-[200px] truncate">{occ.descricao}</td>
                     <td className="px-5 py-3.5">

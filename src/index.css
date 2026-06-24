@@ -56,18 +56,18 @@
 }
 
 :root {
-  --app-bg: #F5F7FA;
-  --app-surface: #FFFFFF;
-  --app-surface-muted: #F8FAFC;
-  --app-card: #FFFFFF;
-  --app-border: #E2E8F0;
-  --app-text: #1E293B;
-  --app-text-muted: #64748B;
-  --app-primary: #3157D5;
-  --app-primary-soft: #E2E8FF;
-  --app-success: #15803D;
-  --app-warning: #B45309;
-  --app-danger: #B91C1C;
+  --app-bg: var(--router-bg);
+  --app-surface: var(--router-surface);
+  --app-surface-muted: var(--router-surface-2);
+  --app-card: var(--router-surface);
+  --app-border: var(--router-border);
+  --app-text: var(--router-text);
+  --app-text-muted: var(--router-text-muted);
+  --app-primary: var(--router-primary);
+  --app-primary-soft: var(--router-primary-soft);
+  --app-success: var(--router-success);
+  --app-warning: var(--router-warning);
+  --app-danger: var(--router-danger);
 
   /* Router Theme Engine Variables (Light Mode) */
   --router-bg: #F8FAFC;
@@ -75,10 +75,10 @@
   --router-surface: #FFFFFF;
   --router-surface-2: #F1F5F9;
   --router-surface-3: #E2E8F0;
-  --router-border: #D8E1EC;
-  --router-border-strong: #CBD5E1;
+  --router-border: #CBD5E1;
+  --router-border-strong: #94A3B8;
   --router-text: #0F172A;
-  --router-text-muted: #475569;
+  --router-text-muted: #334155;
   --router-text-soft: #64748B;
   --router-primary: #2563EB;
   --router-primary-soft: #DBEAFE;
@@ -92,14 +92,14 @@
   --router-info-soft: #DBEAFE;
   --router-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --router-input-bg: #FFFFFF;
-  --router-input-border: #CBD5E1;
-  --router-table-bg: #FFFFFF;
-  --router-table-header: #F1F5F9;
-  --router-table-row: #FFFFFF;
-  --router-table-row-hover: #F8FAFC;
+  --router-input-border: #94A3B8;
+  --router-table-bg: #F8FAFC;
+  --router-table-header: #E2E8F0;
+  --router-table-row: #F8FAFC;
+  --router-table-row-hover: #E2E8F0;
   --router-table-row-selected: #DBEAFE;
   --router-popover-bg: #FFFFFF;
-  --router-popover-border: #CBD5E1;
+  --router-popover-border: #94A3B8;
   
   --router-badge-available: #10B981;
   --router-badge-scheduled: #0EA5E9;
@@ -110,18 +110,18 @@
 }
 
 [data-theme="dark"], .dark {
-  --app-bg: #101522;
-  --app-surface: #171E2E;
-  --app-surface-muted: #202A3D;
-  --app-card: #1D2638;
-  --app-border: #334155;
-  --app-text: #E5E7EB;
-  --app-text-muted: #94A3B8;
-  --app-primary: #8EA7FF;
-  --app-primary-soft: #1E2A55;
-  --app-success: #22C55E;
-  --app-warning: #F59E0B;
-  --app-danger: #EF4444;
+  --app-bg: var(--router-bg);
+  --app-surface: var(--router-surface);
+  --app-surface-muted: var(--router-surface-2);
+  --app-card: var(--router-surface);
+  --app-border: var(--router-border);
+  --app-text: var(--router-text);
+  --app-text-muted: var(--router-text-muted);
+  --app-primary: var(--router-primary);
+  --app-primary-soft: var(--router-primary-soft);
+  --app-success: var(--router-success);
+  --app-warning: var(--router-warning);
+  --app-danger: var(--router-danger);
 
   /* Router Theme Engine Variables (Dark Mode) */
   --router-bg: #0F172A;
@@ -129,8 +129,8 @@
   --router-surface: #1E293B;
   --router-surface-2: #334155;
   --router-surface-3: #475569;
-  --router-border: #334155;
-  --router-border-strong: #475569;
+  --router-border: #475569;
+  --router-border-strong: #64748B;
   --router-text: #F8FAFC;
   --router-text-muted: #CBD5E1;
   --router-text-soft: #94A3B8;
@@ -146,14 +146,14 @@
   --router-info-soft: rgba(96, 165, 250, 0.14);
   --router-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --router-input-bg: #1E293B;
-  --router-input-border: #475569;
-  --router-table-bg: #1E293B;
+  --router-input-border: #64748B;
+  --router-table-bg: #0F172A;
   --router-table-header: #334155;
   --router-table-row: #1E293B;
   --router-table-row-hover: #334155;
   --router-table-row-selected: rgba(59, 130, 246, 0.22);
   --router-popover-bg: #1E293B;
-  --router-popover-border: #475569;
+  --router-popover-border: #64748B;
   
   --router-badge-available: #34D399;
   --router-badge-scheduled: #38BDF8;

@@ -15,8 +15,8 @@ export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = new
   if (!prevEnt) {
     return {
       label: 'SEM PREVISÃO',
-      bgClass: 'bg-slate-900 border-slate-800',
-      textClass: 'text-slate-500',
+      bgClass: 'bg-[var(--router-surface-3)] border-[var(--router-border)]',
+      textClass: 'text-[var(--router-text-muted)]',
       daysDiff: 99,
       isToday: false,
       isDelayed: false,
@@ -37,8 +37,8 @@ export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = new
   ) {
     return {
       label: 'SEM PREVISÃO',
-      bgClass: 'bg-slate-900 border-slate-800',
-      textClass: 'text-slate-500',
+      bgClass: 'bg-[var(--router-surface-3)] border-[var(--router-border)]',
+      textClass: 'text-[var(--router-text-muted)]',
       daysDiff: 99,
       isToday: false,
       isDelayed: false,
@@ -51,8 +51,8 @@ export function getSlaStatus(prevEnt: string | undefined, referenceDateStr = new
   if (parts.length < 2) {
     return {
       label: prevEnt,
-      bgClass: 'bg-slate-900 border-slate-800',
-      textClass: 'text-slate-300',
+      bgClass: 'bg-[var(--router-surface-3)] border-[var(--router-border)]',
+      textClass: 'text-[var(--router-text-soft)]',
       daysDiff: 99,
       isToday: false,
       isDelayed: false,

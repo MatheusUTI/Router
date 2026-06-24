@@ -122,7 +122,7 @@ export default function ExcelColumnFilter({
           {hasActiveFilter ? (
             <Filter size={9} className="stroke-[2.5] text-indigo-500 dark:text-indigo-400 fill-indigo-400/10" />
           ) : (
-            <ChevronDown size={9} className="stroke-[2] text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={9} className="stroke-[2] text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)]" />
           )}
         </button>
       )}
@@ -140,7 +140,7 @@ export default function ExcelColumnFilter({
             </span>
             <button 
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-white cursor-pointer transition-colors"
+              className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:text-[var(--router-text-muted)] dark:hover:text-white cursor-pointer transition-colors"
             >
               <X size={12} />
             </button>
@@ -153,8 +153,8 @@ export default function ExcelColumnFilter({
                 onSortAsc();
                 setIsOpen(false);
               }}
-              className={`py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold flex items-center justify-center gap-1 text-[10px] uppercase cursor-pointer ${
-                isSortedActiveAsc ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-slate-600 dark:text-slate-300'
+              className={`py-1.5 px-2 hover:bg-[var(--router-surface)] dark:hover:bg-[var(--router-surface-2)] transition-all font-bold flex items-center justify-center gap-1 text-[10px] uppercase cursor-pointer ${
+                isSortedActiveAsc ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-[var(--router-text-soft)] dark:text-[var(--router-text-soft)]'
               }`}
             >
               <ArrowUp size={11} className="stroke-[2.5]" />
@@ -165,8 +165,8 @@ export default function ExcelColumnFilter({
                 onSortDesc();
                 setIsOpen(false);
               }}
-              className={`py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold flex items-center justify-center gap-1 text-[10px] uppercase cursor-pointer ${
-                isSortedActiveDesc ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-slate-600 dark:text-slate-300'
+              className={`py-1.5 px-2 hover:bg-[var(--router-surface)] dark:hover:bg-[var(--router-surface-2)] transition-all font-bold flex items-center justify-center gap-1 text-[10px] uppercase cursor-pointer ${
+                isSortedActiveDesc ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'text-[var(--router-text-soft)] dark:text-[var(--router-text-soft)]'
               }`}
             >
               <ArrowDown size={11} className="stroke-[2.5]" />
@@ -177,7 +177,7 @@ export default function ExcelColumnFilter({
           {/* Search values input */}
           {uniqueValues.length > 5 && (
             <div className="mesa-popover-search">
-              <Search size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
+              <Search size={12} className="text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)] shrink-0" />
               <input
                 type="text"
                 placeholder={`Pesquisar ${label.toLowerCase()}...`}
@@ -188,7 +188,7 @@ export default function ExcelColumnFilter({
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-white"
+                  className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:text-[var(--router-text-muted)] dark:hover:text-white"
                 >
                   <X size={10} />
                 </button>
@@ -200,14 +200,14 @@ export default function ExcelColumnFilter({
           <div className="px-3 py-1.5 flex items-center gap-2 border-b border-[var(--router-border)] bg-[var(--router-surface-2)] select-none text-[10.5px]">
             <button
               onClick={handleSelectAll}
-              className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-bold uppercase transition-colors cursor-pointer"
+              className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:text-[var(--router-text-muted)] dark:hover:text-white font-bold uppercase transition-colors cursor-pointer"
             >
               Marcar Todos
             </button>
-            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text-soft)]">•</span>
             <button
               onClick={handleClearSelection}
-              className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-bold uppercase transition-colors cursor-pointer"
+              className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:text-[var(--router-text-muted)] dark:hover:text-white font-bold uppercase transition-colors cursor-pointer"
             >
               Remover Todos
             </button>
@@ -216,7 +216,7 @@ export default function ExcelColumnFilter({
           {/* Checklist of unique values */}
           <div className="flex-1 overflow-y-auto max-h-48 divide-y divide-slate-100 dark:divide-slate-800 px-1 py-1 scrollbar-thin select-none">
             {filteredValues.length === 0 ? (
-              <div className="py-4 text-center text-slate-500 dark:text-slate-500 font-bold uppercase text-[9.5px]">
+              <div className="py-4 text-center text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)] font-bold uppercase text-[9.5px]">
                 Nenhum valor encontrado
               </div>
             ) : (

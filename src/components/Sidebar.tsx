@@ -89,7 +89,7 @@ export default function Sidebar({
     <>
       {/* Dark overlay backdrop - hidden on desktop */}
       <div
-        className={`fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[45] transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 bg-[var(--router-surface-3)]/80 backdrop-blur-sm z-[45] transition-all duration-300 md:hidden ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}

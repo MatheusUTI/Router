@@ -201,7 +201,7 @@ export default function CurvaAView({
                   setShowImporter(!showImporter);
                   setShowForm(false);
                 }}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-[#dae2fd] text-xs font-bold rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-4 py-1.5 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[#dae2fd] text-xs font-bold rounded-lg border border-[var(--router-border)] flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">upload_file</span>
                 Importar TXT/CSV
@@ -267,7 +267,7 @@ export default function CurvaAView({
             <div className="flex gap-2">
               <button
                 onClick={() => setShowImporter(false)}
-                className="px-4.5 py-1.5 bg-slate-800 text-white rounded-lg text-xs"
+                className="px-4.5 py-1.5 bg-[var(--router-surface-2)] text-white rounded-lg text-xs"
               >
                 Cancelar
               </button>
@@ -339,7 +339,7 @@ export default function CurvaAView({
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs"
+              className="px-4 py-2 bg-[var(--router-surface-2)] text-white rounded-lg text-xs"
             >
               Cancelar
             </button>
@@ -402,7 +402,7 @@ export default function CurvaAView({
                 };
 
                 return (
-                  <tr key={`${client.cnpj_remetente}_${idx}`} className="hover:bg-slate-850/30 border-b border-outline-variant/30 transition-colors">
+                  <tr key={`${client.cnpj_remetente}_${idx}`} className="hover:bg-[var(--router-surface-2)]/30 border-b border-outline-variant/30 transition-colors">
                     <td className="px-5 py-3.5 font-mono text-[#dae2fd] font-semibold text-[11.5px]">{client.cnpj_remetente}</td>
                     <td className="px-5 py-3.5 text-white font-sans font-medium uppercase">{client.cliente_remetente}</td>
                     <td className="px-5 py-3.5 text-center">

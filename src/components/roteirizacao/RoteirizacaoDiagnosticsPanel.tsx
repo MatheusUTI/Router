@@ -122,13 +122,13 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           
           {/* Smart Alerts */}
           {diagnostics.warnings.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 rounded-lg flex gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="bg-[var(--router-warning)]/10 border border-[var(--router-warning)]/30 p-4 rounded-lg flex gap-3">
+              <AlertTriangle className="w-5 h-5 text-[var(--router-warning)] shrink-0 mt-0.5" />
               <div>
-                <p className="font-sans text-xs font-bold uppercase text-amber-700 dark:text-amber-400 tracking-wider mb-1">
+                <p className="font-sans text-xs font-bold uppercase text-[var(--router-warning)] tracking-wider mb-1 opacity-90">
                   Alertas Inteligentes de Roteirização
                 </p>
-                <ul className="text-[11px] font-sans text-amber-800 dark:text-amber-300 leading-relaxed list-disc list-inside space-y-1">
+                <ul className="text-[11px] font-sans text-[var(--router-warning)] opacity-80 leading-relaxed list-disc list-inside space-y-1">
                   {diagnostics.warnings.map((warn, i) => (
                     <li key={i}>{warn}</li>
                   ))}
@@ -139,43 +139,43 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
           {/* Audit & Clean-up Contaminated CTRCs Panel */}
           {(diagnostics.contaminationCount ?? 0) > 0 && (
-            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-pulse" />
-                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+            <div className="bg-[var(--router-danger)]/10 border border-[var(--router-danger)]/30 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-[var(--router-danger)]">
+                <AlertTriangle className="w-5 h-5 text-[var(--router-danger)] shrink-0 animate-pulse" />
+                <h4 className="font-mono text-xs font-bold uppercase tracking-wider opacity-90">
                   Auditoria de Integridade Semântica (Destinatário = Cidade)
                 </h4>
               </div>
 
-              <div className="text-[11px] font-sans text-rose-200/90 leading-relaxed space-y-2">
+              <div className="text-[11px] font-sans text-[var(--router-danger)] opacity-80 leading-relaxed space-y-2">
                 <p>
-                  Foi identificada uma anomalia grave em <strong className="text-white font-mono">{(diagnostics.contaminationCount ?? 0)}</strong> de <strong className="text-white font-mono">{diagnostics.totalCtrcs ?? 0}</strong> CTRCs ativos.
+                  Foi identificada uma anomalia grave em <strong className="font-mono font-bold">{(diagnostics.contaminationCount ?? 0)}</strong> de <strong className="font-mono font-bold">{diagnostics.totalCtrcs ?? 0}</strong> CTRCs ativos.
                 </p>
-                <div className="bg-[#120a0d] border border-rose-500/20 p-2.5 rounded text-[10px] space-y-1">
-                  <div>🏁 <strong className="text-rose-300 font-semibold">Provável Causa:</strong> Mapeamento inadequado de colunas durante a importação do CSV/BI operacional.</div>
-                  <div>🚨 <strong className="text-rose-300 font-semibold">Impacto Logístico:</strong> Faturas duplicando o nome da cidade no destinatário, distorcendo a visualização de filiais e rotas de entrega.</div>
+                <div className="bg-[var(--router-danger)]/5 border border-[var(--router-danger)]/20 p-2.5 rounded text-[10px] space-y-1">
+                  <div>🏁 <strong className="opacity-100 font-bold">Provável Causa:</strong> Mapeamento inadequado de colunas durante a importação do CSV/BI operacional.</div>
+                  <div>🚨 <strong className="opacity-100 font-bold">Impacto Logístico:</strong> Faturas duplicando o nome da cidade no destinatário, distorcendo a visualização de filiais e rotas de entrega.</div>
                 </div>
 
                 {/* List Examples (Up to 20 Examples) */}
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest font-mono block">
+                  <span className="text-[10px] font-bold uppercase tracking-widest font-mono block">
                     Exemplos Detectados (Exibindo até 20)
                   </span>
-                  <div className="max-h-36 overflow-y-auto border border-rose-500/10 rounded bg-[#0a0507] pr-1 scrollbar-thin">
-                    <table className="w-full text-left text-[10px] font-mono text-rose-300/80">
-                      <thead className="bg-[#14080d]/80 text-[#dae2fd]/70 sticky top-0 font-bold">
+                  <div className="max-h-36 overflow-y-auto border border-[var(--router-danger)]/10 rounded bg-[var(--router-danger)]/5 pr-1 scrollbar-thin">
+                    <table className="w-full text-left text-[10px] font-mono">
+                      <thead className="bg-[var(--router-danger)]/10 sticky top-0 font-bold">
                         <tr>
                           <th className="px-2 py-1">Código CTRC</th>
                           <th className="px-2 py-1">Destinatário</th>
                           <th className="px-2 py-1">Cidade</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-rose-500/10">
+                      <tbody className="divide-y divide-[var(--router-danger)]/10">
                         {diagnostics.contaminationExamples?.map((ex, idx) => (
-                          <tr key={idx} className="hover:bg-rose-500/5">
-                            <td className="px-2 py-1 font-bold text-rose-400">{ex.id}</td>
-                            <td className="px-2 py-1 truncate max-w-[120px]">{ex.destinatario}</td>
-                            <td className="px-2 py-1 truncate max-w-[100px] text-white">{ex.cidade}</td>
+                          <tr key={idx} className="hover:bg-[var(--router-danger)]/10">
+                            <td className="px-2 py-1 font-bold">{ex.id}</td>
+                            <td className="px-2 py-1 truncate max-w-[120px] opacity-90">{ex.destinatario}</td>
+                            <td className="px-2 py-1 truncate max-w-[100px] opacity-100 font-semibold">{ex.cidade}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -186,9 +186,9 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
               {/* Master Purge Tool */}
               {adminUser?.is_master ? (
-                <div className="pt-2 border-t border-rose-500/20 space-y-2">
-                  <div className="text-[10px] text-[#dac1c5] font-mono leading-relaxed bg-rose-500/5 p-2 rounded">
-                    🛡️ <strong className="text-rose-400 font-semibold">Modo Master Ativo:</strong> Como administrador, você pode excluir os registros corrompidos identificados no IndexedDB local com total sincronização.
+                <div className="pt-2 border-t border-[var(--router-danger)]/20 space-y-2">
+                  <div className="text-[10px] text-[var(--router-danger)] opacity-90 font-mono leading-relaxed bg-[var(--router-danger)]/10 p-2 rounded">
+                    🛡️ <strong className="opacity-100 font-bold">Modo Master Ativo:</strong> Como administrador, você pode excluir os registros corrompidos identificados no IndexedDB local com total sincronização.
                   </div>
                   <button
                     onClick={async () => {
@@ -213,14 +213,14 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
                         }
                       }
                     }}
-                    className="w-full bg-[#1b2540] hover:bg-[#344673] hover:text-white text-rose-300 border border-outline-variant hover:border-slate-500 rounded py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                    className="w-full bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)] text-[var(--router-danger)] hover:text-white border border-[var(--router-danger)]/30 rounded py-1.5 font-mono font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
                   >
                     <X className="w-3.5 h-3.5" />
                     Excluir importação contaminada ({diagnostics.contaminationCount} CTRCs)
                   </button>
                 </div>
               ) : (
-                <div className="text-[10px] text-amber-400 leading-relaxed bg-[#1d120a] border border-amber-600/25 p-2.5 rounded font-mono">
+                <div className="text-[10px] text-[var(--router-warning)] leading-relaxed bg-[var(--router-warning)]/10 border border-[var(--router-warning)]/30 p-2.5 rounded font-mono">
                   🔒 <strong className="font-bold">Ação Restrita:</strong> Solicite a um usuário Master para realizar o expurgo das faturas contaminadas, ou limpe a base no menu de Configurações e importe o CSV novamente com o De-Para de correspondência correto.
                 </div>
               )}
@@ -229,7 +229,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
           {/* Funnel Pipeline Visualization */}
           <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-4">
-            <p className="font-mono text-[11px] font-bold uppercase text-indigo-300 tracking-wide mb-3">
+            <p className="font-mono text-[11px] font-bold uppercase text-[var(--router-primary)] tracking-wide mb-3">
               Funil do Processo de Filtro (Pipeline)
             </p>
             <div className="space-y-2">
@@ -240,8 +240,8 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
                 return (
                   <div key={i} className="flex items-center text-xs">
-                    <span className="w-6 font-mono text-[10px] text-slate-500">#{i+1}</span>
-                    <span className="w-48 font-mono text-[11px] text-slate-300 truncate">{st.name}</span>
+                    <span className="w-6 font-mono text-[10px] text-[var(--router-text-muted)]">#{i+1}</span>
+                    <span className="w-48 font-mono text-[11px] text-[var(--router-text-soft)] truncate">{st.name}</span>
                     <div className="flex-1 mx-3 bg-[var(--router-bg)] h-2.5 rounded-full overflow-hidden border border-[var(--router-border)]">
                       <div
                         className={`h-full transition-all duration-500 ${isZero ? 'bg-rose-600' : 'bg-gradient-to-r from-indigo-600 to-indigo-500'}`}
@@ -251,7 +251,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
                     <span className={`w-12 text-right font-mono text-[11px] font-bold ${isZero ? 'text-rose-400' : 'text-indigo-300'}`}>
                       {st.count}
                     </span>
-                    <span className="w-10 text-right font-mono text-[10px] text-slate-500">
+                    <span className="w-10 text-right font-mono text-[10px] text-[var(--router-text-muted)]">
                       {pct}%
                     </span>
                   </div>
@@ -261,11 +261,11 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           </div>
 
           {/* Botleneck Box */}
-          <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-950/60 p-3.5 rounded-lg">
-            <p className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">
+          <div className="bg-[var(--router-primary)]/10 border border-[var(--router-primary)]/30 p-3.5 rounded-lg">
+            <p className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] tracking-wider">
               Diagnóstico do Gargalo (Maior Retenção de CTRCs)
             </p>
-            <p className="font-sans text-xs text-slate-800 dark:text-slate-200 mt-1 font-semibold">
+            <p className="font-sans text-xs text-[var(--router-text)] mt-1 font-semibold">
               ⚠️ {worstStepName}
             </p>
           </div>
@@ -274,17 +274,17 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Unit */}
             <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
+              <span className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] block mb-2 opacity-90">
                 Filtro de Filiais / Unidades
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
                 {Object.keys(diagnostics.byUnit).length === 0 ? (
-                  <p className="text-slate-500 italic">Nenhum dado</p>
+                  <p className="text-[var(--router-text-muted)] italic">Nenhum dado</p>
                 ) : (
                   Object.entries(diagnostics.byUnit).map(([unid, count]) => (
-                    <div key={unid} className="flex justify-between border-b border-[#14203a]/50 py-1">
-                      <span className="text-slate-400">{unid}</span>
-                      <span className="text-slate-200 font-bold">{count}</span>
+                    <div key={unid} className="flex justify-between border-b border-[var(--router-border)] py-1">
+                      <span className="text-[var(--router-text-soft)]">{unid}</span>
+                      <span className="text-[var(--router-text)] font-bold">{count}</span>
                     </div>
                   ))
                 )}
@@ -293,17 +293,17 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
             {/* Occurrence Sector */}
             <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
+              <span className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] block mb-2 opacity-90">
                 Setores de Ocorrência
               </span>
               <div className="space-y-1.5 font-mono text-[11px] max-h-48 overflow-y-auto pr-1">
                 {Object.keys(diagnostics.byOccurrenceSector).length === 0 ? (
-                  <p className="text-slate-500 italic">Nenhum dado</p>
+                  <p className="text-[var(--router-text-muted)] italic">Nenhum dado</p>
                 ) : (
                   Object.entries(diagnostics.byOccurrenceSector).map(([sec, count]) => (
-                    <div key={sec} className="flex justify-between border-b border-[#14203a]/50 py-1">
-                      <span className="text-slate-400 max-w-[200px] truncate">{sec}</span>
-                      <span className="text-slate-200 font-bold">{count}</span>
+                    <div key={sec} className="flex justify-between border-b border-[var(--router-border)] py-1">
+                      <span className="text-[var(--router-text-soft)] max-w-[200px] truncate">{sec}</span>
+                      <span className="text-[var(--router-text)] font-bold">{count}</span>
                     </div>
                   ))
                 )}
@@ -312,17 +312,17 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
             {/* Status counts */}
             <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
+              <span className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] block mb-2 opacity-90">
                 Status Operacional da Carga (Fase)
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
                 {Object.keys(diagnostics.byStatus).length === 0 ? (
-                  <p className="text-slate-500 italic">Nenhum dado</p>
+                  <p className="text-[var(--router-text-muted)] italic">Nenhum dado</p>
                 ) : (
                   Object.entries(diagnostics.byStatus).map(([st, count]) => (
-                    <div key={st} className="flex justify-between border-b border-[#14203a]/50 py-1">
-                      <span className="text-slate-400">{st}</span>
-                      <span className="text-slate-200 font-bold">{count}</span>
+                    <div key={st} className="flex justify-between border-b border-[var(--router-border)] py-1">
+                      <span className="text-[var(--router-text-soft)]">{st}</span>
+                      <span className="text-[var(--router-text)] font-bold">{count}</span>
                     </div>
                   ))
                 )}
@@ -331,17 +331,17 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
             {/* Eligibility */}
             <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
-              <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
+              <span className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] block mb-2 opacity-90">
                 Elegibilidade de Roteirização
               </span>
               <div className="space-y-1.5 font-mono text-[11px]">
                 {Object.keys(diagnostics.byRoutingEligibility).length === 0 ? (
-                  <p className="text-slate-500 italic">Nenhum dado</p>
+                  <p className="text-[var(--router-text-muted)] italic">Nenhum dado</p>
                 ) : (
                   Object.entries(diagnostics.byRoutingEligibility).map(([elig, count]) => (
-                    <div key={elig} className="flex justify-between border-b border-[#14203a]/50 py-1">
-                      <span className="text-slate-400">{elig}</span>
-                      <span className="text-slate-200 font-bold">{count}</span>
+                    <div key={elig} className="flex justify-between border-b border-[var(--router-border)] py-1">
+                      <span className="text-[var(--router-text-soft)]">{elig}</span>
+                      <span className="text-[var(--router-text)] font-bold">{count}</span>
                     </div>
                   ))
                 )}
@@ -351,21 +351,21 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
 
           {/* Depot Compatibility counts */}
           <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-lg p-3.5">
-            <span className="font-mono text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-300 block mb-2">
+            <span className="font-mono text-[10px] font-bold uppercase text-[var(--router-primary)] block mb-2 opacity-90">
               Compatibilidade de Box / Depósito
             </span>
             <div className="grid grid-cols-2 gap-4 font-mono text-xs">
               <div className="bg-[var(--router-bg)] border border-[var(--router-border)] p-2.5 rounded text-center">
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold block text-lg font-mono">
+                <span className="text-[var(--router-success)] font-bold block text-lg font-mono">
                   {diagnostics.byLogisticCompatibility.compatible ?? 0}
                 </span>
-                <span className="text-[10px] text-slate-500 uppercase font-mono">Compatíveis</span>
+                <span className="text-[var(--router-text-muted)] text-[10px] uppercase font-mono">Compatíveis</span>
               </div>
               <div className="bg-[var(--router-bg)] border border-[var(--router-border)] p-2.5 rounded text-center">
-                <span className="text-rose-600 dark:text-rose-400 font-bold block text-lg font-mono">
+                <span className="text-[var(--router-danger)] font-bold block text-lg font-mono">
                   {diagnostics.byLogisticCompatibility.incompatible ?? 0}
                 </span>
-                <span className="text-[10px] text-slate-500 uppercase font-mono">Em trânsito p/ outro Box</span>
+                <span className="text-[var(--router-text-muted)] text-[10px] uppercase font-mono">Em trânsito p/ outro Box</span>
               </div>
             </div>
           </div>
@@ -381,7 +381,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <Check className="w-3.5 h-3.5 text-[var(--router-success)]" />
                   Copiado!
                 </>
               ) : (
@@ -393,7 +393,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
             </button>
             <button
               onClick={onClearFilters}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider px-4 py-2 rounded flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+              className="bg-[var(--router-primary)] hover:opacity-90 text-white font-mono font-bold text-xs uppercase tracking-wider px-4 py-2 rounded flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Limpar Filtros da Mesa
@@ -401,7 +401,7 @@ ${diagnostics.warnings.length > 0 ? diagnostics.warnings.map(w => `- ${w}`).join
           </div>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-mono font-bold text-slate-400 hover:text-slate-200 hover:bg-[#14203a] rounded transition-all"
+            className="w-full sm:w-auto px-4 py-2 text-xs font-mono font-bold text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:bg-[var(--router-surface-2)] rounded transition-all cursor-pointer"
           >
             Fechar Diagnóstico
           </button>

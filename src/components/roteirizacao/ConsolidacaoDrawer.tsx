@@ -127,13 +127,13 @@ export default function ConsolidacaoDrawer({
           <div className="flex items-center gap-2">
             <span className="text-base">🚛</span>
             <div>
-              <h2 className="text-[13px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
+              <h2 className="text-[13px] font-black text-[var(--router-text)] dark:text-[var(--router-text)] uppercase tracking-widest leading-none">CONSOLIDAÇÃO E FROTA</h2>
               <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase font-mono mt-0.5">ALOCAÇÃO DE VEÍCULO EM PÁTIO</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-black text-lg p-1.5 hover:bg-slate-200 dark:hover:bg-[#1a2440] rounded transition-all cursor-pointer leading-none"
+            className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:text-[var(--router-text-muted)] dark:hover:text-white font-black text-lg p-1.5 hover:bg-[var(--router-surface-2)] dark:hover:bg-[#1a2440] rounded transition-all cursor-pointer leading-none"
             title="Fechar Painel"
           >
             &times;
@@ -162,7 +162,7 @@ export default function ConsolidacaoDrawer({
                   CIDADES: <span className="text-sky-600 dark:text-sky-400 font-bold">{uniqueCities}</span>
                 </div>
                 <div>
-                  ATRASADOS: <span className={`font-bold ${delayedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-400'}`}>{delayedCount}</span>
+                  ATRASADOS: <span className={`font-bold ${delayedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)]'}`}>{delayedCount}</span>
                 </div>
               </div>
 
@@ -177,8 +177,8 @@ export default function ConsolidacaoDrawer({
             </div>
           ) : (
             <div className="flex flex-col gap-1 text-center py-1">
-              <span className="text-slate-500 text-[11.5px] uppercase font-bold tracking-wider">Nenhum CTRC selecionado à parte</span>
-              <p className="text-[11px] text-slate-400 font-medium leading-normal">Você está gerenciando rascunhos de carga e Romaneios existentes para cada veículo disponível no pátio.</p>
+              <span className="text-[var(--router-text-muted)] text-[11.5px] uppercase font-bold tracking-wider">Nenhum CTRC selecionado à parte</span>
+              <p className="text-[11px] text-[var(--router-text-muted)] font-medium leading-normal">Você está gerenciando rascunhos de carga e Romaneios existentes para cada veículo disponível no pátio.</p>
             </div>
           )}
         </div>
@@ -186,10 +186,10 @@ export default function ConsolidacaoDrawer({
         {/* Vehicles Scrolling Panel Area */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-[#080c14] scrollbar-thumb-indigo-500 dark:scrollbar-thumb-indigo-550 scroll-smooth">
           {finalVehiclesList.length === 0 ? (
-            <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-1.5 p-4 text-center">
+            <div className="h-64 flex flex-col items-center justify-center text-[var(--router-text-muted)] gap-1.5 p-4 text-center">
               <span className="text-3xl">📭</span>
               <p className="text-xs font-bold uppercase font-mono">Nenhum veículo disponível no pátio logístico</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-600 uppercase">Verifique o cadastro de frotas e certifique-se de que há veículos ativos com status Pátio.</p>
+              <p className="text-[10px] text-[var(--router-text-muted)] dark:text-[var(--router-text-soft)] uppercase">Verifique o cadastro de frotas e certifique-se de que há veículos ativos com status Pátio.</p>
             </div>
           ) : (
             finalVehiclesList.map((vehicle) => {

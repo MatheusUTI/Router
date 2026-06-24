@@ -534,7 +534,7 @@ export default function BaseDadosView({
         return (
           <div className="space-y-6">
             {/* Top Toolbar */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between bg-[#0e1726]/80 p-4 border border-[#1e2e4f]/70 rounded-xl">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between bg-[var(--router-surface-2)]/80 p-4 border border-[var(--router-border)] rounded-xl">
               <div className="flex flex-wrap items-center gap-3">
                 {/* Search field */}
                 <div className="relative">
@@ -543,12 +543,12 @@ export default function BaseDadosView({
                     placeholder="Buscar unidade..."
                     value={unitSearch}
                     onChange={(e) => setUnitSearch(e.target.value)}
-                    className="w-64 bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-all font-sans"
+                    className="w-64 bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[var(--router-primary)] focus:ring-1 focus:ring-[var(--router-primary)]/30 transition-all font-sans"
                   />
                   {unitSearch && (
                     <button 
                       onClick={() => setUnitSearch('')} 
-                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-white text-xs"
+                      className="absolute right-2.5 top-2.5 text-[var(--router-text-muted)] hover:text-[var(--router-text)] text-xs"
                     >
                       ✕
                     </button>
@@ -559,7 +559,7 @@ export default function BaseDadosView({
                 <select
                   value={unitFilterType}
                   onChange={(e) => setUnitFilterType(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
                 >
                   <option value="TODOS">Todos os Tipos</option>
                   {uniqueTypes.map(t => (
@@ -570,7 +570,7 @@ export default function BaseDadosView({
                 <select
                   value={unitFilterUf}
                   onChange={(e) => setUnitFilterUf(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
                 >
                   <option value="TODAS">Prevenção UF: Todas</option>
                   {uniqueUfs.map(uf => (
@@ -581,7 +581,7 @@ export default function BaseDadosView({
                 <select
                   value={unitFilterAtivo}
                   onChange={(e) => setUnitFilterAtivo(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
                 >
                   <option value="TODOS">Todos os Status</option>
                   <option value="ATIVOS">Ativas</option>
@@ -593,25 +593,25 @@ export default function BaseDadosView({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExportJson}
-                  className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+                  className="bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text-soft)] px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
                 >
                   📥 Exportar JSON
                 </button>
                 <button
                   onClick={handleExportCsv}
-                  className="bg-indigo-950/70 hover:bg-indigo-900/80 border border-[#1e3a6c]/60 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
+                  className="bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text-soft)] px-3 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1.5"
                 >
                   📥 Exportar CSV
                 </button>
                 {isMaster ? (
                   <button
                     onClick={() => handleOpenUnitModal(null)}
-                    className="bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1"
+                    className="router-button-primary"
                   >
                     ➕ Nova Unidade
                   </button>
                 ) : (
-                  <div className="px-3 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-400 rounded-lg select-none">
+                  <div className="px-3 py-1.5 bg-[var(--router-surface-2)] border border-[var(--router-border)] text-xs text-[var(--router-text-muted)] rounded-lg select-none">
                     🔒 Modo Consulta
                   </div>
                 )}
@@ -627,8 +627,8 @@ export default function BaseDadosView({
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-250 select-none ${
                   isDragging 
-                    ? 'border-indigo-400 bg-indigo-500/10 text-white' 
-                    : 'border-[#1e3a6c]/50 bg-[#0e1726]/30 hover:bg-[#0e1726]/60 text-gray-400 hover:text-white'
+                    ? 'border-indigo-400 bg-[var(--router-primary)]/10 text-[var(--router-text)]' 
+                    : 'border-[var(--router-border)] bg-[var(--router-surface)] hover:bg-[var(--router-surface-2)]/60 text-[var(--router-text-muted)] hover:text-[var(--router-text)]'
                 }`}
               >
                 <input
@@ -641,17 +641,17 @@ export default function BaseDadosView({
                 />
                 <span className="text-2xl mb-1.5">🗂️</span>
                 <p className="text-sm font-bold">Importação em Massa (Mestre)</p>
-                <p className="text-xs text-gray-500 mt-1 max-w-sm">
-                  Arraste e solte o arquivo <strong className="text-indigo-400">bd_unidades_operacionais_bi.json</strong> ou <strong className="text-indigo-400">CSV</strong> aqui ou clique para selecionar.
+                <p className="text-xs text-[var(--router-text-muted)] mt-1 max-w-sm">
+                  Arraste e solte o arquivo <strong className="text-[var(--router-primary)]">bd_unidades_operacionais_bi.json</strong> ou <strong className="text-[var(--router-primary)]">CSV</strong> aqui ou clique para selecionar.
                 </p>
               </div>
             )}
 
             {/* Main Grid/Table list */}
-            <div className="border border-[#14203a] bg-[#0b1322]/90 rounded-xl overflow-hidden shadow-xl">
+            <div className="border border-[var(--router-border)] bg-[var(--router-bg)] rounded-xl overflow-hidden shadow-xl">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#0e1726]/90 border-b border-[#14203a] text-indigo-300 font-bold text-xs select-none">
+                  <tr className="bg-[var(--router-surface-2)]/90 border-b border-[var(--router-border)] text-indigo-300 font-bold text-xs select-none">
                     <th className="px-4 py-3 font-sans">Unidade</th>
                     <th className="px-4 py-3 font-sans">UF</th>
                     <th className="px-4 py-3 font-sans">Tipo</th>
@@ -667,7 +667,7 @@ export default function BaseDadosView({
                 <tbody className="divide-y divide-[#14203a] text-xs">
                   {filteredUnidades.length === 0 ? (
                     <tr>
-                      <td colSpan={isMaster ? 10 : 9} className="text-center py-12 text-gray-500 font-sans">
+                      <td colSpan={isMaster ? 10 : 9} className="text-center py-12 text-[var(--router-text-muted)] font-sans">
                         Nenhuma unidade operacional correspondente aos filtros.
                       </td>
                     </tr>
@@ -675,32 +675,32 @@ export default function BaseDadosView({
                     filteredUnidades.map((item) => (
                       <tr 
                         key={item.id} 
-                        className={`hover:bg-indigo-950/20 transition-colors ${!item.ativo ? 'opacity-55 bg-black/10' : ''}`}
+                        className={`hover:bg-[var(--router-surface-3)] transition-colors ${!item.ativo ? 'opacity-55 bg-[var(--router-surface-2)]' : ''}`}
                       >
-                        <td className="px-4 py-3.5 font-bold font-mono text-white text-[13px]">
+                        <td className="px-4 py-3.5 font-bold font-mono text-[var(--router-text)] text-[13px]">
                           {item.unidade}
                         </td>
                         <td className="px-4 py-3.5 font-sans">
-                          <span className="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                          <span className="router-badge router-badge-info px-2 py-0.5 rounded text-[10px] font-bold">
                             {item.uf}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 font-sans">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                             item.tipo === 'Unidade' 
-                              ? 'bg-emerald-950 text-emerald-300' 
-                              : 'bg-amber-950 text-amber-300'
+                              ? 'router-badge router-badge-success' 
+                              : 'router-badge router-badge-warning'
                           }`}>
                             {item.tipo}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 font-mono text-gray-300">
+                        <td className="px-4 py-3.5 font-mono text-[var(--router-text-soft)]">
                           {item.responsavelOperacional || '—'}
                         </td>
-                        <td className="px-4 py-3.5 font-mono text-gray-300">
+                        <td className="px-4 py-3.5 font-mono text-[var(--router-text-soft)]">
                           {item.responsavelComercial || '—'}
                         </td>
-                        <td className="px-4 py-3.5 font-sans text-gray-300">
+                        <td className="px-4 py-3.5 font-sans text-[var(--router-text-soft)]">
                           {item.responsavel || '—'}
                         </td>
                         <td className="px-4 py-3.5 text-center font-sans">
@@ -715,8 +715,8 @@ export default function BaseDadosView({
                             onClick={() => handleToggleUnitActivation(item)}
                             className={`px-2.5 py-0.5 rounded text-[10px] font-bold select-none ${
                               item.ativo !== false
-                                ? 'bg-emerald-900/50 text-emerald-350 cursor-pointer hover:bg-emerald-800'
-                                : 'bg-red-950 text-red-300 cursor-pointer hover:bg-red-900'
+                                ? 'router-badge router-badge-available cursor-pointer'
+                                : 'router-badge router-badge-critical cursor-pointer'
                             }`}
                           >
                             {item.ativo !== false ? '• ATIVO' : '• INATIVO'}
@@ -727,14 +727,14 @@ export default function BaseDadosView({
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleOpenUnitModal(item)}
-                                className="bg-indigo-900/40 hover:bg-indigo-850 border border-indigo-700/30 text-indigo-200 p-1.5 rounded cursor-pointer transition-colors"
+                                className="bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text)] border border-[var(--router-border)] p-1.5 rounded cursor-pointer transition-colors"
                                 title="Editar"
                               >
                                 ✏️
                               </button>
                               <button
                                 onClick={() => handleDeleteUnit(item.id!)}
-                                className="bg-red-950/40 hover:bg-red-900/50 border border-red-800/20 text-red-300 p-1.5 rounded cursor-pointer transition-colors"
+                                className="bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 border border-[var(--router-danger)]/30 text-[var(--router-danger)] p-1.5 rounded cursor-pointer transition-colors"
                                 title="Deletar"
                               >
                                 🗑️
@@ -747,9 +747,9 @@ export default function BaseDadosView({
                   )}
                 </tbody>
               </table>
-              <div className="px-4 py-3 bg-[#0e1726]/40 border-t border-[#14203a] flex items-center justify-between text-[11px] text-gray-400 select-none">
+              <div className="px-4 py-3 bg-[var(--router-surface)] border-t border-[var(--router-border)] flex items-center justify-between text-[11px] text-[var(--router-text-muted)] select-none">
                 <span>Mostrando {filteredUnidades.length} de {unidades.length} registros</span>
-                <span className="font-mono text-gray-500">Mesa de Unidades BI Master Database</span>
+                <span className="font-mono text-[var(--router-text-muted)]">Mesa de Unidades BI Master Database</span>
               </div>
             </div>
           </div>
@@ -799,35 +799,35 @@ export default function BaseDadosView({
       case 'feriados':
         return (
           <div className="space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between bg-[#0e1726]/80 p-4 border border-[#1e2e4f]/70 rounded-xl">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between bg-[var(--router-surface-2)]/80 p-4 border border-[var(--router-border)] rounded-xl">
               <div className="flex items-center gap-3">
                 <input
                   type="text"
                   placeholder="Buscar feriados (Cidade, Descrição...)"
                   value={holidaySearch}
                   onChange={(e) => setHolidaySearch(e.target.value)}
-                  className="w-80 bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-indigo-400 font-sans"
+                  className="w-80 bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[var(--router-primary)] font-sans"
                 />
               </div>
 
               {isMaster ? (
                 <button
                   onClick={() => handleOpenHolidayModal(null)}
-                  className="bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans cursor-pointer flex items-center gap-1"
+                  className="router-button-primary"
                 >
                   ➕ Novo Feriado
                 </button>
               ) : (
-                <div className="px-3 py-1.5 bg-[#14203a] border border-[#1a2d54] text-xs text-gray-400 rounded-lg select-none">
+                <div className="px-3 py-1.5 bg-[var(--router-surface-2)] border border-[var(--router-border)] text-xs text-[var(--router-text-muted)] rounded-lg select-none">
                   🔒 Modo Consulta
                 </div>
               )}
             </div>
 
-            <div className="border border-[#14203a] bg-[#0b1322]/90 rounded-xl overflow-hidden shadow-xl">
+            <div className="border border-[var(--router-border)] bg-[var(--router-bg)] rounded-xl overflow-hidden shadow-xl">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#0e1726]/90 border-b border-[#14203a] text-indigo-300 font-bold text-xs select-none">
+                  <tr className="bg-[var(--router-surface-2)]/90 border-b border-[var(--router-border)] text-indigo-300 font-bold text-xs select-none">
                     <th className="px-4 py-3 font-sans">Data</th>
                     <th className="px-4 py-3 font-sans">Dia/Mês</th>
                     <th className="px-4 py-3 font-sans">Cidade</th>
@@ -840,33 +840,33 @@ export default function BaseDadosView({
                 <tbody className="divide-y divide-[#14203a] text-xs">
                   {filteredFeriados.length === 0 ? (
                     <tr>
-                      <td colSpan={isMaster ? 7 : 6} className="text-center py-12 text-gray-500 font-sans">
+                      <td colSpan={isMaster ? 7 : 6} className="text-center py-12 text-[var(--router-text-muted)] font-sans">
                         Nenhum feriado correspondente à busca.
                       </td>
                     </tr>
                   ) : (
                     filteredFeriados.map((item) => (
-                      <tr key={item.id} className="hover:bg-indigo-950/20 transition-colors">
-                        <td className="px-4 py-3.5 font-bold font-mono text-white">
+                      <tr key={item.id} className="hover:bg-[var(--router-surface-3)] transition-colors">
+                        <td className="px-4 py-3.5 font-bold font-mono text-[var(--router-text)]">
                           {item.date}
                         </td>
-                        <td className="px-4 py-3.5 font-mono text-gray-300">
+                        <td className="px-4 py-3.5 font-mono text-[var(--router-text-soft)]">
                           {item.dayMonth}
                         </td>
                         <td className="px-4 py-3.5 font-sans font-bold">
                           <span className={`px-2 py-0.5 rounded text-[10px] ${
-                            item.city === 'GERAL' ? 'bg-indigo-950 text-indigo-300' : 'bg-rose-950 text-rose-350'
+                            item.city === 'GERAL' ? 'router-badge router-badge-info' : 'router-badge router-badge-danger'
                           }`}>
                             {item.city}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 font-sans text-gray-200">
+                        <td className="px-4 py-3.5 font-sans text-[var(--router-text)]">
                           {item.description}
                         </td>
                         <td className="px-4 py-3.5 font-sans">
                           <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase ${
-                            item.severity === 'CRITICAL' ? 'bg-red-900/45 text-red-300' :
-                            item.severity === 'WARNING' ? 'bg-amber-900/40 text-amber-300' : 'bg-slate-800 text-slate-350'
+                            item.severity === 'CRITICAL' ? 'router-badge router-badge-critical' :
+                            item.severity === 'WARNING' ? 'router-badge router-badge-warning' : 'router-badge router-badge-neutral'
                           }`}>
                             {item.severity}
                           </span>
@@ -879,13 +879,13 @@ export default function BaseDadosView({
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleOpenHolidayModal(item)}
-                                className="bg-indigo-900/40 hover:bg-indigo-850 border border-indigo-700/30 text-indigo-200 p-1.5 rounded cursor-pointer"
+                                className="bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-3)] text-[var(--router-text)] border border-[var(--router-border)] p-1.5 rounded cursor-pointer"
                               >
                                 ✏️
                               </button>
                               <button
                                 onClick={() => handleDeleteHoliday(item.id!)}
-                                className="bg-red-950/40 hover:bg-red-900/50 border border-red-800/20 text-red-300 p-1.5 rounded cursor-pointer"
+                                className="bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 border border-[var(--router-danger)]/30 text-[var(--router-danger)] p-1.5 rounded cursor-pointer"
                               >
                                 🗑️
                               </button>
@@ -897,7 +897,7 @@ export default function BaseDadosView({
                   )}
                 </tbody>
               </table>
-              <div className="px-4 py-3 bg-[#0e1726]/40 border-t border-[#14203a] text-[11px] text-gray-500 font-sans select-none">
+              <div className="px-4 py-3 bg-[var(--router-surface)] border-t border-[var(--router-border)] text-[11px] text-[var(--router-text-muted)] font-sans select-none">
                 Calendar Operational Events DB Context Link
               </div>
             </div>
@@ -957,7 +957,7 @@ export default function BaseDadosView({
         return (
           <div className="space-y-6">
             {/* Filters and Search toolbar */}
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center justify-between bg-[#0e1726]/85 p-4 border border-[#1e2e4f]/70 rounded-xl">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center justify-between bg-[var(--router-surface-2)]/85 p-4 border border-[var(--router-border)] rounded-xl">
               <div className="flex flex-wrap items-center gap-3 flex-1">
                 {/* Search Field */}
                 <div className="relative">
@@ -966,13 +966,13 @@ export default function BaseDadosView({
                     placeholder="Buscar CTRC, Destinatário, NF..."
                     value={ctrcSearch}
                     onChange={(e) => setCtrcSearch(e.target.value)}
-                    className="w-72 bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg pl-8 pr-8 py-1.5 text-xs outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/30 transition-all font-sans"
+                    className="w-72 bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg pl-8 pr-8 py-1.5 text-xs outline-none focus:border-[var(--router-primary)] focus:ring-1 focus:ring-[var(--router-primary)]/30 transition-all font-sans"
                   />
-                  <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+                  <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-[var(--router-text-muted)]" />
                   {ctrcSearch && (
                     <button 
                       onClick={() => setCtrcSearch('')} 
-                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-white text-xs"
+                      className="absolute right-2.5 top-2.5 text-[var(--router-text-muted)] hover:text-[var(--router-text)] text-xs"
                     >
                       ✕
                     </button>
@@ -983,7 +983,7 @@ export default function BaseDadosView({
                 <select
                   value={ctrcFilterStatus}
                   onChange={(e) => setCtrcFilterStatus(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
                 >
                   <option value="ALL">Todos os Status</option>
                   {uniqueCtrcStatuses.map(st => (
@@ -995,7 +995,7 @@ export default function BaseDadosView({
                 <select
                   value={ctrcFilterUnit}
                   onChange={(e) => setCtrcFilterUnit(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans"
                 >
                   <option value="ALL">Todas as Filiais</option>
                   {uniqueCtrcUnits.map(uni => (
@@ -1007,7 +1007,7 @@ export default function BaseDadosView({
                 <select
                   value={ctrcFilterIsActive}
                   onChange={(e) => setCtrcFilterIsActive(e.target.value)}
-                  className="bg-surface text-on-surface border border-[#1e3a6c]/60 rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans font-bold text-indigo-450"
+                  className="bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded-lg px-2.5 py-1.5 text-xs outline-none font-sans font-bold text-[var(--router-primary)]"
                 >
                   <option value="ALL">Todas as Situações</option>
                   <option value="ACTIVE">🟢 Mesa Ativa (Apenas Operacional)</option>
@@ -1016,21 +1016,21 @@ export default function BaseDadosView({
               </div>
 
               {/* Statistics indicator box */}
-              <div className="flex items-center gap-4 text-xs font-mono bg-[#0c1322] border border-[#1a2b4b] px-4 py-2 rounded-lg shrink-0">
-                <div>Total: <span className="text-white font-bold">{ctrcsList.length}</span></div>
-                <div className="text-gray-500">|</div>
-                <div className="text-emerald-400">Ativos na Mesa: <span className="font-bold">{activeCount}</span></div>
-                <div className="text-gray-500">|</div>
+              <div className="flex items-center gap-4 text-xs font-mono bg-[var(--router-bg)] border border-[var(--router-border)] px-4 py-2 rounded-lg shrink-0">
+                <div>Total: <span className="text-[var(--router-text)] font-bold">{ctrcsList.length}</span></div>
+                <div className="text-[var(--router-text-muted)]">|</div>
+                <div className="text-[var(--router-success)]">Ativos na Mesa: <span className="font-bold">{activeCount}</span></div>
+                <div className="text-[var(--router-text-muted)]">|</div>
                 <div className="text-amber-500">Histórico/KPIs: <span className="font-bold">{historicalCount}</span></div>
               </div>
             </div>
 
             {/* List and Table Grid */}
-            <div className="bg-[#0b1322] border border-[#14203a] rounded-xl overflow-hidden shadow-md">
+            <div className="bg-[var(--router-bg)] border border-[var(--router-border)] rounded-xl overflow-hidden shadow-md">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
-                    <tr className="bg-[#0e1726] border-b border-[#14203a] text-gray-300 uppercase font-mono text-[10px] select-none">
+                    <tr className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] text-[var(--router-text-soft)] uppercase font-mono text-[10px] select-none">
                       <th className="px-4 py-3">CTRC / ID</th>
                       <th className="px-4 py-3">Destinatário</th>
                       <th className="px-4 py-3">Cidade / Rota</th>
@@ -1045,7 +1045,7 @@ export default function BaseDadosView({
                   <tbody className="divide-y divide-[#14203a]">
                     {filteredHistoricalCtrcs.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-12 text-center text-gray-500 font-sans text-xs">
+                        <td colSpan={9} className="px-4 py-12 text-center text-[var(--router-text-muted)] font-sans text-xs">
                           Nenhum CTRC encontrado com os filtros ativos.
                         </td>
                       </tr>
@@ -1056,40 +1056,40 @@ export default function BaseDadosView({
                           : !(ctrc.status === 'Entregue' || ctrc.status === 'Recusado' || ctrc.status === 'Finalizado' || ctrc.status === 'Cancelado');
 
                         return (
-                          <tr key={ctrc.id} className="hover:bg-[#121c30]/40 transition-colors text-xs font-sans text-gray-300">
+                          <tr key={ctrc.id} className="hover:bg-[var(--router-surface-3)] transition-colors text-xs font-sans text-[var(--router-text-soft)]">
                             <td className="px-4 py-2.5 font-mono text-indigo-300 font-semibold">{ctrc.id}</td>
-                            <td className="px-4 py-2.5 truncate max-w-[200px] font-semibold text-slate-100" title={ctrc.destinatario}>{ctrc.destinatario}</td>
+                            <td className="px-4 py-2.5 truncate max-w-[200px] font-semibold text-[var(--router-text)]" title={ctrc.destinatario}>{ctrc.destinatario}</td>
                             <td className="px-4 py-2.5">
                               <div className="font-semibold">{ctrc.cidade}</div>
-                              {ctrc.setor && <div className="text-[10px] text-gray-500">{ctrc.setor}</div>}
+                              {ctrc.setor && <div className="text-[10px] text-[var(--router-text-muted)]">{ctrc.setor}</div>}
                             </td>
                             <td className="px-4 py-2.5 font-mono">
                               <div>{ctrc.weight} kg</div>
-                              <div className="text-[10px] text-gray-500">{ctrc.volume} vol</div>
+                              <div className="text-[10px] text-[var(--router-text-muted)]">{ctrc.volume} vol</div>
                             </td>
                             <td className="px-4 py-2.5 font-mono text-[11px]">
-                              {ctrc.valor ? <div className="text-emerald-400 font-bold">R$ {ctrc.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : <div className="text-gray-500">-</div>}
-                              {ctrc.frete ? <div className="text-gray-400">F: R$ {ctrc.frete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : null}
+                              {ctrc.valor ? <div className="text-[var(--router-success)] font-bold">R$ {ctrc.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : <div className="text-[var(--router-text-muted)]">-</div>}
+                              {ctrc.frete ? <div className="text-[var(--router-text-muted)]">F: R$ {ctrc.frete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div> : null}
                             </td>
-                            <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-400">{ctrc.unid}</td>
+                            <td className="px-4 py-2.5 text-center font-mono font-bold text-[var(--router-text-muted)]">{ctrc.unid}</td>
                             <td className="px-4 py-2.5">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                ctrc.status === 'Entregue' || ctrc.status === 'Finalizado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                ctrc.status === 'Recusado' || ctrc.status === 'Cancelado' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                                ctrc.status === 'Entregue' || ctrc.status === 'Finalizado' ? 'router-badge router-badge-success' :
+                                ctrc.status === 'Recusado' || ctrc.status === 'Cancelado' ? 'bg-rose-500/10 text-[var(--router-danger)] border border-rose-500/20' :
+                                'bg-[var(--router-primary)]/10 text-indigo-300 border border-[var(--router-primary)]/20'
                               }`}>
                                 {ctrc.status || 'Pendente'}
                               </span>
                             </td>
                             <td className="px-4 py-2.5">
                               {isCurrentActive ? (
-                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[var(--router-success)] bg-[var(--router-success)]/10 border border-[var(--router-success)]/20 px-2.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 bg-[var(--router-success)] rounded-full animate-pulse" />
                                   Mesa Ativa
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 bg-gray-500/10 border border-gray-500/20 px-2.5 py-0.5 rounded-full">
-                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[var(--router-text-muted)] router-badge router-badge-neutral px-2.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 bg-[var(--router-text-muted)] rounded-full" />
                                   Histórico / Catálogo
                                 </span>
                               )}
@@ -1100,8 +1100,8 @@ export default function BaseDadosView({
                                 title={isCurrentActive ? "Arquivar CTRC (Mover para Histórico)" : "Reativar CTRC para Roteirização"}
                                 className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                                   isCurrentActive 
-                                    ? 'hover:bg-amber-500/10 text-amber-500' 
-                                    : 'hover:bg-emerald-500/10 text-emerald-400'
+                                    ? 'hover:opacity-80 text-[var(--router-warning)]' 
+                                    : 'hover:opacity-80 text-[var(--router-success)]'
                                 }`}
                               >
                                 {isCurrentActive ? <Archive className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
@@ -1141,7 +1141,7 @@ export default function BaseDadosView({
 
       default:
         return (
-          <div className="p-12 text-center text-gray-500 font-sans border-2 border-dashed border-[#1e3a6c]/30 rounded-xl bg-black/10">
+          <div className="p-12 text-center text-[var(--router-text-muted)] font-sans border-2 border-dashed border-[var(--router-border)] rounded-xl bg-[var(--router-surface-2)]">
             Abas adicionais em desenvolvimento progressivo.
           </div>
         );
@@ -1151,18 +1151,18 @@ export default function BaseDadosView({
   return (
     <div className="space-y-6">
       {/* Upper info banners */}
-      <div className="flex flex-col gap-1.5 bg-[#0e1726]/40 border border-[#14203a] px-5 py-4 rounded-xl shadow-sm">
-        <h2 className="text-xl font-bold text-white font-sans flex items-center gap-2">
+      <div className="flex flex-col gap-1.5 bg-[var(--router-surface)] border border-[var(--router-border)] px-5 py-4 rounded-xl shadow-sm">
+        <h2 className="text-xl font-bold text-[var(--router-text)] font-sans flex items-center gap-2">
           <span>🗄️</span> Base de Dados Mestre
         </h2>
-        <p className="text-xs text-gray-400 font-sans max-w-4xl">
-          Centralização de dados cadastrais integrando a base <strong className="text-indigo-400">bd_unidades_operacionais_bi</strong>. 
+        <p className="text-xs text-[var(--router-text-muted)] font-sans max-w-4xl">
+          Centralização de dados cadastrais integrando a base <strong className="text-[var(--router-primary)]">bd_unidades_operacionais_bi</strong>. 
           Altera as tabelas do IndexedDB offline para controle de filiais estendidas, compatibilidades logísticas e roteamento integrado.
         </p>
       </div>
 
       {/* Tabs Selector Navigation bar */}
-      <div className="overflow-x-auto border-b border-[#14203a]">
+      <div className="overflow-x-auto border-b border-[var(--router-border)]">
         <div className="flex gap-1.5 pb-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -1174,8 +1174,8 @@ export default function BaseDadosView({
                 onClickCapture={() => setActiveTab(tab.id as TabId)}
                 className={`py-2 px-4 shadow-[inset_0_-1px_0_rgba(0,0,0,0)] text-xs font-bold font-sans cursor-pointer whitespace-nowrap rounded-t-lg transition-all ${
                   isActive
-                    ? 'border-t-2 border-indigo-400 bg-[#0e1726] text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-indigo-950/15'
+                    ? 'border-t-2 border-indigo-400 bg-[var(--router-surface-2)] text-[var(--router-text)]'
+                    : 'text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:bg-[var(--router-surface-3)]'
                 }`}
               >
                 {tab.label}
@@ -1193,14 +1193,14 @@ export default function BaseDadosView({
       {/* --- UNIDADE MODAL FORM --- */}
       {showUnitModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg bg-[#0b1322] border border-[#1e2e4f] rounded-xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-[#14203a] bg-[#0e1726] flex items-center justify-between">
-              <h3 className="text-sm font-bold text-indigo-400 font-sans">
+          <div className="w-full max-w-lg bg-[var(--router-bg)] border border-[var(--router-border)] rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-[var(--router-border)] bg-[var(--router-surface-2)] flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[var(--router-primary)] font-sans">
                 {editingUnit ? '✏️ Editar Unidade Operacional' : '➕ Adicionar Nova Unidade Operacional'}
               </h3>
               <button 
                 onClick={() => setShowUnitModal(false)}
-                className="text-gray-400 hover:text-white font-bold cursor-pointer text-sm"
+                className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] font-bold cursor-pointer text-sm"
               >
                 ✕
               </button>
@@ -1209,37 +1209,37 @@ export default function BaseDadosView({
             <form onSubmit={handleSaveUnit} className="p-5 space-y-4 text-xs font-sans">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 mb-1 font-bold">Unidade (Sigla) *</label>
+                  <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Unidade (Sigla) *</label>
                   <input
                     type="text"
                     value={formUnidade}
                     onChange={(e) => setFormUnidade(e.target.value)}
                     placeholder="Ex: GYN"
-                    className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none uppercase"
                     disabled={!!editingUnit} // cannot alter primary key code unless new
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 mb-1 font-bold">UF *</label>
+                  <label className="block text-[var(--router-text-muted)] mb-1 font-bold">UF *</label>
                   <input
                     type="text"
                     value={formUf}
                     onChange={(e) => setFormUf(e.target.value)}
                     placeholder="Ex: SP"
                     maxLength={2}
-                    className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none uppercase"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Tipo</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Tipo</label>
                 <select
                   value={formTipo}
                   onChange={(e) => setFormTipo(e.target.value)}
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 outline-none"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 outline-none"
                 >
                   <option value="Unidade">Unidade (Filial Própria)</option>
                   <option value="Parceiro">Parceiro (Agenciador)</option>
@@ -1248,41 +1248,41 @@ export default function BaseDadosView({
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Responsável</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Responsável</label>
                 <input
                   type="text"
                   value={formResponsavel}
                   onChange={(e) => setFormResponsavel(e.target.value)}
                   placeholder="Nome do parceiro corporativo / proprietário"
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 mb-1 font-bold">Responsável Operacional</label>
+                  <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Responsável Operacional</label>
                   <input
                     type="text"
                     value={formRespOper}
                     onChange={(e) => setFormRespOper(e.target.value)}
                     placeholder="Ex: SPO"
-                    className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none uppercase"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 mb-1 font-bold">Responsável Comercial</label>
+                  <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Responsável Comercial</label>
                   <input
                     type="text"
                     value={formRespCom}
                     onChange={(e) => setFormRespCom(e.target.value)}
                     placeholder="Ex: SPO"
-                    className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none uppercase"
+                    className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none uppercase"
                   />
                 </div>
               </div>
 
               {/* Toggles */}
-              <div className="space-y-2 border-t border-[#14203a] pt-3">
+              <div className="space-y-2 border-t border-[var(--router-border)] pt-3">
                 <label className="flex items-center gap-2 cursor-pointer select-none py-1">
                   <input
                     type="checkbox"
@@ -1310,22 +1310,22 @@ export default function BaseDadosView({
                     onChange={(e) => setFormAtivo(e.target.checked)}
                     className="scale-110 accent-indigo-500"
                   />
-                  <span className="font-bold text-white">Unidade Ativa para Roteiro e Filtros</span>
+                  <span className="font-bold text-[var(--router-text)]">Unidade Ativa para Roteiro e Filtros</span>
                 </label>
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-2 border-t border-[#14203a] pt-4">
+              <div className="flex justify-end gap-2 border-t border-[var(--router-border)] pt-4">
                 <button
                   type="button"
                   onClick={() => setShowUnitModal(false)}
-                  className="bg-[#14203a] hover:bg-[#1a2d54] text-gray-300 px-4 py-2 rounded-lg cursor-pointer font-bold"
+                  className="router-button-secondary px-4 py-2 rounded-lg cursor-pointer font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg cursor-pointer font-bold shadow-md"
+                  className="router-button-primary px-5 py-2 rounded-lg cursor-pointer font-bold shadow-md"
                 >
                   Salvar
                 </button>
@@ -1338,14 +1338,14 @@ export default function BaseDadosView({
       {/* --- HOLIDAY MODAL FORM --- */}
       {showHolidayModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-[#0b1322] border border-[#1e2e4f] rounded-xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-[#14203a] bg-[#0e1726] flex items-center justify-between">
-              <h3 className="text-sm font-bold text-indigo-400 font-sans">
+          <div className="w-full max-w-md bg-[var(--router-bg)] border border-[var(--router-border)] rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-[var(--router-border)] bg-[var(--router-surface-2)] flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[var(--router-primary)] font-sans">
                 {editingHoliday ? '✏️ Editar Feriado' : '➕ Adicionar Novo Feriado'}
               </h3>
               <button 
                 onClick={() => setShowHolidayModal(false)}
-                className="text-gray-400 hover:text-white font-bold cursor-pointer text-sm"
+                className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] font-bold cursor-pointer text-sm"
               >
                 ✕
               </button>
@@ -1353,46 +1353,46 @@ export default function BaseDadosView({
 
             <form onSubmit={handleSaveHoliday} className="p-5 space-y-4 text-xs font-sans">
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Data *</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Data *</label>
                 <input
                   type="date"
                   value={formHoldayDate}
                   onChange={(e) => setFormHolidayDate(e.target.value)}
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Cidade Aplicável (ou GERAL para nacionais) *</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Cidade Aplicável (ou GERAL para nacionais) *</label>
                 <input
                   type="text"
                   value={formHolidayCity}
                   onChange={(e) => setFormHolidayCity(e.target.value)}
                   placeholder="EX: BELO HORIZONTE"
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none uppercase"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Descrição / Detalhes *</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Descrição / Detalhes *</label>
                 <textarea
                   value={formHolidayDesc}
                   onChange={(e) => setFormHolidayDesc(e.target.value)}
                   placeholder="Ex: Aniversário da Cidade - Suspensão parcial faturamento"
                   rows={3}
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 focus:border-indigo-400 outline-none"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 focus:border-[var(--router-primary)] outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold">Gravidade do Alerta</label>
+                <label className="block text-[var(--router-text-muted)] mb-1 font-bold">Gravidade do Alerta</label>
                 <select
                   value={formHolidaySeverity}
                   onChange={(e: any) => setFormHolidaySeverity(e.target.value)}
-                  className="w-full bg-surface text-on-surface border border-[#1e3a6c]/60 rounded px-2.5 py-1.5 outline-none"
+                  className="w-full bg-[var(--router-input-bg)] border-[var(--router-input-border)] text-[var(--router-text)] rounded px-2.5 py-1.5 outline-none"
                 >
                   <option value="INFO">Informativo (INFO)</option>
                   <option value="WARNING">Feriado Municipal/Estadual (WARNING)</option>
@@ -1407,21 +1407,21 @@ export default function BaseDadosView({
                   onChange={(e) => setFormHolidayActive(e.target.checked)}
                   className="scale-110 accent-indigo-500"
                 />
-                <span className="font-bold text-white">Feriado Ativo</span>
+                <span className="font-bold text-[var(--router-text)]">Feriado Ativo</span>
               </label>
 
               {/* Footer */}
-              <div className="flex justify-end gap-2 border-t border-[#14203a] pt-4">
+              <div className="flex justify-end gap-2 border-t border-[var(--router-border)] pt-4">
                 <button
                   type="button"
                   onClick={() => setShowHolidayModal(false)}
-                  className="bg-[#14203a] hover:bg-[#1a2d54] text-gray-300 px-4 py-2 rounded-lg cursor-pointer font-bold"
+                  className="router-button-secondary px-4 py-2 rounded-lg cursor-pointer font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg cursor-pointer font-bold shadow-md"
+                  className="router-button-primary px-5 py-2 rounded-lg cursor-pointer font-bold shadow-md"
                 >
                   Salvar
                 </button>

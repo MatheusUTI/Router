@@ -106,7 +106,7 @@ const getFlowStatusLabel = (item: RoteirizacaoItem): string => {
 const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; border: string } => {
   const norm = statusLabel.toUpperCase();
   if (norm === 'DISPONÍVEL' || norm === 'DISPONIVEL' || norm === 'NA MESA') {
-    return { bg: 'bg-[#F1F5F9] dark:bg-slate-850/40', text: 'text-[#475569] dark:text-slate-300', border: 'border-[#E2E8F0] dark:border-slate-700/30' };
+    return { bg: 'bg-[#F1F5F9] dark:bg-[var(--router-surface-2)]/40', text: 'text-[#475569] dark:text-[var(--router-text-soft)]', border: 'border-[#E2E8F0] dark:border-[var(--router-border)]/30' };
   }
   if (norm === 'PRÉ-ROMANEIO') {
     return { bg: 'bg-[#E0E7FF] dark:bg-indigo-950/40', text: 'text-[#3730A3] dark:text-indigo-300', border: 'border-[#C7D2FE] dark:border-indigo-500/20' };
@@ -123,7 +123,7 @@ const getFlowStatusColor = (statusLabel: string): { bg: string; text: string; bo
   if (norm === 'EM TRÂNSITO') {
     return { bg: 'bg-[#DBEAFE] dark:bg-blue-950/40', text: 'text-[#1D4ED8] dark:text-blue-300', border: 'border-[#BFDBFE] dark:border-blue-500/20' };
   }
-  return { bg: 'bg-[#F1F5F9] dark:bg-[#101a2e]', text: 'text-[#475569] dark:text-slate-350', border: 'border-[#E2E8F0] dark:border-slate-800' };
+  return { bg: 'bg-[#F1F5F9] bg-[var(--router-surface-2)]', text: 'text-[#475569] dark:text-[var(--router-text-soft)]', border: 'border-[#E2E8F0] dark:border-[var(--router-border)]' };
 };
 
 const SSW_SERIES_BY_UNIT: Record<string, string> = {
@@ -349,21 +349,21 @@ export default function CargaItem({
                 checked={isSelected}
                 disabled={item.planningStatus === 'CONSOLIDADO'}
                 onChange={() => {}}
-                className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-300 dark:border-slate-700 bg-white dark:bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-3.5 h-3.5 cursor-pointer rounded-sm border-[var(--router-border)] dark:border-[var(--router-border)] bg-[var(--router-surface)] bg-[var(--router-surface-2)] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Col 2: Cidade / Rota */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)]"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
-            <span className="text-slate-900 dark:text-white font-extrabold uppercase tracking-wide truncate block" style={{ fontSize: 'calc(12px * var(--mesa-scale, 1))' }} title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+            <span className="text-[var(--router-text)] dark:text-white font-extrabold uppercase tracking-wide truncate block" style={{ fontSize: 'calc(12px * var(--mesa-scale, 1))' }} title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
               {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
             </span>
             <div className="flex items-center gap-1 font-sans leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }}>
-              <span className="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase">
+              <span className="text-[var(--router-primary)] font-extrabold uppercase">
                 {item.effectiveRoute || 'SEM ROTA'}
               </span>
               {item.isManualRoute && (
@@ -381,14 +381,14 @@ export default function CargaItem({
 
           {/* Col 3: Destinatário / Remetente */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Destinatário */}
             <div className="flex items-center gap-1 leading-none truncate w-full select-text" style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}>
-              <span className="text-slate-400 dark:text-slate-500 font-bold select-none tracking-tight mr-0.5" style={{ fontSize: 'calc(9px * var(--mesa-scale, 1))' }}>DST:</span>
+              <span className="text-[var(--router-text-muted)] font-bold select-none tracking-tight mr-0.5" style={{ fontSize: 'calc(9px * var(--mesa-scale, 1))' }}>DST:</span>
               <span 
-                className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border text-slate-800 dark:text-slate-200 border-transparent`}
+                className={`font-bold uppercase truncate tracking-wide px-1 py-0.2 rounded border text-[var(--router-text)] border-transparent`}
                 style={{ fontSize: 'calc(11.5px * var(--mesa-scale, 1))' }}
                 title={`${item.destinatario || ''}${item.isFob ? ' [FOB]' : ''}${item.isCurvaA ? ' [CURVA A]' : ''}`}
               >
@@ -407,10 +407,10 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Remetente */}
-            <div className="flex items-center gap-1 leading-none truncate w-full select-text text-slate-550 dark:text-slate-450" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
-              <span className="text-slate-400 dark:text-slate-500 font-bold select-none" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>REM:</span>
+            <div className="flex items-center gap-1 leading-none truncate w-full select-text text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)]" style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}>
+              <span className="text-[var(--router-text-muted)] font-bold select-none" style={{ fontSize: 'calc(8.5px * var(--mesa-scale, 1))' }}>REM:</span>
               <span 
-                className={`font-semibold truncate uppercase text-slate-500 dark:text-slate-400`}
+                className={`font-semibold truncate uppercase text-[var(--router-text-muted)]`}
                 style={{ fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}
                 title={item.remetente}
               >
@@ -421,12 +421,12 @@ export default function CargaItem({
 
           {/* Col 4: CTRC / NF */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-mono"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-mono"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(10.5px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: CTRC com link */}
-            <div className="font-bold text-indigo-600 dark:text-indigo-400 truncate leading-none">
-              <span className="text-slate-400 dark:text-slate-500 font-bold mr-0.5">CTRC:</span>
+            <div className="font-bold text-[var(--router-primary)] truncate leading-none">
+              <span className="text-[var(--router-text-muted)] font-bold mr-0.5">CTRC:</span>
               {(() => {
                 const sswUrl = buildSswLink(item);
                 if (!sswUrl) return item.id;
@@ -445,21 +445,21 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: NF */}
-            <div className="text-slate-600 dark:text-slate-400 truncate leading-none mt-0.5">
-              <span className="text-slate-400 dark:text-slate-500 font-bold mr-0.5">NF:</span>
+            <div className="text-[var(--router-text-soft)] truncate leading-none mt-0.5">
+              <span className="text-[var(--router-text-muted)] font-bold mr-0.5">NF:</span>
               <span className="font-semibold">{item.nf || 'S/N'}</span>
             </div>
           </div>
 
           {/* Col 5: Previsão */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-center py-1 px-2 border-r border-slate-200 dark:border-[#14203a]/30"
+            className="min-w-0 flex flex-col justify-center items-center py-1 px-2 border-r border-[var(--router-border)] border-[var(--router-border)]"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {(() => {
               const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
               
-              let prevStyles = 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
+              let prevStyles = 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] dark:bg-[var(--router-surface-3)]/30 dark:text-[var(--router-text-muted)] dark:border-[var(--router-border)]';
               let label = 'S/ PREV';
               let weekday = '';
               
@@ -493,7 +493,7 @@ export default function CargaItem({
 
           {/* Col 6: Status / Localização */}
           <div 
-            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30"
+            className="min-w-0 flex flex-col justify-center text-left py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)]"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Status principal */}
@@ -547,7 +547,7 @@ export default function CargaItem({
             </div>
 
             {/* Linha 2: Localização */}
-            <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5 text-slate-500 dark:text-slate-400 font-sans truncate" style={{ fontSize: 'calc(11px * var(--mesa-scale, 1))' }}>
+            <div className="flex items-center gap-1 leading-none w-full min-w-0 mt-0.5 text-[var(--router-text-muted)] font-sans truncate" style={{ fontSize: 'calc(11px * var(--mesa-scale, 1))' }}>
               {(() => {
                 const normLoc = item.locationLabel ? item.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
                 let displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOC' : normLoc;
@@ -582,13 +582,13 @@ export default function CargaItem({
 
           {/* Col 7: Valor / Frete */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Valor Mercadoria */}
             {(() => {
               const v = item.valor || 0;
-              let vClass = 'text-slate-600 dark:text-slate-400 font-medium';
+              let vClass = 'text-[var(--router-text-soft)] font-medium';
               if (v >= 20000 && v < 100000) {
                 vClass = 'text-emerald-700 dark:text-emerald-500 font-semibold';
               } else if (v >= 100000) {
@@ -602,22 +602,22 @@ export default function CargaItem({
             })()}
 
             {/* Linha 2: Frete */}
-            <span className="text-slate-400 dark:text-slate-500 font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Frete">
+            <span className="text-[var(--router-text-muted)] font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Frete">
               Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
 
           {/* Col 8: Peso / Volumes */}
           <div 
-            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-slate-200 dark:border-[#14203a]/30 font-sans"
+            className="min-w-0 flex flex-col justify-center items-end text-right py-1 px-2.5 gap-0.5 border-r border-[var(--router-border)] border-[var(--router-border)] font-sans"
             style={{ height: 'calc(52px * var(--mesa-scale, 1))', fontSize: 'calc(11px * var(--mesa-scale, 1))' }}
           >
             {/* Linha 1: Peso */}
             {(() => {
               const p = item.peso_r || item.weight || 0;
-              let pClass = 'text-slate-600 dark:text-slate-400 font-bold';
+              let pClass = 'text-[var(--router-text-soft)] font-bold';
               if (p > 10 && p <= 100) {
-                pClass = 'text-slate-600 dark:text-slate-400 font-semibold';
+                pClass = 'text-[var(--router-text-soft)] font-semibold';
               } else if (p > 100 && p <= 500) {
                 pClass = 'text-amber-600 dark:text-amber-500 font-semibold';
               } else if (p > 500) {
@@ -631,7 +631,7 @@ export default function CargaItem({
             })()}
 
             {/* Linha 2: Volumes */}
-            <span className="text-slate-400 dark:text-slate-500 font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Volumes">
+            <span className="text-[var(--router-text-muted)] font-medium leading-none" style={{ fontSize: 'calc(10px * var(--mesa-scale, 1))' }} title="Volumes">
               {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
             </span>
           </div>
@@ -652,7 +652,7 @@ export default function CargaItem({
                   {item.operationalNote}
                 </span>
               ) : (
-                <span className="text-slate-300 dark:text-slate-650 font-bold">-</span>
+                <span className="text-[var(--router-text-soft)]  font-bold">-</span>
               )}
             </div>
 
@@ -665,9 +665,9 @@ export default function CargaItem({
                 } else if (sector === 'EM ROTA') {
                   return <span className="text-blue-600 dark:text-blue-400 font-medium flex items-center gap-0.5" title="Em Rota"><span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Em Rota</span>;
                 } else if (sector === 'TRANSFERÊNCIA' || sector === 'TRANSFERENCIA') {
-                  return <span className="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-0.5" title="Transferência"><span className="h-1.5 w-1.5 rounded-full bg-slate-500"></span> Transf.</span>;
+                  return <span className="text-[var(--router-text-soft)] font-medium flex items-center gap-0.5" title="Transferência"><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Transf.</span>;
                 } else if (sector === 'AGENDAMENTO') {
-                  return <span className="text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-0.5" title="Agendamento"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Agend.</span>;
+                  return <span className="text-[var(--router-primary)] font-medium flex items-center gap-0.5" title="Agendamento"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Agend.</span>;
                 } else if (sector === 'SOLUÇÃO' || sector === 'SOLUCAO') {
                   return <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-0.5" title="Solução"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Solução</span>;
                 } else if (sector === 'RETIDOS' || sector === 'RETIDO') {
@@ -677,7 +677,7 @@ export default function CargaItem({
                 } else if (sector === 'FRETE') {
                   return <span className="text-sky-600 dark:text-sky-400 font-medium flex items-center gap-0.5" title="Frete"><span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span> Frete</span>;
                 } else {
-                  return <span className="text-slate-500 dark:text-slate-400 font-bold flex items-center gap-0.5" title={item.occurrenceSector || 'Indefinido'}><span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Indef.</span>;
+                  return <span className="text-[var(--router-text-muted)] font-bold flex items-center gap-0.5" title={item.occurrenceSector || 'Indefinido'}><span className="h-1.5 w-1.5 rounded-full bg-[var(--router-border)]"></span> Indef.</span>;
                 }
               })()}
             </div>
@@ -705,21 +705,21 @@ export default function CargaItem({
                 checked={isSelected}
                 disabled={item.planningStatus === 'CONSOLIDADO'}
                 onChange={() => {}}
-                className="w-3.5 h-3.5 cursor-pointer rounded-sm border-slate-300 dark:border-slate-700 bg-white dark:bg-[#070c14] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-3.5 h-3.5 cursor-pointer rounded-sm border-[var(--router-border)] dark:border-[var(--router-border)] bg-[var(--router-surface)] bg-[var(--router-surface-2)] focus:ring-0 accent-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
       {/* Block 2: [BLOCO ROTA] - Cidade de Destaque e Linha Direcional */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-slate-200 dark:border-[#14203a]/30`}>
-        <span className="text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock2} select-text leading-tight border-r border-[var(--router-border)] border-[var(--router-border)]`}>
+        <span className="text-[var(--router-text)] dark:text-white hover:text-indigo-600 dark:hover:text-indigo-200 font-extrabold text-[15px] uppercase tracking-wide truncate block" title={item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}>
           {item.normCidade || item.cidade || item.cidade_ent || 'SEM CIDADE'}
         </span>
         
         <div className="flex flex-col gap-0.5 mt-0.5 leading-none">
           {/* Main Directing Route */}
           <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-            <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase text-[14px]">
+            <span className="text-[var(--router-primary)] font-black uppercase text-[14px]">
               {item.effectiveRoute || 'SEM ROTA'}
             </span>
             {item.isManualRoute && (
@@ -736,7 +736,7 @@ export default function CargaItem({
 
           {/* Suggested route if Manual overwrite is active */}
           {item.isManualRoute && item.suggestedRoute && (
-            <span className="text-slate-550 font-bold font-mono text-[11px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
+            <span className="text-[var(--router-text-muted)] font-bold font-mono text-[11px] block truncate" title={`Sugestão: ${item.suggestedRoute}`}>
               Sug.: {item.suggestedRoute}
             </span>
           )}
@@ -744,23 +744,23 @@ export default function CargaItem({
       </div>
 
       {/* Block 3: [BLOCO IDENTIDADE] - Destinatário, Remetente, CTRC e NF */}
-      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-slate-200 dark:border-[#131f38]/15`}>
+      <div className={`min-w-0 flex flex-col justify-center text-left ${padBlock3} gap-0.5 select-text border-l border-[var(--router-border)]`}>
         {/* Destinatário */}
         <div className="flex items-center gap-1 leading-none truncate w-full">
-          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
-          <span className="text-slate-800 dark:text-slate-105 font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
+          <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">DST:</span>
+          <span className="text-[var(--router-text)] font-bold truncate block uppercase text-[13.5px] tracking-wide" title={item.destinatario || 'SEM DESTINATÁRIO'}>
             {item.destinatario || 'SEM DESTINATÁRIO'}
           </span>
         </div>
 
         {/* Remetente */}
         <div className="flex items-center gap-1 leading-none truncate w-full mt-0.5">
-          <span className="text-slate-400 dark:text-slate-500 font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
+          <span className="text-[var(--router-text-muted)] font-black select-none shrink-0 text-[10.5px] tracking-tight">REM:</span>
           <span 
             className={`font-semibold shrink truncate block uppercase text-[12.5px] tracking-wide ${
               item.isCurvaA 
                 ? 'text-[#9D174D] bg-[#FCE7F3] border-[#FBCFE8] dark:text-pink-300 dark:bg-pink-500/10 px-1 py-0.2 rounded border dark:border-pink-500/20 font-black text-[12px]' 
-                : 'text-slate-500 dark:text-slate-400'
+                : 'text-[var(--router-text-muted)]'
             }`}
             title={item.remetente || 'SEM REMETENTE'}
           >
@@ -770,7 +770,7 @@ export default function CargaItem({
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-indigo-600 dark:text-indigo-350">
+        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-mono select-text font-bold mt-0.5 leading-none text-[var(--router-primary)]">
           <span>
             CTRC:{' '}
             {(() => {
@@ -782,7 +782,7 @@ export default function CargaItem({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleOpenSswCtrc}
-                  className="hover:underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 cursor-pointer font-bold inline"
+                  className="hover:underline text-[var(--router-primary)] hover:text-indigo-500 dark:hover:text-indigo-300 cursor-pointer font-bold inline"
                   title="Abrir CTRC no SSW"
                 >
                   {item.id}
@@ -790,18 +790,18 @@ export default function CargaItem({
               );
             })()}
           </span>
-          <span className="text-slate-300 dark:text-slate-600">•</span>
+          <span className="text-[var(--router-text-muted)]">•</span>
           <span>NF: {item.nf || 'S/N'}</span>
           {item.isCriticClient && (
             <span 
-              className="bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 font-black text-[9.5px] px-1 py-0.2 rounded border border-violet-200 dark:border-violet-500/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
+              className="bg-[var(--router-primary)]/10 text-[var(--router-primary)] font-black text-[9.5px] px-1 py-0.2 rounded border border-[var(--router-primary)]/20 shrink-0 select-none leading-none flex items-center gap-0.5 shrink-0"
               title={`${item.criticClientPrefix || 'CD'}: ${item.criticClientName || ''} (${item.criticClientReason || ''})`}
             >
               👑 {item.criticClientPrefix === 'CD' ? 'DIRETORIA' : 'ESPECIAL'}
             </span>
           )}
           {item.isFob && (
-            <span className="bg-amber-50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
+            <span className="router-badge router-badge-warning px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider shrink-0 leading-none">
               FOB
             </span>
           )}
@@ -809,9 +809,9 @@ export default function CargaItem({
       </div>
 
       {/* Block 4: [BLOCO OPERACIONAL SIMPLIFICADO EM HIERARQUIA CLARA] */}
-      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-slate-200 dark:border-[#131f38]/15`}>
+      <div className={`min-w-0 ${padBlock4} flex flex-col justify-center leading-tight border-l border-[var(--router-border)]`}>
         {/* Linha 1: Previsão (data, SLA) */}
-        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-slate-500 dark:text-slate-450 leading-none flex-wrap">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold font-mono text-[var(--router-text-muted)] leading-none flex-wrap">
           {(() => {
             const hasNoPrev = !item.prev_ent || item.prev_ent.trim() === '' || item.prev_ent.toUpperCase() === 'SEM PREVISÃO' || item.prev_ent.toUpperCase() === 'S/PRAZO' || item.prev_ent.toUpperCase() === 'S/P' || item.prev_ent.toUpperCase() === 'SEM PREV';
             if (hasNoPrev) {
@@ -823,10 +823,10 @@ export default function CargaItem({
                 <span>•</span>
                 <span className={`font-black rounded-sm border px-1 py-0.2 text-[9.5px] leading-none ${
                   item.slaStatus?.isDelayed
-                    ? 'bg-[#FFE4E6] dark:bg-red-500/10 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/15'
+                    ? 'router-badge router-badge-critical'
                     : item.slaStatus?.isToday
-                    ? 'bg-[#FEF3C7] dark:bg-amber-500/10 text-[#92400E] dark:text-amber-400 border-[#FDE68A] dark:border-amber-500/15'
-                    : 'bg-[#F1F5F9] dark:bg-slate-900/30 text-[#475569] dark:text-slate-400 border-[#E2E8F0] dark:border-slate-755/20'
+                    ? 'router-badge router-badge-warning'
+                    : 'router-badge router-badge-neutral'
                 }`}>
                   {(() => {
                     if (!item.slaStatus) return 'S/ PRAZO';
@@ -843,7 +843,7 @@ export default function CargaItem({
             );
           })()}
           {(item.status === 'Agendamento' || item.planningStatus === 'AGENDADO') && (
-            <span className="bg-[#E0E7FF] dark:bg-cyan-500/10 text-[#3730A3] dark:text-cyan-300 border border-[#C7D2FE] dark:border-cyan-500/25 px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
+            <span className="router-badge router-badge-info px-1 py-0.2 rounded text-[9.5px] font-black uppercase tracking-wider shrink-0 leading-none">
               AGENDADO
             </span>
           )}
@@ -853,7 +853,7 @@ export default function CargaItem({
         <div className="flex items-center gap-1.5 text-[11px] leading-none w-full min-w-0 mt-1 flex-wrap">
           {/* Custom flow status label as MAIN badge (or simple text if Available) */}
           {flowStatusLabel === 'DISPONÍVEL' ? (
-            <span className="text-slate-550 dark:text-slate-455 font-mono font-bold text-[10px] uppercase shrink-0 leading-none flex items-center gap-1 select-none">
+            <span className="text-[var(--router-text-muted)] font-mono font-bold text-[10px] uppercase shrink-0 leading-none flex items-center gap-1 select-none">
               🟢 Disponível
             </span>
           ) : (
@@ -867,14 +867,14 @@ export default function CargaItem({
             {item.occurrenceCode ? (
               (() => {
                 const code = String(item.occurrenceCode);
-                let badgeStyles = "bg-[#FFE4E6] dark:bg-red-950/40 text-[#BE123C] dark:text-red-400 border-[#FECDD3] dark:border-red-500/20";
+                let badgeStyles = "router-badge router-badge-critical";
                 
                 if (code === '57') {
-                  badgeStyles = "bg-[#DCFCE7] dark:bg-emerald-500/10 text-[#166534] dark:text-emerald-400 border-[#BBF7D0] dark:border-emerald-500/15";
+                  badgeStyles = "router-badge router-badge-success";
                 } else if (code === '59') {
-                  badgeStyles = "bg-[#DBEAFE] dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-300 border-[#BFDBFE] dark:border-blue-500/15";
+                  badgeStyles = "router-badge router-badge-scheduled";
                 } else if (code === '70') {
-                  badgeStyles = "bg-[#FEF3C7] dark:bg-amber-950/40 text-[#92400E] dark:text-amber-300 border-[#FDE68A] dark:border-amber-500/15";
+                  badgeStyles = "router-badge router-badge-warning";
                 }
 
                 return (
@@ -886,7 +886,7 @@ export default function CargaItem({
             ) : null}
 
             {item.occurrenceCode ? (
-              <span className="text-slate-600 dark:text-slate-400 font-bold truncate text-[11px]" title={item.occurrenceDescription}>
+              <span className="text-[var(--router-text-soft)] font-bold truncate text-[11px]" title={item.occurrenceDescription}>
                 {item.occurrenceDescription === 'Ocorrência não mapeada' ? 'não mapeada' : item.occurrenceDescription}
               </span>
             ) : (
@@ -907,18 +907,18 @@ export default function CargaItem({
             const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
             return (
               <span className="text-teal-600 dark:text-teal-400 font-mono text-[11px] truncate max-w-[210px] flex items-center gap-0.5" title={item.locationLabel || 'NÃO INFORMADO'}>
-                📍<span className="font-extrabold uppercase text-slate-800 dark:text-slate-300 text-[11px]">{displayLoc}</span>
+                📍<span className="font-extrabold uppercase text-[var(--router-text)] text-[11px]">{displayLoc}</span>
               </span>
             );
           })()}
 
           {item.occurrenceSector && (
             item.occurrenceSector.toUpperCase() === 'DISPONÍVEL' || item.occurrenceSector.toUpperCase() === 'DISPONIVEL' ? (
-              <span className="text-slate-550 dark:text-slate-400 font-mono text-[10px] leading-none whitespace-nowrap select-none">
+              <span className="text-[var(--router-text-muted)] font-mono text-[10px] leading-none whitespace-nowrap select-none">
                 Setor: Disponível
               </span>
             ) : (
-              <span className="font-extrabold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
+              <span className="font-extrabold text-[var(--router-primary)] bg-indigo-50 dark:bg-indigo-950/30 px-1 rounded-sm border border-indigo-250 dark:border-indigo-800/20 text-[9.5px] leading-none whitespace-nowrap uppercase tracking-wider">
                 Setor: {item.occurrenceSector}
               </span>
             )
@@ -926,7 +926,7 @@ export default function CargaItem({
 
           {/* Micro operational note banner */}
           {item.operationalNote && (
-            <div className="text-[11px] font-medium text-amber-700 dark:text-amber-305 italic truncate" title={item.operationalNote}>
+            <div className="text-[11px] font-medium text-[var(--router-warning)] italic truncate" title={item.operationalNote}>
               Obs: {item.operationalNote}
             </div>
           )}
@@ -934,17 +934,17 @@ export default function CargaItem({
       </div>
 
       {/* Block 5: [BLOCO NÚMEROS] - Peso (kg), Volumes, Valor e Frete */}
-      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-slate-200 dark:border-[#131f38]/15 bg-slate-50/30 dark:bg-[#070c14]/15`}>
-        <span className="text-slate-800 dark:text-slate-105 font-black text-[13px] leading-none">
+      <div className={`min-w-0 flex flex-col items-end justify-center text-right leading-none ${padBlock5} shrink-0 whitespace-nowrap text-[12px] font-mono border-l border-[var(--router-border)] bg-[var(--router-surface-2)]`}>
+        <span className="text-[var(--router-text)] font-black text-[13px] leading-none">
           {(item.peso_r || item.weight || 0).toLocaleString('pt-BR')} kg
         </span>
-        <span className="text-amber-700 dark:text-amber-455 font-bold text-[12px] leading-none mt-1">
+        <span className="text-[var(--router-warning)] font-bold text-[12px] leading-none mt-1">
           {item.volume || 1} {item.volume === 1 ? 'vol' : 'vols'}
         </span>
-        <span className="text-slate-500 dark:text-slate-400 text-[12px] mt-1">
+        <span className="text-[var(--router-text-muted)] text-[12px] mt-1">
           R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
-        <span className="text-indigo-600 dark:text-indigo-350 text-[11px] mt-1">
+        <span className="text-[var(--router-primary)] text-[11px] mt-1">
           Fr: R$ {(item.frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </span>
       </div>
@@ -973,7 +973,7 @@ export default function CargaItem({
               menuPosition 
                 ? 'fixed' 
                 : 'absolute top-2 right-4'
-            } bg-white dark:bg-[#0b132a]/95 backdrop-blur-md border border-slate-200 dark:border-[#1d2d53] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-slate-800 dark:text-slate-200 select-none pointer-events-auto ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
+            } bg-[var(--router-surface)] backdrop-blur-md border border-[var(--router-border)] ${dropWidth} rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.95)] z-50 flex flex-col text-[var(--router-text)] select-none pointer-events-auto ${isCompact ? 'text-[9.2px]' : isComfortable ? 'text-[11.2px]' : 'text-[10px]'}`}
             style={{ 
               filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.05))',
               ...(menuPosition ? {
@@ -984,8 +984,8 @@ export default function CargaItem({
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* Dropdown Header */}
-            <div className={`${dropHeaderPad} bg-slate-50 dark:bg-[#0e1732] border-b border-slate-200 dark:border-[#1c2e5c] flex items-center justify-between rounded-t-xl`}>
-              <span className={`${dropHeaderText} font-sans font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1.5`}>
+            <div className={`${dropHeaderPad} bg-[var(--router-surface-2)] border-b border-[var(--router-border)] flex items-center justify-between rounded-t-xl`}>
+              <span className={`${dropHeaderText} font-sans font-black text-[var(--router-primary)] uppercase tracking-widest flex items-center gap-1.5`}>
                 🛡️ Parâmetros CTRC {item.id}
               </span>
               <button 
@@ -993,15 +993,15 @@ export default function CargaItem({
                   setDropdownOpen(false);
                   setMenuPosition(null);
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X size={12} />
               </button>
             </div>
             
             {/* Option block 1: Route overwrite */}
-            <div className={`${dropBlockPad} border-b border-slate-150 dark:border-[#16223f]/70 flex flex-col`}>
-              <span className={`${labelTextSize} font-sans font-black text-indigo-600 dark:text-indigo-350 uppercase tracking-wider block`}>
+            <div className={`${dropBlockPad} border-b border-[var(--router-border)] flex flex-col`}>
+              <span className={`${labelTextSize} font-sans font-black text-[var(--router-primary)] uppercase tracking-wider block`}>
                 📍 Rota Operacional
               </span>
               <div className="flex gap-2 items-center">
@@ -1011,7 +1011,7 @@ export default function CargaItem({
                   value={typedRoute}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => setTypedRoute(e.target.value.toUpperCase())}
-                  className={`bg-slate-50 dark:bg-[#05080f] border border-slate-200 dark:border-[#16223f] text-slate-800 dark:text-slate-105 placeholder-slate-400 dark:placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
+                  className={`bg-[var(--router-input-bg)] border border-[var(--router-input-border)] text-[var(--router-text)] placeholder-slate-400 dark:placeholder-slate-650 font-mono font-bold rounded-lg focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/30 flex-1 uppercase tracking-wide ${inputPadY}`}
                 />
                 <button
                   onClick={(e) => {
@@ -1027,8 +1027,8 @@ export default function CargaItem({
             </div>
 
             {/* Option block 2: Priority modifiers */}
-            <div className="flex flex-col py-1 border-b border-slate-150 dark:border-[#16223f]/70 bg-slate-50/50 dark:bg-[#070c16]/30">
-              <div className={`${priorityHeaderLabel} font-mono font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest select-none`}>
+            <div className="flex flex-col py-1 border-b border-[var(--router-border)] bg-[var(--router-surface)]/50 bg-[var(--router-surface-2)]">
+              <div className={`${priorityHeaderLabel} font-mono font-black text-[var(--router-text-muted)] uppercase tracking-widest select-none`}>
                 Definir Alerta Prioridade
               </div>
 
@@ -1037,7 +1037,7 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'URGENTE', planningStatus: 'URGENTE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                className={`${priorityBtnPad} text-left hover:bg-[var(--router-surface-3)] text-[var(--router-text)] font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
                   item.planningStatus === 'URGENTE' ? 'bg-red-50 dark:bg-red-500/5 text-red-700 dark:text-red-300 border-l-2 border-red-500 pl-2' : ''
                 }`}
               >
@@ -1053,7 +1053,7 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'PRIORIDADE', planningStatus: 'PRIORIDADE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                className={`${priorityBtnPad} text-left hover:bg-[var(--router-surface-3)] text-[var(--router-text)] font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
                   item.planningStatus === 'PRIORIDADE' ? 'bg-[var(--router-warning)]/10 text-[var(--router-warning)] border-l-2 border-[var(--router-warning)] pl-2' : ''
                 }`}
               >
@@ -1069,7 +1069,7 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'SEGURAR', planningStatus: 'SEGURAR' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-orange-50 dark:hover:bg-orange-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                className={`${priorityBtnPad} text-left hover:bg-[var(--router-surface-3)] text-[var(--router-text)] font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
                   item.planningStatus === 'SEGURAR' ? 'bg-[var(--router-danger)]/10 text-[var(--router-danger)] border-l-2 border-[var(--router-danger)] pl-2' : ''
                 }`}
               >
@@ -1085,7 +1085,7 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'NAO_SAI_HOJE', planningStatus: 'NAO_SAI_HOJE' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-slate-100 dark:hover:bg-slate-700/15 text-slate-500 dark:text-slate-400 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                className={`${priorityBtnPad} text-left hover:bg-[var(--router-surface-3)] text-[var(--router-text-muted)] font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
                   item.planningStatus === 'NAO_SAI_HOJE' ? 'bg-[var(--router-surface-3)] text-[var(--router-text)] border-l-2 border-[var(--router-text-muted)] pl-2' : ''
                 }`}
               >
@@ -1101,7 +1101,7 @@ export default function CargaItem({
                   onUpdatePlanning?.(item.id, { manualPriority: 'AGENDADO', planningStatus: 'AGENDADO' });
                   setDropdownOpen(false);
                 }}
-                className={`${priorityBtnPad} text-left hover:bg-cyan-50 dark:hover:bg-cyan-500/10 text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
+                className={`${priorityBtnPad} text-left hover:bg-[var(--router-surface-3)] text-[var(--router-text)] font-medium flex items-center justify-between group/btn transition-all cursor-pointer ${
                   item.planningStatus === 'AGENDADO' ? 'bg-[var(--router-info)]/10 text-[var(--router-info)] border-l-2 border-[var(--router-info)] pl-2' : ''
                 }`}
               >

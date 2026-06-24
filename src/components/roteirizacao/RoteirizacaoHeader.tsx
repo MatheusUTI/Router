@@ -118,7 +118,7 @@ export default function RoteirizacaoHeader({
 
       {/* 2. Busca */}
       <div className="relative flex-1 min-w-[150px] max-w-[280px] h-8 shrink-1 w-full xl:w-auto order-3 xl:order-2">
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[11px] font-mono select-none">🔍</span>
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--router-text-muted)] text-[11px] font-mono select-none">🔍</span>
         <input
           id="header-universal-search"
           type="text"
@@ -140,10 +140,10 @@ export default function RoteirizacaoHeader({
             onClick={() => setIsAvisosOpen?.(true)}
             className={`rounded font-extrabold text-[11px] px-2 py-1 h-8 transition-all cursor-pointer select-none leading-none flex items-center gap-1 shrink-0 border shadow-sm ${
               highestNoticeSeverity === 'CRITICAL'
-                ? 'bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/65 border-red-200 dark:border-red-700/60 text-red-700 dark:text-red-350 animate-pulse'
+                ? 'bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 border-[var(--router-danger)]/30 text-[var(--router-danger)] animate-pulse'
                 : highestNoticeSeverity === 'WARNING'
-                ? 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border-amber-200 dark:border-amber-700/50 text-amber-800 dark:text-amber-350'
-                : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border-blue-200 dark:border-blue-900/55 text-blue-700 dark:text-blue-350'
+                ? 'bg-[var(--router-warning)]/10 hover:bg-[var(--router-warning)]/20 border-[var(--router-warning)]/30 text-[var(--router-warning)]'
+                : 'bg-[var(--router-info)]/10 hover:bg-[var(--router-info)]/20 border-[var(--router-info)]/30 text-[var(--router-info)]'
             }`}
             title="Reabrir Avisos Operacionais"
             id="reopen-notices-badge"
@@ -229,12 +229,12 @@ export default function RoteirizacaoHeader({
         {/* Fila */}
         <div className={rightStatusClass} title={`Fila: ${filteredCtrcsCount} / ${totalCtrcsCount}`}>
           <span className="hidden lg:inline mr-1 font-bold">Fila:</span>
-          <span className="text-slate-800 dark:text-white font-black uppercase">{filteredCtrcsCount}/{totalCtrcsCount}</span>
+          <span className="text-[var(--router-text)] font-black uppercase">{filteredCtrcsCount}/{totalCtrcsCount}</span>
         </div>
 
         {/* Relógio - Oculto em resoluções < 2xl para economizar espaço */}
         <div className={badgeClass} title="Horário Atual (UTC)">
-          {currentTime} <span className="text-slate-500 text-[9px] ml-1">UTC</span>
+          {currentTime} <span className="text-[var(--router-text-muted)] text-[9px] ml-1">UTC</span>
         </div>
       </div>
 

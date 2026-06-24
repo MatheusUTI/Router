@@ -145,7 +145,7 @@ export default function CargaList({
       {filteredCtrcs.length > 0 && (
         densityMode === 'planilha_operacional' ? (
           <div 
-            className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-slate-500 dark:text-slate-400 py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
+            className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid items-center text-[var(--router-text-muted)] py-1 px-3 select-none tracking-wider font-sans font-extrabold shrink-0 relative z-30"
             style={{ 
               gridTemplateColumns: '24px minmax(calc(115px * var(--mesa-scale, 1)), 0.6fr) minmax(calc(270px * var(--mesa-scale, 1)), 1.5fr) minmax(calc(110px * var(--mesa-scale, 1)), 0.65fr) minmax(calc(85px * var(--mesa-scale, 1)), 0.4fr) minmax(calc(275px * var(--mesa-scale, 1)), 1.55fr) minmax(calc(105px * var(--mesa-scale, 1)), 0.55fr) minmax(calc(95px * var(--mesa-scale, 1)), 0.5fr) minmax(calc(80px * var(--mesa-scale, 1)), 0.4fr)',
               fontSize: 'calc(10px * var(--mesa-scale, 1))',
@@ -165,7 +165,7 @@ export default function CargaList({
                   }
                 }}
                 onChange={() => onSelectAllVisible(visibleIds)}
-                className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-300 dark:border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
+                className="w-3.5 h-3.5 accent-indigo-500 rounded border-[var(--router-border)] bg-transparent focus:ring-0 cursor-pointer"
               />
             </div>
 
@@ -187,13 +187,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>CIDADE</span>
-                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Rota"
                 uniqueValues={excelUniqueRoutes}
@@ -210,9 +210,9 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>ROTA</span>
-                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
@@ -236,13 +236,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>DEST.</span>
-                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Remetente"
                 uniqueValues={excelUniqueSenders}
@@ -259,34 +259,34 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>REM.</span>
-                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 4: CTRC / NF */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'id' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('id');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'id' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-400'}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'id' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-[var(--router-text-muted)]'}`}
               >
                 CTRC {sortField === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <button
                 onClick={() => {
                   const targetDir = sortField === 'nf' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('nf');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'nf' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-400'}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'nf' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-[var(--router-text-muted)]'}`}
               >
                 NF {sortField === 'nf' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
@@ -310,16 +310,16 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>PREVISÃO</span>
-                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 6: Ocorrência / Localização */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase font-sans select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none">
               <ExcelColumnFilter
                 label="Ocorrência"
                 uniqueValues={excelUniqueStatuses}
@@ -336,13 +336,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>OCORR.</span>
-                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Localização"
                 uniqueValues={excelUniqueLocs}
@@ -359,66 +359,66 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'localizacao' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>LOCAL.</span>
-                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 7: Valor / Frete */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1 text-slate-500 font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'valor' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('valor');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'valor' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'valor' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 VALOR {sortField === 'valor' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
-              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">|</span>
               <button
                 onClick={() => {
                   const targetDir = sortField === 'frete' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('frete');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'frete' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'frete' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 FRETE {sortField === 'frete' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
             </div>
 
             {/* Col 8: Peso / Volumes */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 gap-1 text-slate-500 font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1 text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('peso');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 PESO {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
-              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">|</span>
               <button
                 onClick={() => {
                   const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('volumes');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 VOL {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
             </div>
 
             {/* Col 9: OBS / Disponível */}
-            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none text-slate-400">
+            <div className="min-w-0 flex items-center justify-center px-1.5 border-l border-[var(--router-border)] uppercase font-sans select-none text-[var(--router-text-muted)]">
               <ExcelColumnFilter
                 label="Setor / Disponibilidade"
                 uniqueValues={excelUniqueOcorrSectors}
@@ -430,16 +430,16 @@ export default function CargaList({
                 isSortedActiveDesc={false}
                 alignRight={true}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelOcorrSectorFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>OBS / DISP</span>
-                    <Filter size={8.5} className={excelOcorrSectorFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelOcorrSectorFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
           </div>
         ) : (
-          <div className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-slate-500 dark:text-slate-400 py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
+          <div className="bg-[var(--router-surface-2)] border-b border-[var(--router-border)] grid grid-cols-[24px_minmax(180px,1fr)_minmax(310px,1.7fr)_minmax(360px,1.9fr)_minmax(110px,0.4fr)] items-center text-[var(--router-text-muted)] py-1.5 px-3 select-none text-[10px] tracking-wider font-mono font-black shrink-0 relative z-30">
             
             {/* Col 1: Master Checkbox */}
             <div className="w-6 shrink-0 flex items-center justify-center">
@@ -454,7 +454,7 @@ export default function CargaList({
                   }
                 }}
                 onChange={() => onSelectAllVisible(visibleIds)}
-                className="w-3.5 h-3.5 accent-indigo-500 rounded border-slate-300 dark:border-slate-705 bg-transparent focus:ring-0 cursor-pointer"
+                className="w-3.5 h-3.5 accent-indigo-500 rounded border-[var(--router-border)] bg-transparent focus:ring-0 cursor-pointer"
               />
             </div>
 
@@ -476,13 +476,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'cidade' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'cidade' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelCityFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>CIDADE</span>
-                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelCityFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Rota"
                 uniqueValues={excelUniqueRoutes}
@@ -499,16 +499,16 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'rota' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'rota' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelRouteFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>ROTA</span>
-                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelRouteFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 3: Destinatário / Remetente */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase text-[10px] font-mono select-none">
               <ExcelColumnFilter
                 label="Destinatário"
                 uniqueValues={excelUniqueDests}
@@ -525,13 +525,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'destinatario' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'destinatario' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelDestFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>DESTINATÁRIO</span>
-                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelDestFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Remetente"
                 uniqueValues={excelUniqueSenders}
@@ -548,16 +548,16 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'remetente' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'remetente' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelSenderFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>REMETENTE</span>
-                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelSenderFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 4: Previsão / Status / Localização */}
-            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-slate-200 dark:border-[#131f38]/15 uppercase text-[10px] font-mono select-none">
+            <div className="min-w-0 flex items-center gap-1.5 px-1.5 border-l border-[var(--router-border)] uppercase text-[10px] font-mono select-none">
               <ExcelColumnFilter
                 label="Previsão"
                 uniqueValues={excelUniquePrevs}
@@ -574,13 +574,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'prev_ent' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'prev_ent' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelPrevFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>PREVISÃO</span>
-                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelPrevFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Status"
                 uniqueValues={excelUniqueStatuses}
@@ -597,13 +597,13 @@ export default function CargaList({
                 isSortedActiveAsc={sortField === 'status' && sortDirection === 'asc'}
                 isSortedActiveDesc={sortField === 'status' && sortDirection === 'desc'}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelStatusFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>STATUS</span>
-                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelStatusFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
-              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">/</span>
               <ExcelColumnFilter
                 label="Localização"
                 uniqueValues={excelUniqueLocs}
@@ -621,34 +621,34 @@ export default function CargaList({
                 isSortedActiveDesc={sortField === 'localizacao' && sortDirection === 'desc'}
                 alignRight={true}
                 customTrigger={
-                  <div className={`hover:text-slate-800 dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-slate-400'}`}>
+                  <div className={`hover:text-[var(--router-text)] dark:hover:text-white flex items-center gap-0.5 cursor-pointer py-0.5 rounded transition duration-150 ${excelLocationFilter !== null ? 'text-indigo-600 dark:text-indigo-400 font-black underline decoration-indigo-500 decoration-2' : 'text-[var(--router-text-muted)]'}`}>
                     <span>LOCALIZAÇÃO</span>
-                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-slate-600 stroke-[1.5]"} />
+                    <Filter size={8.5} className={excelLocationFilter !== null ? "stroke-[2.5] text-indigo-600 dark:text-indigo-400 fill-indigo-400/20" : "text-[var(--router-text-soft)] stroke-[1.5]"} />
                   </div>
                 }
               />
             </div>
 
             {/* Col 5: Peso / Volumes / Valor Header click sorting keys */}
-            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1.5 text-[9px] text-slate-500 font-bold uppercase select-none">
+            <div className="min-w-0 flex flex-wrap items-center justify-end px-1.5 border-l border-[var(--router-border)] gap-1.5 text-[9px] text-[var(--router-text-muted)] font-bold uppercase select-none">
               <button
                 onClick={() => {
                   const targetDir = sortField === 'peso' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('peso');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'peso' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 Pes {sortField === 'peso' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
-              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[var(--router-text-soft)] dark:text-[var(--router-text)]">|</span>
               <button
                 onClick={() => {
                   const targetDir = sortField === 'volumes' && sortDirection === 'desc' ? 'asc' : 'desc';
                   setSortField('volumes');
                   setSortDirection(targetDir);
                 }}
-                className={`hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
+                className={`hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer ${sortField === 'volumes' ? 'text-indigo-600 dark:text-indigo-400 font-black' : ''}`}
               >
                 Vol {sortField === 'volumes' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
               </button>
@@ -660,7 +660,7 @@ export default function CargaList({
       {/* Main Items View Area */}
       <div className="flex-1 overflow-x-hidden overflow-y-auto divide-y divide-slate-150 dark:divide-[#14203a] scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-[#080c14] scrollbar-thumb-indigo-500 dark:scrollbar-thumb-indigo-550 scroll-smooth">
         {filteredCtrcs.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-3 px-4 text-center">
+          <div className="h-64 flex flex-col items-center justify-center text-[var(--router-text-muted)] gap-3 px-4 text-center">
             <span className="text-3xl">📦</span>
             <p className="text-xs font-bold uppercase font-mono">Nenhuma carga pendente corresponde ao filtro selecionado</p>
             {totalCtrcsCount > 0 && onClearFilters && (
@@ -700,28 +700,28 @@ export default function CargaList({
           <span className="font-bold font-mono text-[9.5px] text-[var(--router-text-muted)] mr-2 uppercase tracking-wide">Legenda:</span>
           <div className="flex items-center gap-3.5 flex-wrap">
             <span className="flex items-center gap-1" title="Verde">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#DCFCE7] dark:bg-emerald-500/10 border border-[#BBF7D0] dark:border-emerald-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Disponível</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-available)] border border-[var(--router-badge-available)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Disponível</span>
             </span>
             <span className="flex items-center gap-1" title="Azul / Índigo">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#DBEAFE] dark:bg-indigo-950/40 border border-[#BFDBFE] dark:border-indigo-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Agendamento / Operacional</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-scheduled)] border border-[var(--router-badge-scheduled)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Agendamento / Operacional</span>
             </span>
             <span className="flex items-center gap-1" title="Amarelo">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF3C7] dark:bg-amber-550/10 border border-[#FDE68A] dark:border-amber-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atenção Leve / FOB</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-light-warning)] border border-[var(--router-badge-light-warning)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Atenção Leve / FOB</span>
             </span>
             <span className="flex items-center gap-1" title="Laranja">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#FFEDD5] dark:bg-orange-500/10 border border-[#FED7AA] dark:border-orange-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atenção Op / Hold</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-operational-warning)] border border-[var(--router-badge-operational-warning)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Atenção Op / Hold</span>
             </span>
             <span className="flex items-center gap-1" title="Vermelho / Rosa">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#FFE4E6] dark:bg-red-500/10 border border-[#FECDD3] dark:border-red-500/20" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Atraso / Curva A / Retido</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-critical)] border border-[var(--router-badge-critical)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Atraso / Curva A / Retido</span>
             </span>
             <span className="flex items-center gap-1" title="Cinza">
-              <span className="w-2.5 h-2.5 rounded-sm bg-slate-150 dark:bg-slate-850 border border-slate-300 dark:border-slate-700" />
-              <span className="text-[10px] uppercase font-bold text-slate-600 dark:text-[var(--router-text-muted)]">Neutro</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--router-badge-neutral)] border border-[var(--router-badge-neutral)] opacity-80" />
+              <span className="text-[10px] uppercase font-bold text-[var(--router-text-soft)] dark:text-[var(--router-text-muted)]">Neutro</span>
             </span>
           </div>
         </div>

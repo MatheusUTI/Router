@@ -1057,7 +1057,7 @@ export default function RoteirizacaoView({
       {generatedPreRomaneios && (
         <>
           <div 
-            className="fixed inset-0 bg-slate-900/50 dark:bg-black/80 backdrop-blur-md z-[100] transition-all duration-200" 
+            className="fixed inset-0 bg-[var(--router-surface-3)]/50 dark:bg-black/80 backdrop-blur-md z-[100] transition-all duration-200" 
             onClick={() => setGeneratedPreRomaneios(null)} 
           />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[var(--router-bg)] border border-[var(--router-border)] rounded-2xl shadow-[var(--router-shadow)] z-[110] overflow-hidden flex flex-col p-6 font-sans">

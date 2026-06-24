@@ -880,7 +880,7 @@ export default function ConfiguracoesView({
       </div>
 
       {message && (
-        <div className="bg-primary-container/15 border border-primary/30 text-primary px-4 py-3 rounded-xl flex items-start gap-3 animate-fadeIn">
+        <div className="bg-[var(--router-primary)]-container/15 border border-primary/30 text-[var(--router-primary)] px-4 py-3 rounded-xl flex items-start gap-3 animate-fadeIn">
           <span className="material-symbols-outlined text-[20px] shrink-0">verified_user</span>
           <div>
             <p className="text-xs font-semibold">Mensagem do Sistema</p>
@@ -895,7 +895,7 @@ export default function ConfiguracoesView({
         <div className="bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-on-surface mb-3 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">manage_accounts</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[18px]">manage_accounts</span>
               Seu Perfil de Operador
             </h3>
             <p className="text-xs text-on-surface-variant mb-5">
@@ -934,7 +934,7 @@ export default function ConfiguracoesView({
                 <select
                   value={tempUnid}
                   onChange={(e) => setTempUnid(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-bold text-primary"
+                  className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-bold text-[var(--router-primary)]"
                 >
                   {adminUser.is_master ? (
                     <>
@@ -965,7 +965,7 @@ export default function ConfiguracoesView({
                     ★ USUÁRIO MASTER (TOTAL)
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 font-mono text-[9px] uppercase tracking-wider rounded font-bold">
+                  <span className="px-2 py-0.5 bg-[var(--router-primary)]/10 text-[var(--router-primary)] border border-primary/20 font-mono text-[9px] uppercase tracking-wider rounded font-bold">
                     OPERADOR PADRÃO
                   </span>
                 )}
@@ -974,7 +974,7 @@ export default function ConfiguracoesView({
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary hover:bg-primary-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-transform active:scale-[0.98] shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[var(--router-primary)] hover:bg-[var(--router-primary)]-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-transform active:scale-[0.98] shadow-sm flex items-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[15px]">verified</span>
                   Salvar Mudanças
@@ -1005,14 +1005,14 @@ export default function ConfiguracoesView({
               <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--router-primary)] rounded-full"></span>
                     <strong className="text-xs text-on-surface">Mapeamento de Frota (OP-01)</strong>
                   </div>
                   <p className="text-[11px] text-on-surface-variant">Reinicializa veículos, motoristas e ajudantes em memória.</p>
                 </div>
                 <button
                   onClick={() => executeReset('OP-01')}
-                  className="px-3.5 py-1.5 bg-[#93000a]/10 hover:bg-[#93000a]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
+                  className="px-3.5 py-1.5 bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
                 >
                   Reset OP-01
                 </button>
@@ -1022,14 +1022,14 @@ export default function ConfiguracoesView({
               <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--router-primary)] rounded-full"></span>
                     <strong className="text-xs text-on-surface">Roteirização Geral (OP-02)</strong>
                   </div>
                   <p className="text-[11px] text-on-surface-variant">Restaura fila de CTRCs pendentes e chamados críticos.</p>
                 </div>
                 <button
                   onClick={() => executeReset('OP-02')}
-                  className="px-3.5 py-1.5 bg-[#93000a]/10 hover:bg-[#93000a]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
+                  className="px-3.5 py-1.5 bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
                 >
                   Reset OP-02
                 </button>
@@ -1039,14 +1039,14 @@ export default function ConfiguracoesView({
               <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--router-primary)] rounded-full"></span>
                     <strong className="text-xs text-on-surface">Controle de Risco (OP-03)</strong>
                   </div>
                   <p className="text-[11px] text-on-surface-variant">Reseta dossiê de clientes críticos e auditorias de CTRC.</p>
                 </div>
                 <button
                   onClick={() => executeReset('OP-03')}
-                  className="px-3.5 py-1.5 bg-[#93000a]/10 hover:bg-[#93000a]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
+                  className="px-3.5 py-1.5 bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 text-error border border-error/20 text-xs font-bold rounded-lg transition-colors shrink-0"
                 >
                   Reset OP-03
                 </button>
@@ -1060,7 +1060,7 @@ export default function ConfiguracoesView({
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left">
         <div>
           <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[19px]">palette</span>
+            <span className="material-symbols-outlined text-[var(--router-primary)] text-[19px]">palette</span>
             Aparência e Tema (Router Theme Engine)
           </h3>
           <p className="text-xs text-on-surface-variant">
@@ -1080,7 +1080,7 @@ export default function ConfiguracoesView({
                 onClick={() => handleUpdateTheme('light')}
                 className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
                   currentTheme === 'light'
-                    ? 'bg-primary text-on-primary border-transparent'
+                    ? 'bg-[var(--router-primary)] text-on-primary border-transparent'
                     : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
                 }`}
               >
@@ -1092,7 +1092,7 @@ export default function ConfiguracoesView({
                 onClick={() => handleUpdateTheme('dark')}
                 className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
                   currentTheme === 'dark'
-                    ? 'bg-primary text-on-primary border-transparent'
+                    ? 'bg-[var(--router-primary)] text-on-primary border-transparent'
                     : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
                 }`}
               >
@@ -1129,7 +1129,7 @@ export default function ConfiguracoesView({
                 onClick={() => handleUpdateContrast('standard')}
                 className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1 ${
                   contrast === 'standard'
-                    ? 'bg-primary text-on-primary border-transparent'
+                    ? 'bg-[var(--router-primary)] text-on-primary border-transparent'
                     : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
                 }`}
               >
@@ -1140,7 +1140,7 @@ export default function ConfiguracoesView({
                 onClick={() => handleUpdateContrast('high')}
                 className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg border transition-all flex items-center justify-center gap-1 ${
                   contrast === 'high'
-                    ? 'bg-primary text-on-primary border-transparent'
+                    ? 'bg-[var(--router-primary)] text-on-primary border-transparent'
                     : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
                 }`}
               >
@@ -1150,8 +1150,8 @@ export default function ConfiguracoesView({
           </div>
         </div>
 
-        <div className="p-3 bg-primary-container/10 border border-primary/20 rounded-lg text-[11px] text-on-surface-variant flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[16px]">info</span>
+        <div className="p-3 bg-[var(--router-primary)]-container/10 border border-primary/20 rounded-lg text-[11px] text-on-surface-variant flex items-center gap-2">
+          <span className="material-symbols-outlined text-[var(--router-primary)] text-[16px]">info</span>
           <span>
             <strong>Motor de temas inicial:</strong> As preferências de aparência são salvas localmente no navegador para preservar seu fluxo de trabalho de despacho. Personalização avançada será evoluída depois.
           </span>
@@ -1162,7 +1162,7 @@ export default function ConfiguracoesView({
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left">
         <div>
           <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[19px]">group</span>
+            <span className="material-symbols-outlined text-[var(--router-primary)] text-[19px]">group</span>
             Gestão Corporativa de Usuários do Sistema RotaOperational
           </h3>
           <p className="text-xs text-on-surface-variant">
@@ -1174,7 +1174,7 @@ export default function ConfiguracoesView({
           {/* Form to create/edit - ONLY edit if Master */}
           <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 space-y-4">
             <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5 border-b border-outline-variant/30 pb-2">
-              <span className="material-symbols-outlined text-primary text-[16px]">person_add</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[16px]">person_add</span>
               Cadastrar Novo Operador
             </h4>
 
@@ -1241,7 +1241,7 @@ export default function ConfiguracoesView({
                   <select
                     value={userFormUnid}
                     onChange={(e) => setUserFormUnid(e.target.value)}
-                    className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-bold text-[#3ecf8e]"
+                    className="w-full bg-surface-container border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-bold text-[var(--router-success)]"
                   >
                     {opUnits.filter(u => u.active).map(u => (
                       <option key={u.code} value={u.code}>{u.name}</option>
@@ -1255,7 +1255,7 @@ export default function ConfiguracoesView({
                     id="is_master_chk"
                     checked={userFormIsMaster}
                     onChange={(e) => setUserFormIsMaster(e.target.checked)}
-                    className="w-4 h-4 text-primary bg-surface-container border-outline-variant rounded focus:ring-primary"
+                    className="w-4 h-4 text-[var(--router-primary)] bg-surface-container border-outline-variant rounded focus:ring-primary"
                   />
                   <label htmlFor="is_master_chk" className="text-xs text-on-surface cursor-pointer select-none">
                     Dar privilégio de <span className="font-bold text-error">MASTER</span> (total)
@@ -1264,7 +1264,7 @@ export default function ConfiguracoesView({
 
                 <button
                   type="submit"
-                  className="w-full py-2 bg-primary hover:bg-primary-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-1.5"
+                  className="w-full py-2 bg-[var(--router-primary)] hover:bg-[var(--router-primary)]-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[15px]">save</span>
                   Gravar em Banco de Dados
@@ -1280,7 +1280,7 @@ export default function ConfiguracoesView({
               <button
                 onClick={handleLoadUsers}
                 disabled={isUsersLoading}
-                className="text-[10px] bg-surface-container hover:bg-surface-container-high px-2 py-1 rounded text-primary border border-outline-variant font-bold flex items-center gap-1"
+                className="text-[10px] bg-surface-container hover:bg-surface-container-high px-2 py-1 rounded text-[var(--router-primary)] border border-outline-variant font-bold flex items-center gap-1"
               >
                 <span className={`material-symbols-outlined text-[13px] ${isUsersLoading ? 'animate-spin' : ''}`}>sync_saved_locally</span>
                 Sincronizar Lista
@@ -1289,7 +1289,7 @@ export default function ConfiguracoesView({
 
             {isUsersLoading ? (
               <div className="text-center py-10 bg-surface rounded-xl border border-outline-variant/40 space-y-2">
-                <span className="material-symbols-outlined text-primary text-[32px] animate-spin">sync</span>
+                <span className="material-symbols-outlined text-[var(--router-primary)] text-[32px] animate-spin">sync</span>
                 <p className="text-xs text-on-surface-variant">Carregando usuários do Supabase...</p>
               </div>
             ) : (
@@ -1308,17 +1308,17 @@ export default function ConfiguracoesView({
                   <tbody className="divide-y divide-outline-variant/40">
                     {appUsers.map((u, idx) => (
                       <tr key={idx} className="hover:bg-surface/50 text-xs">
-                        <td className="p-3 font-mono font-bold text-primary">{u.username}</td>
+                        <td className="p-3 font-mono font-bold text-[var(--router-primary)]">{u.username}</td>
                         <td className="p-3 text-on-surface font-semibold">{u.name}</td>
                         <td className="p-3 text-on-surface-variant">{u.role}</td>
-                        <td className="p-3 font-mono font-bold text-[#3ecf8e]">{u.unid || 'TODAS'}</td>
+                        <td className="p-3 font-mono font-bold text-[var(--router-success)]">{u.unid || 'TODAS'}</td>
                         <td className="p-3">
                           {u.is_master ? (
                             <span className="px-2 py-0.5 bg-error/10 text-error font-mono text-[9px] font-bold rounded uppercase tracking-wider">
                               Master
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary font-mono text-[9px] rounded uppercase tracking-wider">
+                            <span className="px-2 py-0.5 bg-[var(--router-primary)]/10 text-[var(--router-primary)] font-mono text-[9px] rounded uppercase tracking-wider">
                               Standard
                             </span>
                           )}
@@ -1371,7 +1371,7 @@ export default function ConfiguracoesView({
 
         <div>
           <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[19px]">domain</span>
+            <span className="material-symbols-outlined text-[var(--router-primary)] text-[19px]">domain</span>
             Gestão de Unidades Operacionais (Filiais)
           </h3>
           <p className="text-xs text-on-surface-variant">
@@ -1386,7 +1386,7 @@ export default function ConfiguracoesView({
         )}
 
         {opSuccess && (
-          <div className="p-3 bg-primary-container/10 border border-primary/20 text-[#3ecf8e] rounded-lg text-xs font-semibold leading-normal">
+          <div className="p-3 bg-[var(--router-primary)]-container/10 border border-primary/20 text-[var(--router-success)] rounded-lg text-xs font-semibold leading-normal">
             {opSuccess}
           </div>
         )}
@@ -1395,7 +1395,7 @@ export default function ConfiguracoesView({
           {/* Add unit form */}
           <div className="bg-surface p-4 rounded-xl border border-outline-variant/60 space-y-4">
             <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5 border-b border-outline-variant/30 pb-2">
-              <span className="material-symbols-outlined text-primary text-[16px]">add_home</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[16px]">add_home</span>
               Adicionar Nova Filial
             </h4>
 
@@ -1431,7 +1431,7 @@ export default function ConfiguracoesView({
 
               <button
                 type="submit"
-                className="w-full py-2 bg-primary hover:bg-primary-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-[var(--router-primary)] hover:bg-[var(--router-primary)]-fixed text-on-primary font-sans text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[15px]">add</span>
                 Cadastrar Unidade
@@ -1458,7 +1458,7 @@ export default function ConfiguracoesView({
                 <tbody className="divide-y divide-outline-variant/40 text-xs">
                   {opUnits.map(unit => (
                     <tr key={unit.code} className="hover:bg-surface-container-low/30 transition-colors">
-                      <td className="p-3 font-mono font-bold text-primary">{unit.code}</td>
+                      <td className="p-3 font-mono font-bold text-[var(--router-primary)]">{unit.code}</td>
                       <td className="p-3">
                         {editingOpCode === unit.code ? (
                           <div className="flex gap-2 items-center">
@@ -1473,7 +1473,7 @@ export default function ConfiguracoesView({
                                 handleUpdateOpName(unit.code, editingOpName);
                                 setEditingOpCode(null);
                               }}
-                              className="text-xs font-bold bg-[#3ecf8e]/10 text-[#3ecf8e] border border-[#3ecf8e]/20 px-2.5 py-1 rounded hover:bg-[#3ecf8e]/20"
+                              className="text-xs font-bold bg-[var(--router-success)]/10 text-[var(--router-success)] border border-[#3ecf8e]/20 px-2.5 py-1 rounded hover:bg-[var(--router-success)]/20"
                             >
                               Salvar
                             </button>
@@ -1493,7 +1493,7 @@ export default function ConfiguracoesView({
                           onClick={() => handleToggleOpUnit(unit.code)}
                           className={`px-2 py-1 text-[10px] uppercase font-bold rounded-full border transition-all ${
                             unit.active
-                              ? 'bg-[#3ecf8e]/10 text-[#3ecf8e] border-[#3ecf8e]/30 hover:bg-[#3ecf8e]/20'
+                              ? 'bg-[var(--router-success)]/10 text-[var(--router-success)] border-[#3ecf8e]/30 hover:bg-[var(--router-success)]/20'
                               : 'bg-error-container/20 text-error border-error/30 hover:bg-error-container/35'
                           }`}
                         >
@@ -1507,7 +1507,7 @@ export default function ConfiguracoesView({
                               setEditingOpCode(unit.code);
                               setEditingOpName(unit.name.includes(' - ') ? unit.name.substring(unit.name.indexOf(' - ') + 3) : unit.name);
                             }}
-                            className="p-1 text-primary hover:bg-primary/10 rounded transition-colors"
+                            className="p-1 text-[var(--router-primary)] hover:bg-[var(--router-primary)]/10 rounded transition-colors"
                             title="Editar Unidade"
                           >
                             <span className="material-symbols-outlined text-[17px]">edit</span>
@@ -1550,7 +1550,7 @@ export default function ConfiguracoesView({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[18px]">verified_user</span>
               Ambiente de Produção e Limpeza do Mock
             </h3>
             <p className="text-xs text-on-surface-variant">
@@ -1657,7 +1657,7 @@ export default function ConfiguracoesView({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#3ecf8e] text-[18px]">database</span>
+              <span className="material-symbols-outlined text-[var(--router-success)] text-[18px]">database</span>
               Gerenciamento de Chaves de Acesso e Sincronização Supabase
             </h3>
             <p className="text-xs text-on-surface-variant">
@@ -1668,8 +1668,8 @@ export default function ConfiguracoesView({
           <div className="flex flex-col sm:items-end gap-1.5">
             <span className="text-[10px] uppercase font-bold tracking-wider text-on-surface-variant">Origem das Chaves:</span>
             {activeSource === 'localStorage' && (
-              <span className="px-2.5 py-1 bg-primary/10 text-primary border border-primary/30 font-bold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
+              <span className="px-2.5 py-1 bg-[var(--router-primary)]/10 text-[var(--router-primary)] border border-primary/30 font-bold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-[var(--router-primary)] rounded-full animate-bounce"></span>
                 Salvo no Browser (localStorage)
               </span>
             )}
@@ -1692,7 +1692,7 @@ export default function ConfiguracoesView({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-surface p-4 rounded-xl border border-outline-variant/60">
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-on-surface flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px] text-primary">vpn_key</span>
+              <span className="material-symbols-outlined text-[16px] text-[var(--router-primary)]">vpn_key</span>
               Credenciais do Banco de Dados
             </h4>
             
@@ -1728,7 +1728,7 @@ export default function ConfiguracoesView({
               <button
                 type="button"
                 onClick={handleSaveActiveCredentials}
-                className="px-3 py-2 bg-primary text-on-primary hover:bg-primary-fixed text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
+                className="px-3 py-2 bg-[var(--router-primary)] text-on-primary hover:bg-[var(--router-primary)]-fixed text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[15px]">save</span>
                 Aplicar e Salvar no Browser
@@ -1738,7 +1738,7 @@ export default function ConfiguracoesView({
                 <button
                   type="button"
                   onClick={handleClearActiveCredentials}
-                  className="px-3 py-2 bg-[#93000a]/10 hover:bg-[#93000a]/20 text-error border border-error/20 text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
+                  className="px-3 py-2 bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 text-error border border-error/20 text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[15px]">delete_sweep</span>
                   Limpar Override Local
@@ -1750,7 +1750,7 @@ export default function ConfiguracoesView({
           <div className="space-y-4 lg:border-l border-outline-variant/50 lg:pl-4 flex flex-col justify-between">
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-on-surface flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-[#3ecf8e]">info</span>
+                <span className="material-symbols-outlined text-[16px] text-[var(--router-success)]">info</span>
                 Como integrar seu Banco de Dados Supabase?
               </h4>
               <p className="text-[11px] text-on-surface-variant leading-relaxed">
@@ -1769,7 +1769,7 @@ export default function ConfiguracoesView({
         {/* Database Sync Controls (Buttons container) */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-on-surface flex items-center gap-1 pb-1">
-            <span className="material-symbols-outlined text-[16px] text-primary">sync</span>
+            <span className="material-symbols-outlined text-[16px] text-[var(--router-primary)]">sync</span>
             Ações de Sincronização do Banco
           </h4>
 
@@ -1779,14 +1779,14 @@ export default function ConfiguracoesView({
               disabled={isTesting}
               className={`px-4 py-2 bg-surface hover:bg-surface-container-high border border-outline-variant text-[11px] font-bold rounded-lg transition-all flex items-center gap-2 ${isTesting ? 'opacity-65 cursor-wait' : ''}`}
             >
-              <span className="material-symbols-outlined text-[15px] text-[#3ecf8e]">quiz</span>
+              <span className="material-symbols-outlined text-[15px] text-[var(--router-success)]">quiz</span>
               {isTesting ? 'Testando...' : 'Testar Conexão API'}
             </button>
 
             <button
               onClick={handleExportToSupabase}
               disabled={isExporting || !customUrl.trim() || !customKey.trim()}
-              className={`px-4 py-2 bg-[#3ecf8e] text-[#001f11] hover:bg-[#32b479] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+              className={`px-4 py-2 bg-[var(--router-success)] text-[var(--router-surface)] hover:bg-[var(--router-success)] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">cloud_upload</span>
               {isExporting ? 'Exportando...' : 'Carga Semente (Exportar Local para Nuvem)'}
@@ -1795,7 +1795,7 @@ export default function ConfiguracoesView({
             <button
               onClick={handleImportFromSupabase}
               disabled={isImporting || !customUrl.trim() || !customKey.trim()}
-              className={`px-4 py-2 bg-primary text-on-primary hover:bg-primary-fixed text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+              className={`px-4 py-2 bg-[var(--router-primary)] text-on-primary hover:bg-[var(--router-primary)]-fixed text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">cloud_download</span>
               {isImporting ? 'Baixando...' : 'Importar Banco de Dados do Supabase'}
@@ -1815,7 +1815,7 @@ export default function ConfiguracoesView({
         {syncLogs.length > 0 && (
           <div className="bg-surface p-4 rounded-lg border border-outline-variant">
             <h4 className="text-xs font-bold text-on-surface mb-2 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#3ecf8e]"></span>
+              <span className="w-2 h-2 rounded-full bg-[var(--router-success)]"></span>
               Console de Sincronização Supabase:
             </h4>
             <div className="space-y-1 font-mono text-[10px] max-h-40 overflow-y-auto">
@@ -1835,7 +1835,7 @@ export default function ConfiguracoesView({
             className="w-full px-4 py-3 bg-surface hover:bg-surface-container-high transition-colors flex justify-between items-center"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-on-surface">
-              <span className="material-symbols-outlined text-primary text-[17px]">terminal</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[17px]">terminal</span>
               Script SQL Setup de Tabelas (PostgreSQL)
             </div>
             <span className="material-symbols-outlined text-on-surface-variant text-[16px]">
@@ -1850,7 +1850,7 @@ export default function ConfiguracoesView({
                 <button
                   type="button"
                   onClick={copyToClipboard}
-                  className="px-2.5 py-1 bg-primary text-on-primary hover:bg-primary-fixed rounded text-[10px] font-bold transition-all flex items-center gap-1"
+                  className="px-2.5 py-1 bg-[var(--router-primary)] text-on-primary hover:bg-[var(--router-primary)]-fixed rounded text-[10px] font-bold transition-all flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[12px]">
                     {sqlCopied ? 'done' : 'content_copy'}
@@ -1898,7 +1898,7 @@ export default function ConfiguracoesView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface p-4 rounded-xl border border-outline-variant/60">
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-primary text-[16px]">info</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[16px]">info</span>
               Como Funciona a Sincronização?
             </h4>
             <p className="text-[11px] text-on-surface-variant leading-relaxed">
@@ -1926,7 +1926,7 @@ export default function ConfiguracoesView({
         {/* Database Sync Controls (Buttons container) */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-on-surface flex items-center gap-1 pb-1">
-            <span className="material-symbols-outlined text-[16px] text-primary">touch_app</span>
+            <span className="material-symbols-outlined text-[16px] text-[var(--router-primary)]">touch_app</span>
             Ações Rápidas de Sincronização
           </h4>
 
@@ -1934,7 +1934,7 @@ export default function ConfiguracoesView({
             <button
               onClick={handleExportOperationalState}
               disabled={isOperationalSyncing}
-              className={`px-4 py-2.5 bg-[#efb810] text-[#1E1B1B] hover:bg-[#efb810]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+              className={`px-4 py-2.5 bg-[var(--router-warning)] text-[#1E1B1B] hover:bg-[var(--router-warning)]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
               {isOperationalSyncing ? 'Enviando...' : 'Enviar operação para nuvem'}
@@ -1943,7 +1943,7 @@ export default function ConfiguracoesView({
             <button
               onClick={handleImportOperationalState}
               disabled={isOperationalSyncing}
-              className={`px-4 py-2.5 bg-primary text-on-primary hover:bg-primary-fixed text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+              className={`px-4 py-2.5 bg-[var(--router-primary)] text-on-primary hover:bg-[var(--router-primary)]-fixed text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">arrow_downward</span>
               {isOperationalSyncing ? 'Baixando...' : 'Baixar operação da nuvem'}
@@ -1952,7 +1952,7 @@ export default function ConfiguracoesView({
             <button
               onClick={handleSyncOperationalState}
               disabled={isOperationalSyncing}
-              className={`px-4 py-2.5 bg-[#4d8eff] text-black hover:bg-[#4d8eff]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
+              className={`px-4 py-2.5 bg-[var(--router-primary)] text-black hover:bg-[var(--router-primary)]/80 text-[11px] font-bold rounded-lg transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none`}
             >
               <span className="material-symbols-outlined text-[15px]">sync</span>
               {isOperationalSyncing ? 'Sincronizando...' : 'Sincronizar operação agora'}
@@ -1977,7 +1977,7 @@ export default function ConfiguracoesView({
         {operationalSyncDetails.length > 0 && (
           <div className="bg-surface p-4 rounded-lg border border-outline-variant">
             <h4 className="text-xs font-bold text-on-surface mb-2 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#efb810]"></span>
+              <span className="w-2 h-2 rounded-full bg-[var(--router-warning)]"></span>
               Console de Sincronização Operacional:
             </h4>
             <div className="space-y-1 font-mono text-[10px] max-h-40 overflow-y-auto">
@@ -1996,7 +1996,7 @@ export default function ConfiguracoesView({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-outline-variant/40">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#4d8eff] text-[18px]">analytics</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-[18px]">analytics</span>
               Base de Dados Operacional Local (IndexedDB)
             </h3>
             <p className="text-xs text-on-surface-variant">
@@ -2004,8 +2004,8 @@ export default function ConfiguracoesView({
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#101524] border border-[#4d8eff]/20 text-[10px] font-bold text-[#4d8eff] tracking-wider uppercase">
-            <span className="w-1.5 h-1.5 bg-[#4d8eff] rounded-full animate-pulse"></span>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--router-surface)] border border-[var(--router-primary)]/20 text-[10px] font-bold text-[var(--router-primary)] tracking-wider uppercase">
+            <span className="w-1.5 h-1.5 bg-[var(--router-primary)] rounded-full animate-pulse"></span>
             Offline-First Protegido
           </div>
         </div>
@@ -2037,12 +2037,12 @@ export default function ConfiguracoesView({
             <span className="text-lg font-extrabold font-mono text-[#dae2fd]">{dbStats.romaneios}</span>
           </div>
 
-          <div className="p-3 bg-surface rounded-xl border border-primary/20 bg-primary/5 text-left space-y-1 shadow-inner">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">Fila Sync (Total)</span>
-            <span className="text-lg font-extrabold font-mono text-primary flex items-center gap-1">
+          <div className="p-3 bg-surface rounded-xl border border-primary/20 bg-[var(--router-primary)]/5 text-left space-y-1 shadow-inner">
+            <span className="text-[10px] font-bold text-[var(--router-primary)] uppercase tracking-wider block">Fila Sync (Total)</span>
+            <span className="text-lg font-extrabold font-mono text-[var(--router-primary)] flex items-center gap-1">
               <span>{dbStats.syncQueue}</span>
               {dbStats.pendingSyncs > 0 && (
-                <span className="text-[9px] bg-primary text-on-primary font-bold px-1.5 py-0.5 rounded-full animate-bounce">
+                <span className="text-[9px] bg-[var(--router-primary)] text-on-primary font-bold px-1.5 py-0.5 rounded-full animate-bounce">
                   {dbStats.pendingSyncs} pend
                 </span>
               )}
@@ -2054,7 +2054,7 @@ export default function ConfiguracoesView({
         <div className="space-y-3 bg-surface p-4 rounded-xl border border-outline-variant/60">
           <div className="flex justify-between items-center pb-1">
             <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px] text-primary">dynamic_feed</span>
+              <span className="material-symbols-outlined text-[16px] text-[var(--router-primary)]">dynamic_feed</span>
               Fila Transacional Recente (sync_queue)
             </h4>
             <span className="text-[10px] font-mono text-on-surface-variant">Armazenamento sob-demanda Dexie</span>
@@ -2068,7 +2068,7 @@ export default function ConfiguracoesView({
           ) : (
             <div className="overflow-x-auto rounded-lg border border-outline-variant/40 bg-surface-container-low/40">
               <table className="w-full text-xs text-left">
-                <thead className="bg-[#101524] text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/40">
+                <thead className="bg-[var(--router-surface)] text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/40">
                   <tr>
                     <th className="px-3.5 py-2">ID</th>
                     <th className="px-3.5 py-2">Entidade</th>
@@ -2081,12 +2081,12 @@ export default function ConfiguracoesView({
                   {syncQueueItems.map((item, index) => (
                     <tr key={index} className="hover:bg-surface/50 transition-colors">
                       <td className="px-3.5 py-2 text-on-surface-variant">#{item.id}</td>
-                      <td className="px-3.5 py-2 font-semibold text-primary uppercase">{item.entity}</td>
+                      <td className="px-3.5 py-2 font-semibold text-[var(--router-primary)] uppercase">{item.entity}</td>
                       <td className="px-3.5 py-2">
                         <span className={`px-2 py-0.5 rounded font-sans font-bold text-[9px] ${
-                          item.operation === 'CREATE' ? 'bg-[#3ecf8e]/10 text-[#3ecf8e]' :
+                          item.operation === 'CREATE' ? 'bg-[var(--router-success)]/10 text-[var(--router-success)]' :
                           item.operation === 'DELETE' ? 'bg-error/10 text-error' :
-                          'bg-primary/10 text-primary'
+                          'bg-[var(--router-primary)]/10 text-[var(--router-primary)]'
                         }`}>
                           {item.operation}
                         </span>
@@ -2094,9 +2094,9 @@ export default function ConfiguracoesView({
                       <td className="px-3.5 py-2 text-on-surface-variant">{new Date(item.created_at).toLocaleTimeString()}</td>
                       <td className="px-3.5 py-2">
                         <span className={`inline-flex items-center gap-1 font-sans text-[10px] font-bold ${
-                          item.status === 'completed' ? 'text-[#3ecf8e]' : 'text-primary'
+                          item.status === 'completed' ? 'text-[var(--router-success)]' : 'text-[var(--router-primary)]'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'completed' ? 'bg-[#3ecf8e]' : 'bg-primary animate-pulse'}`}></span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'completed' ? 'bg-[var(--router-success)]' : 'bg-[var(--router-primary)] animate-pulse'}`}></span>
                           {item.status === 'completed' ? 'Consolidado na nuvem' : 'Salvo localmente'}
                         </span>
                       </td>
@@ -2119,7 +2119,7 @@ export default function ConfiguracoesView({
             {dbStats.syncQueue > 0 && (
               <button
                 onClick={handleClearSyncQueue}
-                className="px-3 py-1.5 bg-[#93000a]/10 hover:bg-[#93000a]/20 border border-error/20 rounded-lg text-[10px] font-mono text-error font-semibold flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-[var(--router-danger)]/10 hover:bg-[var(--router-danger)]/20 border border-error/20 rounded-lg text-[10px] font-mono text-error font-semibold flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[14px]">cleaning_services</span>
                 Limpar Fila Concluída
@@ -2146,7 +2146,7 @@ export default function ConfiguracoesView({
               <button
                 type="button"
                 onClick={() => setAlertModal(null)}
-                className="px-4 py-1.5 bg-primary text-on-primary hover:bg-primary-fixed text-xs font-bold rounded-lg transition-colors border border-transparent"
+                className="px-4 py-1.5 bg-[var(--router-primary)] text-on-primary hover:bg-[var(--router-primary)]-fixed text-xs font-bold rounded-lg transition-colors border border-transparent"
               >
                 Entendido
               </button>
@@ -2160,7 +2160,7 @@ export default function ConfiguracoesView({
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-surface border border-outline-variant rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-primary text-3xl shrink-0 font-light">help</span>
+              <span className="material-symbols-outlined text-[var(--router-primary)] text-3xl shrink-0 font-light">help</span>
               <div className="space-y-1">
                 <h3 className="font-bold text-on-surface text-sm sm:text-base">{confirmModal.title}</h3>
                 <p className="text-[11px] sm:text-xs text-on-surface-variant leading-relaxed">
@@ -2179,7 +2179,7 @@ export default function ConfiguracoesView({
               <button
                 type="button"
                 onClick={confirmModal.onConfirm}
-                className="px-4 py-1.5 bg-[#3ecf8e] text-[#001f11] hover:bg-[#32b479] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98]"
+                className="px-4 py-1.5 bg-[var(--router-success)] text-[var(--router-surface)] hover:bg-[var(--router-success)] text-[11px] font-bold rounded-lg transition-transform active:scale-[0.98]"
               >
                 Confirmar
               </button>

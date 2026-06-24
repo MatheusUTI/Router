@@ -108,23 +108,23 @@ export default function OperationalNoticesBanner({
         return {
           bannerBg: 'bg-[var(--router-surface)] border-red-200 dark:border-red-900 shadow-[var(--router-shadow)]',
           badgeBg: 'router-badge router-badge-danger',
-          textColor: 'text-red-800 dark:text-red-400',
+          textColor: 'text-[var(--router-danger)]',
           iconColor: 'text-[var(--router-danger)]',
           borderL: 'border-l-[4px] border-l-[var(--router-danger)]'
         };
       case 'WARNING':
         return {
-          bannerBg: 'bg-[var(--router-surface)] border-amber-200 dark:border-amber-900 shadow-[var(--router-shadow)]',
+          bannerBg: 'bg-[var(--router-surface)] border-[var(--router-warning)]/30 shadow-[var(--router-shadow)]',
           badgeBg: 'router-badge router-badge-warning',
-          textColor: 'text-amber-800 dark:text-amber-400',
+          textColor: 'text-[var(--router-warning)]',
           iconColor: 'text-[var(--router-warning)]',
           borderL: 'border-l-[4px] border-l-[var(--router-warning)]'
         };
       default:
         return {
-          bannerBg: 'bg-[var(--router-surface)] border-blue-200 dark:border-blue-900 shadow-[var(--router-shadow)]',
+          bannerBg: 'bg-[var(--router-surface)] border-[var(--router-info)]/30 shadow-[var(--router-shadow)]',
           badgeBg: 'router-badge router-badge-info',
-          textColor: 'text-blue-800 dark:text-blue-400',
+          textColor: 'text-[var(--router-info)]',
           iconColor: 'text-[var(--router-info)]',
           borderL: 'border-l-[4px] border-l-[var(--router-info)]'
         };
@@ -164,7 +164,7 @@ export default function OperationalNoticesBanner({
             type="button" 
             onClick={fetchNotices}
             disabled={loading}
-            className="p-1 text-slate-405 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 rounded transition"
+            className="p-1 text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:bg-[var(--router-surface-2)] rounded transition"
             title="Recarregar Calendário"
             id="notices-refresh-button"
           >
@@ -175,7 +175,7 @@ export default function OperationalNoticesBanner({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-405 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 rounded transition"
+            className="p-1 text-[var(--router-text-muted)] hover:text-[var(--router-text)] hover:bg-[var(--router-surface-2)] rounded transition"
             title="Fechar"
             id="close-notices-toast"
           >
@@ -191,7 +191,7 @@ export default function OperationalNoticesBanner({
         </p>
         
         {notices.length > 1 && (
-          <p className="mt-1 font-sans text-[10px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 font-sans text-[10px] text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)]">
             e mais {notices.length - 1} alertas para os próximos 5 dias
           </p>
         )}
@@ -251,9 +251,9 @@ export default function OperationalNoticesBanner({
 
                 <div className="flex items-start gap-1 min-w-0 mt-0.5">
                   {!notice.route && notice.city !== 'GERAL' ? (
-                    <MapPin className="w-2.5 h-2.5 shrink-0 text-slate-400 dark:text-slate-500 mt-0.5" />
+                    <MapPin className="w-2.5 h-2.5 shrink-0 text-[var(--router-text-muted)] dark:text-[var(--router-text-muted)] mt-0.5" />
                   ) : null}
-                  <p className="font-sans text-[10px] leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
+                  <p className="font-sans text-[10px] leading-relaxed text-[var(--router-text-soft)] dark:text-[var(--router-text-soft)] font-medium">
                     {notice.message}
                   </p>
                 </div>
