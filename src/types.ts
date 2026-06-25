@@ -70,6 +70,19 @@ export interface Ctrc {
   pracaHub?: string;
   importBatchId?: string;
   planningDate?: string;
+
+  // Operational Flow Classification
+  originUnit?: string;
+  destinationUnit?: string;
+  responsibleUnit?: string;
+  flowType?: 'LOCAL_DELIVERY' | 'TRANSFER_OUT' | 'TRANSFER_IN_DELIVERY' | 'OTHER_UNIT' | 'UNKNOWN';
+  isLocalDelivery?: boolean;
+  isTransferOut?: boolean;
+  isTransferIn?: boolean;
+  isDeliveryForUserUnit?: boolean;
+  lastOccurrenceDate?: string;
+  forecastDeliveryDate?: string;
+  realDeliveryDate?: string;
 }
 
 export interface Expense {

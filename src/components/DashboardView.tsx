@@ -1,13 +1,16 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Ctrc, CriticClient } from "../types";
+import { Ctrc, CriticClient, AppUser } from "../types";
 import { calculateDashboardMetrics } from "../services/dashboardMetricsService";
 import { shipmentSupabaseRepository } from "../infrastructure/supabase/repositories/shipmentSupabaseRepository";
+import { DEFAULT_OPERATIONAL_UNIT } from "../constants/operationalUnits";
+import { classifyOperationalFlow } from "../services/operationalFlowClassifier";
 
 interface DashboardProps {
   onNavigateToView: (view: "importacao" | "frota" | "roteirizacao") => void;
   searchValue: string;
   allImportedCtrcs?: Ctrc[];
   criticClients?: CriticClient[];
+  adminUser?: AppUser | null;
 }
 
 export default function DashboardView({
@@ -15,7 +18,9 @@ export default function DashboardView({
   searchValue,
   allImportedCtrcs = [],
   criticClients = [],
+  adminUser,
 }: DashboardProps) {
+  const userUnit = (adminUser?.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
   const [supabaseCtrcs, setSupabaseCtrcs] = useState<Ctrc[] | null>(null);
   const [isFetchingSupabase, setIsFetchingSupabase] = useState(true);
 
@@ -45,7 +50,7 @@ export default function DashboardView({
               s.forecast_delivery_date ||
               (s as any).created_at ||
               undefined;
-            return {
+            const baseCtrc: Ctrc = {
               id: s.raw_payload?.id || `${s.ctrc_number}`,
               destinatario: s.recipient_name || "",
               cidade: s.destination_city || "",
@@ -61,6 +66,7 @@ export default function DashboardView({
               // Re-inject the raw payload safely
               ...(s.raw_payload || {}),
             };
+            return classifyOperationalFlow(baseCtrc, userUnit);
           });
 
           console.log(
@@ -88,6 +94,7 @@ export default function DashboardView({
   );
 
   const activeCtrcs = useMemo(() => {
+    let ctrcsToUse = supabaseCtrcs !== null ? supabaseCtrcs : allImportedCtrcs;
     // If Supabase returned an empty array, but we have local data, fallback to local data.
     if (
       supabaseCtrcs &&
@@ -97,14 +104,18 @@ export default function DashboardView({
       console.log(
         "[Dashboard Debug] Fallback automático para IndexedDB acionado (Supabase vazio)",
       );
-      return allImportedCtrcs;
+      ctrcsToUse = allImportedCtrcs;
     }
-    return supabaseCtrcs !== null ? supabaseCtrcs : allImportedCtrcs;
-  }, [supabaseCtrcs, allImportedCtrcs]);
+
+    // Ensure all are classified, especially if loaded from old cache
+    return ctrcsToUse.map((c) =>
+      c.flowType ? c : classifyOperationalFlow({ ...c }, userUnit),
+    );
+  }, [supabaseCtrcs, allImportedCtrcs, userUnit]);
 
   const metrics = useMemo(() => {
-    return calculateDashboardMetrics(activeCtrcs, criticNames);
-  }, [activeCtrcs, criticNames]);
+    return calculateDashboardMetrics(activeCtrcs, criticNames, { userUnit });
+  }, [activeCtrcs, criticNames, userUnit]);
 
   const {
     operationToday,
@@ -171,6 +182,14 @@ export default function DashboardView({
           <p className="text-xs text-[var(--router-text-muted)] mt-1 max-w-2xl">
             Visão consolidada da operação baseada no histórico de importação.
           </p>
+        </div>
+        <div className="flex items-center justify-center bg-[var(--router-surface-2)] border border-[var(--router-border)] px-4 py-2 rounded-lg">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--router-text-muted)] mr-2">
+            Filial Analisada:
+          </span>
+          <span className="text-sm font-mono font-bold text-[var(--router-primary)] bg-[var(--router-primary)]/10 px-2 py-0.5 rounded shadow-sm">
+            {userUnit}
+          </span>
         </div>
       </div>
 
