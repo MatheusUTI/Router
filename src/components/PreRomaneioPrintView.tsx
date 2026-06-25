@@ -153,8 +153,13 @@ export function PreRomaneioPrintView({ preRomaneios, curvaAClients, resolvedCtrc
                           <td className={`px-1 pb-0 uppercase truncate ${mainTextClass}`}>
                             {ctrc.destinatario || '—'}
                           </td>
-                          <td className="px-1 pb-0 uppercase truncate">
-                            {ctrc.bairro || ''}
+                          <td className="px-1 pb-0 uppercase">
+                            <div className="truncate">{ctrc.bairro || ''}</div>
+                            {ctrc.deliveryAddress && (
+                              <div className="text-[9px] text-gray-600 truncate italic font-normal mt-0.5">
+                                End.: {ctrc.deliveryAddress}
+                              </div>
+                            )}
                           </td>
                         </tr>
 

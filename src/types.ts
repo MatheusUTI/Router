@@ -71,6 +71,16 @@ export interface Ctrc {
   importBatchId?: string;
   planningDate?: string;
 
+  // Delivery Address Fields
+  recipientAddress?: string;
+  recipientNeighborhood?: string;
+  deliveryPlace?: string;
+  localDeliveryAddress?: string;
+  localDeliveryNeighborhood?: string;
+  deliveryAddress?: string;
+  deliveryNeighborhood?: string;
+  deliveryCity?: string;
+
   // Subcontract Fields
   originSeries?: string;
   isSubcontract?: boolean;

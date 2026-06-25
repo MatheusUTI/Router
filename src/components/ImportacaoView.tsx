@@ -65,6 +65,12 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       descricao_ocorr: '',
       localizacao: '',
       realDeliveryDate: '',
+      recipientAddress: '',
+      recipientNeighborhood: '',
+      deliveryPlace: '',
+      localDeliveryAddress: '',
+      localDeliveryNeighborhood: '',
+      deliveryCity: '',
     };
   });
 
@@ -199,6 +205,12 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       descricao_ocorr: '',
       localizacao: '',
       realDeliveryDate: '',
+      recipientAddress: '',
+      recipientNeighborhood: '',
+      deliveryPlace: '',
+      localDeliveryAddress: '',
+      localDeliveryNeighborhood: '',
+      deliveryCity: '',
     };
 
     extractedHeaders.forEach((h) => {
@@ -401,6 +413,20 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ) {
         newMappings.realDeliveryDate = h;
       }
+      // 17. ADRESS FIELDS
+      else if (lower === 'endereco do destinatario' || lower === 'endereço do destinatario') {
+        newMappings.recipientAddress = h;
+      } else if (lower === 'bairro do destinatario') {
+        newMappings.recipientNeighborhood = h;
+      } else if (lower === 'local de entrega') {
+        newMappings.deliveryPlace = h;
+      } else if (lower === 'endereco' || lower === 'endereço') {
+        newMappings.localDeliveryAddress = h;
+      } else if (lower === 'bairro') {
+        newMappings.localDeliveryNeighborhood = h;
+      } else if (lower === 'cidade de entrega') {
+        newMappings.deliveryCity = h;
+      }
     });
 
     setMappings(newMappings);
@@ -427,6 +453,12 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       descricao_ocorr: '',
       localizacao: '',
       realDeliveryDate: '',
+      recipientAddress: '',
+      recipientNeighborhood: '',
+      deliveryPlace: '',
+      localDeliveryAddress: '',
+      localDeliveryNeighborhood: '',
+      deliveryCity: '',
     };
     setMappings(cleared);
     localStorage.removeItem('rota_operational_saved_layout_mapping');
@@ -509,6 +541,23 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     const descOcoIdx = mappings.descricao_ocorr ? columnHeaders.indexOf(mappings.descricao_ocorr) : -1;
     const locIdx = mappings.localizacao ? columnHeaders.indexOf(mappings.localizacao) : -1;
     const realDelIdx = mappings.realDeliveryDate ? columnHeaders.indexOf(mappings.realDeliveryDate) : -1;
+    
+    // Address Fields Indices
+    const recAddrIdx = mappings.recipientAddress ? columnHeaders.indexOf(mappings.recipientAddress) : -1;
+    const recNeighIdx = mappings.recipientNeighborhood ? columnHeaders.indexOf(mappings.recipientNeighborhood) : -1;
+    const delPlaceIdx = mappings.deliveryPlace ? columnHeaders.indexOf(mappings.deliveryPlace) : -1;
+    const locDelAddrIdx = mappings.localDeliveryAddress ? columnHeaders.indexOf(mappings.localDeliveryAddress) : -1;
+    const locDelNeighIdx = mappings.localDeliveryNeighborhood ? columnHeaders.indexOf(mappings.localDeliveryNeighborhood) : -1;
+    const delCityIdx = mappings.deliveryCity ? columnHeaders.indexOf(mappings.deliveryCity) : -1;
+
+    // Address Debug counters
+    let debugTotal = 0;
+    let debugRecNeigh = 0;
+    let debugLocNeigh = 0;
+    let debugRecAddr = 0;
+    let debugLocAddr = 0;
+    const sampleAddresses: string[] = [];
+    const sampleNeighborhoods: string[] = [];
 
     // We collect data rows lying strictly BELOW the selected header row line
     const dataLines = lines.slice(headerLineIndex + 1);
@@ -544,6 +593,28 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       const locVal = locIdx !== -1 ? cells[locIdx] : '';
       const realDelVal = realDelIdx !== -1 ? cells[realDelIdx] : '';
 
+      // Address Fields
+      const recAddrVal = recAddrIdx !== -1 ? cells[recAddrIdx] : '';
+      const recNeighVal = recNeighIdx !== -1 ? cells[recNeighIdx] : '';
+      const delPlaceVal = delPlaceIdx !== -1 ? cells[delPlaceIdx] : '';
+      const locDelAddrVal = locDelAddrIdx !== -1 ? cells[locDelAddrIdx] : '';
+      const locDelNeighVal = locDelNeighIdx !== -1 ? cells[locDelNeighIdx] : '';
+      const delCityVal = delCityIdx !== -1 ? cells[delCityIdx] : '';
+
+      // Derived Address Logic
+      const deliveryAddress = locDelAddrVal || recAddrVal || undefined;
+      const deliveryNeighborhood = locDelNeighVal || recNeighVal || undefined;
+      const finalDeliveryCity = delCityVal || cityVal || 'Ponto de Distribuição';
+
+      // Address Debugging
+      debugTotal++;
+      if (recNeighVal) debugRecNeigh++;
+      if (locDelNeighVal) debugLocNeigh++;
+      if (recAddrVal) debugRecAddr++;
+      if (locDelAddrVal) debugLocAddr++;
+      if (deliveryAddress && sampleAddresses.length < 5) sampleAddresses.push(deliveryAddress);
+      if (deliveryNeighborhood && sampleNeighborhoods.length < 5) sampleNeighborhoods.push(deliveryNeighborhood);
+
       // Normalize date: if empty, "-", "0" or invalid, treat as undefined
       const cleanRealDel = (realDelVal && realDelVal !== '-' && realDelVal !== '0') ? realDelVal : undefined;
 
@@ -554,8 +625,8 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       results.push({
         id: idVal ? idVal : `CTRC #${90400 + idx}`,
         destinatario: destVal || 'Destinatário Desconhecido',
-        cidade: cityVal || 'Ponto de Distribuição',
-        cidade_ent: cityVal || undefined,
+        cidade: finalDeliveryCity,
+        cidade_ent: finalDeliveryCity,
         pracaDestino: pracaDestinoVal || undefined,
         weight: weightVal || 150,
         volume: volumesVal || 2,
@@ -580,8 +651,28 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         originSeries,
         isSubcontract,
         countsForDeliveryPerformance,
+        // Delivery Address Fields
+        recipientAddress: recAddrVal || undefined,
+        recipientNeighborhood: recNeighVal || undefined,
+        deliveryPlace: delPlaceVal || undefined,
+        localDeliveryAddress: locDelAddrVal || undefined,
+        localDeliveryNeighborhood: locDelNeighVal || undefined,
+        deliveryAddress,
+        deliveryNeighborhood,
+        deliveryCity: delCityVal || undefined,
+        bairro: deliveryNeighborhood, // Also map to default bairro for compatibility
       });
     });
+
+    console.group('[Import Address Debug]');
+    console.log('Total importado:', debugTotal);
+    console.log('Total com bairro de destinatário:', debugRecNeigh);
+    console.log('Total com bairro de entrega:', debugLocNeigh);
+    console.log('Total com endereço destinatário:', debugRecAddr);
+    console.log('Total com endereço de entrega:', debugLocAddr);
+    console.log('Exemplos de deliveryAddress:', sampleAddresses);
+    console.log('Exemplos de deliveryNeighborhood:', sampleNeighborhoods);
+    console.groupEnd();
 
     return results;
   };
@@ -694,6 +785,12 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     { key: 'descricao_ocorr', label: 'Descrição da Ocorrência', required: false },
     { key: 'localizacao', label: 'Localização Física Atual', required: false },
     { key: 'realDeliveryDate', label: 'Data da Entrega Realizada', required: false },
+    { key: 'recipientAddress', label: 'Endereço do Destinatário', required: false },
+    { key: 'recipientNeighborhood', label: 'Bairro do Destinatário', required: false },
+    { key: 'deliveryPlace', label: 'Local de Entrega', required: false },
+    { key: 'localDeliveryAddress', label: 'Endereço (Entrega)', required: false },
+    { key: 'localDeliveryNeighborhood', label: 'Bairro (Entrega)', required: false },
+    { key: 'deliveryCity', label: 'Cidade de Entrega', required: false },
   ];
 
   return (
