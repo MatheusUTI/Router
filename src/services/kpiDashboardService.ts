@@ -53,8 +53,9 @@ export function calculateKpiMetrics(
     dailyMap.set(dateStr, {
       date: dateStr,
       previstas: 0,
-      noPrazo: 0,
-      atrasadas: 0,
+      entreguesNoPrazo: 0,
+      entreguesForaDoPrazo: 0,
+      pendentes: 0,
       performance: 0,
     });
     current.setDate(current.getDate() + 1);
@@ -62,9 +63,9 @@ export function calculateKpiMetrics(
 
   const executiveSummary: ExecutiveSummary = {
     previstas: 0,
-    noPrazo: 0,
+    entregues: 0,
+    pendentes: 0,
     atrasadas: 0,
-    performance: 0,
   };
 
   const backlogDistribution: BacklogDistribution = {
@@ -82,9 +83,15 @@ export function calculateKpiMetrics(
     clientesCriticosPendentes: 0,
     vencidos: 0,
     recebidosNoDiaDoPrazo: 0,
+    entregasPrevistasHojeNaoRoteirizadas: 0,
   };
 
   let excludedSubcontracts = 0;
+  
+  let totalEntreguesNoPrazo = 0;
+  let totalPendentesDentroDoPrazo = 0;
+  let totalPendentesAtrasados = 0;
+  let totalEntreguesForaDoPrazo = 0;
 
   for (const ctrc of ctrcs) {
     const destUnit = ctrc.destinationUnit || ctrc.unid || ctrc.setor;
@@ -111,6 +118,12 @@ export function calculateKpiMetrics(
       if (realDel) realDeliveryStart = startOfDay(realDel);
     }
 
+    // Classifications
+    const isEntregueNoPrazo = isDelivered && realDeliveryStart! <= forecastStart;
+    const isEntregueForaDoPrazo = isDelivered && realDeliveryStart! > forecastStart;
+    const isPendenteDentroDoPrazo = !isDelivered && forecastStart >= today;
+    const isPendenteAtrasado = !isDelivered && forecastStart < today;
+
     // ----------------------------
     // 1. Performance KPIs (Filtered by period)
     // ----------------------------
@@ -119,31 +132,23 @@ export function calculateKpiMetrics(
     if (isWithinPeriod) {
       const dateStr = formatDateToLocalString(forecastStart);
       const dayData = dailyMap.get(dateStr);
-      
-      let wasOnTime = false;
-      let wasOverdue = false;
-
-      if (isDelivered && realDeliveryStart) {
-        if (realDeliveryStart <= forecastStart) {
-          wasOnTime = true;
-        } else {
-          wasOverdue = true;
-        }
-      } else {
-        if (forecastStart < today) {
-          wasOverdue = true;
-        }
-      }
 
       if (dayData) {
         dayData.previstas++;
-        if (wasOnTime) dayData.noPrazo++;
-        if (wasOverdue) dayData.atrasadas++;
+        if (isEntregueNoPrazo) dayData.entreguesNoPrazo++;
+        if (isEntregueForaDoPrazo) dayData.entreguesForaDoPrazo++;
+        if (isPendenteDentroDoPrazo || isPendenteAtrasado) dayData.pendentes++;
       }
 
       executiveSummary.previstas++;
-      if (wasOnTime) executiveSummary.noPrazo++;
-      if (wasOverdue) executiveSummary.atrasadas++;
+      if (isDelivered) executiveSummary.entregues++;
+      if (!isDelivered) executiveSummary.pendentes++;
+      if (isPendenteAtrasado) executiveSummary.atrasadas++;
+
+      if (isEntregueNoPrazo) totalEntreguesNoPrazo++;
+      if (isPendenteDentroDoPrazo) totalPendentesDentroDoPrazo++;
+      if (isPendenteAtrasado) totalPendentesAtrasados++;
+      if (isEntregueForaDoPrazo) totalEntreguesForaDoPrazo++;
     }
 
     // ----------------------------
@@ -157,11 +162,11 @@ export function calculateKpiMetrics(
 
       if (diasAtraso > 15) {
         backlogDistribution.acima15Dias++;
-      } else if (diasAtraso > 7 && diasAtraso <= 15) {
+      } else if (diasAtraso >= 8 && diasAtraso <= 15) {
         backlogDistribution.ate15Dias++;
-      } else if (diasAtraso > 2 && diasAtraso <= 7) {
+      } else if (diasAtraso >= 3 && diasAtraso <= 7) {
         backlogDistribution.ate7Dias++;
-      } else if (diasAtraso > 0 && diasAtraso <= 2) {
+      } else if (diasAtraso >= 1 && diasAtraso <= 2) {
         backlogDistribution.ate2Dias++;
       } else if (forecastStart.getTime() === today.getTime()) {
         backlogDistribution.dentroDoPrazo++;
@@ -178,7 +183,13 @@ export function calculateKpiMetrics(
       ) {
         alerts.clientesCriticosPendentes++;
       }
-      if (forecastStart < today) alerts.vencidos++;
+      if (forecastStart.getTime() === today.getTime()) alerts.vencidos++;
+      
+      // Entregas previstas para hoje ainda não roteirizadas
+      // A CTRC is active for routing if it hasn't been routed yet.
+      if (forecastStart.getTime() === today.getTime() && ctrc.isActiveForRouting === true) {
+        alerts.entregasPrevistasHojeNaoRoteirizadas++;
+      }
     }
     
     // SLA Recebimento / Recebidos no dia do prazo
@@ -193,14 +204,26 @@ export function calculateKpiMetrics(
     }
   }
 
-  // Calculate percentages
-  if (executiveSummary.previstas > 0) {
-    executiveSummary.performance = (executiveSummary.noPrazo / executiveSummary.previstas) * 100;
-  }
+  // Calculate Operational Projection
+  const currentPerformance = executiveSummary.previstas > 0 ? (totalEntreguesNoPrazo / executiveSummary.previstas) * 100 : 0;
+  const projectedPerformance = executiveSummary.previstas > 0 ? ((totalEntreguesNoPrazo + totalPendentesDentroDoPrazo) / executiveSummary.previstas) * 100 : 0;
+  const goalGap = projectedPerformance - DEFAULT_OPERATIONAL_GOAL;
+  
+  // deliveriesNeededForGoal: How many deliveries in total are needed to reach the goal
+  const deliveriesNeededTotal = Math.ceil((DEFAULT_OPERATIONAL_GOAL / 100) * executiveSummary.previstas);
+  const deliveriesNeededForGoal = Math.max(0, deliveriesNeededTotal - totalEntreguesNoPrazo);
+
+  const operationalProjection = {
+    currentPerformance,
+    projectedPerformance,
+    goalGap,
+    deliveriesNeededForGoal,
+    riskCtrcs: totalPendentesAtrasados,
+  };
 
   const dailyPerformance = Array.from(dailyMap.values()).map(day => {
     if (day.previstas > 0) {
-      day.performance = (day.noPrazo / day.previstas) * 100;
+      day.performance = (day.entreguesNoPrazo / day.previstas) * 100;
     }
     return day;
   });
@@ -208,19 +231,21 @@ export function calculateKpiMetrics(
   // Sort daily
   dailyPerformance.sort((a, b) => new Date(a.date.split("/").reverse().join("-")).getTime() - new Date(b.date.split("/").reverse().join("-")).getTime());
 
-  console.group('[KPI Dashboard Debug]');
-  console.log('Filial:', userUnit);
-  console.log('Período:', formatDateToLocalString(startObj), 'até', formatDateToLocalString(endObj));
+  console.group('[Predictive KPI Debug]');
   console.log('Previstas:', executiveSummary.previstas);
-  console.log('No Prazo:', executiveSummary.noPrazo);
-  console.log('Atrasadas:', executiveSummary.atrasadas);
-  console.log('Performance:', executiveSummary.performance.toFixed(2) + '%');
-  console.log('Backlog:', backlogDistribution.total);
-  console.log('Subcontratos Excluídos:', excludedSubcontracts);
+  console.log('Entregues no Prazo:', totalEntreguesNoPrazo);
+  console.log('Entregues Fora do Prazo:', totalEntreguesForaDoPrazo);
+  console.log('Pendentes:', executiveSummary.pendentes);
+  console.log('Pendentes Atrasados:', totalPendentesAtrasados);
+  console.log('Performance Atual:', currentPerformance.toFixed(2) + '%');
+  console.log('Performance Projetada:', projectedPerformance.toFixed(2) + '%');
+  console.log('Gap da Meta:', goalGap.toFixed(2) + '%');
+  console.log('CTRCs em Risco:', operationalProjection.riskCtrcs);
   console.groupEnd();
 
   return {
     executiveSummary,
+    operationalProjection,
     dailyPerformance,
     backlogDistribution,
     alerts,

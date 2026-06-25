@@ -140,6 +140,7 @@ export default function DashboardView({
 
   const {
     executiveSummary,
+    operationalProjection,
     dailyPerformance,
     backlogDistribution,
     alerts,
@@ -301,14 +302,27 @@ export default function DashboardView({
 
         <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">No Prazo</span>
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Entregues</span>
             <span className="material-symbols-outlined text-[18px] text-emerald-400">check_circle</span>
           </div>
           <div>
             <div className="text-3xl font-mono font-bold tracking-tight">
-              {executiveSummary.noPrazo}
+              {executiveSummary.entregues}
             </div>
-            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Entregas realizadas até a previsão</p>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Total efetivamente entregue</p>
+          </div>
+        </div>
+
+        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Pendentes</span>
+            <span className="material-symbols-outlined text-[18px] text-amber-400">pending_actions</span>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold tracking-tight">
+              {executiveSummary.pendentes}
+            </div>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Sem data de entrega realizada</p>
           </div>
         </div>
 
@@ -321,22 +335,25 @@ export default function DashboardView({
             <div className="text-3xl font-mono font-bold tracking-tight">
               {executiveSummary.atrasadas}
             </div>
-            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Entregues fora do prazo ou vencidas</p>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Pendentes com prazo vencido</p>
           </div>
         </div>
+      </div>
 
+      {/* Projeção Operacional */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Performance %</span>
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Performance Atual</span>
             <span className="material-symbols-outlined text-[18px] text-purple-400">speed</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div>
               <div className="text-3xl font-mono font-bold tracking-tight">
-                {executiveSummary.performance.toFixed(2)}%
+                {operationalProjection.currentPerformance.toFixed(2)}%
               </div>
               <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
-                Meta: {operationalGoal}%
+                Entregues no prazo / Previstas
               </p>
             </div>
             <div className="relative w-12 h-12 flex shrink-0 items-center justify-center">
@@ -350,14 +367,14 @@ export default function DashboardView({
                 />
                 <path
                   className={
-                    executiveSummary.performance >= operationalGoal
+                    operationalProjection.currentPerformance >= operationalGoal
                       ? "text-emerald-400"
-                      : executiveSummary.performance >= operationalGoal - 5
+                      : operationalProjection.currentPerformance >= operationalGoal - 5
                         ? "text-amber-400"
                         : "text-red-500"
                   }
                   strokeWidth="4"
-                  strokeDasharray={`${executiveSummary.performance}, 100`}
+                  strokeDasharray={`${operationalProjection.currentPerformance}, 100`}
                   strokeLinecap="round"
                   stroke="currentColor"
                   fill="none"
@@ -365,6 +382,64 @@ export default function DashboardView({
                 />
               </svg>
             </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Performance Projetada</span>
+            <span className="material-symbols-outlined text-[18px] text-blue-400">query_stats</span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-3xl font-mono font-bold tracking-tight">
+                {operationalProjection.projectedPerformance.toFixed(2)}%
+              </div>
+              <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
+                Melhor cenário no final do dia
+              </p>
+            </div>
+            <div className="relative w-12 h-12 flex shrink-0 items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-[var(--router-surface-3)]"
+                  strokeWidth="4"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className={
+                    operationalProjection.projectedPerformance >= operationalGoal
+                      ? "text-emerald-400"
+                      : operationalProjection.projectedPerformance >= operationalGoal - 5
+                        ? "text-amber-400"
+                        : "text-red-500"
+                  }
+                  strokeWidth="4"
+                  strokeDasharray={`${operationalProjection.projectedPerformance}, 100`}
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Gap da Meta ({operationalGoal}%)</span>
+            <span className="material-symbols-outlined text-[18px] text-amber-400">target</span>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold tracking-tight">
+              {operationalProjection.goalGap > 0 ? "+" : ""}{operationalProjection.goalGap.toFixed(2)}%
+            </div>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
+              Faltam <span className="font-bold">{operationalProjection.deliveriesNeededForGoal} entregas</span> para atingir a meta
+            </p>
           </div>
         </div>
       </div>
@@ -390,15 +465,16 @@ export default function DashboardView({
                   <tr className="border-b border-[var(--router-border)] text-[10px] text-[var(--router-text-muted)] uppercase font-bold tracking-wider">
                     <th className="py-2.5 px-3">Data</th>
                     <th className="py-2.5 px-3 text-right">Previstas</th>
-                    <th className="py-2.5 px-3 text-right text-emerald-400">No Prazo</th>
-                    <th className="py-2.5 px-3 text-right text-red-400">Atrasadas</th>
+                    <th className="py-2.5 px-3 text-right text-emerald-400">Entregues No Prazo</th>
+                    <th className="py-2.5 px-3 text-right text-red-400">Entregues Fora do Prazo</th>
+                    <th className="py-2.5 px-3 text-right text-amber-400">Pendentes</th>
                     <th className="py-2.5 px-3 text-right">Performance %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--router-border)] font-mono text-xs">
                   {dailyPerformance.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-[var(--router-text-muted)] font-sans">
+                      <td colSpan={6} className="py-8 text-center text-[var(--router-text-muted)] font-sans">
                         Nenhum dado para exibir no período selecionado.
                       </td>
                     </tr>
@@ -407,11 +483,12 @@ export default function DashboardView({
                       <tr key={day.date} className="hover:bg-[var(--router-surface-2)] transition-colors">
                         <td className="py-2.5 px-3 font-sans text-[var(--router-text-muted)] font-medium">{day.date}</td>
                         <td className="py-2.5 px-3 text-right font-bold">{day.previstas}</td>
-                        <td className="py-2.5 px-3 text-right text-emerald-400">{day.noPrazo}</td>
-                        <td className="py-2.5 px-3 text-right text-red-400">{day.atrasadas}</td>
+                        <td className="py-2.5 px-3 text-right text-emerald-400">{day.entreguesNoPrazo}</td>
+                        <td className="py-2.5 px-3 text-right text-red-400">{day.entreguesForaDoPrazo}</td>
+                        <td className="py-2.5 px-3 text-right text-amber-400">{day.pendentes}</td>
                         <td className="py-2.5 px-3 text-right font-bold">
                           {day.previstas > 0 ? (
-                            <span className={day.performance >= operationalGoal ? "text-emerald-400" : day.performance >= operationalGoal - 5 ? "text-amber-400" : "text-red-500"}>
+                            <span className={day.performance >= operationalGoal ? "text-emerald-400" : day.performance >= 90 ? "text-amber-400" : "text-red-500"}>
                               {day.performance.toFixed(2)}%
                             </span>
                           ) : (
@@ -427,11 +504,10 @@ export default function DashboardView({
                     <tr className="bg-[var(--router-surface-2)] border-t-2 border-[var(--router-border)] font-bold text-xs">
                       <td className="py-3 px-3 font-sans text-[var(--router-text)]">Consolidado ({dailyPerformance.length} dias)</td>
                       <td className="py-3 px-3 text-right text-[var(--router-text)]">{executiveSummary.previstas}</td>
-                      <td className="py-3 px-3 text-right text-emerald-400">{executiveSummary.noPrazo}</td>
-                      <td className="py-3 px-3 text-right text-red-500">{executiveSummary.atrasadas}</td>
+                      <td colSpan={3} className="py-3 px-3 text-right text-[var(--router-text-muted)]">Performance Geral:</td>
                       <td className="py-3 px-3 text-right">
-                        <span className={executiveSummary.performance >= operationalGoal ? "text-emerald-400" : executiveSummary.performance >= operationalGoal - 5 ? "text-amber-400" : "text-red-500"}>
-                          {executiveSummary.performance.toFixed(2)}%
+                        <span className={operationalProjection.currentPerformance >= operationalGoal ? "text-emerald-400" : operationalProjection.currentPerformance >= 90 ? "text-amber-400" : "text-red-500"}>
+                          {operationalProjection.currentPerformance.toFixed(2)}%
                         </span>
                       </td>
                     </tr>
@@ -497,6 +573,40 @@ export default function DashboardView({
               style={{ maxHeight: "calc(100vh - 280px)" }}
             >
               <div
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-red-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView("roteirizacao")}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
+                    CTRCs em Risco
+                  </span>
+                  <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
+                    {operationalProjection.riskCtrcs}
+                  </span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">
+                  Cargas pendentes cujo prazo de entrega já venceu.
+                </p>
+              </div>
+
+              <div
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-amber-400 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView("roteirizacao")}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                    Previstas Hoje Não Roteirizadas
+                  </span>
+                  <span className="bg-amber-400/10 text-amber-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
+                    {alerts.entregasPrevistasHojeNaoRoteirizadas}
+                  </span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">
+                  Entregas com prazo para hoje ainda não atribuídas a um romaneio.
+                </p>
+              </div>
+
+              <div
                 className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-amber-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
                 onClick={() => onNavigateToView("roteirizacao")}
               >
@@ -536,14 +646,14 @@ export default function DashboardView({
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
-                    CTRCs Vencidos
+                    CTRCs Vencidos Hoje
                   </span>
                   <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
                     {alerts.vencidos}
                   </span>
                 </div>
                 <p className="text-[10px] text-[var(--router-text-muted)]">
-                  Cargas cujo prazo de entrega já expirou e não foram entregues.
+                  Cargas que o prazo vence exatamente hoje.
                 </p>
               </div>
 
@@ -566,6 +676,12 @@ export default function DashboardView({
             </div>
           </section>
         </div>
+      </div>
+      
+      <div className="mt-8 text-center border-t border-[var(--router-border)] pt-4 pb-2">
+        <p className="text-[10px] text-[var(--router-text-muted)] max-w-3xl mx-auto italic">
+          "A performance exibida representa uma projeção operacional imediata baseada na previsão vigente do SSW e pode divergir marginalmente do BI corporativo oficial."
+        </p>
       </div>
     </div>
   );

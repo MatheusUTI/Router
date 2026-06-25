@@ -572,16 +572,25 @@ export interface AuditLog {
 
 export interface ExecutiveSummary {
   previstas: number;
-  noPrazo: number;
+  entregues: number;
+  pendentes: number;
   atrasadas: number;
-  performance: number; // percentage
+}
+
+export interface OperationalProjection {
+  currentPerformance: number; // percentage
+  projectedPerformance: number; // percentage
+  goalGap: number; // percentage
+  deliveriesNeededForGoal: number;
+  riskCtrcs: number;
 }
 
 export interface DailyPerformance {
   date: string; // YYYY-MM-DD
   previstas: number;
-  noPrazo: number;
-  atrasadas: number;
+  entreguesNoPrazo: number;
+  entreguesForaDoPrazo: number;
+  pendentes: number;
   performance: number; // percentage
 }
 
@@ -600,10 +609,12 @@ export interface KpiAlerts {
   clientesCriticosPendentes: number;
   vencidos: number;
   recebidosNoDiaDoPrazo: number;
+  entregasPrevistasHojeNaoRoteirizadas: number;
 }
 
 export interface KpiDashboardMetrics {
   executiveSummary: ExecutiveSummary;
+  operationalProjection: OperationalProjection;
   dailyPerformance: DailyPerformance[];
   backlogDistribution: BacklogDistribution;
   alerts: KpiAlerts;
