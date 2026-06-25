@@ -62,6 +62,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ocorrencia: '',
       descricao_ocorr: '',
       localizacao: '',
+      realDeliveryDate: '',
     };
   });
 
@@ -195,6 +196,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ocorrencia: '',
       descricao_ocorr: '',
       localizacao: '',
+      realDeliveryDate: '',
     };
 
     extractedHeaders.forEach((h) => {
@@ -385,6 +387,18 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ) {
         newMappings.unid = h;
       }
+      // 16. DATA ENTREGA REALIZADA
+      else if (
+        lower === 'data da entrega realizada' ||
+        lower === 'entrega realizada' ||
+        lower === 'data entrega realizada' ||
+        lower === 'data da entrega' ||
+        lower === 'data entrega' ||
+        lower.includes('entrega realizada') ||
+        lower.includes('data entrega')
+      ) {
+        newMappings.realDeliveryDate = h;
+      }
     });
 
     setMappings(newMappings);
@@ -410,6 +424,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       ocorrencia: '',
       descricao_ocorr: '',
       localizacao: '',
+      realDeliveryDate: '',
     };
     setMappings(cleared);
     localStorage.removeItem('rota_operational_saved_layout_mapping');
@@ -491,6 +506,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     const ocoIdx = mappings.ocorrencia ? columnHeaders.indexOf(mappings.ocorrencia) : -1;
     const descOcoIdx = mappings.descricao_ocorr ? columnHeaders.indexOf(mappings.descricao_ocorr) : -1;
     const locIdx = mappings.localizacao ? columnHeaders.indexOf(mappings.localizacao) : -1;
+    const realDelIdx = mappings.realDeliveryDate ? columnHeaders.indexOf(mappings.realDeliveryDate) : -1;
 
     // We collect data rows lying strictly BELOW the selected header row line
     const dataLines = lines.slice(headerLineIndex + 1);
@@ -524,6 +540,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       const ocoVal = ocoIdx !== -1 ? cells[ocoIdx] : '';
       const descOcoVal = descOcoIdx !== -1 ? cells[descOcoIdx] : '';
       const locVal = locIdx !== -1 ? cells[locIdx] : '';
+      const realDelVal = realDelIdx !== -1 ? cells[realDelIdx] : '';
+
+      // Normalize date: if empty, "-", "0" or invalid, treat as undefined
+      const cleanRealDel = (realDelVal && realDelVal !== '-' && realDelVal !== '0') ? realDelVal : undefined;
 
       results.push({
         id: idVal ? idVal : `CTRC #${90400 + idx}`,
@@ -534,7 +554,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         weight: weightVal || 150,
         volume: volumesVal || 2,
         type: (weightVal > 1000) ? 'CURVA A' : 'NORMAL',
-        status: 'Pendente',
+        status: cleanRealDel ? 'Entregue' : 'Pendente',
         setor: setorVal || undefined,
         prev_ent: prevVal || undefined,
         remetente: remVal || undefined,
@@ -546,7 +566,11 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         ocorrencia: ocoVal || undefined,
         descricao_ocorr: descOcoVal || undefined,
         localizacao: locVal || undefined,
-        isActiveForRouting: true,
+        realDeliveryDate: cleanRealDel,
+        dataEntregaRealizada: cleanRealDel,
+        deliveryDate: cleanRealDel,
+        delivery_date: cleanRealDel,
+        isActiveForRouting: !cleanRealDel, // Don't route if already delivered
       });
     });
 
@@ -610,6 +634,18 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     }
 
     onAddCtrcs(parsedRecords);
+
+    // [Import Delivery Date Debug]
+    console.group('[Import Delivery Date Debug]');
+    console.log('Total importado:', parsedRecords.length);
+    const withDelDate = parsedRecords.filter(r => !!r.realDeliveryDate);
+    const withoutDelDate = parsedRecords.filter(r => !r.realDeliveryDate);
+    console.log('Total com Data da Entrega Realizada:', withDelDate.length);
+    console.log('Total SEM Data da Entrega Realizada:', withoutDelDate.length);
+    console.log('Exemplos Entregues:', withDelDate.slice(0, 5));
+    console.log('Exemplos Pendentes:', withoutDelDate.slice(0, 5));
+    console.groupEnd();
+
     const oldCount = localStorage.getItem('last_import_old_removed_count') || '0';
     const newCount = localStorage.getItem('last_import_new_added_count') || String(parsedRecords.length);
     setSuccessMsg(`Importação concluída. A fila ativa foi substituída por ${newCount} CTRCs do novo arquivo. ${oldCount} CTRCs antigos foram removidos da Mesa ativa.`);
@@ -641,6 +677,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     { key: 'ocorrencia', label: 'Código da Última Ocorrência', required: false },
     { key: 'descricao_ocorr', label: 'Descrição da Ocorrência', required: false },
     { key: 'localizacao', label: 'Localização Física Atual', required: false },
+    { key: 'realDeliveryDate', label: 'Data da Entrega Realizada', required: false },
   ];
 
   return (

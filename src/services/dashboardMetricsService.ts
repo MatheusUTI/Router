@@ -122,6 +122,12 @@ export function calculateDashboardMetrics(
 
   const dailyMap = new Map<string, DailyDeliveryPerformance>();
   
+  let debugTotalBaseFilial = 0;
+  let debugTotalWithRealDeliveryDate = 0;
+  let debugTotalWithoutRealDeliveryDate = 0;
+  let debugTotalConsideredDelivered = 0;
+  let debugTotalPending = 0;
+
   let current = new Date(startDate);
   while (current <= endDate) {
     const dateStr = formatDateToLocalString(current);
@@ -166,10 +172,22 @@ export function calculateDashboardMetrics(
 
     const prevEntDate = parseDate(ctrc.prev_ent) || parseDate(ctrc.forecastDeliveryDate);
     const prevEntStart = prevEntDate ? startOfDay(prevEntDate) : null;
-    const isDelivered = ctrc.status === "Entregue" || ctrc.ocorrencia === "01";
+    
+    // Rule: Delivered only if realDeliveryDate or equivalent is present
+    const isDelivered = !!(ctrc.realDeliveryDate || ctrc.dataEntregaRealizada || ctrc.deliveryDate || ctrc.delivery_date);
+
+    // Update debug counters
+    debugTotalBaseFilial++;
+    if (isDelivered) {
+      debugTotalWithRealDeliveryDate++;
+      debugTotalConsideredDelivered++;
+    } else {
+      debugTotalWithoutRealDeliveryDate++;
+      debugTotalPending++;
+    }
 
     let dataEntrega = isDelivered
-      ? parseDate(ctrc.data_ocorrencia) || parseDate(ctrc.data_ocorr) || parseDate(ctrc.realDeliveryDate) || today
+      ? parseDate(ctrc.realDeliveryDate) || parseDate(ctrc.dataEntregaRealizada) || parseDate(ctrc.deliveryDate) || parseDate(ctrc.delivery_date) || parseDate(ctrc.data_ocorrencia) || parseDate(ctrc.data_ocorr) || today
       : null;
     if (dataEntrega) dataEntrega = startOfDay(dataEntrega);
 
@@ -284,6 +302,14 @@ export function calculateDashboardMetrics(
   );
   console.log("Total considered in Dashboard KPIs:", consideredCtrcs);
   console.log("Period:", startDateStr, "to", endDateStr);
+  console.groupEnd();
+
+  console.group('[Dashboard Delivery Date Debug]');
+  console.log('Total base da filial:', debugTotalBaseFilial);
+  console.log('Total com realDeliveryDate:', debugTotalWithRealDeliveryDate);
+  console.log('Total SEM realDeliveryDate:', debugTotalWithoutRealDeliveryDate);
+  console.log('Total considerados entregues:', debugTotalConsideredDelivered);
+  console.log('Total pendentes:', debugTotalPending);
   console.groupEnd();
 
   return metrics;

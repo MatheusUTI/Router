@@ -66,12 +66,13 @@ export default function DashboardView({
               weight: s.weight || 0,
               volume: s.volume_count || 0,
               type: s.is_curve_a ? "CURVA A" : "NORMAL",
-              status: (s.status as any) || "Pendente",
+              status: s.delivery_date ? "Entregue" : ((s.status as any) || "Pendente"),
               remetente: s.sender_name || undefined,
               pagador: s.payer_name || undefined,
               data_ocorrencia: dataOcorrencia,
               prev_ent: s.forecast_delivery_date || undefined,
               valor: s.total_value || undefined,
+              realDeliveryDate: s.delivery_date || s.raw_payload?.realDeliveryDate || undefined,
               // Re-inject the raw payload safely
               ...(s.raw_payload || {}),
             };

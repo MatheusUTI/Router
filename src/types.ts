@@ -83,6 +83,9 @@ export interface Ctrc {
   lastOccurrenceDate?: string;
   forecastDeliveryDate?: string;
   realDeliveryDate?: string;
+  dataEntregaRealizada?: string;
+  deliveryDate?: string;
+  delivery_date?: string;
 }
 
 export interface Expense {
