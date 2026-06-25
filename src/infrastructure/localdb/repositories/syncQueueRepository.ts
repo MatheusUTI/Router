@@ -79,10 +79,20 @@ export const SyncQueueRepository = {
             success = res.success;
             errorObj = res.error;
           } else if (item.entity === 'ctrc' && item.operation === 'DELETE') {
-            const ctrcNumber = item.payload.id.replace(/\D/g, '').substring(0, 8) || item.payload.id;
-            const res = await shipmentSupabaseRepository.softDeleteShipment(ctrcNumber);
-            success = res.success;
-            errorObj = res.error;
+            const uniqueKey = item.payload?.unique_key || item.payload?.uniqueKey;
+            
+            if (uniqueKey) {
+              const res = await shipmentSupabaseRepository.softDeleteShipment(uniqueKey);
+              success = res.success;
+              errorObj = res.error;
+            } else if (item.payload?.id && String(item.payload.id).includes('_')) {
+              // Assume it's a unique_key if it has underscores like SPO_1_1234
+              const res = await shipmentSupabaseRepository.softDeleteShipment(item.payload.id);
+              success = res.success;
+              errorObj = res.error;
+            } else {
+              errorObj = new Error('Falha: unique_key não encontrada no payload para soft delete.');
+            }
           } else {
             // For MVP, we will just mark other non-implemented operations as failed.
             errorObj = new Error(`Auto-retry not implemented for ${item.entity} / ${item.operation}`);

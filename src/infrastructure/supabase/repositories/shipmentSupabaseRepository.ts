@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../client';
+import { getSupabaseClient, checkSupabaseHealth } from '../client';
 
 export interface Shipment {
   id: string;
@@ -32,6 +32,9 @@ export const shipmentSupabaseRepository = {
   async upsertShipments(shipments: Shipment[]): Promise<{ success: boolean; error?: any }> {
     const { client, isOnline } = getSupabaseClient();
     if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+    
+    const isActuallyOnline = await checkSupabaseHealth();
+    if (!isActuallyOnline) return { success: false, error: 'Supabase network offline' };
 
     try {
       const { error } = await client.from('shipments').upsert(shipments, {
@@ -50,6 +53,9 @@ export const shipmentSupabaseRepository = {
     const { client, isOnline } = getSupabaseClient();
     if (!isOnline || !client) return { success: false, data: null, error: 'Supabase offline' };
 
+    const isActuallyOnline = await checkSupabaseHealth();
+    if (!isActuallyOnline) return { success: false, data: null, error: 'Supabase network offline' };
+
     try {
       const dateLimit = new Date();
       dateLimit.setDate(dateLimit.getDate() - days);
@@ -57,8 +63,9 @@ export const shipmentSupabaseRepository = {
       const { data, error } = await client
         .from('shipments')
         .select('*')
-        .gte('created_at', dateLimit.toISOString())
-        .eq('is_deleted', false);
+        .gte('issue_date', dateLimit.toISOString())
+        .eq('is_deleted', false)
+        .order('issue_date', { ascending: false });
 
       if (error) throw error;
       return { success: true, data };
@@ -68,9 +75,12 @@ export const shipmentSupabaseRepository = {
     }
   },
 
-  async softDeleteShipment(ctrcNumber: string): Promise<{ success: boolean; error?: any }> {
+  async softDeleteShipment(uniqueKey: string): Promise<{ success: boolean; error?: any }> {
     const { client, isOnline } = getSupabaseClient();
     if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+
+    const isActuallyOnline = await checkSupabaseHealth();
+    if (!isActuallyOnline) return { success: false, error: 'Supabase network offline' };
 
     try {
       const { error } = await client
@@ -79,7 +89,7 @@ export const shipmentSupabaseRepository = {
           is_deleted: true, 
           deleted_at: new Date().toISOString() 
         })
-        .eq('ctrc_number', ctrcNumber);
+        .eq('unique_key', uniqueKey);
 
       if (error) throw error;
       return { success: true };

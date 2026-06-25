@@ -4,6 +4,11 @@ import { Ctrc } from '../types';
 function parseDate(dateStr?: string): Date | null {
   if (!dateStr || dateStr.trim() === '' || dateStr.toUpperCase().includes('SEM')) return null;
   
+  if (dateStr.includes('T')) {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d;
+  }
+  
   if (dateStr.includes('/')) {
     const parts = dateStr.split('/');
     if (parts.length === 3) {
@@ -17,7 +22,7 @@ function parseDate(dateStr?: string): Date | null {
       if (!isNaN(d.getTime())) return d;
     }
   } else if (dateStr.includes('-')) {
-    const d = new Date(dateStr + 'T00:00:00');
+    const d = new Date(dateStr + 'T12:00:00Z');
     if (!isNaN(d.getTime())) return d;
   }
   

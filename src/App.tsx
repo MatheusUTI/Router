@@ -359,7 +359,7 @@ export default function App() {
                 id: r.id,
                 vehicleType: r.vehicle_type,
                 maxValueWithoutGr: Number(r.max_value_without_gr),
-                requiresTrackingAboveValue: r.requires_tracking_above_value === true || r.requires_tracking_above_value === 'true' || Number(r.requires_tracking_above_value) > 0,
+                requiresTrackingAboveValue: Boolean(r.requires_tracking_above_value),
                 requiresAuthorizationAboveLimit: r.requires_authorization_above_limit,
                 blocksRoutingAboveLimit: r.blocks_routing_above_limit
               }));
