@@ -570,7 +570,44 @@ export interface AuditLog {
   description: string;
 }
 
+export interface ExecutiveSummary {
+  previstas: number;
+  noPrazo: number;
+  atrasadas: number;
+  performance: number; // percentage
+}
 
+export interface DailyPerformance {
+  date: string; // YYYY-MM-DD
+  previstas: number;
+  noPrazo: number;
+  atrasadas: number;
+  performance: number; // percentage
+}
 
+export interface BacklogDistribution {
+  acima15Dias: number;
+  ate15Dias: number;
+  ate7Dias: number;
+  ate2Dias: number;
+  dentroDoPrazo: number;
+  futuro: number;
+  total: number;
+}
 
+export interface KpiAlerts {
+  curvaAPendentes: number;
+  clientesCriticosPendentes: number;
+  vencidos: number;
+  recebidosNoDiaDoPrazo: number;
+}
 
+export interface KpiDashboardMetrics {
+  executiveSummary: ExecutiveSummary;
+  dailyPerformance: DailyPerformance[];
+  backlogDistribution: BacklogDistribution;
+  alerts: KpiAlerts;
+  periodStart: string;
+  periodEnd: string;
+  operationalGoal: number;
+}

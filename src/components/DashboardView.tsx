@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Ctrc, CriticClient, AppUser } from "../types";
-import { calculateDashboardMetrics } from "../services/dashboardMetricsService";
+import { calculateKpiMetrics, DEFAULT_OPERATIONAL_GOAL } from "../services/kpiDashboardService";
 import { shipmentSupabaseRepository } from "../infrastructure/supabase/repositories/shipmentSupabaseRepository";
 import { DEFAULT_OPERATIONAL_UNIT } from "../constants/operationalUnits";
 import { classifyOperationalFlow } from "../services/operationalFlowClassifier";
 import { DashboardPeriodPreset, resolvePeriodDates, formatDateToLocalString } from "../constants/dashboardPeriods";
+
 
 interface DashboardProps {
   onNavigateToView: (view: "importacao" | "frota" | "roteirizacao") => void;
@@ -102,7 +103,7 @@ export default function DashboardView({
   }, [allImportedCtrcs.length]); // Add dependency to catch if it updates
 
   const criticNames = useMemo(
-    () => criticClients.map((c) => c.name),
+    () => new Set(criticClients.map((c) => c.name.toUpperCase().trim())),
     [criticClients],
   );
 
@@ -127,20 +128,24 @@ export default function DashboardView({
   }, [supabaseCtrcs, allImportedCtrcs, userUnit]);
 
   const metrics = useMemo(() => {
-    return calculateDashboardMetrics(activeCtrcs, criticNames, {
+    return calculateKpiMetrics(
+      activeCtrcs,
+      criticNames,
       userUnit,
-      startDate: periodDates.startDate,
-      endDate: periodDates.endDate,
-    });
-  }, [activeCtrcs, criticNames, userUnit, periodDates]);
+      periodPreset,
+      customStart,
+      customEnd
+    );
+  }, [activeCtrcs, criticNames, userUnit, periodPreset, customStart, customEnd]);
 
   const {
-    periodPredicted,
-    periodDelivered,
-    slaReceipt,
-    backlog,
-    dailyEvolution,
+    executiveSummary,
+    dailyPerformance,
+    backlogDistribution,
     alerts,
+    periodStart,
+    periodEnd,
+    operationalGoal
   } = metrics;
 
   if (isFetchingSupabase) {
@@ -202,14 +207,24 @@ export default function DashboardView({
               <span className="text-[var(--router-primary)] font-medium">Subcontratos não compõem os KPIs operacionais.</span>
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex items-center justify-center bg-[var(--router-surface-2)] border border-[var(--router-border)] px-4 py-2 rounded-lg">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--router-text-muted)] mr-2">
-                Filial Analisada:
-              </span>
-              <span className="text-sm font-mono font-bold text-[var(--router-primary)] bg-[var(--router-primary)]/10 px-2 py-0.5 rounded shadow-sm">
-                {userUnit}
-              </span>
+          <div className="flex flex-col gap-2 items-end">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center bg-[var(--router-surface-2)] border border-[var(--router-border)] px-4 py-2 rounded-lg">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--router-text-muted)] mr-2">
+                  Filial Analisada:
+                </span>
+                <span className="text-sm font-mono font-bold text-[var(--router-primary)] bg-[var(--router-primary)]/10 px-2 py-0.5 rounded shadow-sm">
+                  {userUnit}
+                </span>
+              </div>
+              <div className="flex items-center justify-center bg-[var(--router-surface-2)] border border-[var(--router-border)] px-4 py-2 rounded-lg">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--router-text-muted)] mr-2">
+                  Meta Operacional:
+                </span>
+                <span className="text-sm font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded shadow-sm">
+                  {operationalGoal}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -261,8 +276,9 @@ export default function DashboardView({
                 />
               </div>
             )}
-            <div className="text-xs font-mono font-medium text-[var(--router-text-muted)] bg-[var(--router-surface-2)] border border-[var(--router-border)] px-3 py-1.5 rounded-lg w-full lg:w-auto text-center">
-              Período analisado: <span className="font-bold text-[var(--router-text)]">{formatDateToLocalString(periodDates.startDate)}</span> a <span className="font-bold text-[var(--router-text)]">{formatDateToLocalString(periodDates.endDate)}</span>
+            <div className="text-xs font-mono font-medium text-[var(--router-text-muted)] bg-[var(--router-surface-2)] border border-[var(--router-border)] px-3 py-1.5 rounded-lg w-full lg:w-auto text-center flex items-center gap-2">
+              <span>Período analisado: <span className="font-bold text-[var(--router-text)]">{periodStart}</span> até <span className="font-bold text-[var(--router-text)]">{periodEnd}</span></span>
+              <span className="bg-[var(--router-primary)]/10 text-[var(--router-primary)] px-2 py-0.5 rounded font-bold">{dailyPerformance.length} dias</span>
             </div>
           </div>
         </div>
@@ -270,169 +286,91 @@ export default function DashboardView({
 
       {/* Resumo Executivo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* KPI 1: Carteira Prevista */}
         <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Carteira Prevista</span>
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Previstas</span>
             <span className="material-symbols-outlined text-[18px] text-blue-400">calendar_today</span>
           </div>
           <div>
             <div className="text-3xl font-mono font-bold tracking-tight">
-              {periodPredicted.total}
+              {executiveSummary.previstas}
             </div>
-            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Previsão de entrega no período</p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--router-border)] text-center">
-            <div>
-              <p className="text-[9px] text-emerald-400 font-bold uppercase">Entregues</p>
-              <p className="text-xs font-mono font-bold">{periodPredicted.delivered}</p>
-            </div>
-            <div>
-              <p className="text-[9px] text-amber-400 font-bold uppercase">Pendente</p>
-              <p className="text-xs font-mono font-bold">{periodPredicted.pendingOnTime}</p>
-            </div>
-            <div>
-              <p className="text-[9px] text-red-500 font-bold uppercase">Vencido</p>
-              <p className="text-xs font-mono font-bold">{periodPredicted.pendingOverdue}</p>
-            </div>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Total de entregas previstas no período</p>
           </div>
         </div>
 
-        {/* KPI 2: SLA de Entrega */}
         <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">SLA Entrega</span>
-            <span className="material-symbols-outlined text-[18px] text-emerald-400">verified</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="text-3xl font-mono font-bold tracking-tight">
-                {periodDelivered.slaPercentage.toFixed(1)}%
-              </div>
-              <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
-                {periodDelivered.onTime} no prazo / {periodDelivered.total} entregues
-              </p>
-            </div>
-            <div className="relative w-12 h-12 flex shrink-0 items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-[var(--router-surface-3)]"
-                  strokeWidth="4"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className={
-                    periodDelivered.slaPercentage >= 95
-                      ? "text-emerald-400"
-                      : periodDelivered.slaPercentage >= 85
-                        ? "text-amber-400"
-                        : "text-red-500"
-                  }
-                  strokeWidth="4"
-                  strokeDasharray={`${periodDelivered.slaPercentage}, 100`}
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--router-border)] text-center">
-            <div>
-              <p className="text-[9px] text-emerald-400 font-bold uppercase">No Prazo</p>
-              <p className="text-xs font-mono font-bold">{periodDelivered.onTime}</p>
-            </div>
-            <div>
-              <p className="text-[9px] text-red-500 font-bold uppercase">Fora Prazo</p>
-              <p className="text-xs font-mono font-bold">{periodDelivered.late}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 3: SLA Recebimento */}
-        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">SLA Recebimento</span>
-            <span className="material-symbols-outlined text-[18px] text-purple-400">local_shipping</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="text-3xl font-mono font-bold tracking-tight">
-                {slaReceipt.slaPercentage.toFixed(1)}%
-              </div>
-              <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
-                {slaReceipt.onTime} no prazo / {slaReceipt.total} recebidos
-              </p>
-            </div>
-            <div className="relative w-12 h-12 flex shrink-0 items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-[var(--router-surface-3)]"
-                  strokeWidth="4"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className={
-                    slaReceipt.slaPercentage >= 95
-                      ? "text-emerald-400"
-                      : slaReceipt.slaPercentage >= 85
-                        ? "text-amber-400"
-                        : "text-red-500"
-                  }
-                  strokeWidth="4"
-                  strokeDasharray={`${slaReceipt.slaPercentage}, 100`}
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--router-border)] text-center">
-            <div>
-              <p className="text-[9px] text-emerald-400 font-bold uppercase">No Prazo</p>
-              <p className="text-xs font-mono font-bold">{slaReceipt.onTime}</p>
-            </div>
-            <div>
-              <p className="text-[9px] text-red-500 font-bold uppercase">Fora Prazo</p>
-              <p className="text-xs font-mono font-bold">{slaReceipt.late}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4: Backlog Atual */}
-        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Backlog Atual</span>
-            <span className="material-symbols-outlined text-[18px] text-amber-400">inventory_2</span>
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">No Prazo</span>
+            <span className="material-symbols-outlined text-[18px] text-emerald-400">check_circle</span>
           </div>
           <div>
             <div className="text-3xl font-mono font-bold tracking-tight">
-              {backlog.notDelivered}
+              {executiveSummary.noPrazo}
             </div>
-            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Total não entregues na filial</p>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Entregas realizadas até a previsão</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--router-border)] text-center">
-            <div>
-              <p className="text-[9px] text-amber-400 font-bold uppercase">No Prazo</p>
-              <p className="text-xs font-mono font-bold">{backlog.pendingOnTime}</p>
+        </div>
+
+        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Atrasadas</span>
+            <span className="material-symbols-outlined text-[18px] text-red-500">warning</span>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold tracking-tight">
+              {executiveSummary.atrasadas}
             </div>
+            <p className="text-[10px] text-[var(--router-text-muted)] mt-1">Entregues fora do prazo ou vencidas</p>
+          </div>
+        </div>
+
+        <div className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--router-text-muted)] uppercase tracking-wider">Performance %</span>
+            <span className="material-symbols-outlined text-[18px] text-purple-400">speed</span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[9px] text-red-500 font-bold uppercase">Vencido</p>
-              <p className="text-xs font-mono font-bold">{backlog.pendingOverdue}</p>
+              <div className="text-3xl font-mono font-bold tracking-tight">
+                {executiveSummary.performance.toFixed(2)}%
+              </div>
+              <p className="text-[10px] text-[var(--router-text-muted)] mt-1">
+                Meta: {operationalGoal}%
+              </p>
+            </div>
+            <div className="relative w-12 h-12 flex shrink-0 items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-[var(--router-surface-3)]"
+                  strokeWidth="4"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className={
+                    executiveSummary.performance >= operationalGoal
+                      ? "text-emerald-400"
+                      : executiveSummary.performance >= operationalGoal - 5
+                        ? "text-amber-400"
+                        : "text-red-500"
+                  }
+                  strokeWidth="4"
+                  strokeDasharray={`${executiveSummary.performance}, 100`}
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column - Daily Evolution */}
+        {/* Left Column - Daily Evolution and Backlog */}
         <div className="xl:col-span-2 space-y-6">
           <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -443,7 +381,7 @@ export default function DashboardView({
                 EVOLUÇÃO DIÁRIA DO PERÍODO
               </h2>
               <span className="text-[10px] font-mono text-[var(--router-text-muted)] uppercase">
-                Base: destinationUnit == {userUnit}
+                Base: Previstas para o dia
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -451,32 +389,30 @@ export default function DashboardView({
                 <thead>
                   <tr className="border-b border-[var(--router-border)] text-[10px] text-[var(--router-text-muted)] uppercase font-bold tracking-wider">
                     <th className="py-2.5 px-3">Data</th>
-                    <th className="py-2.5 px-3 text-right">Previstos</th>
-                    <th className="py-2.5 px-3 text-right">Entregues</th>
+                    <th className="py-2.5 px-3 text-right">Previstas</th>
                     <th className="py-2.5 px-3 text-right text-emerald-400">No Prazo</th>
-                    <th className="py-2.5 px-3 text-right text-red-400">Atrasados</th>
-                    <th className="py-2.5 px-3 text-right">SLA Entrega</th>
+                    <th className="py-2.5 px-3 text-right text-red-400">Atrasadas</th>
+                    <th className="py-2.5 px-3 text-right">Performance %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--router-border)] font-mono text-xs">
-                  {dailyEvolution.length === 0 ? (
+                  {dailyPerformance.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-[var(--router-text-muted)] font-sans">
+                      <td colSpan={5} className="py-8 text-center text-[var(--router-text-muted)] font-sans">
                         Nenhum dado para exibir no período selecionado.
                       </td>
                     </tr>
                   ) : (
-                    dailyEvolution.map((day) => (
+                    dailyPerformance.map((day) => (
                       <tr key={day.date} className="hover:bg-[var(--router-surface-2)] transition-colors">
                         <td className="py-2.5 px-3 font-sans text-[var(--router-text-muted)] font-medium">{day.date}</td>
-                        <td className="py-2.5 px-3 text-right font-bold">{day.predicted}</td>
-                        <td className="py-2.5 px-3 text-right">{day.delivered}</td>
-                        <td className="py-2.5 px-3 text-right text-emerald-400">{day.onTime}</td>
-                        <td className="py-2.5 px-3 text-right text-red-400">{day.late}</td>
+                        <td className="py-2.5 px-3 text-right font-bold">{day.previstas}</td>
+                        <td className="py-2.5 px-3 text-right text-emerald-400">{day.noPrazo}</td>
+                        <td className="py-2.5 px-3 text-right text-red-400">{day.atrasadas}</td>
                         <td className="py-2.5 px-3 text-right font-bold">
-                          {day.slaPercent !== null ? (
-                            <span className={day.slaPercent >= 95 ? "text-emerald-400" : day.slaPercent >= 85 ? "text-amber-400" : "text-red-500"}>
-                              {day.slaPercent.toFixed(1)}%
+                          {day.previstas > 0 ? (
+                            <span className={day.performance >= operationalGoal ? "text-emerald-400" : day.performance >= operationalGoal - 5 ? "text-amber-400" : "text-red-500"}>
+                              {day.performance.toFixed(2)}%
                             </span>
                           ) : (
                             <span className="text-[var(--router-text-muted)]">-</span>
@@ -486,23 +422,62 @@ export default function DashboardView({
                     ))
                   )}
                 </tbody>
-                {dailyEvolution.length > 0 && (
+                {dailyPerformance.length > 0 && (
                   <tfoot>
                     <tr className="bg-[var(--router-surface-2)] border-t-2 border-[var(--router-border)] font-bold text-xs">
-                      <td className="py-3 px-3 font-sans text-[var(--router-text)]">Consolidado ({dailyEvolution.length} dias)</td>
-                      <td className="py-3 px-3 text-right text-[var(--router-text)]">{periodPredicted.total}</td>
-                      <td className="py-3 px-3 text-right text-[var(--router-text)]">{periodDelivered.total}</td>
-                      <td className="py-3 px-3 text-right text-emerald-400">{periodDelivered.onTime}</td>
-                      <td className="py-3 px-3 text-right text-red-500">{periodDelivered.late}</td>
+                      <td className="py-3 px-3 font-sans text-[var(--router-text)]">Consolidado ({dailyPerformance.length} dias)</td>
+                      <td className="py-3 px-3 text-right text-[var(--router-text)]">{executiveSummary.previstas}</td>
+                      <td className="py-3 px-3 text-right text-emerald-400">{executiveSummary.noPrazo}</td>
+                      <td className="py-3 px-3 text-right text-red-500">{executiveSummary.atrasadas}</td>
                       <td className="py-3 px-3 text-right">
-                        <span className={periodDelivered.slaPercentage >= 95 ? "text-emerald-400" : periodDelivered.slaPercentage >= 85 ? "text-amber-400" : "text-red-500"}>
-                          {periodDelivered.slaPercentage.toFixed(1)}%
+                        <span className={executiveSummary.performance >= operationalGoal ? "text-emerald-400" : executiveSummary.performance >= operationalGoal - 5 ? "text-amber-400" : "text-red-500"}>
+                          {executiveSummary.performance.toFixed(2)}%
                         </span>
                       </td>
                     </tr>
                   </tfoot>
                 )}
               </table>
+            </div>
+          </section>
+
+          <section className="bg-[var(--router-surface)] border border-[var(--router-border)] rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-[var(--router-text)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px]">
+                  inventory_2
+                </span>
+                BACKLOG OPERACIONAL
+              </h2>
+              <span className="text-[10px] font-mono text-[var(--router-text-muted)] uppercase">
+                CTRCs Pendentes (Total: {backlogDistribution.total})
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Acima de 15 Dias</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.acima15Dias}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1">Até 15 Dias</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.ate15Dias}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">Até 7 Dias</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.ate7Dias}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">Até 2 Dias</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.ate2Dias}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">Dentro do Prazo</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.dentroDoPrazo}</p>
+              </div>
+              <div className="bg-[var(--router-surface-2)] p-4 rounded-lg border border-[var(--router-border)] text-center">
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Futuro</p>
+                <p className="text-2xl font-mono font-bold text-[var(--router-text)]">{backlogDistribution.futuro}</p>
+              </div>
             </div>
           </section>
         </div>
@@ -522,24 +497,6 @@ export default function DashboardView({
               style={{ maxHeight: "calc(100vh - 280px)" }}
             >
               <div
-                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-red-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
-                onClick={() => onNavigateToView("roteirizacao")}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
-                    Clientes Críticos Pendentes
-                  </span>
-                  <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
-                    {alerts.criticPending.length}
-                  </span>
-                </div>
-                <p className="text-[10px] text-[var(--router-text-muted)]">
-                  Atenção máxima em entregas que impactam nível de serviço
-                  corporativo.
-                </p>
-              </div>
-
-              <div
                 className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-amber-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
                 onClick={() => onNavigateToView("roteirizacao")}
               >
@@ -548,7 +505,7 @@ export default function DashboardView({
                     Curva A Pendentes
                   </span>
                   <span className="bg-amber-500/10 text-amber-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
-                    {alerts.curvaAPending.length}
+                    {alerts.curvaAPendentes}
                   </span>
                 </div>
                 <p className="text-[10px] text-[var(--router-text-muted)]">
@@ -562,10 +519,27 @@ export default function DashboardView({
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
+                    Clientes Críticos Pendentes
+                  </span>
+                  <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
+                    {alerts.clientesCriticosPendentes}
+                  </span>
+                </div>
+                <p className="text-[10px] text-[var(--router-text-muted)]">
+                  Atenção máxima em entregas que impactam nível de serviço.
+                </p>
+              </div>
+
+              <div
+                className="bg-[var(--router-surface-2)] p-3 rounded-lg border-l-4 border-l-red-500 border border-y-[var(--router-border)] border-r-[var(--router-border)] hover:bg-[var(--router-surface-3)] cursor-pointer transition-colors"
+                onClick={() => onNavigateToView("roteirizacao")}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
                     CTRCs Vencidos
                   </span>
                   <span className="bg-red-500/10 text-red-500 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
-                    {alerts.overdue.length}
+                    {alerts.vencidos}
                   </span>
                 </div>
                 <p className="text-[10px] text-[var(--router-text-muted)]">
@@ -582,12 +556,11 @@ export default function DashboardView({
                     Recebidos no Dia do Prazo
                   </span>
                   <span className="bg-blue-500/10 text-blue-400 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">
-                    {alerts.receivedOnDeadlineDay.length}
+                    {alerts.recebidosNoDiaDoPrazo}
                   </span>
                 </div>
                 <p className="text-[10px] text-[var(--router-text-muted)]">
-                  Fora do SLA de Recebimento. Precisam ser expedidos com
-                  urgência hoje.
+                  Recebidos no último dia do SLA. Expedição urgente necessária.
                 </p>
               </div>
             </div>
