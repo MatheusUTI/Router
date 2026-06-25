@@ -1,4 +1,4 @@
-import { getSupabaseClient, checkSupabaseHealth } from '../client';
+import { getSupabaseClient, checkSupabaseHealth } from "../client";
 
 export interface Shipment {
   id: string;
@@ -29,73 +29,88 @@ export interface Shipment {
 }
 
 export const shipmentSupabaseRepository = {
-  async upsertShipments(shipments: Shipment[]): Promise<{ success: boolean; error?: any }> {
+  async upsertShipments(
+    shipments: Shipment[],
+  ): Promise<{ success: boolean; error?: any }> {
     const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
-    
+    if (!isOnline || !client)
+      return { success: false, error: "Supabase offline" };
+
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline) return { success: false, error: 'Supabase network offline' };
+    if (!isActuallyOnline)
+      return { success: false, error: "Supabase network offline" };
 
     try {
-      const { error } = await client.from('shipments').upsert(shipments, {
-        onConflict: 'unique_key'
+      const { error } = await client.from("shipments").upsert(shipments, {
+        onConflict: "unique_key",
       });
-      
+
       if (error) throw error;
       return { success: true };
     } catch (err) {
-      console.error('Error upserting shipments to Supabase:', err);
+      console.error("Error upserting shipments to Supabase:", err);
       return { success: false, error: err };
     }
   },
 
-  async getRecentShipments(days: number = 31): Promise<{ data: Shipment[] | null; success: boolean; error?: any }> {
+  async getRecentShipments(
+    days: number = 31,
+  ): Promise<{ data: Shipment[] | null; success: boolean; error?: any }> {
     const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, data: null, error: 'Supabase offline' };
+    if (!isOnline || !client)
+      return { success: false, data: null, error: "Supabase offline" };
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline) return { success: false, data: null, error: 'Supabase network offline' };
+    if (!isActuallyOnline)
+      return { success: false, data: null, error: "Supabase network offline" };
 
     try {
       const dateLimit = new Date();
       dateLimit.setDate(dateLimit.getDate() - days);
-      
+
+      const dateIso = dateLimit.toISOString();
       const { data, error } = await client
-        .from('shipments')
-        .select('*')
-        .gte('issue_date', dateLimit.toISOString())
-        .eq('is_deleted', false)
-        .order('issue_date', { ascending: false });
+        .from("shipments")
+        .select("*")
+        .or(
+          `issue_date.gte.${dateIso},forecast_delivery_date.gte.${dateIso},created_at.gte.${dateIso}`,
+        )
+        .or("is_deleted.is.null,is_deleted.eq.false")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return { success: true, data };
     } catch (err) {
-      console.error('Error fetching recent shipments from Supabase:', err);
+      console.error("Error fetching recent shipments from Supabase:", err);
       return { success: false, data: null, error: err };
     }
   },
 
-  async softDeleteShipment(uniqueKey: string): Promise<{ success: boolean; error?: any }> {
+  async softDeleteShipment(
+    uniqueKey: string,
+  ): Promise<{ success: boolean; error?: any }> {
     const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+    if (!isOnline || !client)
+      return { success: false, error: "Supabase offline" };
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline) return { success: false, error: 'Supabase network offline' };
+    if (!isActuallyOnline)
+      return { success: false, error: "Supabase network offline" };
 
     try {
       const { error } = await client
-        .from('shipments')
-        .update({ 
-          is_deleted: true, 
-          deleted_at: new Date().toISOString() 
+        .from("shipments")
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
         })
-        .eq('unique_key', uniqueKey);
+        .eq("unique_key", uniqueKey);
 
       if (error) throw error;
       return { success: true };
     } catch (err) {
-      console.error('Error soft deleting shipment in Supabase:', err);
+      console.error("Error soft deleting shipment in Supabase:", err);
       return { success: false, error: err };
     }
-  }
+  },
 };
