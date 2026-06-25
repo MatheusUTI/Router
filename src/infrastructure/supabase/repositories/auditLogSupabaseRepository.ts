@@ -10,7 +10,7 @@ export const auditLogSupabaseRepository = {
       const payload = {
         id: log.id,
         timestamp: new Date(log.timestamp).toISOString(),
-        user_name: log.userName,
+        user_name: log.user,
         profile: log.profile,
         entity_type: log.entityType,
         entity_id: log.entityId,
@@ -39,7 +39,7 @@ export const auditLogSupabaseRepository = {
       const payloads = logs.map(log => ({
         id: log.id,
         timestamp: new Date(log.timestamp).toISOString(),
-        user_name: log.userName,
+        user_name: log.user,
         profile: log.profile,
         entity_type: log.entityType,
         entity_id: log.entityId,

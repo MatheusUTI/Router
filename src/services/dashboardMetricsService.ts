@@ -1,4 +1,5 @@
 import { Ctrc } from "../types";
+import { getStartOfDay, getEndOfDay, formatDateToLocalString } from "../constants/dashboardPeriods";
 
 // Helper to parse DD/MM/YYYY or YYYY-MM-DD to Date object
 function parseDate(dateStr?: string): Date | null {
@@ -41,25 +42,31 @@ function startOfDay(d: Date): Date {
   return newDate;
 }
 
+export interface DailyDeliveryPerformance {
+  date: string;
+  dateObj: Date;
+  predicted: number;
+  delivered: number;
+  onTime: number;
+  late: number;
+  slaPercent: number | null;
+}
+
 export interface DashboardMetrics {
-  operationToday: {
-    predicted: number;
-    routed: number;
+  periodPredicted: {
+    total: number;
     delivered: number;
-    pending: number;
-    overdue: number;
+    pendingOnTime: number;
+    pendingOverdue: number;
   };
-  last31Days: {
-    emitted: number;
-    delivered: number;
-    notDelivered: number;
-  };
-  slaReceipt: {
+  periodDelivered: {
+    total: number;
     onTime: number;
     late: number;
     slaPercentage: number;
   };
-  slaDelivery: {
+  slaReceipt: {
+    total: number;
     onTime: number;
     late: number;
     slaPercentage: number;
@@ -69,6 +76,7 @@ export interface DashboardMetrics {
     pendingOverdue: number;
     notDelivered: number;
   };
+  dailyEvolution: DailyDeliveryPerformance[];
   alerts: {
     criticPending: Ctrc[];
     curvaAPending: Ctrc[];
@@ -80,22 +88,22 @@ export interface DashboardMetrics {
 export function calculateDashboardMetrics(
   ctrcs: Ctrc[],
   criticClients: string[] = [],
-  options?: { userUnit?: string },
+  options?: { userUnit?: string; startDate?: Date; endDate?: Date },
 ): DashboardMetrics {
   const today = startOfDay(new Date());
 
+  const startDateStr = options?.startDate ? options.startDate.toISOString() : getStartOfDay(new Date()).toISOString();
+  const endDateStr = options?.endDate ? options.endDate.toISOString() : getEndOfDay(new Date()).toISOString();
+  
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+
   const metrics: DashboardMetrics = {
-    operationToday: {
-      predicted: 0,
-      routed: 0,
-      delivered: 0,
-      pending: 0,
-      overdue: 0,
-    },
-    last31Days: { emitted: 0, delivered: 0, notDelivered: 0 },
-    slaReceipt: { onTime: 0, late: 0, slaPercentage: 0 },
-    slaDelivery: { onTime: 0, late: 0, slaPercentage: 0 },
+    periodPredicted: { total: 0, delivered: 0, pendingOnTime: 0, pendingOverdue: 0 },
+    periodDelivered: { total: 0, onTime: 0, late: 0, slaPercentage: 0 },
+    slaReceipt: { total: 0, onTime: 0, late: 0, slaPercentage: 0 },
     backlog: { pendingOnTime: 0, pendingOverdue: 0, notDelivered: 0 },
+    dailyEvolution: [],
     alerts: {
       criticPending: [],
       curvaAPending: [],
@@ -111,6 +119,23 @@ export function calculateDashboardMetrics(
   let transferInCount = 0;
   let transferOutCount = 0;
   let otherUnitCount = 0;
+
+  const dailyMap = new Map<string, DailyDeliveryPerformance>();
+  
+  let current = new Date(startDate);
+  while (current <= endDate) {
+    const dateStr = formatDateToLocalString(current);
+    dailyMap.set(dateStr, {
+      date: dateStr,
+      dateObj: new Date(current),
+      predicted: 0,
+      delivered: 0,
+      onTime: 0,
+      late: 0,
+      slaPercent: null,
+    });
+    current.setDate(current.getDate() + 1);
+  }
 
   ctrcs.forEach((ctrc) => {
     // Flow analysis
@@ -139,96 +164,73 @@ export function calculateDashboardMetrics(
 
     consideredCtrcs++;
 
-    // Basic date parsing
-    const prevEntDate = parseDate(ctrc.prev_ent);
+    const prevEntDate = parseDate(ctrc.prev_ent) || parseDate(ctrc.forecastDeliveryDate);
+    const prevEntStart = prevEntDate ? startOfDay(prevEntDate) : null;
     const isDelivered = ctrc.status === "Entregue" || ctrc.ocorrencia === "01";
 
-    // DataChegadaUnidade: fallback to planningDate, data_ocorr, or today if missing
-    let dataChegadaUnidade =
-      parseDate(ctrc.planningDate) ||
-      parseDate(ctrc.data_ocorr) ||
-      parseDate(ctrc.data_ocorrencia) ||
-      today;
-    dataChegadaUnidade = startOfDay(dataChegadaUnidade);
-
-    // DataEntrega: we assume data_ocorrencia/data_ocorr has it if delivered
     let dataEntrega = isDelivered
-      ? parseDate(ctrc.data_ocorrencia) || parseDate(ctrc.data_ocorr) || today
+      ? parseDate(ctrc.data_ocorrencia) || parseDate(ctrc.data_ocorr) || parseDate(ctrc.realDeliveryDate) || today
       : null;
     if (dataEntrega) dataEntrega = startOfDay(dataEntrega);
 
-    const prevEntStart = prevEntDate ? startOfDay(prevEntDate) : null;
+    let dataUltimaOcorrencia = parseDate(ctrc.lastOccurrenceDate) || parseDate(ctrc.data_ocorrencia) || parseDate(ctrc.data_ocorr) || today;
+    dataUltimaOcorrencia = startOfDay(dataUltimaOcorrencia);
 
-    // --- Section 1: Operation Today ---
-    // Predicted today: PrevisaoEntrega == Today
-    if (prevEntStart && prevEntStart.getTime() === today.getTime()) {
-      metrics.operationToday.predicted++;
-    }
-    // Routed today: has planningDate == Today and is in route or separated
-    const planningStart = parseDate(ctrc.planningDate)
-      ? startOfDay(parseDate(ctrc.planningDate)!)
-      : null;
-    if (planningStart && planningStart.getTime() === today.getTime()) {
-      metrics.operationToday.routed++; // All planned today? Or only status == Em Rota? The requirement says "Roteirizados Hoje". We assume planningDate == today means it was routed today.
-    }
-    // Delivered today
-    if (
-      isDelivered &&
-      dataEntrega &&
-      dataEntrega.getTime() === today.getTime()
-    ) {
-      metrics.operationToday.delivered++;
-    }
-    // Pending today (in backlog for today)
-    if (
-      !isDelivered &&
-      prevEntStart &&
-      prevEntStart.getTime() === today.getTime()
-    ) {
-      metrics.operationToday.pending++;
-    }
-    // Overdue today (pending and prev_ent < today)
-    if (
-      !isDelivered &&
-      prevEntStart &&
-      prevEntStart.getTime() < today.getTime()
-    ) {
-      metrics.operationToday.overdue++;
-    }
-
-    // --- Section 2: Last 31 Days ---
-    if (isDelivered) {
-      metrics.last31Days.delivered++;
-    } else {
-      metrics.last31Days.notDelivered++;
-    }
-
-    // --- Section 3: SLA Receipt ---
-    // Only calculate for TRANSFER_IN_DELIVERY, local deliveries are not penalized for receipt
-    if (prevEntStart && isTransferIn) {
-      // Received on time: DataChegadaUnidade < DataPrevisaoEntrega
-      if (dataChegadaUnidade.getTime() < prevEntStart.getTime()) {
-        metrics.slaReceipt.onTime++;
+    // --- KPI 1: Predicted Portfolio ---
+    if (prevEntStart && prevEntStart >= startDate && prevEntStart <= endDate) {
+      metrics.periodPredicted.total++;
+      if (isDelivered) {
+        metrics.periodPredicted.delivered++;
       } else {
-        metrics.slaReceipt.late++;
-        // Alert: Received on deadline day (DataChegadaUnidade == DataPrevisaoEntrega)
-        if (dataChegadaUnidade.getTime() === prevEntStart.getTime()) {
-          metrics.alerts.receivedOnDeadlineDay.push(ctrc);
+        if (prevEntStart.getTime() >= today.getTime()) {
+          metrics.periodPredicted.pendingOnTime++;
+        } else {
+          metrics.periodPredicted.pendingOverdue++;
+        }
+      }
+      
+      const pDateStr = formatDateToLocalString(prevEntStart);
+      if (dailyMap.has(pDateStr)) {
+        dailyMap.get(pDateStr)!.predicted++;
+      }
+    }
+
+    // --- KPI 2: Delivered in the period ---
+    if (isDelivered && dataEntrega && dataEntrega >= startDate && dataEntrega <= endDate) {
+      metrics.periodDelivered.total++;
+      
+      const dDateStr = formatDateToLocalString(dataEntrega);
+      if (dailyMap.has(dDateStr)) {
+        dailyMap.get(dDateStr)!.delivered++;
+      }
+
+      if (prevEntStart) {
+        if (dataEntrega.getTime() <= prevEntStart.getTime()) {
+          metrics.periodDelivered.onTime++;
+          if (dailyMap.has(dDateStr)) dailyMap.get(dDateStr)!.onTime++;
+        } else {
+          metrics.periodDelivered.late++;
+          if (dailyMap.has(dDateStr)) dailyMap.get(dDateStr)!.late++;
         }
       }
     }
 
-    // --- Section 4: SLA Delivery ---
-    // Delivery SLA only applies to deliveries done by the user's unit
-    if (isDelivered && prevEntStart && dataEntrega) {
-      if (dataEntrega.getTime() <= prevEntStart.getTime()) {
-        metrics.slaDelivery.onTime++;
-      } else {
-        metrics.slaDelivery.late++;
-      }
+    // --- KPI 3: Operational Receipt SLA ---
+    if (isTransferIn && dataUltimaOcorrencia >= startDate && dataUltimaOcorrencia <= endDate) {
+       metrics.slaReceipt.total++;
+       if (prevEntStart) {
+         if (dataUltimaOcorrencia.getTime() < prevEntStart.getTime()) {
+           metrics.slaReceipt.onTime++;
+         } else {
+           metrics.slaReceipt.late++;
+           if (dataUltimaOcorrencia.getTime() === prevEntStart.getTime()) {
+             metrics.alerts.receivedOnDeadlineDay.push(ctrc);
+           }
+         }
+       }
     }
 
-    // --- Section 5: Backlog ---
+    // --- KPI 4: Current Backlog (Snapshot) ---
     if (!isDelivered) {
       metrics.backlog.notDelivered++;
       if (prevEntStart) {
@@ -241,26 +243,32 @@ export function calculateDashboardMetrics(
       }
 
       // Alerts
-      // We assume isClienteCritico and CurvaA logic.
-      // Curva A pending:
       if (ctrc.type === "CURVA A") {
         metrics.alerts.curvaAPending.push(ctrc);
       }
-
-      // Critical pending
-      const isCritical = criticClients.some(
-        (c) =>
-          ctrc.destinatario.toUpperCase().includes(c.toUpperCase()) ||
-          (ctrc.remetente &&
-            ctrc.remetente.toUpperCase().includes(c.toUpperCase())),
-      );
-      if (isCritical) {
+      if (
+        ctrc.remetente &&
+        criticClients.some((c) =>
+          ctrc.remetente?.toLowerCase().includes(c.toLowerCase()),
+        )
+      ) {
         metrics.alerts.criticPending.push(ctrc);
       }
     }
   });
 
-  metrics.last31Days.emitted = consideredCtrcs;
+  metrics.periodDelivered.slaPercentage = metrics.periodDelivered.total > 0 
+    ? (metrics.periodDelivered.onTime / metrics.periodDelivered.total) * 100 
+    : 0;
+
+  metrics.slaReceipt.slaPercentage = metrics.slaReceipt.total > 0 
+    ? (metrics.slaReceipt.onTime / metrics.slaReceipt.total) * 100 
+    : 0;
+
+  metrics.dailyEvolution = Array.from(dailyMap.values()).map(d => {
+    d.slaPercent = d.delivered > 0 ? (d.onTime / d.delivered) * 100 : null;
+    return d;
+  }).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
 
   console.group("[Dashboard Flow Debug]");
   console.log("User Unit:", userUnit || "Not provided");
@@ -272,21 +280,11 @@ export function calculateDashboardMetrics(
   console.log(
     "Total UNKNOWN:",
     ctrcs.length -
-      (localDeliveryCount +
-        transferInCount +
-        transferOutCount +
-        otherUnitCount),
+      (localDeliveryCount + transferInCount + transferOutCount + otherUnitCount),
   );
   console.log("Total considered in Dashboard KPIs:", consideredCtrcs);
+  console.log("Period:", startDateStr, "to", endDateStr);
   console.groupEnd();
-
-  const totalReceipt = metrics.slaReceipt.onTime + metrics.slaReceipt.late;
-  metrics.slaReceipt.slaPercentage =
-    totalReceipt > 0 ? (metrics.slaReceipt.onTime / totalReceipt) * 100 : 0;
-
-  const totalDelivery = metrics.slaDelivery.onTime + metrics.slaDelivery.late;
-  metrics.slaDelivery.slaPercentage =
-    totalDelivery > 0 ? (metrics.slaDelivery.onTime / totalDelivery) * 100 : 0;
 
   return metrics;
 }
