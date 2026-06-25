@@ -1,12 +1,19 @@
-import { db, SyncQueueItem } from '../db';
+import { db, SyncQueueItem } from "../db";
 
 /**
  * Adiciona uma ação operativa pendente na fila de sincronização secundária.
  */
 export async function addToSyncQueue(
-  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota' | 'audit_log',
-  operation: 'CREATE' | 'UPDATE' | 'DELETE',
-  payload: any
+  entity:
+    | "ctrc"
+    | "vehicle"
+    | "driver"
+    | "romaneio"
+    | "occurrence"
+    | "cidade_rota"
+    | "audit_log",
+  operation: "CREATE" | "UPDATE" | "DELETE",
+  payload: any,
 ): Promise<number> {
   const item: SyncQueueItem = {
     entity,
@@ -14,18 +21,18 @@ export async function addToSyncQueue(
     payload,
     created_at: new Date().toISOString(),
     retry_count: 0,
-    status: 'pending'
+    status: "pending",
   };
   return db.sync_queue.add(item);
 }
 
 export const SyncQueueRepository = {
   async getPending(): Promise<SyncQueueItem[]> {
-    return db.sync_queue.where('status').equals('pending').toArray();
+    return db.sync_queue.where("status").equals("pending").toArray();
   },
 
   async markAsCompleted(id: number): Promise<void> {
-    await db.sync_queue.update(id, { status: 'completed' });
+    await db.sync_queue.update(id, { status: "completed" });
   },
 
   async markAsFailed(id: number, errorMessage: string): Promise<void> {
@@ -33,9 +40,9 @@ export const SyncQueueRepository = {
     if (item) {
       const nextRetry = item.retry_count + 1;
       await db.sync_queue.update(id, {
-        status: nextRetry >= 5 ? 'failed' : 'pending', // Re-enfileira automaticamente até 5 tentativas
+        status: nextRetry >= 5 ? "failed" : "pending", // Re-enfileira automaticamente até 5 tentativas
         retry_count: nextRetry,
-        errorMessage
+        errorMessage,
       });
     }
   },
@@ -49,7 +56,53 @@ export const SyncQueueRepository = {
   },
 
   async clearCompleted(): Promise<void> {
-    await db.sync_queue.where('status').equals('completed').delete();
+    await db.sync_queue.where("status").equals("completed").delete();
+  },
+
+  async cleanupOldItems(): Promise<void> {
+    const now = Date.now();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+    const allItems = await db.sync_queue.toArray();
+
+    const idsToDelete = allItems
+      .filter((item) => {
+        const itemDate = new Date(item.created_at).getTime();
+
+        if (item.status === "completed") {
+          return now - itemDate > SEVEN_DAYS_MS;
+        }
+        if (item.status === "failed") {
+          return now - itemDate > THIRTY_DAYS_MS;
+        }
+        return false; // Preserve pending and processing
+      })
+      .map((item) => item.id!);
+
+    if (idsToDelete.length > 0) {
+      await db.sync_queue.bulkDelete(idsToDelete);
+      console.log(`[SyncQueue] Cleaned up ${idsToDelete.length} old items.`);
+    }
+  },
+
+  async getSummary(): Promise<{
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+  }> {
+    const allItems = await db.sync_queue.toArray();
+    return allItems.reduce(
+      (acc, item) => {
+        if (item.status === "pending") acc.pending++;
+        else if (item.status === "processing") acc.processing++;
+        else if (item.status === "completed") acc.completed++;
+        else if (item.status === "failed") acc.failed++;
+        return acc;
+      },
+      { pending: 0, processing: 0, completed: 0, failed: 0 },
+    );
   },
 
   async processSyncQueue(): Promise<void> {
@@ -59,56 +112,80 @@ export const SyncQueueRepository = {
     // To avoid circular dependencies or massive imports, we dynamically import the repos here.
     // In a real robust system, this might be handled by a dedicated worker or dispatcher pattern.
     try {
-      const { auditLogSupabaseRepository } = await import('../../supabase/repositories/auditLogSupabaseRepository');
-      const { shipmentSupabaseRepository } = await import('../../supabase/repositories/shipmentSupabaseRepository');
-      
+      const { auditLogSupabaseRepository } =
+        await import("../../supabase/repositories/auditLogSupabaseRepository");
+      const { shipmentSupabaseRepository } =
+        await import("../../supabase/repositories/shipmentSupabaseRepository");
+
       for (const item of pendingItems) {
         if (!item.id) continue;
-        
-        await db.sync_queue.update(item.id, { 
-          status: 'processing', 
-          last_attempt_at: new Date().toISOString() 
+
+        await db.sync_queue.update(item.id, {
+          status: "processing",
+          last_attempt_at: new Date().toISOString(),
         });
 
         try {
           let success = false;
           let errorObj = null;
 
-          if (item.entity === 'audit_log' && item.operation === 'CREATE') {
-            const res = await auditLogSupabaseRepository.insertLog(item.payload);
+          if (item.entity === "audit_log" && item.operation === "CREATE") {
+            const res = await auditLogSupabaseRepository.insertLog(
+              item.payload,
+            );
             success = res.success;
             errorObj = res.error;
-          } else if (item.entity === 'ctrc' && item.operation === 'DELETE') {
-            const uniqueKey = item.payload?.unique_key || item.payload?.uniqueKey;
-            
+          } else if (item.entity === "ctrc" && item.operation === "DELETE") {
+            const uniqueKey =
+              item.payload?.unique_key || item.payload?.uniqueKey;
+
             if (uniqueKey) {
-              const res = await shipmentSupabaseRepository.softDeleteShipment(uniqueKey);
+              const res =
+                await shipmentSupabaseRepository.softDeleteShipment(uniqueKey);
               success = res.success;
               errorObj = res.error;
-            } else if (item.payload?.id && String(item.payload.id).includes('_')) {
+            } else if (
+              item.payload?.id &&
+              String(item.payload.id).includes("_")
+            ) {
               // Assume it's a unique_key if it has underscores like SPO_1_1234
-              const res = await shipmentSupabaseRepository.softDeleteShipment(item.payload.id);
+              const res = await shipmentSupabaseRepository.softDeleteShipment(
+                item.payload.id,
+              );
               success = res.success;
               errorObj = res.error;
             } else {
-              errorObj = new Error('Falha: unique_key não encontrada no payload para soft delete.');
+              errorObj = new Error(
+                "Falha: unique_key não encontrada no payload para soft delete.",
+              );
             }
           } else {
             // For MVP, we will just mark other non-implemented operations as failed.
-            errorObj = new Error(`Auto-retry not implemented for ${item.entity} / ${item.operation}`);
+            errorObj = new Error(
+              `Auto-retry not implemented for ${item.entity} / ${item.operation}`,
+            );
           }
 
           if (success) {
             await this.markAsCompleted(item.id);
           } else {
-            await this.markAsFailed(item.id, errorObj?.message || String(errorObj));
+            await this.markAsFailed(
+              item.id,
+              errorObj?.message || String(errorObj),
+            );
           }
         } catch (err: any) {
           await this.markAsFailed(item.id, err.message || String(err));
         }
       }
+
+      // Cleanup old items after processing
+      await this.cleanupOldItems();
     } catch (err) {
-      console.warn('Failed to load dependencies for sync queue processing:', err);
+      console.warn(
+        "Failed to load dependencies for sync queue processing:",
+        err,
+      );
     }
-  }
+  },
 };

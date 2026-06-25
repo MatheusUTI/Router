@@ -682,14 +682,39 @@ export async function exportStateToSupabase(data: {
   // 8. Curva A Clients
   if (data.curvaAClients && data.curvaAClients.length > 0) {
     try {
-      const formattedCurvas = data.curvaAClients.map(c => ({
-        cnpj_remetente: c.cnpj_remetente,
-        curva_a: c.curva_a,
-        cliente_remetente: c.cliente_remetente
-      }));
-      const { error } = await supabase.from('curva_a_clients').upsert(formattedCurvas);
-      if (error) throw error;
-      results.push(`✓ ${formattedCurvas.length} clientes Curva A exportados.`);
+      const map = new Map<string, any>();
+      let ignoredCount = 0;
+
+      for (const item of data.curvaAClients) {
+        const key = String(item.cnpj_remetente || '').replace(/\D/g, '').trim();
+        
+        if (!key) {
+          ignoredCount++;
+          continue;
+        }
+
+        if (map.has(key)) {
+          ignoredCount++;
+        }
+
+        map.set(key, {
+          cnpj_remetente: key,
+          curva_a: String(item.curva_a || '').trim(),
+          cliente_remetente: String(item.cliente_remetente || '').trim()
+        });
+      }
+
+      const formattedCurvas = Array.from(map.values());
+
+      if (formattedCurvas.length > 0) {
+        const { error } = await supabase
+          .from('curva_a_clients')
+          .upsert(formattedCurvas, { onConflict: 'cnpj_remetente' });
+          
+        if (error) throw error;
+      }
+      
+      results.push(`✓ ${formattedCurvas.length} clientes Curva A exportados. Ignorados por duplicidade/sem CNPJ: ${ignoredCount}`);
     } catch (err: any) {
       hasErrors = true;
       results.push(`❌ Clientes Curva A: ${formatSupabaseError(err, 'curva_a_clients')}`);
