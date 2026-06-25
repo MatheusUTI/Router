@@ -71,6 +71,11 @@ export interface Ctrc {
   importBatchId?: string;
   planningDate?: string;
 
+  // Subcontract Fields
+  originSeries?: string;
+  isSubcontract?: boolean;
+  countsForDeliveryPerformance?: boolean;
+
   // Operational Flow Classification
   originUnit?: string;
   destinationUnit?: string;

@@ -73,6 +73,9 @@ export default function DashboardView({
               prev_ent: s.forecast_delivery_date || undefined,
               valor: s.total_value || undefined,
               realDeliveryDate: s.delivery_date || s.raw_payload?.realDeliveryDate || undefined,
+              isSubcontract: s.is_subcontract || s.raw_payload?.isSubcontract || false,
+              originSeries: s.origin_series || s.raw_payload?.originSeries || "",
+              countsForDeliveryPerformance: s.counts_for_performance ?? s.raw_payload?.countsForDeliveryPerformance ?? true,
               // Re-inject the raw payload safely
               ...(s.raw_payload || {}),
             };
@@ -195,7 +198,8 @@ export default function DashboardView({
               Dashboard Gerencial
             </h1>
             <p className="text-xs text-[var(--router-text-muted)] mt-1 max-w-2xl">
-              Visão consolidada da operação baseada no histórico de importação.
+              Visão consolidada da operação baseada no histórico de importação.{" "}
+              <span className="text-[var(--router-primary)] font-medium">Subcontratos não compõem os KPIs operacionais.</span>
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

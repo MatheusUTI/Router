@@ -12,6 +12,7 @@ export function normalizeOperationalUnit(value: string | undefined): string {
   // Aliases
   if (clean === "VGS" || clean === "VAG") return "VGA";
   if (clean === "BHS") return "BHZ";
+  if (clean === "SPS") return "SPO";
 
   return clean;
 }

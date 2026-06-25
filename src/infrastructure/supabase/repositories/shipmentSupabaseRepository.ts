@@ -22,6 +22,9 @@ export interface Shipment {
   is_delivered?: boolean;
   is_curve_a?: boolean;
   is_critical_client?: boolean;
+  is_subcontract?: boolean;
+  origin_series?: string;
+  counts_for_performance?: boolean;
   last_import_batch_id?: string;
   raw_payload?: any;
   created_at?: string;

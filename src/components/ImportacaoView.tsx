@@ -1,6 +1,8 @@
 import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
 import { Ctrc, AppUser } from '../types';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
+import { parseCtrcSeries, checkIsSubcontract } from '../utils/ctrcUtils';
+import { classifyOperationalFlow } from '../services/operationalFlowClassifier';
 
 interface ImportacaoViewProps {
   onAddCtrcs: (newCtrcs: Ctrc[]) => void;
@@ -545,6 +547,10 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       // Normalize date: if empty, "-", "0" or invalid, treat as undefined
       const cleanRealDel = (realDelVal && realDelVal !== '-' && realDelVal !== '0') ? realDelVal : undefined;
 
+      const originSeries = parseCtrcSeries(idVal);
+      const isSubcontract = checkIsSubcontract(originSeries);
+      const countsForDeliveryPerformance = !isSubcontract;
+
       results.push({
         id: idVal ? idVal : `CTRC #${90400 + idx}`,
         destinatario: destVal || 'Destinatário Desconhecido',
@@ -571,6 +577,9 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
         deliveryDate: cleanRealDel,
         delivery_date: cleanRealDel,
         isActiveForRouting: !cleanRealDel, // Don't route if already delivered
+        originSeries,
+        isSubcontract,
+        countsForDeliveryPerformance,
       });
     });
 
@@ -633,17 +642,24 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       }
     }
 
-    onAddCtrcs(parsedRecords);
+    const classifiedRecords = parsedRecords.map(ctrc => 
+      classifyOperationalFlow(ctrc, adminUser?.unid || DEFAULT_OPERATIONAL_UNIT)
+    );
+
+    onAddCtrcs(classifiedRecords);
 
     // [Import Delivery Date Debug]
     console.group('[Import Delivery Date Debug]');
-    console.log('Total importado:', parsedRecords.length);
-    const withDelDate = parsedRecords.filter(r => !!r.realDeliveryDate);
-    const withoutDelDate = parsedRecords.filter(r => !r.realDeliveryDate);
+    console.log('Total importado:', classifiedRecords.length);
+    const withDelDate = classifiedRecords.filter(r => !!r.realDeliveryDate);
+    const withoutDelDate = classifiedRecords.filter(r => !r.realDeliveryDate);
+    const subcontracts = classifiedRecords.filter(r => r.isSubcontract);
     console.log('Total com Data da Entrega Realizada:', withDelDate.length);
     console.log('Total SEM Data da Entrega Realizada:', withoutDelDate.length);
+    console.log('Total Subcontratos:', subcontracts.length);
     console.log('Exemplos Entregues:', withDelDate.slice(0, 5));
     console.log('Exemplos Pendentes:', withoutDelDate.slice(0, 5));
+    console.log('Exemplos Subcontratos:', subcontracts.slice(0, 5));
     console.groupEnd();
 
     const oldCount = localStorage.getItem('last_import_old_removed_count') || '0';

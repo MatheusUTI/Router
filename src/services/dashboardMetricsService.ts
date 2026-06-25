@@ -122,7 +122,11 @@ export function calculateDashboardMetrics(
 
   const dailyMap = new Map<string, DailyDeliveryPerformance>();
   
-  let debugTotalBaseFilial = 0;
+  let debugTotalBaseFilialAntesExclusao = 0;
+  let debugTotalSubcontracts = 0;
+  let debugTotalOperacaoPropria = 0;
+  const debugSeriesDistribution: Record<string, number> = {};
+
   let debugTotalWithRealDeliveryDate = 0;
   let debugTotalWithoutRealDeliveryDate = 0;
   let debugTotalConsideredDelivered = 0;
@@ -168,6 +172,22 @@ export function calculateDashboardMetrics(
       return; // Skip TRANSFER_OUT and OTHER_UNIT from main KPIs
     }
 
+    debugTotalBaseFilialAntesExclusao++;
+
+    const isSubcontract = ctrc.isSubcontract === true;
+    const countsForPerformance = ctrc.countsForDeliveryPerformance !== false;
+
+    if (isSubcontract) {
+      debugTotalSubcontracts++;
+      const series = ctrc.originSeries || "UNKNOWN";
+      debugSeriesDistribution[series] = (debugSeriesDistribution[series] || 0) + 1;
+    }
+
+    if (!countsForPerformance) {
+      return;
+    }
+
+    debugTotalOperacaoPropria++;
     consideredCtrcs++;
 
     const prevEntDate = parseDate(ctrc.prev_ent) || parseDate(ctrc.forecastDeliveryDate);
@@ -177,7 +197,6 @@ export function calculateDashboardMetrics(
     const isDelivered = !!(ctrc.realDeliveryDate || ctrc.dataEntregaRealizada || ctrc.deliveryDate || ctrc.delivery_date);
 
     // Update debug counters
-    debugTotalBaseFilial++;
     if (isDelivered) {
       debugTotalWithRealDeliveryDate++;
       debugTotalConsideredDelivered++;
@@ -304,8 +323,15 @@ export function calculateDashboardMetrics(
   console.log("Period:", startDateStr, "to", endDateStr);
   console.groupEnd();
 
+  console.group('[Dashboard Subcontract Debug]');
+  console.log('Total filial antes da exclusão:', debugTotalBaseFilialAntesExclusao);
+  console.log('Total subcontratos encontrados:', debugTotalSubcontracts);
+  console.log('Total operação própria:', debugTotalOperacaoPropria);
+  console.log('Distribuição por série:', debugSeriesDistribution);
+  console.groupEnd();
+
   console.group('[Dashboard Delivery Date Debug]');
-  console.log('Total base da filial:', debugTotalBaseFilial);
+  console.log('Total base da filial (operação própria):', debugTotalOperacaoPropria);
   console.log('Total com realDeliveryDate:', debugTotalWithRealDeliveryDate);
   console.log('Total SEM realDeliveryDate:', debugTotalWithoutRealDeliveryDate);
   console.log('Total considerados entregues:', debugTotalConsideredDelivered);
