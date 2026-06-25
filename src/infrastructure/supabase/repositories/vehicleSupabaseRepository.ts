@@ -9,7 +9,7 @@ export const vehicleSupabaseRepository = {
     try {
       const payload = {
         id: vehicle.id,
-        plate: vehicle.plate || null, // Assuming you might have added plate to the local type
+        plate: vehicle.id, // Using id as plate
         driver_name: vehicle.driverName,
         capacity: vehicle.capacity,
         type: vehicle.type,

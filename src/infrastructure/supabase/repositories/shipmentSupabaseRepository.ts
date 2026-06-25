@@ -57,13 +57,35 @@ export const shipmentSupabaseRepository = {
       const { data, error } = await client
         .from('shipments')
         .select('*')
-        .gte('created_at', dateLimit.toISOString());
+        .gte('created_at', dateLimit.toISOString())
+        .eq('is_deleted', false);
 
       if (error) throw error;
       return { success: true, data };
     } catch (err) {
       console.error('Error fetching recent shipments from Supabase:', err);
       return { success: false, data: null, error: err };
+    }
+  },
+
+  async softDeleteShipment(ctrcNumber: string): Promise<{ success: boolean; error?: any }> {
+    const { client, isOnline } = getSupabaseClient();
+    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+
+    try {
+      const { error } = await client
+        .from('shipments')
+        .update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        })
+        .eq('ctrc_number', ctrcNumber);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (err) {
+      console.error('Error soft deleting shipment in Supabase:', err);
+      return { success: false, error: err };
     }
   }
 };

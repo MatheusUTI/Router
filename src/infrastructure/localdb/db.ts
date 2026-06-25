@@ -3,11 +3,12 @@ import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, Cur
 
 export interface SyncQueueItem {
   id?: number;
-  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota';
+  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota' | 'audit_log';
   operation: 'CREATE' | 'UPDATE' | 'DELETE';
   payload: any;
   created_at: string;
   retry_count: number;
+  last_attempt_at?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   errorMessage?: string;
 }

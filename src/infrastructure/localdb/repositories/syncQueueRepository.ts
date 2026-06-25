@@ -50,5 +50,55 @@ export const SyncQueueRepository = {
 
   async clearCompleted(): Promise<void> {
     await db.sync_queue.where('status').equals('completed').delete();
+  },
+
+  async processSyncQueue(): Promise<void> {
+    const pendingItems = await this.getPending();
+    if (pendingItems.length === 0) return;
+
+    // To avoid circular dependencies or massive imports, we dynamically import the repos here.
+    // In a real robust system, this might be handled by a dedicated worker or dispatcher pattern.
+    try {
+      const { auditLogSupabaseRepository } = await import('../../supabase/repositories/auditLogSupabaseRepository');
+      const { shipmentSupabaseRepository } = await import('../../supabase/repositories/shipmentSupabaseRepository');
+      
+      for (const item of pendingItems) {
+        if (!item.id) continue;
+        
+        await db.sync_queue.update(item.id, { 
+          status: 'processing', 
+          last_attempt_at: new Date().toISOString() 
+        });
+
+        try {
+          let success = false;
+          let errorObj = null;
+
+          if (item.entity === 'audit_log' && item.operation === 'CREATE') {
+            const res = await auditLogSupabaseRepository.insertLog(item.payload);
+            success = res.success;
+            errorObj = res.error;
+          } else if (item.entity === 'ctrc' && item.operation === 'DELETE') {
+            const ctrcNumber = item.payload.id.replace(/\D/g, '').substring(0, 8) || item.payload.id;
+            const res = await shipmentSupabaseRepository.softDeleteShipment(ctrcNumber);
+            success = res.success;
+            errorObj = res.error;
+          } else {
+            // For MVP, we will just mark other non-implemented operations as failed.
+            errorObj = new Error(`Auto-retry not implemented for ${item.entity} / ${item.operation}`);
+          }
+
+          if (success) {
+            await this.markAsCompleted(item.id);
+          } else {
+            await this.markAsFailed(item.id, errorObj?.message || String(errorObj));
+          }
+        } catch (err: any) {
+          await this.markAsFailed(item.id, err.message || String(err));
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load dependencies for sync queue processing:', err);
+    }
   }
 };

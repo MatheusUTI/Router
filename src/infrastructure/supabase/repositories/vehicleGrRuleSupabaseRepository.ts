@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../client';
-import { VehicleGrRule } from '../../localdb/repositories/vehicleGrRuleRepository'; // Assume it exists or we use internal type
+import { VehicleGrRule } from '../../../types';
 
 export const vehicleGrRuleSupabaseRepository = {
   async upsertRule(rule: VehicleGrRule): Promise<{ success: boolean; error?: any }> {
@@ -11,7 +11,7 @@ export const vehicleGrRuleSupabaseRepository = {
         id: rule.id,
         vehicle_type: rule.vehicleType,
         max_value_without_gr: rule.maxValueWithoutGr,
-        requires_tracking_above_value: rule.requiresTrackingAboveValue,
+        requires_tracking_above_value: rule.requiresTrackingAboveValue ? 1 : 0,
         requires_authorization_above_limit: rule.requiresAuthorizationAboveLimit,
         blocks_routing_above_limit: rule.blocksRoutingAboveLimit,
         updated_at: new Date().toISOString()

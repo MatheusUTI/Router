@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../client';
-import { AuditLog } from '../../localdb/repositories/auditLogRepository'; // Adjust if needed
+import { AuditLog } from '../../../types';
 
 export const auditLogSupabaseRepository = {
   async insertLog(log: AuditLog): Promise<{ success: boolean; error?: any }> {

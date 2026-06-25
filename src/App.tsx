@@ -32,6 +32,7 @@ import { VehicleRepository } from './infrastructure/localdb/repositories/vehicle
 import { VehicleRegistryRepository } from './infrastructure/localdb/repositories/vehicleRegistryRepository';
 import { VehicleGrRuleRepository } from './infrastructure/localdb/repositories/vehicleGrRuleRepository';
 import { AuditLogRepository } from './infrastructure/localdb/repositories/auditLogRepository';
+import { SyncQueueRepository } from './infrastructure/localdb/repositories/syncQueueRepository';
 import { DriverRepository } from './infrastructure/localdb/repositories/driverRepository';
 import { TripRepository } from './infrastructure/localdb/repositories/tripRepository';
 import { OccurrenceRepository } from './infrastructure/localdb/repositories/occurrenceRepository';
@@ -358,7 +359,7 @@ export default function App() {
                 id: r.id,
                 vehicleType: r.vehicle_type,
                 maxValueWithoutGr: Number(r.max_value_without_gr),
-                requiresTrackingAboveValue: Number(r.requires_tracking_above_value),
+                requiresTrackingAboveValue: r.requires_tracking_above_value === true || r.requires_tracking_above_value === 'true' || Number(r.requires_tracking_above_value) > 0,
                 requiresAuthorizationAboveLimit: r.requires_authorization_above_limit,
                 blocksRoutingAboveLimit: r.blocks_routing_above_limit
               }));
@@ -404,6 +405,13 @@ export default function App() {
             }
           } catch (e) {
             console.warn('[Sync] Supabase sync initialization failed (offline mode):', e);
+          }
+
+          // CR-MVP-SUPABASE-07: Auto-retry background queue
+          try {
+            await SyncQueueRepository.processSyncQueue();
+          } catch (err) {
+            console.warn('[Sync] Failed to process background sync queue:', err);
           }
         }, 0);
 
@@ -467,6 +475,7 @@ export default function App() {
     try {
       const { vehicleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleSupabaseRepository');
       await vehicleSupabaseRepository.upsertVehicle(v);
+      await SyncQueueRepository.processSyncQueue();
     } catch (e) { console.warn(e) }
     setIsSyncing(false);
   };
@@ -478,6 +487,7 @@ export default function App() {
     try {
       const { vehicleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleSupabaseRepository');
       await vehicleSupabaseRepository.upsertVehicle(v);
+      await SyncQueueRepository.processSyncQueue();
     } catch (e) { console.warn(e) }
     setIsSyncing(false);
   };
@@ -578,6 +588,7 @@ export default function App() {
       try {
         const { vehicleGrRuleSupabaseRepository } = await import('./infrastructure/supabase/repositories/vehicleGrRuleSupabaseRepository');
         await vehicleGrRuleSupabaseRepository.upsertRule(rule);
+        await SyncQueueRepository.processSyncQueue();
       } catch (e) {
         console.warn('Failed to sync GR rule to Supabase:', e);
       }
@@ -957,15 +968,29 @@ export default function App() {
           });
 
           // 2. Converter CTRCs para Formato Shipment
+          const parseToIso = (dateStr?: string) => {
+            if (!dateStr) return undefined;
+            // Check if DD/MM/YYYY
+            const ptBrMatch = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (ptBrMatch) {
+              const [_, day, month, year] = ptBrMatch;
+              return new Date(`${year}-${month}-${day}T12:00:00Z`).toISOString();
+            }
+            // Fallback
+            const dt = new Date(dateStr);
+            if (!isNaN(dt.getTime())) return dt.toISOString();
+            return undefined;
+          };
+
           const shipmentsToSync = mergedCtrcs.map(c => ({
             id: c.id,
             company_code: adminUnid,
             ctrc_number: c.id.replace(/\D/g, '').substring(0, 8) || c.id,
             ctrc_series: '1',
             unique_key: `${adminUnid}_1_${c.id}`,
-            issue_date: c.data_ocorrencia || undefined,
-            forecast_delivery_date: c.prev_ent || undefined,
-            unit_arrival_date: c.data_ocorrencia || undefined,
+            issue_date: parseToIso(c.data_ocorrencia),
+            forecast_delivery_date: parseToIso(c.prev_ent),
+            unit_arrival_date: parseToIso(c.data_ocorrencia),
             sender_name: c.remetente || undefined,
             recipient_name: c.destinatario || undefined,
             payer_name: c.pagador || undefined,
@@ -990,6 +1015,8 @@ export default function App() {
             await shipmentSupabaseRepository.upsertShipments(batch);
           }
           console.log(`[Importacao] Sincronização Supabase concluída (${shipmentsToSync.length} shipments)`);
+          
+          await SyncQueueRepository.processSyncQueue();
         } catch (syncErr) {
           console.error('[Importacao] Falha na sincronização Supabase (fallback ativo):', syncErr);
         }
@@ -1146,6 +1173,7 @@ export default function App() {
             try {
               const { criticalClientSupabaseRepository } = await import('./infrastructure/supabase/repositories/criticalClientSupabaseRepository');
               await criticalClientSupabaseRepository.upsertClient(updatedClient);
+              await SyncQueueRepository.processSyncQueue();
             } catch (err) {
               console.warn('Falha ao sincronizar cliente crítico:', err);
             }
