@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { systemLogService } from '../../services/systemLogService';
 
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
@@ -13,9 +14,11 @@ export function getSupabaseClient() {
 
   const supabaseKey =
     ((import.meta as any).env)?.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    ((import.meta as any).env)?.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
+    systemLogService.logError('Database', 'Credenciais do Supabase ausentes no momento da inicialização.');
     throw new Error('Supabase não configurado.');
   }
 
@@ -30,6 +33,7 @@ export function getSupabaseClient() {
     }
   );
 
+  systemLogService.logSuccess('Database', 'Supabase Client inicializado com sucesso.');
   return supabaseInstance;
 }
 
@@ -42,8 +46,14 @@ export async function checkSupabaseHealth(): Promise<boolean> {
       .select('username')
       .limit(1);
 
-    return !error;
-  } catch {
+    if (error) {
+       systemLogService.logError('Network', 'Health Check do Supabase falhou.', error);
+       return false;
+    }
+    
+    return true;
+  } catch (err: any) {
+    systemLogService.logError('Network', 'Exceção durante Health Check do Supabase.', err);
     return false;
   }
 }

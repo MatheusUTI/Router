@@ -1,4 +1,5 @@
 import { getSupabaseClient, checkSupabaseHealth } from "../client";
+import { systemLogService } from "../../../services/systemLogService";
 
 export interface RoutingPlan {
   id: string;
@@ -50,8 +51,10 @@ export const routingPlanSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante getPlan (routing_plans).');
       return { success: false, data: null, error: "Supabase network offline" };
+    }
 
     try {
       const { data, error } = await client
@@ -61,8 +64,13 @@ export const routingPlanSupabaseRepository = {
         .eq("planning_date", planningDate)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', `Erro na query getPlan (${companyCode}, ${planningDate})`, error);
+        throw error;
+      }
       if (!data) return { success: true, data: null };
+      
+      systemLogService.logSuccess('Sync', `Plano recuperado com sucesso (${companyCode}, ${planningDate}).`);
       return { success: true, data: mapFromDb(data) };
     } catch (err) {
       console.error("Error fetching routing plan from Supabase:", err);
@@ -92,8 +100,10 @@ export const routingPlanSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante getOrCreatePlan (routing_plans).');
       return { success: false, data: null, error: "Supabase network offline" };
+    }
 
     const newPlan: RoutingPlan = {
       id: `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -117,9 +127,11 @@ export const routingPlanSupabaseRepository = {
         if (error.code === '23505') {
           return this.getPlan(companyCode, planningDate);
         }
+        systemLogService.logError('Sync', `Erro na criação do plano (${companyCode}, ${planningDate})`, error);
         throw error;
       }
 
+      systemLogService.logSuccess('Sync', `Plano criado com sucesso (${companyCode}, ${planningDate}).`);
       return { success: true, data: mapFromDb(data) };
     } catch (err) {
       console.error("Error creating routing plan in Supabase:", err);
@@ -140,8 +152,10 @@ export const routingPlanSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante updatePlanStatus (routing_plans).');
       return { success: false, error: "Supabase network offline" };
+    }
 
     try {
       const { error } = await client

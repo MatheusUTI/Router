@@ -40,6 +40,7 @@ import {
   syncOperationalStateWithSupabase,
   mergeGeneric,
 } from "../supabase";
+import { SystemLogsPanel } from "./configuracoes/SystemLogsPanel";
 import { IS_DEMO_MODE } from "../constants/runtimeMode";
 import {
   initialVehicles,
@@ -2531,6 +2532,9 @@ export default function ConfiguracoesView({
           </div>
         )}
       </div>
+
+      {/* System Logs Panel */}
+      <SystemLogsPanel />
 
       {/* IndexedDB Local Persistence Governance Board */}
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-6 text-left relative overflow-hidden animate-fade-in">

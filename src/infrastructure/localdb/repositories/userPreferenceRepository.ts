@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { UserPreference, UserPreferencesPayload } from '../../../types';
 import { supabase } from '../../../supabase';
+import { systemLogService } from '../../../services/systemLogService';
 
 export const UserPreferenceRepository = {
   async getAll(): Promise<UserPreference[]> {
@@ -112,6 +113,7 @@ export const UserPreferenceRepository = {
 
   async pushUserPreferenceToCloud(preference: UserPreference): Promise<boolean> {
     if (!supabase) {
+      systemLogService.logWarn('Sync', 'Não foi possível fazer push das preferências: Supabase não configurado');
       return false;
     }
     try {
@@ -133,6 +135,7 @@ export const UserPreferenceRepository = {
         .upsert(payload);
 
       if (error) {
+        systemLogService.logError('Sync', 'Erro ao fazer push das preferências de usuário', error);
         console.error('[UserPreferenceRepository] Error pushing to cloud:', error);
         await db.user_preferences.update(preference.id, { sync_status: 'failed' });
         return false;
@@ -143,8 +146,10 @@ export const UserPreferenceRepository = {
         sync_status: 'synced',
         synced_at: new Date().toISOString()
       });
+      systemLogService.logSuccess('Sync', `Preferências do usuário ${preference.username} sincronizadas com sucesso.`);
       return true;
     } catch (err) {
+      systemLogService.logError('Sync', 'Exceção ao fazer push das preferências de usuário', err);
       console.error('[UserPreferenceRepository] Error in pushUserPreferenceToCloud:', err);
       try {
         await db.user_preferences.update(preference.id, { sync_status: 'failed' });

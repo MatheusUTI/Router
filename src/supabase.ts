@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, RoutePlanningItem, PreRomaneio } from './types';
 import { RomaneioSave } from './infrastructure/localdb/db';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
+import { systemLogService } from './services/systemLogService';
 
 // Global configurations query hierarchy (Simplified)
 export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'env' | 'none' } {
@@ -9,6 +10,7 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
   const localUrl = localStorage.getItem('supabase_custom_url');
   const localKey = localStorage.getItem('supabase_custom_key');
   if (localUrl && localKey) {
+    systemLogService.logInfo('Auth', 'Credenciais Supabase obtidas via localStorage.');
     return { url: localUrl, key: localKey, source: 'localStorage' };
   }
 
@@ -26,9 +28,11 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
     '';
 
   if (envUrl && envUrl !== 'https://your-supabase-project.supabase.co' && envKey && envKey !== 'your-supabase-anon-key') {
+    systemLogService.logInfo('Auth', 'Credenciais Supabase obtidas via Variáveis de Ambiente.');
     return { url: envUrl, key: envKey, source: 'env' };
   }
 
+  systemLogService.logWarn('Auth', 'Nenhuma credencial Supabase encontrada. Trabalhando offline.');
   return { url: '', key: '', source: 'none' };
 }
 
@@ -56,6 +60,7 @@ export function updateActiveSupabaseClient(url: string, key: string): { success:
     localStorage.setItem('supabase_custom_key', cleanKey);
     supabase = createClient(cleanUrl, cleanKey);
     isSupabaseConfigured = true;
+    systemLogService.logSuccess('Auth', 'Cliente Supabase atualizado manualmente via localStorage.');
     return { success: true, source: 'localStorage', url: cleanUrl, key: cleanKey };
   } else {
     // Clear custom settings
@@ -65,9 +70,11 @@ export function updateActiveSupabaseClient(url: string, key: string): { success:
     if (defaultCred.url && defaultCred.key) {
       supabase = createClient(defaultCred.url, defaultCred.key);
       isSupabaseConfigured = true;
+      systemLogService.logInfo('Auth', 'Custom credenciais removidas, fallback para Variáveis de Ambiente efetuado.');
     } else {
       supabase = null;
       isSupabaseConfigured = false;
+      systemLogService.logWarn('Auth', 'Custom credenciais removidas e sem fallback. Supabase Desativado.');
     }
     return { success: true, source: defaultCred.source, url: defaultCred.url, key: defaultCred.key };
   }
@@ -75,19 +82,25 @@ export function updateActiveSupabaseClient(url: string, key: string): { success:
 
 // Helper to test if database credentials are responsive
 export async function testSupabaseConnection(): Promise<{ success: boolean; message: string }> {
+  systemLogService.logInfo('Network', 'Iniciando teste de conexão base com Supabase (vehicles)...');
   if (!supabase) {
+    systemLogService.logError('Network', 'Supabase não está configurado. Conexão rejeitada.');
     return { success: false, message: 'Supabase não está configurado. Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.' };
   }
   try {
     const { error } = await supabase.from('vehicles').select('id').limit(1);
     if (error) {
       if (error.code === '42P01') {
+        systemLogService.logWarn('Network', 'Conectado, mas tabelas não criadas (Erro 42P01).');
         return { success: true, message: 'Conectado com sucesso! No entanto, as tabelas ainda não foram criadas. Execute o script SQL no console do Supabase.' };
       }
+      systemLogService.logError('Network', 'Falha no teste de conexão com Supabase.', error);
       return { success: false, message: `Erro de resposta: ${error.message} (Código ${error.code})` };
     }
+    systemLogService.logSuccess('Network', 'Teste de conexão concluído com sucesso. Banco ativo.');
     return { success: true, message: 'Conexão estabelecida com sucesso! Banco ativo e tabelas prontas para sincronização.' };
   } catch (err: any) {
+    systemLogService.logError('Network', 'Falha crítica (Exceção) no teste de conexão Supabase', err);
     return { success: false, message: `Falha na requisição: ${err?.message || err}` };
   }
 }
@@ -194,6 +207,7 @@ export async function getAppUsers(): Promise<AppUser[]> {
         .order("created_at", { ascending: true });
         
       if (!error && data) {
+        systemLogService.logSuccess('Auth', `Carregados ${data.length} usuários via Supabase Web Client.`);
         const mapped: AppUser[] = data.map((u: any) => ({
           username: u.username,
           password: u.password,
@@ -212,10 +226,12 @@ export async function getAppUsers(): Promise<AppUser[]> {
         });
         return resultList;
       } else if (error) {
+        systemLogService.logWarn('Auth', 'Erro ao buscar app_users no Supabase, acionando fallback.', error);
         console.warn("Direct query for app_users returned error, falling back:", error.message);
       }
     }
   } catch (supErr) {
+    systemLogService.logWarn('Auth', 'Exceção ao buscar app_users no Supabase, acionando fallback.', supErr);
     console.warn("Error querying database directly for users, using backend/local:", supErr);
   }
 
@@ -231,13 +247,16 @@ export async function getAppUsers(): Promise<AppUser[]> {
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.users) {
+        systemLogService.logSuccess('Auth', `Carregados ${data.users.length} usuários via API Local.`);
         return data.users;
       }
     }
   } catch (e) {
-    console.warn("Erro ao recuperar usuários do backend, usando dados locais:", e);
+    systemLogService.logError('Auth', 'Falha ao conectar com API Local de usuários.', e);
   }
 
+  // 3. Last fallback: IndexedDB / LocalStorage
+  systemLogService.logWarn('Auth', 'Todos os métodos remotos falharam. Carregando usuários do LocalStorage.');
   return getLocalAppUsers();
 }
 
@@ -930,7 +949,17 @@ export async function exportOperationalStateToSupabase(data: {
   preRomaneios: PreRomaneio[];
   savedRomaneios: RomaneioSave[];
 }): Promise<{ success: boolean; results: string[] }> {
-  if (!supabase) throw new Error('Supabase client is not configured.');
+  if (!supabase) {
+    systemLogService.logError('Sync', 'Exportação operacional falhou: Supabase não configurado');
+    throw new Error('Supabase client is not configured.');
+  }
+
+  systemLogService.logInfo('Sync', 'Iniciando exportação operacional...', {
+    ctrcs: data.ctrcs.length,
+    planItems: data.routePlanningItems.length,
+    preRomaneios: data.preRomaneios.length,
+    savedRomaneios: data.savedRomaneios.length
+  });
 
   const results: string[] = [];
   let hasErrors = false;
@@ -1079,7 +1108,12 @@ export async function importOperationalStateFromSupabase(): Promise<{
     savedRomaneios: RomaneioSave[];
   };
 }> {
-  if (!supabase) throw new Error('Supabase client is not configured.');
+  if (!supabase) {
+    systemLogService.logError('Sync', 'Importação operacional falhou: Supabase não configurado');
+    throw new Error('Supabase client is not configured.');
+  }
+
+  systemLogService.logInfo('Sync', 'Iniciando importação operacional...');
 
   try {
     // 1. Fetch CTRCs
@@ -1196,12 +1230,14 @@ export async function importOperationalStateFromSupabase(): Promise<{
       return item;
     });
 
+    systemLogService.logSuccess('Sync', 'Dados operacionais importados com sucesso do Supabase.');
     return {
       success: true,
       message: 'Dados operacionais importados com sucesso do Supabase!',
       data: { ctrcs, routePlanningItems, preRomaneios, savedRomaneios }
     };
   } catch (err: any) {
+    systemLogService.logError('Sync', 'Erro ao importar dados operacionais', err);
     return {
       success: false,
       message: err.message || 'Erro inesperado ao buscar dados operacionais do Supabase.'
@@ -1272,7 +1308,12 @@ export async function syncOperationalStateWithSupabase(localState: {
   };
   results: string[];
 }> {
-  if (!supabase) throw new Error('Supabase client is not configured.');
+  if (!supabase) {
+    systemLogService.logWarn('Sync', 'Sincronização abortada: Supabase não configurado');
+    throw new Error('Supabase client is not configured.');
+  }
+
+  systemLogService.logInfo('Sync', 'Iniciando Sincronização Bidirecional...');
 
   const results: string[] = [];
   try {

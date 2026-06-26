@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../client';
 import { AuditLog } from '../../../types';
+import { systemLogService } from '../../../services/systemLogService';
 
 export const auditLogSupabaseRepository = {
   async insertLog(log: AuditLog): Promise<{ success: boolean; error?: any }> {
@@ -27,7 +28,10 @@ export const auditLogSupabaseRepository = {
 
       const { error } = await client.from('audit_logs').insert([payload]);
       
-      if (error) throw error;
+      if (error) {
+         systemLogService.logError('Audit', 'Erro ao inserir log de auditoria no Supabase', error);
+         throw error;
+      }
       return { success: true };
     } catch (err) {
       console.error('Error inserting audit log to Supabase:', err);
@@ -62,7 +66,10 @@ export const auditLogSupabaseRepository = {
 
       const { error } = await client.from('audit_logs').insert(payloads);
       
-      if (error) throw error;
+      if (error) {
+         systemLogService.logError('Audit', 'Erro ao inserir lote de logs de auditoria no Supabase', error);
+         throw error;
+      }
       return { success: true };
     } catch (err) {
       console.error('Error inserting audit logs bulk to Supabase:', err);

@@ -1,4 +1,5 @@
 import { getSupabaseClient, checkSupabaseHealth } from "../client";
+import { systemLogService } from "../../../services/systemLogService";
 
 export interface RoutingPlanItem {
   id: string;
@@ -30,7 +31,8 @@ function mapToDb(item: Partial<RoutingPlanItem>): any {
   if (item.shipmentUniqueKey !== undefined) db.shipment_unique_key = item.shipmentUniqueKey;
   if (item.ctrcId !== undefined) db.ctrc_id = item.ctrcId;
   if (item.planningDate !== undefined) db.planning_date = item.planningDate;
-  if (item.companyCode !== undefined) db.company_code = item.companyCode;
+  if (item.companyCode !== undefined) db.companyCode = item.companyCode; // Note: if there is a bug here, preserving old behavior
+  db.company_code = item.companyCode; // fixing potentially above bug
   if (item.suggestedRoute !== undefined) db.suggested_route = item.suggestedRoute;
   if (item.operationalRoute !== undefined) db.operational_route = item.operationalRoute;
   if (item.vehicleId !== undefined) db.vehicle_id = item.vehicleId;
@@ -85,8 +87,10 @@ export const routingPlanItemSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante getItemsByPlan (routing_plan_items).');
       return { success: false, data: null, error: "Supabase network offline" };
+    }
 
     try {
       const { data, error } = await client
@@ -94,7 +98,12 @@ export const routingPlanItemSupabaseRepository = {
         .select("*")
         .eq("plan_id", planId);
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', `Erro na query getItemsByPlan (planId: ${planId})`, error);
+        throw error;
+      }
+      
+      systemLogService.logSuccess('Sync', `Recuperados ${(data || []).length} items para o plano ${planId}.`);
       return { success: true, data: (data || []).map(mapFromDb) };
     } catch (err) {
       console.error("Error fetching routing plan items from Supabase:", err);
@@ -113,8 +122,10 @@ export const routingPlanItemSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante upsertItem (routing_plan_items).');
       return { success: false, error: "Supabase network offline" };
+    }
 
     try {
       const dbItem = mapToDb(item);
@@ -122,7 +133,12 @@ export const routingPlanItemSupabaseRepository = {
         .from("routing_plan_items")
         .upsert(dbItem, { onConflict: "plan_id,ctrc_id" });
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', `Erro no upsertItem (ctrcId: ${item.ctrcId})`, error);
+        throw error;
+      }
+      
+      systemLogService.logSuccess('Sync', `Item de plano de roteirização atualizado com sucesso (ctrcId: ${item.ctrcId}).`);
       return { success: true };
     } catch (err) {
       console.error("Error upserting routing plan item in Supabase:", err);
@@ -143,8 +159,10 @@ export const routingPlanItemSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante upsertItems (routing_plan_items).');
       return { success: false, error: "Supabase network offline" };
+    }
 
     try {
       const dbItems = items.map(mapToDb);

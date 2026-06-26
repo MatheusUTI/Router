@@ -1,4 +1,5 @@
 import { getSupabaseClient, checkSupabaseHealth } from "../client";
+import { systemLogService } from "../../../services/systemLogService";
 
 export interface Shipment {
   id: string;
@@ -43,15 +44,22 @@ export const shipmentSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante upsertShipments.');
       return { success: false, error: "Supabase network offline" };
+    }
 
     try {
       const { error } = await client.from("shipments").upsert(shipments, {
         onConflict: "unique_key",
       });
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', 'Erro na query upsert em shipments', error);
+        throw error;
+      }
+      
+      systemLogService.logSuccess('Sync', `Realizado upsert de ${shipments.length} shipments com sucesso no Supabase.`);
       return { success: true };
     } catch (err) {
       console.error("Error upserting shipments to Supabase:", err);
@@ -70,8 +78,10 @@ export const shipmentSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante getRecentShipments.');
       return { success: false, data: null, error: "Supabase network offline" };
+    }
 
     try {
       const dateLimit = new Date();
@@ -87,7 +97,12 @@ export const shipmentSupabaseRepository = {
         .or("is_deleted.is.null,is_deleted.eq.false")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', 'Erro ao recuperar shipments recentes', error);
+        throw error;
+      }
+      
+      systemLogService.logSuccess('Sync', `Recuperados ${data?.length} shipments recentes do Supabase.`);
       return { success: true, data };
     } catch (err) {
       console.error("Error fetching recent shipments from Supabase:", err);
@@ -106,8 +121,10 @@ export const shipmentSupabaseRepository = {
     }
 
     const isActuallyOnline = await checkSupabaseHealth();
-    if (!isActuallyOnline)
+    if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante softDeleteShipment.');
       return { success: false, error: "Supabase network offline" };
+    }
 
     try {
       const { error } = await client
@@ -118,7 +135,12 @@ export const shipmentSupabaseRepository = {
         })
         .eq("unique_key", uniqueKey);
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', `Erro no soft delete do shipment: ${uniqueKey}`, error);
+        throw error;
+      }
+      
+      systemLogService.logSuccess('Sync', `Shipment ${uniqueKey} deletado logicamente no Supabase.`);
       return { success: true };
     } catch (err) {
       console.error("Error soft deleting shipment in Supabase:", err);

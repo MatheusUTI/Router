@@ -1,5 +1,6 @@
 import { getSupabaseClient, checkSupabaseHealth } from "../client";
 import { PreRomaneio } from "../../../types";
+import { systemLogService } from "../../../services/systemLogService";
 
 function mapToDb(item: PreRomaneio, companyCode: string): any {
   return {
@@ -66,6 +67,7 @@ export const preRomaneioSupabaseRepository = {
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante getPreRomaneiosByDateAndUnit.');
       return { success: false, data: null, error: "Supabase network offline" };
     }
 
@@ -76,7 +78,10 @@ export const preRomaneioSupabaseRepository = {
         .eq("company_code", companyCode)
         .eq("planning_date", date);
 
-      if (error) throw error;
+      if (error) {
+        systemLogService.logError('Sync', `Erro na query pre_romaneios (${companyCode}, ${date})`, error);
+        throw error;
+      }
       if (!pres || pres.length === 0) {
         return { success: true, data: [] };
       }
@@ -88,7 +93,10 @@ export const preRomaneioSupabaseRepository = {
         .select("*")
         .in("pre_romaneio_id", preIds);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+         systemLogService.logError('Sync', `Erro na query pre_romaneio_items`, itemsError);
+         throw itemsError;
+      }
 
       const itemsMap: Record<string, string[]> = {};
       (items || []).forEach((it) => {
@@ -99,6 +107,7 @@ export const preRomaneioSupabaseRepository = {
       });
 
       const mappedPres = pres.map((p) => mapFromDb(p, itemsMap[p.id] || []));
+      systemLogService.logSuccess('Sync', `Recuperados ${mappedPres.length} pre-romaneios (${companyCode}, ${date}).`);
       return { success: true, data: mappedPres };
     } catch (err) {
       console.error("Error fetching pre-romaneios from Supabase:", err);
@@ -119,6 +128,7 @@ export const preRomaneioSupabaseRepository = {
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline) {
+      systemLogService.logWarn('Sync', 'Supabase network offline durante upsertPreRomaneio.');
       return { success: false, error: "Supabase network offline" };
     }
 
@@ -128,14 +138,20 @@ export const preRomaneioSupabaseRepository = {
         .from("pre_romaneios")
         .upsert(dbPre, { onConflict: "id" });
 
-      if (error) throw error;
+      if (error) {
+         systemLogService.logError('Sync', `Erro no upsert de pre_romaneios (${item.id})`, error);
+         throw error;
+      }
 
       const { error: deleteError } = await client
         .from("pre_romaneio_items")
         .delete()
         .eq("pre_romaneio_id", item.id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+         systemLogService.logError('Sync', `Erro ao deletar pre_romaneio_items antigos (${item.id})`, deleteError);
+         throw deleteError;
+      }
 
       if (item.ctrcIds && item.ctrcIds.length > 0) {
         const dbItems = item.ctrcIds.map((ctrcId) => ({
