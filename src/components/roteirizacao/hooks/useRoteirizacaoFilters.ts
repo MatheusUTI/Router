@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { RoteirizacaoItem, AppUser, RoteirizacaoSortField, SortDirection } from '../../../types';
 import { DEFAULT_OPERATIONAL_UNIT } from '../../../constants/operationalUnits';
+import { UserPreferenceRepository } from '../../../infrastructure/localdb/repositories/userPreferenceRepository';
 
 export const DEFAULT_ROUTE_SECTORS = [
   'Agendamento',
@@ -395,6 +396,152 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     DEFAULT_ROUTE_SECTORS.map((s) => s.toUpperCase().trim())
   );
 
+  const [isPrefLoaded, setIsPrefLoaded] = useState<boolean>(false);
+  const username = adminUser?.username || '';
+
+  // Load preferences
+  useEffect(() => {
+    if (!username) return;
+    setIsPrefLoaded(false);
+
+    const loadAndSyncFilters = async () => {
+      try {
+        // Fetch local cached preferences first
+        const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        if (localPref?.preferences?.roteirizacao) {
+          const p = localPref.preferences.roteirizacao;
+          if (p.selectedUnit !== undefined) setSelectedUnit(p.selectedUnit);
+          if (p.selectedSector !== undefined) setSelectedSector(p.selectedSector);
+          if (p.selectedLocationFilter !== undefined) setSelectedLocationFilter(p.selectedLocationFilter);
+          if (p.searchQuery !== undefined) setSearchQuery(p.searchQuery);
+          if (p.showOtherUnits !== undefined) setShowOtherUnits(p.showOtherUnits);
+          if (p.logisticScope !== undefined) setLogisticScope(p.logisticScope);
+          if (p.activeTacticalFilter !== undefined) setActiveTacticalFilter(p.activeTacticalFilter);
+          if (p.selectedEligibility !== undefined) setSelectedEligibility(p.selectedEligibility);
+          if (p.selectedOccurrenceSectors !== undefined) setSelectedOccurrenceSectors(p.selectedOccurrenceSectors);
+          if (p.sortField !== undefined) setSortField(p.sortField);
+          if (p.sortDirection !== undefined) setSortDirection(p.sortDirection);
+          if (p.excelRouteFilter !== undefined) setExcelRouteFilter(p.excelRouteFilter);
+          if (p.excelCityFilter !== undefined) setExcelCityFilter(p.excelCityFilter);
+          if (p.excelDestFilter !== undefined) setExcelDestFilter(p.excelDestFilter);
+          if (p.excelPrevFilter !== undefined) setExcelPrevFilter(p.excelPrevFilter);
+          if (p.excelStatusFilter !== undefined) setExcelStatusFilter(p.excelStatusFilter);
+          if (p.excelLocationFilter !== undefined) setExcelLocationFilter(p.excelLocationFilter);
+          if (p.excelSenderFilter !== undefined) setExcelSenderFilter(p.excelSenderFilter);
+          if (p.excelOcorrSectorFilter !== undefined) setExcelOcorrSectorFilter(p.excelOcorrSectorFilter);
+        }
+        setIsPrefLoaded(true);
+
+        // Sync cloud in background (non-blocking)
+        UserPreferenceRepository.syncUserPreferences(username).then(async () => {
+          const syncedPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+          if (syncedPref?.preferences?.roteirizacao) {
+            const p = syncedPref.preferences.roteirizacao;
+            if (p.selectedUnit !== undefined) setSelectedUnit(p.selectedUnit);
+            if (p.selectedSector !== undefined) setSelectedSector(p.selectedSector);
+            if (p.selectedLocationFilter !== undefined) setSelectedLocationFilter(p.selectedLocationFilter);
+            if (p.searchQuery !== undefined) setSearchQuery(p.searchQuery);
+            if (p.showOtherUnits !== undefined) setShowOtherUnits(p.showOtherUnits);
+            if (p.logisticScope !== undefined) setLogisticScope(p.logisticScope);
+            if (p.activeTacticalFilter !== undefined) setActiveTacticalFilter(p.activeTacticalFilter);
+            if (p.selectedEligibility !== undefined) setSelectedEligibility(p.selectedEligibility);
+            if (p.selectedOccurrenceSectors !== undefined) setSelectedOccurrenceSectors(p.selectedOccurrenceSectors);
+            if (p.sortField !== undefined) setSortField(p.sortField);
+            if (p.sortDirection !== undefined) setSortDirection(p.sortDirection);
+            if (p.excelRouteFilter !== undefined) setExcelRouteFilter(p.excelRouteFilter);
+            if (p.excelCityFilter !== undefined) setExcelCityFilter(p.excelCityFilter);
+            if (p.excelDestFilter !== undefined) setExcelDestFilter(p.excelDestFilter);
+            if (p.excelPrevFilter !== undefined) setExcelPrevFilter(p.excelPrevFilter);
+            if (p.excelStatusFilter !== undefined) setExcelStatusFilter(p.excelStatusFilter);
+            if (p.excelLocationFilter !== undefined) setExcelLocationFilter(p.excelLocationFilter);
+            if (p.excelSenderFilter !== undefined) setExcelSenderFilter(p.excelSenderFilter);
+            if (p.excelOcorrSectorFilter !== undefined) setExcelOcorrSectorFilter(p.excelOcorrSectorFilter);
+          }
+        }).catch((err) => {
+          console.warn('[useRoteirizacaoFilters] Falha de sync remota de preferências:', err);
+        });
+
+      } catch (err) {
+        console.error('[useRoteirizacaoFilters] Falha ao carregar preferências:', err);
+        setIsPrefLoaded(true);
+      }
+    };
+
+    loadAndSyncFilters();
+  }, [username]);
+
+  // Debounced Save Preferences
+  useEffect(() => {
+    if (!isPrefLoaded || !username) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        const existingRoteirizacao = localPref?.preferences?.roteirizacao || {};
+        
+        const newRoteirizacao = {
+          ...existingRoteirizacao,
+          selectedUnit,
+          selectedSector,
+          selectedLocationFilter,
+          searchQuery,
+          showOtherUnits,
+          logisticScope,
+          activeTacticalFilter,
+          selectedEligibility,
+          selectedOccurrenceSectors,
+          sortField,
+          sortDirection,
+          excelRouteFilter,
+          excelCityFilter,
+          excelDestFilter,
+          excelPrevFilter,
+          excelStatusFilter,
+          excelLocationFilter,
+          excelSenderFilter,
+          excelOcorrSectorFilter,
+        };
+
+        const updated = await UserPreferenceRepository.saveLocalPreference(
+          username,
+          'roteirizacao',
+          { ...localPref?.preferences, roteirizacao: newRoteirizacao }
+        );
+
+        // Try pushing to cloud in background (non-blocking)
+        UserPreferenceRepository.pushUserPreferenceToCloud(updated).catch((err) => {
+          console.warn('[useRoteirizacaoFilters] Erro silencioso ao tentar sincronizar preferência com nuvem:', err);
+        });
+      } catch (err) {
+        console.error('[useRoteirizacaoFilters] Erro ao salvar preferências:', err);
+      }
+    }, 500); // Debounce of 500ms (between 300 and 800ms)
+
+    return () => clearTimeout(timer);
+  }, [
+    username,
+    isPrefLoaded,
+    selectedUnit,
+    selectedSector,
+    selectedLocationFilter,
+    searchQuery,
+    showOtherUnits,
+    logisticScope,
+    activeTacticalFilter,
+    selectedEligibility,
+    selectedOccurrenceSectors,
+    sortField,
+    sortDirection,
+    excelRouteFilter,
+    excelCityFilter,
+    excelDestFilter,
+    excelPrevFilter,
+    excelStatusFilter,
+    excelLocationFilter,
+    excelSenderFilter,
+    excelOcorrSectorFilter
+  ]);
+
   // Available unique occurrence sectors
   const availableSectors = useMemo(() => {
     const sectors = ctrcs.map((c) => c.occurrenceSector || 'Sem setor');
@@ -439,28 +586,166 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
     });
   }, [ctrcs, adminUser, selectedUnit]);
 
+  const applyFilters = (
+    items: RoteirizacaoItem[],
+    options: {
+      ignore?: 'route' | 'city' | 'dest' | 'prev' | 'status' | 'location' | 'sender' | 'occurrenceSector';
+    } = {}
+  ): RoteirizacaoItem[] => {
+    let current = items;
+
+    // Route Filter (ignore if ignore === 'route')
+    if (options.ignore !== 'route' && excelRouteFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.effectiveRoute || c.normRota || 'SEM ROTA').toUpperCase().trim();
+        return excelRouteFilter.includes(val);
+      });
+    }
+
+    // Occurrence Sector Filter (ignore if ignore === 'occurrenceSector')
+    if (options.ignore !== 'occurrenceSector' && excelOcorrSectorFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.occurrenceSector || 'SEM SETOR').toUpperCase().trim();
+        return excelOcorrSectorFilter.includes(val);
+      });
+    }
+
+    // Search Query
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      current = current.filter((ctrc) => {
+        const mId = (ctrc.id || '').toLowerCase().includes(query);
+        const mDest = (ctrc.destinatario || '').toLowerCase().includes(query);
+        const mRem = (ctrc.remetente || '').toLowerCase().includes(query);
+        const mCid = (ctrc.normCidade || ctrc.cidade || ctrc.cidade_ent || '').toLowerCase().includes(query);
+        const mNf = (ctrc.nf || '').toLowerCase().includes(query);
+        const mSetor = (ctrc.normSetor || '').toLowerCase().includes(query);
+        const mRoute = (ctrc.effectiveRoute || '').toLowerCase().includes(query) || (ctrc.normRota || '').toLowerCase().includes(query);
+        const mLoc = (ctrc.locationLabel || '').toLowerCase().includes(query) || (ctrc.localizacao || '').toLowerCase().includes(query);
+        const mNote = (ctrc.operationalNote || '').toLowerCase().includes(query);
+        const mOcorrCode = (ctrc.occurrenceCode || '').toLowerCase().includes(query) || (ctrc.ocorrencia || '').toLowerCase().includes(query);
+        const mOcorrDesc = (ctrc.occurrenceDescription || '').toLowerCase().includes(query) || (ctrc.descricao_ocorr || '').toLowerCase().includes(query);
+        
+        return (mId || mDest || mRem || mCid || mNf || mSetor || mLoc || mRoute || mNote || mOcorrCode || mOcorrDesc);
+      });
+    }
+
+    // Logistics Compatibility Check
+    current = current.filter((ctrc) => {
+      const targetUnit = adminUser.is_master 
+        ? (selectedUnit === 'TODAS' ? 'TODAS' : selectedUnit)
+        : (adminUser.unid || DEFAULT_OPERATIONAL_UNIT).toUpperCase();
+      
+      const isCompat = isLogisticallyCompatible(
+        ctrc.locationLabel || ctrc.localizacao || '',
+        ctrc.unid || '',
+        targetUnit,
+        ctrc.pracaHub,
+        ctrc.pracaDestino
+      );
+      
+      const isTransit = (ctrc.availabilityLabel || ctrc.status || '').toUpperCase() === 'EM TRÂNSITO' || 
+                        (ctrc.disponibilidade || '').toUpperCase() === 'EM TRÂNSITO' ||
+                        (ctrc.locationLabel || ctrc.localizacao || '').toUpperCase().includes('→') ||
+                        (ctrc.locationLabel || ctrc.localizacao || '').toUpperCase().includes('EM TRÂNSI') ||
+                        (ctrc.locationLabel || ctrc.localizacao || '').toUpperCase().includes('PARA FILIAL');
+
+      if (logisticScope === 'my-unit') {
+        return isCompat && !isTransit;
+      } else if (logisticScope === 'my-unit-transit') {
+        return isCompat;
+      } else if (logisticScope === 'all-units') {
+        return true;
+      } else if (logisticScope === 'incompatible') {
+        return !isCompat;
+      }
+      return true;
+    });
+
+    // City Filter (ignore if ignore === 'city')
+    if (options.ignore !== 'city' && excelCityFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim();
+        return excelCityFilter.includes(val);
+      });
+    }
+
+    // Destinatario Filter (ignore if ignore === 'dest')
+    if (options.ignore !== 'dest' && excelDestFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.destinatario || 'SEM DESTINATÁRIO').toUpperCase().trim();
+        return excelDestFilter.includes(val);
+      });
+    }
+
+    // Previsao Filter (ignore if ignore === 'prev')
+    if (options.ignore !== 'prev' && excelPrevFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.prev_ent || 'SEM PREVISÃO').toUpperCase().trim();
+        return excelPrevFilter.includes(val);
+      });
+    }
+
+    // Status/Occurrence Filter (ignore if ignore === 'status')
+    if (options.ignore !== 'status' && excelStatusFilter !== null) {
+      current = current.filter(c => {
+        let label = 'SEM OCORRÊNCIA';
+        if (c.occurrenceCode) {
+          const code = String(c.occurrenceCode);
+          const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
+          label = `OC ${code} · ${occName}`;
+        }
+        return excelStatusFilter.includes(label.toUpperCase().trim());
+      });
+    }
+
+    // Location Filter (ignore if ignore === 'location')
+    if (options.ignore !== 'location' && excelLocationFilter !== null) {
+      current = current.filter(c => {
+        const normLoc = c.locationLabel ? c.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
+        const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
+        return excelLocationFilter.includes(displayLoc.toUpperCase().trim());
+      });
+    }
+
+    // Sender Filter (ignore if ignore === 'sender')
+    if (options.ignore !== 'sender' && excelSenderFilter !== null) {
+      current = current.filter(c => {
+        const val = (c.remetente || 'SEM REMETENTE').toUpperCase().trim();
+        return excelSenderFilter.includes(val);
+      });
+    }
+
+    return current;
+  };
+
   const excelUniqueRoutes = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.effectiveRoute || c.normRota || 'SEM ROTA').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'route' });
+    const list = contextualItems.map(c => (c.effectiveRoute || c.normRota || 'SEM ROTA').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter]);
 
   const excelUniqueCities = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'city' });
+    const list = contextualItems.map(c => (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter]);
 
   const excelUniqueDests = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.destinatario || 'SEM DESTINATÁRIO').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'dest' });
+    const list = contextualItems.map(c => (c.destinatario || 'SEM DESTINATÁRIO').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter]);
 
   const excelUniquePrevs = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.prev_ent || 'SEM PREVISÃO').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'prev' });
+    const list = contextualItems.map(c => (c.prev_ent || 'SEM PREVISÃO').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter]);
 
   const excelUniqueStatuses = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => {
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'status' });
+    const list = contextualItems.map(c => {
       if (c.occurrenceCode) {
         const code = String(c.occurrenceCode);
         const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
@@ -469,26 +754,29 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       return 'SEM OCORRÊNCIA';
     });
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelPrevFilter, excelLocationFilter, excelSenderFilter]);
 
   const excelUniqueLocs = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => {
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'location' });
+    const list = contextualItems.map(c => {
       const normLoc = c.locationLabel ? c.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
       const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
       return displayLoc.toUpperCase().trim();
     });
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelSenderFilter]);
 
   const excelUniqueSenders = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.remetente || 'SEM REMETENTE').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'sender' });
+    const list = contextualItems.map(c => (c.remetente || 'SEM REMETENTE').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, excelOcorrSectorFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter]);
 
   const excelUniqueOcorrSectors = useMemo(() => {
-    const list = afterUnitCtrcs.map(c => (c.occurrenceSector || 'SEM SETOR').toUpperCase().trim());
+    const contextualItems = applyFilters(afterUnitCtrcs, { ignore: 'occurrenceSector' });
+    const list = contextualItems.map(c => (c.occurrenceSector || 'SEM SETOR').toUpperCase().trim());
     return Array.from(new Set(list)).sort();
-  }, [afterUnitCtrcs]);
+  }, [afterUnitCtrcs, excelRouteFilter, searchQuery, selectedUnit, adminUser, logisticScope, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter]);
 
   // Apply sequential filtering and sorting logic
   const { filteredCtrcs, filterCounts } = useMemo(() => {
@@ -500,7 +788,10 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       return isEligibleForUnit(ctrc, activeUnit);
     });
 
-    // Step 2: Route/Sector filtering (excelRouteFilter) - Single source of truth
+    const finalFiltered = applyFilters(afterUnit, {});
+    const sortedList = sortRoteirizacaoItems(finalFiltered, sortField, sortDirection);
+
+    // Step 2: Route/Sector filtering (excelRouteFilter) - Single source of truth (for diagnostic counts)
     const afterRoute = excelRouteFilter === null 
       ? afterUnit 
       : afterUnit.filter(c => {
@@ -508,7 +799,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
           return excelRouteFilter.includes(val);
         });
 
-    // Step 3: Setor Ocorrência Filter (excelOcorrSectorFilter) - Single source of truth
+    // Step 3: Setor Ocorrência Filter (excelOcorrSectorFilter) - Single source of truth (for diagnostic counts)
     const afterOccurrence = excelOcorrSectorFilter === null
       ? afterRoute 
       : afterRoute.filter(c => {
@@ -516,7 +807,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
           return excelOcorrSectorFilter.includes(val);
         });
 
-    // Step 4: Case-insensitive unified query search
+    // Step 4: Case-insensitive unified query search (for diagnostic counts)
     const afterSearch = afterOccurrence.filter((ctrc) => {
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase().trim();
@@ -537,7 +828,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       return true;
     });
 
-    // Step 5: Logistics Compatibility Check
+    // Step 5: Logistics Compatibility Check (for diagnostic counts)
     const afterLogistic = afterSearch.filter((ctrc) => {
       const targetUnit = adminUser.is_master 
         ? (selectedUnit === 'TODAS' ? 'TODAS' : selectedUnit)
@@ -569,65 +860,8 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
       return true;
     });
 
-    // Step 6: Status/Fase Check (unfiltered at this stage)
+    // Step 6: Status/Fase Check (unfiltered at this stage) (for diagnostic counts)
     const afterStatus = afterLogistic;
-
-    // Excel column multi-select filters
-    // Excel City Filter
-    const excelAfterCity = excelCityFilter === null 
-      ? afterStatus 
-      : afterStatus.filter(c => {
-          const val = (c.normCidade || c.cidade || c.cidade_ent || 'SEM CIDADE').toUpperCase().trim();
-          return excelCityFilter.includes(val);
-        });
-
-    // Excel Destinatario Filter
-    const excelAfterDest = excelDestFilter === null
-      ? excelAfterCity 
-      : excelAfterCity.filter(c => {
-          const val = (c.destinatario || 'SEM DESTINATÁRIO').toUpperCase().trim();
-          return excelDestFilter.includes(val);
-        });
-
-    // Excel Previsao Filter
-    const excelAfterPrev = excelPrevFilter === null 
-      ? excelAfterDest 
-      : excelAfterDest.filter(c => {
-          const val = (c.prev_ent || 'SEM PREVISÃO').toUpperCase().trim();
-          return excelPrevFilter.includes(val);
-        });
-
-    // Excel Status Filter (Now Occurrence Filter)
-    const excelAfterStatusState = excelStatusFilter === null 
-      ? excelAfterPrev 
-      : excelAfterPrev.filter(c => {
-          let label = 'SEM OCORRÊNCIA';
-          if (c.occurrenceCode) {
-            const code = String(c.occurrenceCode);
-            const occName = c.occurrenceDescription === 'Ocorrência não mapeada' ? 'OCORRÊNCIA' : (c.occurrenceDescription || 'OCORRÊNCIA').toUpperCase();
-            label = `OC ${code} · ${occName}`;
-          }
-          return excelStatusFilter.includes(label.toUpperCase().trim());
-        });
-
-    // Excel Location Filter
-    const excelAfterLoc = excelLocationFilter === null 
-      ? excelAfterStatusState 
-      : excelAfterStatusState.filter(c => {
-          const normLoc = c.locationLabel ? c.locationLabel.replace(/📍/g, '').replace(/BOX\s*:?/ig, '').trim() : '';
-          const displayLoc = (!normLoc || normLoc === '' || normLoc === 'SEM BOX' || normLoc === 'NÃO INFORMADO') ? 'S/ LOCALIZAÇÃO' : normLoc;
-          return excelLocationFilter.includes(displayLoc.toUpperCase().trim());
-        });
-
-    // Excel Remetente (Sender) Filter
-    const excelAfterSender = excelSenderFilter === null 
-      ? excelAfterLoc 
-      : excelAfterLoc.filter(c => {
-          const val = (c.remetente || 'SEM REMETENTE').toUpperCase().trim();
-          return excelSenderFilter.includes(val);
-        });
-
-    const sortedList = sortRoteirizacaoItems(excelAfterSender, sortField, sortDirection);
 
     return {
       filteredCtrcs: sortedList,
@@ -641,7 +875,7 @@ export function useRoteirizacaoFilters({ ctrcs, adminUser }: UseRoteirizacaoFilt
         totalFinalVisible: sortedList.length,
       }
     };
-  }, [ctrcs, adminUser, selectedUnit, selectedSector, searchQuery, logisticScope, selectedOccurrenceSectors, sortField, sortDirection, excelRouteFilter, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter, excelOcorrSectorFilter]);
+  }, [ctrcs, adminUser, selectedUnit, searchQuery, logisticScope, sortField, sortDirection, excelRouteFilter, excelCityFilter, excelDestFilter, excelPrevFilter, excelStatusFilter, excelLocationFilter, excelSenderFilter, excelOcorrSectorFilter]);
 
   // Sync showOtherUnits when logisticScope changes for legacy dependencies
   React.useEffect(() => {

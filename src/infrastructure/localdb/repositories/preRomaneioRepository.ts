@@ -1,5 +1,6 @@
 import { db } from '../db';
 import { PreRomaneio, PreRomaneioStatus } from '../../../types';
+import { preRomaneioSupabaseRepository } from '../../supabase/repositories/preRomaneioSupabaseRepository';
 
 export const PreRomaneioRepository = {
   async getAll(): Promise<PreRomaneio[]> {
@@ -20,36 +21,78 @@ export const PreRomaneioRepository = {
 
   async put(item: PreRomaneio): Promise<string> {
     await db.pre_romaneios.put(item);
+    try {
+      const companyCode = localStorage.getItem('user_unit') || 'SPO';
+      await preRomaneioSupabaseRepository.upsertPreRomaneio(item, companyCode);
+    } catch (err) {
+      console.warn('[PreRomaneioRepository] Erro ao sincronizar pré-romaneio no Supabase:', err);
+    }
     return item.id;
   },
 
   async putMany(items: PreRomaneio[]): Promise<void> {
     await db.pre_romaneios.bulkPut(items);
+    try {
+      const companyCode = localStorage.getItem('user_unit') || 'SPO';
+      await preRomaneioSupabaseRepository.upsertPreRomaneios(items, companyCode);
+    } catch (err) {
+      console.warn('[PreRomaneioRepository] Erro ao sincronizar pré-romaneios no Supabase:', err);
+    }
   },
 
   async delete(id: string): Promise<void> {
+    const existing = await db.pre_romaneios.get(id);
     await db.pre_romaneios.delete(id);
+    if (existing) {
+      try {
+        const companyCode = localStorage.getItem('user_unit') || 'SPO';
+        const cancelled = { ...existing, status: 'CANCELADO' as const, updatedAt: new Date().toISOString() };
+        await preRomaneioSupabaseRepository.upsertPreRomaneio(cancelled, companyCode);
+      } catch (err) {
+        console.warn('[PreRomaneioRepository] Erro ao marcar como cancelado no Supabase durante remoção:', err);
+      }
+    }
   },
 
   async updateStatus(id: string, status: PreRomaneioStatus, extras?: Partial<PreRomaneio>): Promise<void> {
     const existing = await db.pre_romaneios.get(id);
     if (!existing) return;
 
-    await db.pre_romaneios.update(id, {
+    const updated = {
+      ...existing,
       status,
       updatedAt: new Date().toISOString(),
       ...extras
-    });
+    };
+
+    await db.pre_romaneios.put(updated);
+
+    try {
+      const companyCode = localStorage.getItem('user_unit') || 'SPO';
+      await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+    } catch (err) {
+      console.warn('[PreRomaneioRepository] Erro ao sincronizar status no Supabase:', err);
+    }
   },
 
   async updateAssignment(id: string, data: Partial<PreRomaneio>): Promise<void> {
     const existing = await db.pre_romaneios.get(id);
     if (!existing) return;
 
-    await db.pre_romaneios.update(id, {
+    const updated = {
+      ...existing,
       ...data,
       updatedAt: new Date().toISOString()
-    });
+    };
+
+    await db.pre_romaneios.put(updated);
+
+    try {
+      const companyCode = localStorage.getItem('user_unit') || 'SPO';
+      await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+    } catch (err) {
+      console.warn('[PreRomaneioRepository] Erro ao sincronizar atribuição no Supabase:', err);
+    }
   },
 
   async cancel(id: string): Promise<void> {

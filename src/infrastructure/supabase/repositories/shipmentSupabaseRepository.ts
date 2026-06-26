@@ -35,9 +35,12 @@ export const shipmentSupabaseRepository = {
   async upsertShipments(
     shipments: Shipment[],
   ): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client)
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
       return { success: false, error: "Supabase offline" };
+    }
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline)
@@ -59,9 +62,12 @@ export const shipmentSupabaseRepository = {
   async getRecentShipments(
     days: number = 31,
   ): Promise<{ data: Shipment[] | null; success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client)
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
       return { success: false, data: null, error: "Supabase offline" };
+    }
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline)
@@ -92,9 +98,12 @@ export const shipmentSupabaseRepository = {
   async softDeleteShipment(
     uniqueKey: string,
   ): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client)
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
       return { success: false, error: "Supabase offline" };
+    }
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline)

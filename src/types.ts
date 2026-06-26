@@ -81,6 +81,16 @@ export interface Ctrc {
   deliveryNeighborhood?: string;
   deliveryCity?: string;
 
+  // Operational Decisions Fields
+  operationalRoute?: string;
+  manualPriority?: string;
+  planningStatus?: string;
+  operationalNote?: string;
+  isManualRoute?: boolean;
+  preRomaneioId?: string;
+  romaneioId?: string;
+  routePlanningId?: string;
+
   // Subcontract Fields
   originSeries?: string;
   isSubcontract?: boolean;
@@ -241,7 +251,7 @@ export type RoteirizacaoSortField =
 export type SortDirection = 'asc' | 'desc';
 
 export interface RoteirizacaoPreferences {
-  densityMode: DensityMode;
+  densityMode?: DensityMode;
   mesaScale?: '85%' | '90%' | '100%' | '110%' | '120%';
   groupingMode?: string;
   selectedUnit?: string;
@@ -255,6 +265,17 @@ export interface RoteirizacaoPreferences {
   sortDirection?: SortDirection;
   showOtherUnits?: boolean;
   mesaViewPreferences?: MesaViewPreferences;
+  searchQuery?: string;
+  logisticScope?: string;
+  selectedEligibility?: string;
+  excelRouteFilter?: string[] | null;
+  excelCityFilter?: string[] | null;
+  excelDestFilter?: string[] | null;
+  excelPrevFilter?: string[] | null;
+  excelStatusFilter?: string[] | null;
+  excelLocationFilter?: string[] | null;
+  excelSenderFilter?: string[] | null;
+  excelOcorrSectorFilter?: string[] | null;
 }
 
 export interface UserPreferencesPayload {
@@ -307,6 +328,10 @@ export interface RoutePlanningItem {
   manualPriority?: PlanningPriority;
   planningStatus: PlanningStatus;
   operationalNote?: string;
+  vehicleId?: string;
+  vehiclePlate?: string;
+  driverName?: string;
+  helperName?: string;
   lockedByUser?: boolean;
   updatedBy?: string;
   updatedAt: string;
@@ -437,6 +462,7 @@ export interface PreRomaneio {
   helperName?: string;
   observations?: string;
   importBatchId?: string;
+  planId?: string;
 }
 
 export interface OperationalCalendarEvent {

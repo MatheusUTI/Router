@@ -9,7 +9,11 @@ import { UserPreferenceRepository } from '../../infrastructure/localdb/repositor
 import { RouteGateRepository } from '../../infrastructure/localdb/repositories/routeGateRepository';
 import { PreRomaneioRepository } from '../../infrastructure/localdb/repositories/preRomaneioRepository';
 import { CidadeAtendidaSSWRepository } from '../../infrastructure/localdb/repositories/cidadeAtendidaSSWRepository';
+import { AuditLogRepository } from '../../infrastructure/localdb/repositories/auditLogRepository';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
+import { routingPlanSupabaseRepository } from '../../infrastructure/supabase/repositories/routingPlanSupabaseRepository';
+import { routingPlanItemSupabaseRepository } from '../../infrastructure/supabase/repositories/routingPlanItemSupabaseRepository';
+import { preRomaneioSupabaseRepository } from '../../infrastructure/supabase/repositories/preRomaneioSupabaseRepository';
 
 // Modular Imports
 import RoteirizacaoHeader from './RoteirizacaoHeader';
@@ -66,6 +70,8 @@ export default function RoteirizacaoView({
   const [curvaAClientsLocal, setCurvaAClientsLocal] = useState<CurvaAClientLocal[]>([]);
   const [helpers, setHelpers] = useState<Helper[]>([]);
   const [routePlanningItems, setRoutePlanningItems] = useState<RoutePlanningItem[]>([]);
+  const [activeRoutingPlan, setActiveRoutingPlan] = useState<any>(null);
+  const [isSyncingPlan, setIsSyncingPlan] = useState<boolean>(false);
   const [isNormalizing, setIsNormalizing] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [generatedPreRomaneios, setGeneratedPreRomaneios] = useState<PreRomaneio[] | null>(null);
@@ -112,12 +118,11 @@ export default function RoteirizacaoView({
     const loadEnrichmentBases = async () => {
       setIsNormalizing(true);
       try {
-        const [occList, crList, caList, hList, planList, sswList] = await Promise.all([
+        const [occList, crList, caList, hList, sswList] = await Promise.all([
           OccurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
           CidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
           CurvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
           HelperRepository.getAll().catch(() => [] as Helper[]),
-          RoutePlanningRepository.getAll().catch(() => [] as RoutePlanningItem[]),
           CidadeAtendidaSSWRepository.getAll().catch(() => [] as CidadeAtendidaSSW[]),
         ]);
 
@@ -126,7 +131,6 @@ export default function RoteirizacaoView({
         setSswCidades(sswList);
         setCurvaAClientsLocal(caList);
         setHelpers(hList);
-        setRoutePlanningItems(planList);
       } catch (e) {
         console.error('[Roteirizacao] Erro carregando bases auxiliares de enriquecimento:', e);
       } finally {
@@ -136,9 +140,198 @@ export default function RoteirizacaoView({
     loadEnrichmentBases();
   }, []);
 
+  // Synchronized loading of Routing Plan & Routing Plan Items from Supabase on Mount or Date/Unit change
+  useEffect(() => {
+    let active = true;
+
+    const syncPlan = async () => {
+      const companyCode = adminUser?.unid || 'SPO';
+      const username = adminUser?.username || 'admin';
+      
+      // Step A: Load Local Cache first for immediate, non-blocking render
+      try {
+        const localItems = await RoutePlanningRepository.getByDate(planningDate);
+        if (active) {
+          setRoutePlanningItems(localItems);
+        }
+      } catch (err) {
+        console.warn('[Roteirizacao] Erro ao carregar planejamento local:', err);
+      }
+
+      // Step B: Connect to Supabase to fetch/create collaborative state
+      try {
+        setIsSyncingPlan(true);
+        
+        const planRes = await routingPlanSupabaseRepository.getOrCreatePlan(companyCode, planningDate, username);
+        if (!active) return;
+
+        if (planRes.success && planRes.data) {
+          setActiveRoutingPlan(planRes.data);
+          const planId = planRes.data.id;
+          
+          const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(planId);
+          if (itemsRes.success && itemsRes.data && active) {
+            const remoteItems = itemsRes.data;
+            
+            if (remoteItems.length > 0) {
+              const mappedRemoteItems: RoutePlanningItem[] = remoteItems.map((item) => ({
+                id: `${item.planningDate}_${item.ctrcId}`,
+                ctrcId: item.ctrcId,
+                planningDate: item.planningDate,
+                suggestedRoute: item.suggestedRoute || '',
+                operationalRoute: item.operationalRoute,
+                manualPriority: item.manualPriority as any,
+                planningStatus: (item.planningStatus || 'A_PLANEJAR') as any,
+                operationalNote: item.operationalNote,
+                vehicleId: item.vehicleId,
+                vehiclePlate: item.vehiclePlate,
+                driverName: item.driverName,
+                helperName: item.helperName,
+                lockedByUser: !!item.lockedByUser,
+                updatedBy: item.updatedBy,
+                createdAt: item.createdAt || new Date().toISOString(),
+                updatedAt: item.updatedAt || new Date().toISOString(),
+              }));
+              
+              // Seed/update local cache with remote changes
+              await RoutePlanningRepository.putMany(mappedRemoteItems);
+              
+              // Load the final unified state from local cache
+              const unifiedItems = await RoutePlanningRepository.getByDate(planningDate);
+              setRoutePlanningItems(unifiedItems);
+            }
+            
+            setToastMessage('🔄 Mesa sincronizada com o Supabase');
+            setTimeout(() => setToastMessage(null), 3000);
+          }
+        } else {
+          console.warn('[Roteirizacao] Supabase não retornou plano. Operando em modo offline.');
+        }
+
+        // Step C: Sync Pre-Romaneios from Supabase for this date and unit
+        try {
+          const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, planningDate);
+          if (preRes.success && preRes.data && active) {
+            const remotePre = preRes.data;
+            if (remotePre.length > 0) {
+              await PreRomaneioRepository.putMany(remotePre);
+              // Trigger parent CTRC re-partition so newly fetched pre-romaneios map their CTRCs as linked
+              if (onRefreshCtrcs) {
+                onRefreshCtrcs();
+              }
+            }
+          }
+        } catch (preErr) {
+          console.warn('[Roteirizacao] Erro ao sincronizar pré-romaneios do Supabase:', preErr);
+        }
+      } catch (err) {
+        console.warn('[Roteirizacao] Falha na sincronia remota (Mesa Colaborativa offline):', err);
+      } finally {
+        if (active) {
+          setIsSyncingPlan(false);
+        }
+      }
+    };
+
+    syncPlan();
+
+    return () => {
+      active = false;
+    };
+  }, [planningDate, adminUser?.unid, adminUser?.username]);
+
   // Set up planning update callback handler
   const handleUpdatePlanning = async (ctrcId: string, patch: Partial<RoutePlanningItem>) => {
     try {
+      const oldItem = routePlanningItems.find((p) => p.ctrcId === ctrcId);
+      const userName = adminUser?.name || adminUser?.username || 'admin';
+      const isMaster = adminUser?.is_master || false;
+
+      // 1. Audit route changes
+      if (patch.operationalRoute !== undefined && (!oldItem || oldItem.operationalRoute !== patch.operationalRoute)) {
+        const oldRoute = oldItem?.operationalRoute || 'NENHUMA';
+        const newRoute = patch.operationalRoute || 'NENHUMA';
+        AuditLogRepository.log({
+          user: userName,
+          isMaster,
+          entityType: 'ROUTING_PLAN_ITEM',
+          entityId: ctrcId,
+          action: 'UPDATE',
+          field: 'operationalRoute',
+          oldValue: oldRoute,
+          newValue: newRoute,
+          description: `CTRC ${ctrcId} movido de ROTA ${oldRoute} para ROTA ${newRoute} por ${userName}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de rota:', err));
+      }
+
+      // 2. Audit planning status changes
+      if (patch.planningStatus !== undefined && (!oldItem || oldItem.planningStatus !== patch.planningStatus)) {
+        const oldStatus = oldItem?.planningStatus || 'A_PLANEJAR';
+        const newStatus = patch.planningStatus;
+        AuditLogRepository.log({
+          user: userName,
+          isMaster,
+          entityType: 'ROUTING_PLAN_ITEM',
+          entityId: ctrcId,
+          action: 'UPDATE',
+          field: 'planningStatus',
+          oldValue: oldStatus,
+          newValue: newStatus,
+          description: `Status de planejamento do CTRC ${ctrcId} alterado de ${oldStatus} para ${newStatus} por ${userName}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de status:', err));
+      }
+
+      // 3. Audit operational notes changes
+      if (patch.operationalNote !== undefined && (!oldItem || oldItem.operationalNote !== patch.operationalNote)) {
+        const oldNote = oldItem?.operationalNote || '';
+        const newNote = patch.operationalNote || '';
+        AuditLogRepository.log({
+          user: userName,
+          isMaster,
+          entityType: 'ROUTING_PLAN_ITEM',
+          entityId: ctrcId,
+          action: 'UPDATE',
+          field: 'operationalNote',
+          oldValue: oldNote,
+          newValue: newNote,
+          description: `Observação operacional do CTRC ${ctrcId} alterada de '${oldNote}' para '${newNote}' por ${userName}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de observação:', err));
+      }
+
+      // 4. Audit vehicle assignments
+      if (patch.vehiclePlate !== undefined && (!oldItem || oldItem.vehiclePlate !== patch.vehiclePlate)) {
+        const oldPlate = oldItem?.vehiclePlate || 'NENHUM';
+        const newPlate = patch.vehiclePlate || 'NENHUM';
+        AuditLogRepository.log({
+          user: userName,
+          isMaster,
+          entityType: 'ROUTING_PLAN_ITEM',
+          entityId: ctrcId,
+          action: 'UPDATE',
+          field: 'vehiclePlate',
+          oldValue: oldPlate,
+          newValue: newPlate,
+          description: `Veículo ${newPlate} vinculado ao CTRC ${ctrcId} por ${userName}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de veículo:', err));
+      }
+
+      // 5. Audit driver assignments
+      if (patch.driverName !== undefined && (!oldItem || oldItem.driverName !== patch.driverName)) {
+        const oldDriver = oldItem?.driverName || 'NENHUM';
+        const newDriver = patch.driverName || 'NENHUM';
+        AuditLogRepository.log({
+          user: userName,
+          isMaster,
+          entityType: 'ROUTING_PLAN_ITEM',
+          entityId: ctrcId,
+          action: 'UPDATE',
+          field: 'driverName',
+          oldValue: oldDriver,
+          newValue: newDriver,
+          description: `Motorista ${newDriver} vinculado ao CTRC ${ctrcId} por ${userName}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de motorista:', err));
+      }
+
       const updatedItem = await RoutePlanningRepository.upsertForCtrc(ctrcId, planningDate, patch);
       
       setRoutePlanningItems((prev) => {
@@ -151,6 +344,34 @@ export default function RoteirizacaoView({
           return [...prev, updatedItem];
         }
       });
+
+      // If active routing plan exists on Supabase, synchronize in background
+      if (activeRoutingPlan) {
+        const companyCode = adminUser?.unid || 'SPO';
+        const remoteItem = {
+          id: `${activeRoutingPlan.id}_${ctrcId}`,
+          planId: activeRoutingPlan.id,
+          shipmentUniqueKey: `${companyCode}_${ctrcId}`,
+          ctrcId: ctrcId,
+          planningDate: planningDate,
+          companyCode: companyCode,
+          suggestedRoute: updatedItem.suggestedRoute || undefined,
+          operationalRoute: updatedItem.operationalRoute || undefined,
+          planningStatus: updatedItem.planningStatus || 'A_PLANEJAR',
+          manualPriority: updatedItem.manualPriority || undefined,
+          operationalNote: updatedItem.operationalNote || undefined,
+          vehicleId: updatedItem.vehicleId || undefined,
+          vehiclePlate: updatedItem.vehiclePlate || undefined,
+          driverName: updatedItem.driverName || undefined,
+          helperName: updatedItem.helperName || undefined,
+          lockedByUser: updatedItem.lockedByUser ? String(updatedItem.lockedByUser) : undefined,
+          updatedBy: adminUser?.username || 'admin',
+        };
+
+        routingPlanItemSupabaseRepository.upsertItem(remoteItem).catch((err) => {
+          console.warn('[Roteirizacao] Erro silencioso ao salvar item no Supabase:', err);
+        });
+      }
 
       setToastMessage(`📌 Ajuste salvo para CTRC ${ctrcId}`);
       setTimeout(() => setToastMessage(null), 3000);
@@ -353,8 +574,24 @@ export default function RoteirizacaoView({
   useEffect(() => {
     if (occurrences) {
       setDbOccurrencesList(occurrences);
-      // Reset selected occurrence sectors filter when occurrences are replaced or updated to clear old/stale filters (e.g. COBRANA)
-      setSelectedOccurrenceSectors([]);
+      const validSectors = new Set(occurrences.map((o) => (o.setor_ocorr || '').toUpperCase().trim()));
+      
+      setSelectedOccurrenceSectors((prev) => {
+        if (!prev || prev.length === 0) return prev;
+        const filtered = prev.filter((sec) => {
+          const uSec = sec.toUpperCase().trim();
+          return validSectors.has(uSec) || [
+            'Agendamento',
+            'Disponível',
+            'Disponível Cobrança',
+            'Disponível Pendência',
+            'Disponível Transferência',
+            'Sem setor',
+            'Solução'
+          ].map(s => s.toUpperCase().trim()).includes(uSec);
+        });
+        return filtered.length === prev.length ? prev : filtered;
+      });
     }
   }, [occurrences, setSelectedOccurrenceSectors]);
 
@@ -636,30 +873,6 @@ export default function RoteirizacaoView({
           if (rotPref.groupingMode) {
             setGroupingMode('none');
           }
-          if (rotPref.selectedUnit) {
-            setSelectedUnit(rotPref.selectedUnit);
-          }
-          if (rotPref.selectedSector) {
-            setSelectedSector(rotPref.selectedSector);
-          }
-          if (rotPref.selectedLocationFilter) {
-            setSelectedLocationFilter(rotPref.selectedLocationFilter);
-          }
-          if (rotPref.activeTacticalFilter) {
-            setActiveTacticalFilter(rotPref.activeTacticalFilter);
-          }
-          if (rotPref.selectedOccurrenceSectors) {
-            setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
-          }
-          if (rotPref.sortField) {
-            setSortField(rotPref.sortField);
-          }
-          if (rotPref.sortDirection) {
-            setSortDirection(rotPref.sortDirection);
-          }
-          if (rotPref.showOtherUnits !== undefined) {
-            setShowOtherUnits(rotPref.showOtherUnits);
-          }
         }
         setIsPrefLoaded(true);
 
@@ -679,30 +892,6 @@ export default function RoteirizacaoView({
           if (rotPref.groupingMode) {
             setGroupingMode('none');
           }
-          if (rotPref.selectedUnit) {
-            setSelectedUnit(rotPref.selectedUnit);
-          }
-          if (rotPref.selectedSector) {
-            setSelectedSector(rotPref.selectedSector);
-          }
-          if (rotPref.selectedLocationFilter) {
-            setSelectedLocationFilter(rotPref.selectedLocationFilter);
-          }
-          if (rotPref.activeTacticalFilter) {
-            setActiveTacticalFilter(rotPref.activeTacticalFilter);
-          }
-          if (rotPref.selectedOccurrenceSectors) {
-            setSelectedOccurrenceSectors(rotPref.selectedOccurrenceSectors);
-          }
-          if (rotPref.sortField) {
-            setSortField(rotPref.sortField);
-          }
-          if (rotPref.sortDirection) {
-            setSortDirection(rotPref.sortDirection);
-          }
-          if (rotPref.showOtherUnits !== undefined) {
-            setShowOtherUnits(rotPref.showOtherUnits);
-          }
         }
       } catch (err) {
         console.error('[Roteirizacao] Erro no carregamento/sincronia das preferências do usuário:', err);
@@ -721,17 +910,9 @@ export default function RoteirizacaoView({
     handleUpdatePreference({
       densityMode,
       mesaScale,
-      groupingMode,
-      selectedUnit,
-      selectedSector,
-      selectedLocationFilter,
-      activeTacticalFilter,
-      selectedOccurrenceSectors,
-      sortField,
-      sortDirection,
-      showOtherUnits
+      groupingMode
     });
-  }, [densityMode, mesaScale, groupingMode, selectedUnit, selectedSector, selectedLocationFilter, activeTacticalFilter, selectedOccurrenceSectors, sortField, sortDirection, showOtherUnits, isPrefLoaded, isNormalizing]);
+  }, [densityMode, mesaScale, groupingMode, isPrefLoaded, isNormalizing]);
 
   // Checklist aggregation totals calculation
   const { selectedWeight, selectedVolume, selectedValue, selectedFrete } = useMemo(() => {
@@ -837,7 +1018,8 @@ export default function RoteirizacaoView({
           totalFrete,
           createdBy: adminUser.name || adminUser.username,
           createdAt: nowStr,
-          updatedAt: nowStr
+          updatedAt: nowStr,
+          planId: activeRoutingPlan?.id
         });
       }
 
@@ -855,6 +1037,18 @@ export default function RoteirizacaoView({
     try {
       // 1. Persist the pre-romaneios
       await PreRomaneioRepository.putMany(generatedPreRomaneios);
+
+      // Audit Log for created pre-romaneios
+      for (const pr of generatedPreRomaneios) {
+        AuditLogRepository.log({
+          user: adminUser.name || adminUser.username || 'admin',
+          isMaster: adminUser.is_master || false,
+          entityType: 'PRE_ROMANEIO',
+          entityId: pr.id,
+          action: 'CREATE',
+          description: `Pré-romaneio ${pr.id} criado para a rota ${pr.route} (Portão: ${pr.gate || 'Nenhum'}) com ${pr.ctrcIds?.length || 0} CTRCs por ${adminUser.name || adminUser.username}`
+        }).catch((err) => console.warn('[Audit] Erro ao registrar log de criacao de pre-romaneio:', err));
+      }
 
       // 2. Clear current selections
       const selectedCtrcs = filteredCtrcs.filter((c) => selectedIds.includes(c.id));

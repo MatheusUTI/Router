@@ -3,8 +3,12 @@ import { AuditLog } from '../../../types';
 
 export const auditLogSupabaseRepository = {
   async insertLog(log: AuditLog): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
+      return { success: false, error: 'Supabase offline' };
+    }
 
     try {
       const payload = {
@@ -32,8 +36,14 @@ export const auditLogSupabaseRepository = {
   },
 
   async insertLogsBulk(logs: AuditLog[]): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client || logs.length === 0) return { success: false, error: 'Supabase offline or empty array' };
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
+      return { success: false, error: 'Supabase offline' };
+    }
+
+    if (logs.length === 0) return { success: true };
 
     try {
       const payloads = logs.map(log => ({

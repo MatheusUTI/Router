@@ -259,6 +259,9 @@ export default function App() {
   // Automatically unlock master screens for logged-in master users
   useEffect(() => {
     setIsSessionUnlocked(adminProfile?.is_master === true);
+    if (adminProfile?.unid) {
+      localStorage.setItem("user_unit", adminProfile.unid);
+    }
   }, [adminProfile]);
 
   // Global Operational Databases State
@@ -1000,6 +1003,22 @@ export default function App() {
     // 4. Batch persist to local IndexedDB
     await CtrcRepository.putMany(mergedCtrcs);
 
+    // Audit Log for import creation
+    try {
+      await AuditLogRepository.log({
+        user: adminProfile.name || "admin",
+        isMaster: isSessionUnlocked,
+        entityType: "ROUTING_PLAN",
+        entityId: importBatchId,
+        action: "CREATE",
+        description: `Importação de CTRCs concluída com sucesso. Foram processados ${newCtrcs.length} CTRCs por ${adminProfile.name || "admin"}.`,
+      });
+      const logs = await AuditLogRepository.getAll();
+      setAuditLogs(logs);
+    } catch (err) {
+      console.warn("[Audit] Falha ao registrar log de importacao:", err);
+    }
+
     // 5. Stash the import stats in localStorage so we can display beautiful, detailed numbers in the UI
     localStorage.setItem(
       "last_import_old_removed_count",
@@ -1117,6 +1136,10 @@ export default function App() {
             await import("./infrastructure/supabase/repositories/importBatchSupabaseRepository");
           const { shipmentSupabaseRepository } =
             await import("./infrastructure/supabase/repositories/shipmentSupabaseRepository");
+          const { routingPlanSupabaseRepository } =
+            await import("./infrastructure/supabase/repositories/routingPlanSupabaseRepository");
+          const { routingPlanItemSupabaseRepository } =
+            await import("./infrastructure/supabase/repositories/routingPlanItemSupabaseRepository");
 
           const adminUnid = adminProfile?.unid || DEFAULT_OPERATIONAL_UNIT;
           const adminUsername = adminProfile?.username || "admin";
@@ -1155,7 +1178,7 @@ export default function App() {
             company_code: adminUnid,
             ctrc_number: c.id.replace(/\D/g, "").substring(0, 8) || c.id,
             ctrc_series: "1",
-            unique_key: `${adminUnid}_1_${c.id}`,
+            unique_key: `${adminUnid}_${c.id}`,
             issue_date: parseToIso(c.data_ocorrencia),
             forecast_delivery_date: parseToIso(c.prev_ent),
             unit_arrival_date: parseToIso(c.data_ocorrencia),
@@ -1189,6 +1212,47 @@ export default function App() {
           console.log(
             `[Importacao] Sincronização Supabase concluída (${shipmentsToSync.length} shipments)`,
           );
+
+          // 4. Create or obtain routing plan and upsert plan items
+          try {
+            const planRes = await routingPlanSupabaseRepository.getOrCreatePlan(
+              adminUnid,
+              planningDate,
+              adminUsername
+            );
+
+            if (planRes.success && planRes.data) {
+              const planId = planRes.data.id;
+              const planItemsToSync = mergedCtrcs.map((c) => ({
+                id: `${planId}_${c.id}`,
+                planId: planId,
+                shipmentUniqueKey: `${adminUnid}_${c.id}`,
+                ctrcId: c.id,
+                planningDate: planningDate,
+                companyCode: adminUnid,
+                suggestedRoute: c.setor || undefined,
+                operationalRoute: c.operationalRoute || undefined,
+                planningStatus: 'A_PLANEJAR',
+                manualPriority: c.manualPriority || undefined,
+                operationalNote: c.operationalNote || undefined,
+                updatedBy: adminUsername,
+                rawPayload: c,
+              }));
+
+              for (let i = 0; i < planItemsToSync.length; i += BATCH_SIZE) {
+                const batch = planItemsToSync.slice(i, i + BATCH_SIZE);
+                await routingPlanItemSupabaseRepository.upsertItems(batch);
+              }
+              console.log(
+                `[Importacao] Sincronização Supabase concluída (${planItemsToSync.length} routing_plan_items)`,
+              );
+            }
+          } catch (planErr) {
+            console.error(
+              "[Importacao] Falha na sincronização de planos de roteirização (Mesa Colaborativa):",
+              planErr
+            );
+          }
 
           await SyncQueueRepository.processSyncQueue();
         } catch (syncErr) {

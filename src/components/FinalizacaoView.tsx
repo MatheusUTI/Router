@@ -3,6 +3,7 @@ import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal, VehicleRegistry, VehicleGrRule } from '../types';
 import { calculateSuggestedGrLimit } from '../utils/grUtils';
 import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
+import { AuditLogRepository } from '../infrastructure/localdb/repositories/auditLogRepository';
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
 import { CurvaAClientRepository } from '../infrastructure/localdb/repositories/curvaAClientRepository';
 import { isClienteCurvaA } from './roteirizacao/helpers/isClienteCurvaA';
@@ -257,6 +258,7 @@ export default function FinalizacaoView({
       const targetDate = convertManifestDateToPlanningDate(manifestDate);
       
       let prs = await PreRomaneioRepository.getAll();
+      prs = prs.filter(pr => pr.status !== 'CANCELADO');
       
       // Filter strictly by selected date OR active import batch if looking at today
       prs = prs.filter(pr => {
@@ -293,6 +295,41 @@ export default function FinalizacaoView({
     if (!pr) return;
 
     const prevStatus = pr.status;
+
+    // Audit Log for field change
+    const userName = adminUser?.name || adminUser?.username || 'admin';
+    const isMaster = adminUser?.is_master || false;
+    const oldVal = pr[field];
+    if (oldVal !== val) {
+      let description = '';
+      if (field === 'vehiclePlate') {
+        description = `Veículo do pré-romaneio ${pr.route} alterado de ${oldVal || 'Nenhum'} para ${val || 'Nenhum'} por ${userName}`;
+      } else if (field === 'driverName') {
+        description = `Motorista do pré-romaneio ${pr.route} alterado de ${oldVal || 'Nenhum'} para ${val || 'Nenhum'} por ${userName}`;
+      } else if (field === 'helperName') {
+        description = `Ajudante do pré-romaneio ${pr.route} alterado de ${oldVal || 'Nenhum'} para ${val || 'Nenhum'} por ${userName}`;
+      } else if (field === 'gate') {
+        description = `Portão do pré-romaneio ${pr.route} alterado de ${oldVal || 'Nenhum'} para ${val || 'Nenhum'} por ${userName}`;
+      } else if (field === 'status') {
+        description = `Status do pré-romaneio ${pr.route} alterado de ${oldVal || 'Nenhum'} para ${val || 'Nenhum'} por ${userName}`;
+      } else if (field === 'observations') {
+        description = `Observação do pré-romaneio ${pr.route} alterada de '${oldVal || ''}' para '${val || ''}' por ${userName}`;
+      } else {
+        description = `Campo ${String(field)} do pré-romaneio ${pr.route} alterado de '${oldVal || ''}' para '${val || ''}' por ${userName}`;
+      }
+
+      AuditLogRepository.log({
+        user: userName,
+        isMaster,
+        entityType: 'PRE_ROMANEIO',
+        entityId: prId,
+        action: 'UPDATE',
+        field: String(field),
+        oldValue: oldVal ? String(oldVal) : undefined,
+        newValue: val ? String(val) : undefined,
+        description
+      }).catch((err) => console.warn('[Audit] Erro ao registrar log de pre-romaneio:', err));
+    }
 
     // 1. Update in-memory state
     setPreRomaneios((prev) =>
@@ -342,7 +379,7 @@ export default function FinalizacaoView({
 
   
   const handleDeletePreRomaneioAction = async (pr: PreRomaneio) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o pré-romaneio da rota ${pr.route}?\nCargas do ciclo ativo retornarão para a Mesa.`)) {
+    if (!window.confirm(`Tem certeza que deseja cancelar o pré-romaneio da rota ${pr.route}?\nCargas do ciclo ativo retornarão para a Mesa.`)) {
       return;
     }
     
@@ -357,16 +394,28 @@ export default function FinalizacaoView({
         await CtrcRepository.putMany(updated);
       }
       
-      await PreRomaneioRepository.delete(pr.id);
+      await PreRomaneioRepository.updateStatus(pr.id, 'CANCELADO');
+
+      // Audit Log for cancellation of pre-romaneio
+      const userName = adminUser?.name || adminUser?.username || 'admin';
+      const isMaster = adminUser?.is_master || false;
+      AuditLogRepository.log({
+        user: userName,
+        isMaster,
+        entityType: 'PRE_ROMANEIO',
+        entityId: pr.id,
+        action: 'DELETE',
+        description: `Pré-romaneio ${pr.id} da rota ${pr.route} cancelado por ${userName}. Cargas do ciclo ativo retornaram para a Mesa.`
+      }).catch((err) => console.warn('[Audit] Erro ao registrar log de cancelamento de pre-romaneio:', err));
       
-      triggerToast('Pré-romaneio excluído com sucesso.');
+      triggerToast('Pré-romaneio cancelado com sucesso.');
       loadPreRomaneiosData();
       if (onRefreshCtrcs) {
         await onRefreshCtrcs();
       }
     } catch (err) {
-      console.error('[FinalizacaoView] Erro ao excluir pré-romaneio:', err);
-      triggerToast('Erro ao excluir pré-romaneio.');
+      console.error('[FinalizacaoView] Erro ao cancelar pré-romaneio:', err);
+      triggerToast('Erro ao cancelar pré-romaneio.');
     }
   };
 

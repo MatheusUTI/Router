@@ -15,8 +15,12 @@ export interface ImportBatch {
 
 export const importBatchSupabaseRepository = {
   async createBatch(batch: ImportBatch): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
+      return { success: false, error: 'Supabase offline' };
+    }
 
     try {
       const { error } = await client.from('import_batches').insert([batch]);

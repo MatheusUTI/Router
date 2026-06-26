@@ -3,8 +3,12 @@ import { VehicleGrRule } from '../../../types';
 
 export const vehicleGrRuleSupabaseRepository = {
   async upsertRule(rule: VehicleGrRule): Promise<{ success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, error: 'Supabase offline' };
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
+      return { success: false, error: 'Supabase offline' };
+    }
 
     try {
       const payload = {
@@ -28,8 +32,12 @@ export const vehicleGrRuleSupabaseRepository = {
   },
 
   async getAllRules(): Promise<{ data: any[] | null; success: boolean; error?: any }> {
-    const { client, isOnline } = getSupabaseClient();
-    if (!isOnline || !client) return { success: false, data: null, error: 'Supabase offline' };
+    let client;
+    try {
+      client = getSupabaseClient();
+    } catch {
+      return { success: false, data: null, error: 'Supabase offline' };
+    }
 
     try {
       const { data, error } = await client.from('vehicle_gr_rules').select('*');
