@@ -465,6 +465,8 @@ export default function RoteirizacaoView({
     return arr;
   }, [curvaAClients, curvaAClientsLocal]);
 
+  const [showDelivered, setShowDelivered] = useState(false);
+
   // Dynamic enrichment output mapping to RoteirizacaoItem list
   const enrichedCtrcsList = useMemo(() => {
     if (isNormalizing) return [] as RoteirizacaoItem[];
@@ -479,8 +481,13 @@ export default function RoteirizacaoView({
       });
     }
 
+    // CR-MESA-PERFORMANCE-01: Filtrar inativos/entregues se showDelivered for false
+    const filteredForEnrichment = showDelivered 
+      ? availableCtrcs 
+      : availableCtrcs.filter((c) => isActiveForRouting(c));
+
     const res = RoteirizacaoEnrichmentService.enrichCargas(
-      availableCtrcs,
+      filteredForEnrichment,
       cidadesRotas,
       dbOccurrencesList,
       combinedCurvaClients,
@@ -1188,6 +1195,8 @@ export default function RoteirizacaoView({
         activeUsersCount={activeUsersCount}
         activeUsersList={activeUsersList}
         lastSyncTime={lastSyncTime}
+        showDelivered={showDelivered}
+        onToggleShowDelivered={setShowDelivered}
       />
 
       <OperationalNoticesBanner

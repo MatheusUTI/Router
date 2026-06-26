@@ -99,6 +99,8 @@ export function isStatusAvailable(status?: string | null): boolean {
   return !notAvailableStatuses.has(status);
 }
 
+import { isActiveForRouting } from './components/roteirizacao/helpers/isActiveForRouting';
+
 // Function to partition CTRCs based on their operational phase and pre-romaneio links
 export async function partitionCtrcs(
   localCtrcs: Ctrc[],
@@ -125,6 +127,9 @@ export async function partitionCtrcs(
   const available: Ctrc[] = [];
   const linked: Ctrc[] = [];
   const allImported: Ctrc[] = [];
+  
+  let rawTotal = localCtrcs.length;
+  let removedByDelivery = 0;
 
   for (const ctrc of localCtrcs) {
     // Collect all active import CTRCs for BI/Dashboard
@@ -143,18 +148,12 @@ export async function partitionCtrcs(
       continue;
     }
 
-    const isActive =
-      ctrc.isActiveForRouting !== undefined
-        ? ctrc.isActiveForRouting
-        : !(
-            ctrc.status === "Entregue" ||
-            ctrc.status === "Recusado" ||
-            (ctrc.status as string) === "Finalizado" ||
-            (ctrc.status as string) === "Cancelado"
-          );
+    // Apply the active-only rule for the routing table
+    const isActive = isActiveForRouting(ctrc);
 
     if (!isActive) {
-      continue;
+      removedByDelivery++;
+      continue; // CR-MESA-PERFORMANCE-01: Exclude completely from Mesa's memory queues
     }
 
     const isLinkedByPreRomaneio = activePreRomaneioCtrcIds.has(ctrc.id);
@@ -178,6 +177,13 @@ export async function partitionCtrcs(
     } else {
       available.push(ctrc);
     }
+  }
+
+  if (removedByDelivery > 0 || rawTotal > 0) {
+    console.log(`[Roteirizacao] Performance Load:
+    CTRCs brutos: ${rawTotal}
+    Removidos entregues/finalizados: ${removedByDelivery}
+    Ativos na Mesa: ${available.length + linked.length}`);
   }
 
   return { available, linked, allImported };
@@ -347,6 +353,44 @@ export default function App() {
   const [occurrences, setOccurrences] = useState<DeliveryOccurrence[]>(
     initialDeliveryOccurrences,
   );
+
+  // Global Presence Heartbeat
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const sendHeartbeat = async () => {
+      if (!adminProfile) return;
+      if (currentView === "login") return;
+
+      const { UserPresenceSupabaseRepository } = await import(
+        "./infrastructure/supabase/repositories/userPresenceSupabaseRepository"
+      );
+
+      const username = adminProfile.username || "admin";
+      
+      const payload = {
+        id: username,
+        username: username,
+        name: adminProfile.name || "",
+        role: adminProfile.is_master ? "master" : "user",
+        company_code: adminProfile.unid || DEFAULT_OPERATIONAL_UNIT,
+        current_view: currentView,
+        current_plan_id: currentView === "mesa" ? localStorage.getItem("active_planning_date") || "" : "",
+        status: "ONLINE" as any
+      };
+
+      await UserPresenceSupabaseRepository.heartbeatPresence(payload);
+    };
+
+    if (adminProfile && currentView !== "login") {
+      sendHeartbeat(); // immediate on mount or view change
+      intervalId = setInterval(sendHeartbeat, 30000); // every 30s
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [adminProfile, currentView]);
   const [curvaAClients, setCurvaAClients] =
     useState<CurvaAClient[]>(initialCurvaAClients);
 

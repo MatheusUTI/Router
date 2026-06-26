@@ -34,6 +34,8 @@ interface RoteirizacaoHeaderProps {
   activeUsersCount?: number;
   activeUsersList?: any[];
   lastSyncTime?: string;
+  showDelivered?: boolean;
+  onToggleShowDelivered?: (show: boolean) => void;
 }
 
 export default function RoteirizacaoHeader({
@@ -68,6 +70,8 @@ export default function RoteirizacaoHeader({
   activeUsersCount = 1,
   activeUsersList = [],
   lastSyncTime,
+  showDelivered = false,
+  onToggleShowDelivered,
 }: RoteirizacaoHeaderProps) {
   const [showUsersPopover, setShowUsersPopover] = useState(false);
   const formattedPlanningDate = planningDate 
@@ -235,6 +239,20 @@ export default function RoteirizacaoHeader({
           >
             <span className="material-symbols-outlined text-[14px] select-none">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+        )}
+
+        {/* Show Delivered Toggle Button */}
+        {onToggleShowDelivered && (
+          <button
+            id="btn-toggle-show-delivered"
+            onClick={() => onToggleShowDelivered(!showDelivered)}
+            className={`${btnSecondaryClass} ${showDelivered ? 'bg-[var(--router-primary-alpha)] border-[var(--router-primary)] text-[var(--router-primary)]' : ''}`}
+            title={showDelivered ? 'Ocultar Entregues/Finalizados' : 'Mostrar Entregues/Finalizados'}
+          >
+            <span className="material-symbols-outlined text-[14px] select-none">
+              {showDelivered ? 'visibility_off' : 'visibility'}
             </span>
           </button>
         )}

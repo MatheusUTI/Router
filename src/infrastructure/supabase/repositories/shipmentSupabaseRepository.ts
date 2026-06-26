@@ -69,6 +69,8 @@ export const shipmentSupabaseRepository = {
 
   async getRecentShipments(
     days: number = 31,
+    companyCode?: string,
+    activeOnly?: boolean
   ): Promise<{ data: Shipment[] | null; success: boolean; error?: any }> {
     let client;
     try {
@@ -87,14 +89,23 @@ export const shipmentSupabaseRepository = {
       dateLimit.setDate(dateLimit.getDate() - days);
 
       const dateIso = dateLimit.toISOString();
-      const { data, error } = await client
+      let query = client
         .from("shipments")
         .select("*")
         .or(
           `issue_date.gte.${dateIso},forecast_delivery_date.gte.${dateIso},created_at.gte.${dateIso}`,
         )
-        .or("is_deleted.is.null,is_deleted.eq.false")
-        .order("created_at", { ascending: false });
+        .or("is_deleted.is.null,is_deleted.eq.false");
+        
+      if (companyCode) {
+        query = query.eq('company_code', companyCode);
+      }
+      
+      if (activeOnly) {
+        query = query.or("is_delivered.is.null,is_delivered.eq.false");
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
         systemLogService.logError('Sync', 'Erro ao recuperar shipments recentes na query real', error);
