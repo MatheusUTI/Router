@@ -24,7 +24,10 @@ function mapToDb(item: PreRomaneio, companyCode: string): any {
     observations: item.observations || null,
     import_batch_id: item.importBatchId || null,
     created_at: item.createdAt || new Date().toISOString(),
-    updated_at: item.updatedAt || new Date().toISOString()
+    updated_at: item.updatedAt || new Date().toISOString(),
+    cancelled_at: item.cancelledAt || null,
+    cancelled_by: item.cancelledBy || null,
+    cancel_reason: item.cancelReason || null
   };
 }
 
@@ -43,6 +46,9 @@ function mapFromDb(db: any, ctrcIds: string[]): PreRomaneio {
     createdBy: db.created_by || undefined,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
+    cancelledAt: db.cancelled_at || undefined,
+    cancelledBy: db.cancelled_by || undefined,
+    cancelReason: db.cancel_reason || undefined,
     notes: db.notes || undefined,
     vehiclePlate: db.vehicle_plate || undefined,
     driverName: db.driver_name || undefined,

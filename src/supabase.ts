@@ -1547,7 +1547,10 @@ CREATE TABLE IF NOT EXISTS public.pre_romaneios (
   ctrc_ids JSONB,
   raw_payload JSONB,
   created_at TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+  cancelled_by TEXT,
+  cancel_reason TEXT
 );
 
 -- 11. Romaneio Salvos (savedRomaneios)
@@ -1580,6 +1583,13 @@ CREATE TABLE IF NOT EXISTS public.user_presence (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ==========================================
+-- INCREMENTAL MIGRATIONS
+-- ==========================================
+ALTER TABLE public.pre_romaneios ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+ALTER TABLE public.pre_romaneios ADD COLUMN IF NOT EXISTS cancelled_by TEXT;
+ALTER TABLE public.pre_romaneios ADD COLUMN IF NOT EXISTS cancel_reason TEXT;
 
 -- ==========================================
 -- IMPORTANTE: Para que o sistema sincronize livremente sem erros de política (RLS),

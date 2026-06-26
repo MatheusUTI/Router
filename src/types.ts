@@ -455,6 +455,9 @@ export interface PreRomaneio {
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+  cancelReason?: string;
   convertedRomaneioId?: string;
   notes?: string;
   vehiclePlate?: string;

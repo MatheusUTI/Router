@@ -40,13 +40,21 @@ export const PreRomaneioRepository = {
     }
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, username?: string, reason?: string): Promise<void> {
     const existing = await db.pre_romaneios.get(id);
-    await db.pre_romaneios.delete(id);
     if (existing) {
+      const now = new Date().toISOString();
+      const cancelled: PreRomaneio = {
+        ...existing,
+        status: 'CANCELADO' as const,
+        updatedAt: now,
+        cancelledAt: now,
+        cancelledBy: username || 'sistema',
+        cancelReason: reason || 'Cancelado operacionalmente'
+      };
+      await db.pre_romaneios.put(cancelled);
       try {
         const companyCode = localStorage.getItem('user_unit') || 'SPO';
-        const cancelled = { ...existing, status: 'CANCELADO' as const, updatedAt: new Date().toISOString() };
         await preRomaneioSupabaseRepository.upsertPreRomaneio(cancelled, companyCode);
       } catch (err) {
         console.warn('[PreRomaneioRepository] Erro ao marcar como cancelado no Supabase durante remoção:', err);
@@ -54,16 +62,25 @@ export const PreRomaneioRepository = {
     }
   },
 
-  async updateStatus(id: string, status: PreRomaneioStatus, extras?: Partial<PreRomaneio>): Promise<void> {
+  async updateStatus(id: string, status: PreRomaneioStatus, extras?: Partial<PreRomaneio>, username?: string): Promise<void> {
     const existing = await db.pre_romaneios.get(id);
     if (!existing) return;
 
-    const updated = {
+    let updated: PreRomaneio = {
       ...existing,
       status,
       updatedAt: new Date().toISOString(),
       ...extras
     };
+
+    if (status === 'CANCELADO') {
+      updated = {
+        ...updated,
+        cancelledAt: updated.updatedAt,
+        cancelledBy: username || 'sistema',
+        cancelReason: 'Cancelado operacionalmente via status'
+      };
+    }
 
     await db.pre_romaneios.put(updated);
 

@@ -101,6 +101,8 @@ export function isStatusAvailable(status?: string | null): boolean {
 
 import { isActiveForRouting } from './components/roteirizacao/helpers/isActiveForRouting';
 
+import { isActivePreRomaneio } from "./components/roteirizacao/helpers/isActivePreRomaneio";
+
 // Function to partition CTRCs based on their operational phase and pre-romaneio links
 export async function partitionCtrcs(
   localCtrcs: Ctrc[],
@@ -113,7 +115,7 @@ export async function partitionCtrcs(
   try {
     const preRomaneios = await PreRomaneioRepository.getAll();
     preRomaneios.forEach((pr) => {
-      if (pr.status !== "CANCELADO") {
+      if (isActivePreRomaneio(pr)) {
         activePreRomaneioIds.add(pr.id);
         pr.ctrcIds?.forEach((id) => {
           activePreRomaneioCtrcIds.add(id);

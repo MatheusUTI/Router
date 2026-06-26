@@ -7,6 +7,7 @@ import { AuditLogRepository } from '../infrastructure/localdb/repositories/audit
 import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
 import { CurvaAClientRepository } from '../infrastructure/localdb/repositories/curvaAClientRepository';
 import { isClienteCurvaA } from './roteirizacao/helpers/isClienteCurvaA';
+import { isActivePreRomaneio } from './roteirizacao/helpers/isActivePreRomaneio';
 import { PreRomaneioPrintView } from './PreRomaneioPrintView';
 import {
   Printer,
@@ -258,7 +259,7 @@ export default function FinalizacaoView({
       const targetDate = convertManifestDateToPlanningDate(manifestDate);
       
       let prs = await PreRomaneioRepository.getAll();
-      prs = prs.filter(pr => pr.status !== 'CANCELADO');
+      prs = prs.filter(pr => isActivePreRomaneio(pr));
       
       // Filter strictly by selected date OR active import batch if looking at today
       prs = prs.filter(pr => {
@@ -394,18 +395,43 @@ export default function FinalizacaoView({
         await CtrcRepository.putMany(updated);
       }
       
-      await PreRomaneioRepository.updateStatus(pr.id, 'CANCELADO');
+      const userName = adminUser?.name || adminUser?.username || 'admin';
+      
+      await PreRomaneioRepository.delete(pr.id, userName, 'Cancelamento operacional');
+
+      if (pr.planId) {
+        try {
+          const { routingPlanItemSupabaseRepository } = await import('../infrastructure/supabase/repositories/routingPlanItemSupabaseRepository');
+          const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(pr.planId);
+          if (itemsRes.success && itemsRes.data) {
+            const updatedItems = itemsRes.data
+              .filter(item => pr.ctrcIds?.includes(item.ctrcId))
+              .map(item => ({
+                ...item,
+                planningStatus: 'A_PLANEJAR',
+                operationalRoute: item.operationalRoute === pr.route ? undefined : item.operationalRoute,
+                updatedAt: new Date().toISOString(),
+                updatedBy: userName
+              }));
+            
+            if (updatedItems.length > 0) {
+              await routingPlanItemSupabaseRepository.upsertItems(updatedItems);
+            }
+          }
+        } catch (e) {
+          console.warn('[FinalizacaoView] Erro ao reverter itens de planejamento no Supabase:', e);
+        }
+      }
 
       // Audit Log for cancellation of pre-romaneio
-      const userName = adminUser?.name || adminUser?.username || 'admin';
       const isMaster = adminUser?.is_master || false;
       AuditLogRepository.log({
         user: userName,
         isMaster,
         entityType: 'PRE_ROMANEIO',
         entityId: pr.id,
-        action: 'DELETE',
-        description: `Pré-romaneio ${pr.id} da rota ${pr.route} cancelado por ${userName}. Cargas do ciclo ativo retornaram para a Mesa.`
+        action: 'CANCEL',
+        description: `Pré-romaneio ${pr.id} cancelado por ${userName}. CTRCs retornados à Mesa.`
       }).catch((err) => console.warn('[Audit] Erro ao registrar log de cancelamento de pre-romaneio:', err));
       
       triggerToast('Pré-romaneio cancelado com sucesso.');
@@ -1261,7 +1287,14 @@ export default function FinalizacaoView({
                                         <td className="py-1.5 px-2">
                                           <select
                                             value={row.status}
-                                            onChange={(e) => handleUpdatePreRomaneioField(row.id, 'status', e.target.value)}
+                                            onChange={(e) => {
+                                              if (e.target.value === 'CANCELADO') {
+                                                const pr = preRomaneios.find(p => p.id === row.id);
+                                                if (pr) handleDeletePreRomaneioAction(pr);
+                                              } else {
+                                                handleUpdatePreRomaneioField(row.id, 'status', e.target.value);
+                                              }
+                                            }}
                                             className="bg-[var(--router-input-bg)] hover:bg-[var(--router-surface-2)] focus:bg-[var(--router-surface)] border border-[var(--router-border)] focus:border-indigo-500 rounded px-1 py-0.5 text-[var(--router-text)] text-[11px] font-bold focus:outline-none cursor-pointer w-full"
                                           >
                                             <option value="RASCUNHO">Rascunho</option>
@@ -2167,7 +2200,13 @@ export default function FinalizacaoView({
                       {/* Status select quick-switcher */}
                       <select
                         value={pr.status}
-                        onChange={(e) => handleUpdatePreRomaneioField(pr.id, 'status', e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value === 'CANCELADO') {
+                            handleDeletePreRomaneioAction(pr);
+                          } else {
+                            handleUpdatePreRomaneioField(pr.id, 'status', e.target.value);
+                          }
+                        }}
                         className="bg-[var(--router-surface-3)] border border-outline-variant/50 hover:border-[var(--router-primary)]-variant rounded-lg px-2 py-2 text-xs text-[var(--router-text)] font-mono cursor-pointer focus:outline-none"
                       >
                         <option value="RASCUNHO">Rascunho</option>
