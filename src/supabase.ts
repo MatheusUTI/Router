@@ -1024,7 +1024,7 @@ export async function exportOperationalStateToSupabase(data: {
         updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString()
       }));
       const uniquePlanning = deduplicateById(formattedPlanning);
-      const { error } = await supabase.from('route_planning_items').upsert(uniquePlanning);
+      const { error } = await supabase.from('routing_plan_items').upsert(uniquePlanning);
       if (error) throw error;
       results.push(`✓ ${uniquePlanning.length} itens de planejamento exportados.`);
     } else {
@@ -1121,7 +1121,7 @@ export async function importOperationalStateFromSupabase(): Promise<{
     if (ctrcsError) throw ctrcsError;
 
     // 2. Fetch Route Planning Items
-    const { data: planningRaw, error: planningError } = await supabase.from('route_planning_items').select('*');
+    const { data: planningRaw, error: planningError } = await supabase.from('routing_plan_items').select('*');
     if (planningError) throw planningError;
 
     // 3. Fetch Pre Romaneios
@@ -1511,7 +1511,7 @@ CREATE TABLE IF NOT EXISTS public.curva_a_clients (
 );
 
 -- 9. Planejamento de Rota (Route Planning Items)
-CREATE TABLE IF NOT EXISTS public.route_planning_items (
+CREATE TABLE IF NOT EXISTS public.routing_plan_items (
   id TEXT PRIMARY KEY,
   ctrc_id TEXT,
   planning_date TEXT,
@@ -1565,7 +1565,7 @@ ALTER TABLE public.clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.occurrences DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.route_planning_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.routing_plan_items DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pre_romaneios DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_romaneios DISABLE ROW LEVEL SECURITY;
 `;

@@ -53,7 +53,7 @@ export const SystemLogsPanel: React.FC = () => {
       systemLogService.logInfo('Testes Manuais', 'URL e Key presentes. Testando conexões com as tabelas...');
 
       // Test app_users
-      const { error: errUsers } = await client.from('app_users').select('id').limit(1);
+      const { error: errUsers } = await client.from('app_users').select('username').limit(1);
       if (errUsers) {
         systemLogService.logError('Testes Manuais', 'Erro ao consultar app_users', errUsers);
       } else {
