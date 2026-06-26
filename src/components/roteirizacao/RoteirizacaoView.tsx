@@ -32,6 +32,7 @@ import { useCargaSelection } from './hooks/useCargaSelection';
 import { useRoteirizacaoGrouping } from './hooks/useRoteirizacaoGrouping';
 import { useVehicleAllocation } from './hooks/useVehicleAllocation';
 import { validateFieldContract } from './helpers/fieldContractValidator';
+import { isActiveForRouting } from './helpers/isActiveForRouting';
 
 const ENABLE_ROUTER_DIAGNOSTICS = false;
 
@@ -97,6 +98,7 @@ export default function RoteirizacaoView({
   const [activeUsersList, setActiveUsersList] = useState<any[]>([]);
   const [activeUsersCount, setActiveUsersCount] = useState<number>(1);
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [showDelivered, setShowDelivered] = useState<boolean>(false);
 
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -464,8 +466,6 @@ export default function RoteirizacaoView({
     });
     return arr;
   }, [curvaAClients, curvaAClientsLocal]);
-
-  const [showDelivered, setShowDelivered] = useState(false);
 
   // Dynamic enrichment output mapping to RoteirizacaoItem list
   const enrichedCtrcsList = useMemo(() => {

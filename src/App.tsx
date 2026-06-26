@@ -153,7 +153,7 @@ export async function partitionCtrcs(
 
     if (!isActive) {
       removedByDelivery++;
-      continue; // CR-MESA-PERFORMANCE-01: Exclude completely from Mesa's memory queues
+      // We don't continue anymore so the 'showDelivered' toggle in RoteirizacaoView can work
     }
 
     const isLinkedByPreRomaneio = activePreRomaneioCtrcIds.has(ctrc.id);
