@@ -968,43 +968,55 @@ export async function exportOperationalStateToSupabase(data: {
   // 1. CTRCs
   try {
     if (data.ctrcs.length > 0) {
-      const formattedCtrcs = data.ctrcs.map(c => ({
-        id: c.id,
-        destinatario: c.destinatario,
-        cidade: c.cidade,
-        weight: c.weight,
-        volume: c.volume,
-        type: c.type,
-        status: c.status,
-        cidade_ent: c.cidade_ent || null,
-        setor: c.setor || null,
-        prev_ent: c.prev_ent || null,
-        remetente: c.remetente || null,
-        ocorrencia: c.ocorrencia || null,
-        data_ocorr: c.data_ocorr || null,
-        nf: c.nf || null,
-        valor: c.valor || null,
-        frete: c.frete || null,
-        unid: c.unid || null,
-        pagador: c.pagador || null,
-        cod: c.cod || null,
-        descricao_ocorr: c.descricao_ocorr || null,
-        data_ocorrencia: c.data_ocorrencia || null,
-        peso_r: c.peso_r || null,
-        obs: c.obs || null,
-        disponibilidade: c.disponibilidade || null,
-        localizacao: c.localizacao || null
-      }));
+      const formattedCtrcs = data.ctrcs.map(c => {
+        const parsedVolume = Math.round(Number(c.volume) || 0);
+        const parsedWeight = parseFloat(String(c.weight)) || 0;
+        const parsedValor = c.valor ? parseFloat(String(c.valor)) : null;
+        const parsedFrete = c.frete ? parseFloat(String(c.frete)) : null;
+        const parsedPesoR = c.peso_r ? parseFloat(String(c.peso_r)) : null;
+
+        return {
+          id: c.id,
+          destinatario: c.destinatario,
+          cidade: c.cidade,
+          weight: parsedWeight,
+          volume: parsedVolume,
+          type: c.type,
+          status: c.status,
+          cidade_ent: c.cidade_ent || null,
+          setor: c.setor || null,
+          prev_ent: c.prev_ent || null,
+          remetente: c.remetente || null,
+          ocorrencia: c.ocorrencia || null,
+          data_ocorr: c.data_ocorr || null,
+          nf: c.nf || null,
+          valor: parsedValor,
+          frete: parsedFrete,
+          unid: c.unid || null,
+          pagador: c.pagador || null,
+          cod: c.cod || null,
+          descricao_ocorr: c.descricao_ocorr || null,
+          data_ocorrencia: c.data_ocorrencia || null,
+          peso_r: parsedPesoR,
+          obs: c.obs || null,
+          disponibilidade: c.disponibilidade || null,
+          localizacao: c.localizacao || null
+        };
+      });
       const uniqueCtrcs = deduplicateById(formattedCtrcs);
+      systemLogService.logInfo('Sync', `CTRC Exemplo antes do upsert: ID=${uniqueCtrcs[0]?.id}, volume original=${data.ctrcs[0]?.volume}, convertido=${uniqueCtrcs[0]?.volume}`);
       const { error } = await supabase.from('ctrcs').upsert(uniqueCtrcs);
       if (error) throw error;
       results.push(`✓ ${uniqueCtrcs.length} CTRCs exportados.`);
+      systemLogService.logSuccess('Sync', `[Sync] ${uniqueCtrcs.length} CTRCs exportados`);
     } else {
       results.push(`✓ Sem CTRCs para exportar.`);
+      systemLogService.logInfo('Sync', `[Sync] 0 CTRCs exportados`);
     }
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ CTRCs: ${err.message || err}`);
+    systemLogService.logError('Sync', `[Sync] Erro exportando CTRCs: ${err.message || err}`, err);
   }
 
   // 2. Route Planning Items
@@ -1020,7 +1032,7 @@ export async function exportOperationalStateToSupabase(data: {
         planning_status: p.planningStatus,
         operational_note: p.operationalNote || null,
         locked_by_user: p.lockedByUser ? String(p.lockedByUser) : null,
-        payload: { ...p },
+        raw_payload: { ...p },
         created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
         updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString()
       }));
@@ -1028,12 +1040,15 @@ export async function exportOperationalStateToSupabase(data: {
       const { error } = await supabase.from('routing_plan_items').upsert(uniquePlanning);
       if (error) throw error;
       results.push(`✓ ${uniquePlanning.length} itens de planejamento exportados.`);
+      systemLogService.logSuccess('Sync', `[Sync] ${uniquePlanning.length} itens planejamento exportados`);
     } else {
       results.push(`✓ Sem itens de planejamento para exportar.`);
+      systemLogService.logInfo('Sync', `[Sync] 0 itens planejamento exportados`);
     }
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Planejamento: ${err.message || err}`);
+    systemLogService.logError('Sync', `[Sync] Erro exportando itens planejamento: ${err.message || err}`, err);
   }
 
   // 3. Pre Romaneios
@@ -1045,9 +1060,8 @@ export async function exportOperationalStateToSupabase(data: {
         route: p.route,
         gate: p.gate,
         status: p.status,
-        converted_romaneio_id: p.convertedRomaneioId || null,
         ctrc_ids: p.ctrcIds || [],
-        payload: { ...p },
+        raw_payload: { ...p },
         created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
         updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString()
       }));
@@ -1055,12 +1069,15 @@ export async function exportOperationalStateToSupabase(data: {
       const { error } = await supabase.from('pre_romaneios').upsert(uniquePre);
       if (error) throw error;
       results.push(`✓ ${uniquePre.length} pré-romaneios exportados.`);
+      systemLogService.logSuccess('Sync', `[Sync] ${uniquePre.length} pré-romaneios exportados`);
     } else {
       results.push(`✓ Sem pré-romaneios para exportar.`);
+      systemLogService.logInfo('Sync', `[Sync] 0 pré-romaneios exportados`);
     }
   } catch (err: any) {
     hasErrors = true;
     results.push(`❌ Pré-romaneios: ${err.message || err}`);
+    systemLogService.logError('Sync', `[Sync] Erro exportando pré-romaneios: ${err.message || err}`, err);
   }
 
   // 4. Saved Romaneios (Legacy - Local Only, no Supabase sync)
@@ -1158,8 +1175,8 @@ export async function importOperationalStateFromSupabase(): Promise<{
     // Parse Route Planning Items
     const routePlanningItems: RoutePlanningItem[] = (planningRaw || []).map(p => {
       let item: RoutePlanningItem;
-      if (p.payload && typeof p.payload === 'object' && p.payload.id) {
-        item = { ...(p.payload as RoutePlanningItem) };
+      if (p.raw_payload && typeof p.raw_payload === 'object' && p.raw_payload.id) {
+        item = { ...(p.raw_payload as RoutePlanningItem) };
       } else {
         item = {
           id: p.id,
@@ -1181,8 +1198,8 @@ export async function importOperationalStateFromSupabase(): Promise<{
     // Parse Pre Romaneios
     const preRomaneios: PreRomaneio[] = (preRaw || []).map(p => {
       let item: PreRomaneio;
-      if (p.payload && typeof p.payload === 'object' && p.payload.id) {
-        item = { ...(p.payload as PreRomaneio) };
+      if (p.raw_payload && typeof p.raw_payload === 'object' && p.raw_payload.id) {
+        item = { ...(p.raw_payload as PreRomaneio) };
       } else {
         item = {
           id: p.id,
@@ -1190,12 +1207,12 @@ export async function importOperationalStateFromSupabase(): Promise<{
           route: p.route,
           gate: p.gate,
           status: p.status,
-          convertedRomaneioId: p.converted_romaneio_id || undefined,
+          convertedRomaneioId: p.raw_payload?.convertedRomaneioId || undefined,
           ctrcIds: Array.isArray(p.ctrc_ids) ? p.ctrc_ids : [],
-          totalWeight: p.payload?.totalWeight || 0,
-          totalVolumes: p.payload?.totalVolumes || 0,
-          totalValue: p.payload?.totalValue || 0,
-          totalFrete: p.payload?.totalFrete || 0,
+          totalWeight: p.raw_payload?.totalWeight || 0,
+          totalVolumes: p.raw_payload?.totalVolumes || 0,
+          totalValue: p.raw_payload?.totalValue || 0,
+          totalFrete: p.raw_payload?.totalFrete || 0,
           createdAt: p.created_at || new Date().toISOString(),
           updatedAt: p.updated_at || new Date().toISOString()
         };
@@ -1206,8 +1223,8 @@ export async function importOperationalStateFromSupabase(): Promise<{
     // Parse Saved Romaneios
     const savedRomaneios: RomaneioSave[] = (savedRaw || []).map(r => {
       let item: RomaneioSave;
-      if (r.payload && typeof r.payload === 'object' && r.payload.id) {
-        item = { ...(r.payload as RomaneioSave) };
+      if (r.raw_payload && typeof r.raw_payload === 'object' && r.raw_payload.id) {
+        item = { ...(r.raw_payload as RomaneioSave) };
       } else {
         item = {
           id: r.id,
@@ -1216,8 +1233,8 @@ export async function importOperationalStateFromSupabase(): Promise<{
           vehiclePlate: r.vehicle_plate,
           driverName: r.driver_name,
           helperName: r.helper_name,
-          ctrcs: r.payload?.ctrcs || [],
-          observations: r.payload?.observations,
+          ctrcs: r.raw_payload?.ctrcs || [],
+          observations: r.raw_payload?.observations,
           isSyncedWithCloud: true
         };
       }
@@ -1358,7 +1375,7 @@ export async function syncOperationalStateWithSupabase(localState: {
       localState.savedRomaneios,
       remoteSaved,
       (s) => s.id,
-      (s) => (s as any).updatedAt || (s as any).updated_at || (s as any).payload?.updatedAt || (s as any).payload?.updated_at,
+      (s) => (s as any).updatedAt || (s as any).updated_at || (s as any).raw_payload?.updatedAt || (s as any).raw_payload?.updated_at,
       'saved_romaneios'
     );
     results.push(`✓ Romaneios salvos mesclados com sucesso: total de ${mergedSaved.length} (Locais: ${localState.savedRomaneios.length}, Remotos: ${remoteSaved.length})`);
@@ -1515,7 +1532,7 @@ CREATE TABLE IF NOT EXISTS public.routing_plan_items (
   planning_status TEXT,
   operational_note TEXT,
   locked_by_user TEXT,
-  payload JSONB,
+  raw_payload JSONB,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 );
@@ -1527,9 +1544,8 @@ CREATE TABLE IF NOT EXISTS public.pre_romaneios (
   route TEXT,
   gate TEXT,
   status TEXT,
-  converted_romaneio_id TEXT,
   ctrc_ids JSONB,
-  payload JSONB,
+  raw_payload JSONB,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 );
@@ -1543,7 +1559,7 @@ CREATE TABLE IF NOT EXISTS public.saved_romaneios (
   driver_name TEXT,
   helper_name TEXT,
   ctrc_ids JSONB,
-  payload JSONB,
+  raw_payload JSONB,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 );
