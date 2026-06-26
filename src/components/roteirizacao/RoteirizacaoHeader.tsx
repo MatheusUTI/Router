@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppUser, RoteirizacaoDiagnostics, DensityMode } from '../../types';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../../constants/operationalUnits';
 
@@ -28,6 +28,12 @@ interface RoteirizacaoHeaderProps {
   onUpdateMesaScale?: (scale: '85%' | '90%' | '100%' | '110%' | '120%') => void;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
+  onManualSync?: () => void;
+  isSyncing?: boolean;
+  onlineStatus?: boolean;
+  activeUsersCount?: number;
+  activeUsersList?: any[];
+  lastSyncTime?: string;
 }
 
 export default function RoteirizacaoHeader({
@@ -56,7 +62,14 @@ export default function RoteirizacaoHeader({
   onUpdateMesaScale,
   theme = 'dark',
   onToggleTheme,
+  onManualSync,
+  isSyncing = false,
+  onlineStatus = true,
+  activeUsersCount = 1,
+  activeUsersList = [],
+  lastSyncTime,
 }: RoteirizacaoHeaderProps) {
+  const [showUsersPopover, setShowUsersPopover] = useState(false);
   const formattedPlanningDate = planningDate 
     ? new Date(planningDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -225,6 +238,70 @@ export default function RoteirizacaoHeader({
             </span>
           </button>
         )}
+
+        {/* Sync Controls */}
+        <div className="flex items-center bg-[var(--router-surface)] border border-[var(--router-border)] rounded h-8 overflow-visible shrink-0 relative">
+          <div className="flex items-center px-2 border-r border-[var(--router-border)]" title={onlineStatus ? "Supabase Online" : "Supabase Offline"}>
+            <div className={`w-2 h-2 rounded-full ${onlineStatus ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          </div>
+          <div 
+            className="flex items-center px-2 border-r border-[var(--router-border)] cursor-pointer hover:bg-[var(--router-surface-3)] transition-colors h-full" 
+            title="Usuários Ativos (Presence)"
+            onClick={() => {
+              if (adminUser.is_master) {
+                setShowUsersPopover(!showUsersPopover);
+              }
+            }}
+          >
+            <span className="material-symbols-outlined text-[12px] text-[var(--router-text-muted)] mr-1">group</span>
+            <span className="text-[10px] font-bold font-mono text-[var(--router-text)]">{activeUsersCount}</span>
+          </div>
+
+          {showUsersPopover && adminUser.is_master && (
+            <div className="absolute top-10 right-0 z-[100] w-64 bg-[var(--router-surface)] border border-[var(--router-border)] rounded shadow-xl flex flex-col overflow-hidden">
+              <div className="px-3 py-2 border-b border-[var(--router-border)] bg-[var(--router-surface-2)] flex justify-between items-center">
+                <span className="text-[11px] font-bold text-[var(--router-text)]">Usuários Ativos ({activeUsersCount})</span>
+                <button onClick={() => setShowUsersPopover(false)} className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] material-symbols-outlined text-[14px]">close</button>
+              </div>
+              <div className="flex flex-col max-h-64 overflow-y-auto">
+                {activeUsersList.map(u => (
+                  <div key={u.id} className="p-2 border-b border-[var(--router-border)] last:border-b-0 text-[10px] flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[var(--router-text)] truncate">{u.name || u.username} <span className="font-normal text-[var(--router-text-muted)]">({u.username})</span></span>
+                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${u.role === 'master' ? 'bg-purple-500/20 text-purple-500' : 'bg-[var(--router-surface-3)] text-[var(--router-text-muted)]'}`}>{u.role || 'user'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[var(--router-text-muted)]">
+                      <span>Filial: {u.company_code}</span>
+                      <span>Visto: {new Date(u.last_seen_at).toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                    <div className="text-[var(--router-text-muted)] truncate" title={u.current_view}>
+                      Tela: <span className="text-[var(--router-primary)]">{u.current_view}</span>
+                    </div>
+                  </div>
+                ))}
+                {activeUsersList.length === 0 && (
+                  <div className="p-3 text-center text-[10px] text-[var(--router-text-muted)]">Nenhum usuário ativo</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {onManualSync && (
+            <button
+              onClick={onManualSync}
+              disabled={isSyncing || !onlineStatus}
+              className={`flex items-center px-2 h-full text-[10px] font-bold uppercase transition-colors ${
+                isSyncing ? 'text-[var(--router-primary)] opacity-70' : 'hover:bg-[var(--router-surface-3)] text-[var(--router-text)]'
+              }`}
+              title={lastSyncTime ? `Última sincronização: ${lastSyncTime}` : 'Sincronizar agora'}
+            >
+              <span className={`material-symbols-outlined text-[14px] mr-1 ${isSyncing ? 'animate-spin' : ''}`}>
+                sync
+              </span>
+              <span className="hidden xl:inline">Sync</span>
+            </button>
+          )}
+        </div>
 
         {/* Fila */}
         <div className={rightStatusClass} title={`Fila: ${filteredCtrcsCount} / ${totalCtrcsCount}`}>

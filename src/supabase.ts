@@ -1564,6 +1564,23 @@ CREATE TABLE IF NOT EXISTS public.saved_romaneios (
   updated_at TIMESTAMPTZ
 );
 
+-- 12. User Presence
+CREATE TABLE IF NOT EXISTS public.user_presence (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL,
+  name TEXT,
+  role TEXT,
+  company_code TEXT,
+  current_view TEXT,
+  current_plan_id TEXT,
+  current_route TEXT,
+  status TEXT DEFAULT 'ONLINE',
+  metadata JSONB DEFAULT '{}'::jsonb,
+  last_seen_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ==========================================
 -- IMPORTANTE: Para que o sistema sincronize livremente sem erros de política (RLS),
 -- execute estes comandos para liberar o acesso público de leitura e escrita:
@@ -1578,4 +1595,5 @@ ALTER TABLE public.curva_a_clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.routing_plan_items DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pre_romaneios DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_romaneios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_presence DISABLE ROW LEVEL SECURITY;
 `;

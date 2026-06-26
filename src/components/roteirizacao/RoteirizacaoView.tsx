@@ -15,6 +15,9 @@ import { routingPlanSupabaseRepository } from '../../infrastructure/supabase/rep
 import { routingPlanItemSupabaseRepository } from '../../infrastructure/supabase/repositories/routingPlanItemSupabaseRepository';
 import { preRomaneioSupabaseRepository } from '../../infrastructure/supabase/repositories/preRomaneioSupabaseRepository';
 
+import { UserPresenceSupabaseRepository } from '../../infrastructure/supabase/repositories/userPresenceSupabaseRepository';
+import { checkSupabaseHealth } from '../../infrastructure/supabase/client';
+
 // Modular Imports
 import RoteirizacaoHeader from './RoteirizacaoHeader';
 import CargaList from './CargaList';
@@ -89,6 +92,12 @@ export default function RoteirizacaoView({
   const [mesaScale, setMesaScale] = useState<'85%' | '90%' | '100%' | '110%' | '120%'>('100%');
   const [isPrefLoaded, setIsPrefLoaded] = useState<boolean>(false);
 
+  // Sync & Presence states
+  const [onlineStatus, setOnlineStatus] = useState<boolean>(true);
+  const [activeUsersList, setActiveUsersList] = useState<any[]>([]);
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(1);
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
+
   // Unified running time
   const [currentTime, setCurrentTime] = useState<string>('');
 
@@ -140,14 +149,43 @@ export default function RoteirizacaoView({
     loadEnrichmentBases();
   }, []);
 
-  // Synchronized loading of Routing Plan & Routing Plan Items from Supabase on Mount or Date/Unit change
-  useEffect(() => {
-    let active = true;
+  // Extract sync logic so it can be called manually and automatically
+  const performFullSync = async (active = true, showToast = true) => {
+    const companyCode = adminUser?.unid || 'SPO';
+    const username = adminUser?.username || 'admin';
+    
+    setIsSyncingPlan(true);
 
-    const syncPlan = async () => {
-      const companyCode = adminUser?.unid || 'SPO';
-      const username = adminUser?.username || 'admin';
-      
+    try {
+      // Health check first
+      const isOnline = await checkSupabaseHealth();
+      setOnlineStatus(isOnline);
+      if (!isOnline) {
+        if (showToast) {
+          setToastMessage('⚠️ Supabase offline. Trabalhando localmente.');
+          setTimeout(() => setToastMessage(null), 3000);
+        }
+        return;
+      }
+
+      // Sync Presence
+      await UserPresenceSupabaseRepository.heartbeatPresence({
+        id: username,
+        username: username,
+        name: adminUser?.name || '',
+        role: adminUser?.is_master ? 'master' : 'user',
+        company_code: companyCode,
+        current_view: 'Mesa de Roteirização',
+        current_plan_id: activeRoutingPlan?.id || '',
+        status: 'ONLINE'
+      });
+
+      const activeUsers = await UserPresenceSupabaseRepository.getActiveUsers();
+      if (active) {
+        setActiveUsersList(activeUsers);
+        setActiveUsersCount(activeUsers.length);
+      }
+
       // Step A: Load Local Cache first for immediate, non-blocking render
       try {
         const localItems = await RoutePlanningRepository.getByDate(planningDate);
@@ -159,86 +197,113 @@ export default function RoteirizacaoView({
       }
 
       // Step B: Connect to Supabase to fetch/create collaborative state
-      try {
-        setIsSyncingPlan(true);
-        
-        const planRes = await routingPlanSupabaseRepository.getOrCreatePlan(companyCode, planningDate, username);
-        if (!active) return;
+      const planRes = await routingPlanSupabaseRepository.getOrCreatePlan(companyCode, planningDate, username);
+      if (!active) return;
 
-        if (planRes.success && planRes.data) {
-          setActiveRoutingPlan(planRes.data);
-          const planId = planRes.data.id;
+      if (planRes.success && planRes.data) {
+        setActiveRoutingPlan(planRes.data);
+        const planId = planRes.data.id;
+        
+        const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(planId);
+        if (itemsRes.success && itemsRes.data && active) {
+          const remoteItems = itemsRes.data;
           
-          const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(planId);
-          if (itemsRes.success && itemsRes.data && active) {
-            const remoteItems = itemsRes.data;
+          if (remoteItems.length > 0) {
+            const mappedRemoteItems: RoutePlanningItem[] = remoteItems.map((item) => ({
+              id: `${item.planningDate}_${item.ctrcId}`,
+              ctrcId: item.ctrcId,
+              planningDate: item.planningDate,
+              suggestedRoute: item.suggestedRoute || '',
+              operationalRoute: item.operationalRoute,
+              manualPriority: item.manualPriority as any,
+              planningStatus: (item.planningStatus || 'A_PLANEJAR') as any,
+              operationalNote: item.operationalNote,
+              vehicleId: item.vehicleId,
+              vehiclePlate: item.vehiclePlate,
+              driverName: item.driverName,
+              helperName: item.helperName,
+              lockedByUser: !!item.lockedByUser,
+              updatedBy: item.updatedBy,
+              createdAt: item.createdAt || new Date().toISOString(),
+              updatedAt: item.updatedAt || new Date().toISOString(),
+            }));
             
-            if (remoteItems.length > 0) {
-              const mappedRemoteItems: RoutePlanningItem[] = remoteItems.map((item) => ({
-                id: `${item.planningDate}_${item.ctrcId}`,
-                ctrcId: item.ctrcId,
-                planningDate: item.planningDate,
-                suggestedRoute: item.suggestedRoute || '',
-                operationalRoute: item.operationalRoute,
-                manualPriority: item.manualPriority as any,
-                planningStatus: (item.planningStatus || 'A_PLANEJAR') as any,
-                operationalNote: item.operationalNote,
-                vehicleId: item.vehicleId,
-                vehiclePlate: item.vehiclePlate,
-                driverName: item.driverName,
-                helperName: item.helperName,
-                lockedByUser: !!item.lockedByUser,
-                updatedBy: item.updatedBy,
-                createdAt: item.createdAt || new Date().toISOString(),
-                updatedAt: item.updatedAt || new Date().toISOString(),
-              }));
-              
-              // Seed/update local cache with remote changes
-              await RoutePlanningRepository.putMany(mappedRemoteItems);
-              
-              // Load the final unified state from local cache
-              const unifiedItems = await RoutePlanningRepository.getByDate(planningDate);
-              setRoutePlanningItems(unifiedItems);
-            }
+            // Seed/update local cache with remote changes
+            await RoutePlanningRepository.putMany(mappedRemoteItems);
             
+            // Load the final unified state from local cache
+            const unifiedItems = await RoutePlanningRepository.getByDate(planningDate);
+            setRoutePlanningItems(unifiedItems);
+          }
+          
+          if (showToast) {
             setToastMessage('🔄 Mesa sincronizada com o Supabase');
             setTimeout(() => setToastMessage(null), 3000);
           }
-        } else {
-          console.warn('[Roteirizacao] Supabase não retornou plano. Operando em modo offline.');
+          setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
         }
+      } else {
+        console.warn('[Roteirizacao] Supabase não retornou plano. Operando em modo offline.');
+      }
 
-        // Step C: Sync Pre-Romaneios from Supabase for this date and unit
-        try {
-          const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, planningDate);
-          if (preRes.success && preRes.data && active) {
-            const remotePre = preRes.data;
-            if (remotePre.length > 0) {
-              await PreRomaneioRepository.putMany(remotePre);
-              // Trigger parent CTRC re-partition so newly fetched pre-romaneios map their CTRCs as linked
-              if (onRefreshCtrcs) {
-                onRefreshCtrcs();
-              }
+      // Step C: Sync Pre-Romaneios from Supabase for this date and unit
+      try {
+        const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, planningDate);
+        if (preRes.success && preRes.data && active) {
+          const remotePre = preRes.data;
+          if (remotePre.length > 0) {
+            await PreRomaneioRepository.putMany(remotePre);
+            // Trigger parent CTRC re-partition so newly fetched pre-romaneios map their CTRCs as linked
+            if (onRefreshCtrcs) {
+              onRefreshCtrcs();
             }
           }
-        } catch (preErr) {
-          console.warn('[Roteirizacao] Erro ao sincronizar pré-romaneios do Supabase:', preErr);
         }
-      } catch (err) {
-        console.warn('[Roteirizacao] Falha na sincronia remota (Mesa Colaborativa offline):', err);
-      } finally {
-        if (active) {
-          setIsSyncingPlan(false);
-        }
+      } catch (preErr) {
+        console.warn('[Roteirizacao] Erro ao sincronizar pré-romaneios do Supabase:', preErr);
       }
-    };
+    } catch (err) {
+      console.warn('[Roteirizacao] Falha na sincronia remota (Mesa Colaborativa offline):', err);
+      setOnlineStatus(false);
+    } finally {
+      if (active) setIsSyncingPlan(false);
+    }
+  };
 
-    syncPlan();
-
+  // Synchronized loading of Routing Plan & Routing Plan Items from Supabase on Mount or Date/Unit change
+  useEffect(() => {
+    let active = true;
+    performFullSync(active, false);
     return () => {
       active = false;
     };
   }, [planningDate, adminUser?.unid, adminUser?.username]);
+
+  // Auto-sync intervals and window focus
+  useEffect(() => {
+    let active = true;
+    
+    // Auto-sync every 60 seconds
+    const intervalId = setInterval(() => {
+      if (active && document.hasFocus()) {
+        performFullSync(active, false);
+      }
+    }, 60000);
+
+    // Sync on window focus
+    const onFocus = () => {
+      if (active) {
+        performFullSync(active, true);
+      }
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [planningDate, adminUser?.unid, adminUser?.username, activeRoutingPlan?.id]);
 
   // Set up planning update callback handler
   const handleUpdatePlanning = async (ctrcId: string, patch: Partial<RoutePlanningItem>) => {
@@ -1117,6 +1182,12 @@ export default function RoteirizacaoView({
         onUpdateMesaScale={setMesaScale}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        onManualSync={() => performFullSync(true, true)}
+        isSyncing={isSyncingPlan}
+        onlineStatus={onlineStatus}
+        activeUsersCount={activeUsersCount}
+        activeUsersList={activeUsersList}
+        lastSyncTime={lastSyncTime}
       />
 
       <OperationalNoticesBanner
