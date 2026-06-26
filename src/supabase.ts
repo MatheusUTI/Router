@@ -3,6 +3,7 @@ import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccu
 import { RomaneioSave } from './infrastructure/localdb/db';
 import { DEFAULT_OPERATIONAL_UNIT } from './constants/operationalUnits';
 import { systemLogService } from './services/systemLogService';
+import { normalizeSupabaseUrl } from './infrastructure/supabase/client';
 
 // Global configurations query hierarchy (Simplified)
 export function getSavedCredentials(): { url: string; key: string; source: 'localStorage' | 'env' | 'none' } {
@@ -11,7 +12,7 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
   const localKey = localStorage.getItem('supabase_custom_key');
   if (localUrl && localKey) {
     systemLogService.logInfo('Auth', 'Credenciais Supabase obtidas via localStorage.');
-    return { url: localUrl, key: localKey, source: 'localStorage' };
+    return { url: normalizeSupabaseUrl(localUrl), key: localKey, source: 'localStorage' };
   }
 
   // 2. Try standard environment variables (Vite-supported)
@@ -20,7 +21,7 @@ export function getSavedCredentials(): { url: string; key: string; source: 'loca
     ((import.meta as any).env)?.NEXT_PUBLIC_SUPABASE_URL || 
     '';
   if (envUrl) {
-    envUrl = envUrl.replace(/\/rest\/v1\/?$/, '').trim();
+    envUrl = normalizeSupabaseUrl(envUrl);
   }
   const envKey = 
     ((import.meta as any).env)?.VITE_SUPABASE_ANON_KEY || 
@@ -49,10 +50,7 @@ export let supabase = (supabaseUrl && supabaseAnonKey)
 
 // Dynamic updater
 export function updateActiveSupabaseClient(url: string, key: string): { success: boolean; source: string; url: string; key: string } {
-  let cleanUrl = url.trim();
-  if (cleanUrl) {
-    cleanUrl = cleanUrl.replace(/\/rest\/v1\/?$/, '').trim();
-  }
+  let cleanUrl = normalizeSupabaseUrl(url);
   const cleanKey = key.trim();
 
   if (cleanUrl && cleanKey) {
@@ -82,25 +80,28 @@ export function updateActiveSupabaseClient(url: string, key: string): { success:
 
 // Helper to test if database credentials are responsive
 export async function testSupabaseConnection(): Promise<{ success: boolean; message: string }> {
-  systemLogService.logInfo('Network', 'Iniciando teste de conexão base com Supabase (vehicles)...');
+  const currentUrl = supabaseUrl || 'desconhecido';
+  const maskedUrl = currentUrl.replace(/(https?:\/\/)([^.]+)(\..+)/, '$1***$3');
+  
+  systemLogService.logInfo('Network', `Iniciando teste de conexão base com Supabase (vehicles)... URL Base: ${maskedUrl}`);
   if (!supabase) {
-    systemLogService.logError('Network', 'Supabase não está configurado. Conexão rejeitada.');
+    systemLogService.logError('Network', `Supabase não está configurado. Conexão rejeitada. URL atual: ${maskedUrl}`);
     return { success: false, message: 'Supabase não está configurado. Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.' };
   }
   try {
     const { error } = await supabase.from('vehicles').select('id').limit(1);
     if (error) {
-      if (error.code === '42P01') {
-        systemLogService.logWarn('Network', 'Conectado, mas tabelas não criadas (Erro 42P01).');
-        return { success: true, message: 'Conectado com sucesso! No entanto, as tabelas ainda não foram criadas. Execute o script SQL no console do Supabase.' };
+      if (error.code === 'PGRST125' || error.code === '42P01' || error.code === '42703' || error.message?.includes('schema cache')) {
+        systemLogService.logWarn('Network', `Conectado (URL: ${maskedUrl}), mas ocorreu erro de schema ou tabela não criada (Erro ${error.code}).`);
+        return { success: true, message: `Conectado com sucesso na URL Base ${maskedUrl}! No entanto, as tabelas ainda não foram criadas. Execute o script SQL no console do Supabase.` };
       }
-      systemLogService.logError('Network', 'Falha no teste de conexão com Supabase.', error);
+      systemLogService.logError('Network', `Falha no teste de conexão com Supabase (URL: ${maskedUrl}).`, error);
       return { success: false, message: `Erro de resposta: ${error.message} (Código ${error.code})` };
     }
-    systemLogService.logSuccess('Network', 'Teste de conexão concluído com sucesso. Banco ativo.');
-    return { success: true, message: 'Conexão estabelecida com sucesso! Banco ativo e tabelas prontas para sincronização.' };
+    systemLogService.logSuccess('Network', `Teste de conexão concluído com sucesso. Banco ativo na URL Base ${maskedUrl}.`);
+    return { success: true, message: `Conexão estabelecida com sucesso na URL Base ${maskedUrl}! Banco ativo e tabelas prontas para sincronização.` };
   } catch (err: any) {
-    systemLogService.logError('Network', 'Falha crítica (Exceção) no teste de conexão Supabase', err);
+    systemLogService.logError('Network', `Falha crítica (Exceção) no teste de conexão Supabase na URL ${maskedUrl}`, err);
     return { success: false, message: `Falha na requisição: ${err?.message || err}` };
   }
 }
@@ -1062,33 +1063,12 @@ export async function exportOperationalStateToSupabase(data: {
     results.push(`❌ Pré-romaneios: ${err.message || err}`);
   }
 
-  // 4. Saved Romaneios
+  // 4. Saved Romaneios (Legacy - Local Only, no Supabase sync)
   try {
     if (data.savedRomaneios.length > 0) {
-      const formattedSaved = data.savedRomaneios.map(r => {
-        const payloadData = r as any;
-        const createdVal = r.ctrcs?.[0]?.data_ocorrencia || payloadData.createdAt || payloadData.created_at || new Date().toISOString();
-        const updatedVal = payloadData.updatedAt || payloadData.updated_at || new Date().toISOString();
-
-        return {
-          id: r.id,
-          date: r.date,
-          vehicle_id: r.vehicleId,
-          vehicle_plate: r.vehiclePlate,
-          driver_name: r.driverName,
-          helper_name: r.helperName,
-          ctrc_ids: r.ctrcs ? r.ctrcs.map(c => c.id) : [],
-          payload: { ...r },
-          created_at: new Date(createdVal).toISOString(),
-          updated_at: new Date(updatedVal).toISOString()
-        };
-      });
-      const uniqueSaved = deduplicateById(formattedSaved);
-      const { error } = await supabase.from('saved_romaneios').upsert(uniqueSaved);
-      if (error) throw error;
-      results.push(`✓ ${uniqueSaved.length} romaneios salvos exportados.`);
+      results.push(`✓ Romaneios salvos mantidos apenas localmente (${data.savedRomaneios.length} ignorados no remoto).`);
     } else {
-      results.push(`✓ Sem romaneios salvos para exportar.`);
+      results.push(`✓ Sem romaneios salvos.`);
     }
   } catch (err: any) {
     hasErrors = true;
@@ -1115,23 +1095,37 @@ export async function importOperationalStateFromSupabase(): Promise<{
 
   systemLogService.logInfo('Sync', 'Iniciando importação operacional...');
 
+  let ctrcsRaw: any[] = [];
   try {
-    // 1. Fetch CTRCs
-    const { data: ctrcsRaw, error: ctrcsError } = await supabase.from('ctrcs').select('*');
-    if (ctrcsError) throw ctrcsError;
+    const { data, error } = await supabase.from('ctrcs').select('*');
+    if (error) throw error;
+    ctrcsRaw = data || [];
+  } catch (err) {
+    systemLogService.logError('Sync', 'Erro ao importar CTRCs', err);
+  }
 
-    // 2. Fetch Route Planning Items
-    const { data: planningRaw, error: planningError } = await supabase.from('routing_plan_items').select('*');
-    if (planningError) throw planningError;
+  let planningRaw: any[] = [];
+  try {
+    const { data, error } = await supabase.from('routing_plan_items').select('*');
+    if (error) throw error;
+    planningRaw = data || [];
+  } catch (err) {
+    systemLogService.logError('Sync', 'Erro ao importar routing_plan_items', err);
+  }
 
-    // 3. Fetch Pre Romaneios
-    const { data: preRaw, error: preError } = await supabase.from('pre_romaneios').select('*');
-    if (preError) throw preError;
+  let preRaw: any[] = [];
+  try {
+    const { data, error } = await supabase.from('pre_romaneios').select('*');
+    if (error) throw error;
+    preRaw = data || [];
+  } catch (err) {
+    systemLogService.logError('Sync', 'Erro ao importar pre_romaneios', err);
+  }
 
-    // 4. Fetch Saved Romaneios
-    const { data: savedRaw, error: savedError } = await supabase.from('saved_romaneios').select('*');
-    if (savedError) throw savedError;
+  // Saved Romaneios is no longer synced from remote
+  const savedRaw: any[] = [];
 
+  try {
     // Parse CTRCs
     const ctrcs: Ctrc[] = (ctrcsRaw || []).map(c => ({
       id: c.id,

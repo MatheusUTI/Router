@@ -79,8 +79,7 @@ export const shipmentSupabaseRepository = {
 
     const isActuallyOnline = await checkSupabaseHealth();
     if (!isActuallyOnline) {
-      systemLogService.logWarn('Sync', 'Supabase network offline durante getRecentShipments.');
-      return { success: false, data: null, error: "Supabase network offline" };
+      systemLogService.logWarn('Sync', 'Health Check Supabase falhou, mas tentando getRecentShipments mesmo assim (fallback mode).');
     }
 
     try {
@@ -98,7 +97,7 @@ export const shipmentSupabaseRepository = {
         .order("created_at", { ascending: false });
 
       if (error) {
-        systemLogService.logError('Sync', 'Erro ao recuperar shipments recentes', error);
+        systemLogService.logError('Sync', 'Erro ao recuperar shipments recentes na query real', error);
         throw error;
       }
       

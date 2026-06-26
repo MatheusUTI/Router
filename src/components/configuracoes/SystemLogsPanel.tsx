@@ -128,7 +128,7 @@ export const SystemLogsPanel: React.FC = () => {
       }
     }
     
-    details.origem_ativa = localStorage.getItem('router_supabase_url') ? 'localStorage' : (envVars.VITE_SUPABASE_URL ? 'env' : 'none');
+    details.origem_ativa = localStorage.getItem('supabase_custom_url') ? 'localStorage' : (envVars.VITE_SUPABASE_URL || envVars.NEXT_PUBLIC_SUPABASE_URL ? 'env' : 'none');
 
     systemLogService.logSuccess('Testes Manuais', 'Resultado do teste de Variáveis de Ambiente', details);
   };
