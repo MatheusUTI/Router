@@ -1269,7 +1269,9 @@ export default function App() {
 
             if (planRes.success && planRes.data) {
               const planId = planRes.data.id;
-              const planItemsToSync = mergedCtrcs.map((c) => ({
+              
+              const activeCtrcs = mergedCtrcs.filter(c => isActiveForRouting(c));
+              const planItemsToSync = activeCtrcs.map((c) => ({
                 id: `${planId}_${c.id}`,
                 planId: planId,
                 shipmentUniqueKey: `${adminUnid}_${c.id}`,
@@ -1290,7 +1292,7 @@ export default function App() {
                 await routingPlanItemSupabaseRepository.upsertItems(batch);
               }
               console.log(
-                `[Importacao] Sincronização Supabase concluída (${planItemsToSync.length} routing_plan_items)`,
+                `[Importacao] Sincronização Supabase concluída (${planItemsToSync.length} routing_plan_items ativos de ${mergedCtrcs.length} importados)`,
               );
             }
           } catch (planErr) {
