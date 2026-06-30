@@ -257,6 +257,21 @@ export default function FinalizacaoView({
       const activeImportBatchId = localStorage.getItem('active_import_batch_id');
       const activePlanningDate = localStorage.getItem('active_planning_date');
       const targetDate = convertManifestDateToPlanningDate(manifestDate);
+      const companyCode = localStorage.getItem('empresa_ativa') || '01';
+
+      // 1. Sync from Supabase first for the current unit and target date
+      const { preRomaneioSupabaseRepository } = await import('../infrastructure/supabase/repositories/preRomaneioSupabaseRepository');
+      try {
+        const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, targetDate);
+        if (preRes.success && preRes.data) {
+          const remotePre = preRes.data.filter(pr => pr.status !== 'CANCELADO');
+          if (remotePre.length > 0) {
+            await PreRomaneioRepository.putMany(remotePre);
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao buscar pre-romaneios do Supabase:', e);
+      }
       
       let prs = await PreRomaneioRepository.getAll();
       prs = prs.filter(pr => isActivePreRomaneio(pr));
@@ -372,6 +387,8 @@ export default function FinalizacaoView({
         }
       } else {
         await PreRomaneioRepository.updateAssignment(prId, { [field]: val });
+        triggerToast(`Campo ${String(field)} do pré-romaneio ${pr.route} atualizado.`);
+        loadPreRomaneiosData();
       }
     } catch (err) {
       console.error('[FinalizacaoView] Error updating pre-romaneio field:', err);

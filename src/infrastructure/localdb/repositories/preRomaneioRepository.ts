@@ -54,8 +54,7 @@ export const PreRomaneioRepository = {
       };
       await db.pre_romaneios.put(cancelled);
       try {
-        const companyCode = localStorage.getItem('user_unit') || 'SPO';
-        await preRomaneioSupabaseRepository.upsertPreRomaneio(cancelled, companyCode);
+        await preRomaneioSupabaseRepository.cancelPreRomaneio(id, cancelled.cancelledBy, cancelled.cancelReason);
       } catch (err) {
         console.warn('[PreRomaneioRepository] Erro ao marcar como cancelado no Supabase durante remoção:', err);
       }
@@ -86,7 +85,11 @@ export const PreRomaneioRepository = {
 
     try {
       const companyCode = localStorage.getItem('user_unit') || 'SPO';
-      await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+      if (status === 'CANCELADO') {
+        await preRomaneioSupabaseRepository.cancelPreRomaneio(id, updated.cancelledBy, updated.cancelReason);
+      } else {
+        await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+      }
     } catch (err) {
       console.warn('[PreRomaneioRepository] Erro ao sincronizar status no Supabase:', err);
     }

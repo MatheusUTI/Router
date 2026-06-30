@@ -252,7 +252,7 @@ export default function RoteirizacaoView({
       try {
         const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, planningDate);
         if (preRes.success && preRes.data && active) {
-          const remotePre = preRes.data;
+          const remotePre = preRes.data.filter(pr => pr.status !== 'CANCELADO');
           if (remotePre.length > 0) {
             await PreRomaneioRepository.putMany(remotePre);
             // Trigger parent CTRC re-partition so newly fetched pre-romaneios map their CTRCs as linked
@@ -482,9 +482,16 @@ export default function RoteirizacaoView({
     }
 
     // CR-MESA-PERFORMANCE-01: Filtrar inativos/entregues se showDelivered for false
-    const filteredForEnrichment = showDelivered 
+    let filteredForEnrichment = showDelivered 
       ? availableCtrcs 
       : availableCtrcs.filter((c) => isActiveForRouting(c));
+
+    // CR-ECOSSISTEMA-ROTEIRIZACAO-SYNC-01: Regra 7 - Filtrar apenas CTRCs com planningStatus === 'A_PLANEJAR' ou vazio
+    filteredForEnrichment = filteredForEnrichment.filter((c) => {
+      const planItem = routePlanningItems.find((i) => i.ctrcId === c.id);
+      if (!planItem) return true;
+      return !planItem.planningStatus || planItem.planningStatus === 'A_PLANEJAR';
+    });
 
     const res = RoteirizacaoEnrichmentService.enrichCargas(
       filteredForEnrichment,
