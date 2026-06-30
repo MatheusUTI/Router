@@ -237,16 +237,22 @@ export default function RoteirizacaoView({
             const unifiedItems = await RoutePlanningRepository.getByDate(planningDate);
             setRoutePlanningItems(unifiedItems);
           } else {
-            console.log(`[Roteirizacao] Plano ${planId} vazio (0 itens). Buscando shipments para hidratar...`);
+            // Use systemLogService for better visibility instead of console.log
+            const { systemLogService } = await import('../../services/systemLogService');
+            systemLogService.logWarn('Roteirizacao', `Plano ${planId} vazio (0 itens). Buscando shipments para hidratar...`);
             try {
               const { shipmentSupabaseRepository } = await import('../../infrastructure/supabase/repositories/shipmentSupabaseRepository');
               
               const shipmentRes = await shipmentSupabaseRepository.getRecentShipments(31, companyCode, true);
               if (shipmentRes.success && shipmentRes.data) {
                 const activeShipments = shipmentRes.data;
-                console.log(`[Roteirizacao] Encontrados ${activeShipments.length} shipments ativos.`);
                 
-                const newItemsToSync = activeShipments.map((shipment) => {
+                // CR-ECOSSISTEMA-ROTEIRIZACAO-SYNC-01: Filter only for this planningDate
+                const filteredShipments = activeShipments.filter(s => s.raw_payload?.planningDate === planningDate);
+                
+                systemLogService.logInfo('Roteirizacao', `Encontrados ${activeShipments.length} shipments ativos gerais, ${filteredShipments.length} para a data ${planningDate}.`);
+                
+                const newItemsToSync = filteredShipments.map((shipment) => {
                   const ctrcId = shipment.raw_payload?.id || shipment.ctrc_number;
                   const suggestedRoute = shipment.raw_payload?.setor || undefined;
                   const manualPriority = shipment.raw_payload?.manualPriority || undefined;
@@ -268,7 +274,7 @@ export default function RoteirizacaoView({
                 });
                 
                 if (newItemsToSync.length > 0) {
-                  console.log(`[Roteirizacao] Criando ${newItemsToSync.length} routing_plan_items no Supabase...`);
+                  systemLogService.logInfo('Roteirizacao', `Criando ${newItemsToSync.length} routing_plan_items no Supabase...`);
                   const BATCH_SIZE = 500;
                   for (let i = 0; i < newItemsToSync.length; i += BATCH_SIZE) {
                     const batch = newItemsToSync.slice(i, i + BATCH_SIZE);
@@ -288,11 +294,11 @@ export default function RoteirizacaoView({
                   
                   await RoutePlanningRepository.putMany(localRouteItems);
                   setRoutePlanningItems(localRouteItems);
-                  console.log(`[Roteirizacao] Total final da Mesa após hidratação: ${localRouteItems.length} itens.`);
+                  systemLogService.logSuccess('Roteirizacao', `Total final da Mesa após hidratação: ${localRouteItems.length} itens.`);
                 }
               }
-            } catch (err) {
-              console.error("[Roteirizacao] Erro ao hidratar plano a partir de shipments:", err);
+            } catch (err: any) {
+              systemLogService.logError("Roteirizacao", "Erro ao hidratar plano a partir de shipments", err);
             }
           }
           

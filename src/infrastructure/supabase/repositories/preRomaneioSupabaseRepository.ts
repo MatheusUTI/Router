@@ -107,7 +107,7 @@ export const preRomaneioSupabaseRepository = {
 
       if (error) throw error;
       const itemsMap: Record<string, string[]> = {};
-      (items || []).forEach((it) => {
+      (items || []).forEach((it: any) => {
         if (!itemsMap[it.pre_romaneio_id]) {
           itemsMap[it.pre_romaneio_id] = [];
         }

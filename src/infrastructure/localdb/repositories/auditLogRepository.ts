@@ -43,7 +43,7 @@ export const AuditLogRepository = {
     isMaster: boolean;
     entityType: string;
     entityId: string;
-    action: 'CREATE' | 'UPDATE' | 'DELETE';
+    action: 'CREATE' | 'UPDATE' | 'DELETE' | 'CANCEL' | 'CONVERT';
     field?: string;
     oldValue?: string;
     newValue?: string;

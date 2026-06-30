@@ -37,12 +37,16 @@ export class UserPresenceSupabaseRepository {
 
       const { error } = await client.from('user_presence').upsert([dataToUpsert] as any);
       if (error) {
-        systemLogService.logError('Presence', 'Falha ao enviar heartbeat', error);
+        if (error.code !== 'PGRST205') {
+          systemLogService.logError('Presence', 'Falha ao enviar heartbeat', error);
+        }
         return { success: false, error };
       }
       return { success: true };
-    } catch (err) {
-      systemLogService.logError('Presence', 'Exceção no heartbeatPresence', err);
+    } catch (err: any) {
+      if (err?.code !== 'PGRST205') {
+        systemLogService.logError('Presence', 'Exceção no heartbeatPresence', err);
+      }
       return { success: false, error: err };
     }
   }
@@ -67,12 +71,16 @@ export class UserPresenceSupabaseRepository {
 
       const { data, error } = await query.order('last_seen_at', { ascending: false });
       if (error) {
-        systemLogService.logError('Presence', 'Falha ao obter usuários ativos', error);
+        if (error.code !== 'PGRST205') {
+          systemLogService.logError('Presence', 'Falha ao obter usuários ativos', error);
+        }
         return [];
       }
       return data || [];
-    } catch (err) {
-      systemLogService.logError('Presence', 'Exceção em getActiveUsers', err);
+    } catch (err: any) {
+      if (err?.code !== 'PGRST205') {
+        systemLogService.logError('Presence', 'Exceção em getActiveUsers', err);
+      }
       return [];
     }
   }
@@ -88,7 +96,9 @@ export class UserPresenceSupabaseRepository {
         .eq('id', username);
 
       if (error) {
-        systemLogService.logError('Presence', 'Falha ao marcar offline', error);
+        if (error.code !== 'PGRST205') {
+          systemLogService.logError('Presence', 'Falha ao marcar offline', error);
+        }
         return { success: false };
       }
       return { success: true };
