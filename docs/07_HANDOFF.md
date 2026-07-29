@@ -1,36 +1,22 @@
-# Handoff para Novos Agentes / Desenvolvedores
+# Documento de Handoff (Continuidade)
 
-## Estado Atual
-O projeto Router chegou à **Baseline V1.25.0**.
-A Mesa de Roteirização estabilizou seu layout de Planilha Operacional, filtros principais, comportamento dinâmico de filial e tema Day/Dark.
+## Contexto para a IA/Dev
+O projeto RotaOperational (Router) é uma ferramenta crítica de logística que já se encontra estável em sua versão Operacional da Mesa (`v1.25.0`). O núcleo pesado do sistema - Importação -> Filtragem Dinâmica -> Pré-Separação - funciona em arquitetura offline-first (Dexie IndexedDB) sincronizando com Supabase.
 
-## O Que Não Pode Ser Quebrado
-- Estrutura em Planilha Operacional.
-- Regra de filtragem de Filial Operacional (destino) vs. Localização.
-- Subcontratos sendo roteirizáveis.
-- Setor Ocorrencia direcionando a disponibilidade.
-- Escala de zoom (85%, 100%, 110%, etc).
-- Suporte mínimo a telas de 1366x768.
+## Fluxo Principal a Compreender
+1. **Dados em Entrada:** O componente de Importação puxa planilhas ou TXTs (SSW), processa as Praças (Filiais), normaliza status (via Services) e injeta no `IndexedDB.ctrcs`.
+2. **Uso Contínuo (Mesa):** Em `RoteirizacaoView.tsx`, filtros massivos ocorrem consumindo as tabelas de Dexie.
+3. **Uso em Saída:** Cargas selecionadas geram instâncias de `pre_romaneios`, alterando o status das cargas e criando rotinas de subida ao Supabase (sync queue).
 
-## Como Testar
-- Logar com `master` / `123`.
-- Importar uma base real.
-- Realizar validação dos filtros, seleção e montagem de pré-separação.
-- Alternar temas e escalas de Mesa.
+## Riscos Operacionais Presentes
+- A aplicação possui um arquivo legado gigantesco: `src/supabase.ts` onde, antes do padrão Repository ser totalmente abraçado, faziam-se upserts diretos para a nuvem. Isso precisa ser purgado e migrado 100% para os Repositories.
+- O cálculo de "Disponibilidade" e "Setor" é volátil e depende da integridade do string parsing da importação.
 
-## Fluxo de Validação
-1. Validar e formatar: `npm run lint`
-2. Checar build: `npm run build`
-3. Commit
-4. Testar resultado em Vercel no ambiente correspondente
+## O Que Está Pendente
+Os Dashboards Táticos e indicadores KPIs exibem muitos números falsos ou fixos na UI e não reagem às métricas extraídas puramente do IndexedDB de forma completa. Algumas tabelas do Supabase podem estar com políticas de RLS muito soltas ou muito rígidas (causando falhas pontuais de sync perdoadas silenciosamente).
 
-## Arquivos Principais a Observar
-- `src/components/roteirizacao/RoteirizacaoView.tsx` (Mesa)
-- `src/components/roteirizacao/CargaList.tsx`
-- `src/components/roteirizacao/CargaItem.tsx`
-- `src/components/roteirizacao/hooks/useRoteirizacaoFilters.ts` (Core Rules)
-
-## Instrução Crucial
-Antes de alterar ou evoluir a Mesa de Roteirização, **obrigatório** ler:
-- `docs/11_ROUTER_DESIGN_SYSTEM.md`
-- `docs/12_OPERATIONAL_RULES.md`
+## Como Continuar
+1. Verifique `04_NEXT_TASK.md` para entender exatamente o que precisa ser feito agora.
+2. Em todo início de ciclo, leia `00_RULES.md` e não execute comandos de deleção ou refatoração global que modifiquem componentes visuais estáveis.
+3. Não presuma que "algo está no backend"; não há Node Backend, toda a lógica processa no Client Browser e bate no Supabase Postgres via PostgREST/Client.
+4. Após sua implementação, valide com `npm run lint` e reescreva o `04_NEXT_TASK.md` para a próxima iteração.

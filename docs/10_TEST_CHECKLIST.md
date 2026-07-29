@@ -1,65 +1,33 @@
-# Test Checklist
+# Checklist de Testes e Regressão Operacional
 
-## Regressão da Mesa de Roteirização
+Sempre que a aplicação for considerada pronta para deploy ou encerramento de um grande bloco de melhorias (ex. Sincronismo, Layout), percorra manualmente (ou automatize no futuro) estes itens vitais.
 
-- [ ] Realizar login com usuário `master` / senha `123`.
-- [ ] Importar base contendo múltiplas unidades e subcontratos.
-- [ ] Confirmar que o mapeamento automático detectou "Praça de Destino".
-- [ ] Confirmar que o CTRC importado possui a propriedade `pracaDestino` preservada na tabela.
-- [ ] Testar Filial TODAS (deve exibir visão geral de todas as filiais).
-- [ ] Testar Filial VGA (deve listar CTRCs de operação/destino VGA).
-- [ ] Testar Filial BHZ (deve listar CTRCs de operação/destino BHZ).
-- [ ] Confirmar que Filial filtra por Destino Operacional, e não localização.
-- [ ] Confirmar que o filtro por "Localização" funciona separadamente em sua respectiva coluna.
-- [ ] Testar que VGS e subcontratos são mantidos como roteirizáveis, preservando suas filiais.
-- [ ] Testar ocorrências específicas como OC 57, 59 e 70 para verificação de regras.
-- [ ] Testar o filtro de Setor (separado da Ocorrência).
-- [ ] Testar o filtro de Ocorrência propriamente dito.
-- [ ] Confirmar que a coluna OBS / DISP exibe a disponibilidade corretamente.
-- [ ] Testar seleção de CTRCs (múltiplas linhas).
-- [ ] Testar a criação de Pré-separação para veículos.
-- [ ] Testar Link externo SSW num CTRC para confirmar se abre corretamente.
-- [ ] Testar visualização em resolução de tela `1366x768` (100% de zoom de navegador).
-- [ ] Testar funcionalidade de Escala da Mesa (85%, 100%, 120%).
-- [ ] Alternar entre modo Day e Dark, verificando se a Mesa permanece coerente (sem fundo ou bordas híbridas).
+## 1. Módulo de Autenticação
+- [ ] O login aceita `master` com senha `123`.
+- [ ] Com a rede DESLIGADA, o login `master` (ou caches locais) entra usando os dados salvos em localStorage/IndexedDB.
+- [ ] Comportamento após logout: Apaga sessões corretas mas não apaga o banco offline (para não re-sincronizar Gigabytes de cargas amanhã sem necessidade extrema).
 
-## Validação Manual: Sincronização e Resiliência (CR-MESA-COLABORATIVA-01)
+## 2. Importação e Parser (SSW)
+- [ ] Importar um arquivo válido não deve travar a tela principal, usando fluxos transacionais.
+- [ ] Inserções em lote (`ctrcs`, `occurrences`) refletem no IndexedDB imediatamente.
+- [ ] Logar no `SystemLogsPanel` confirma que o parsing terminou e quantas linhas foram tratadas ou ignoradas.
+- [ ] Campos-chave de negócio ("Filial" e "Setor Ocorrencia") derivaram com precisão.
 
-### Cenário 1: Sincronia Multi-Navegador e Filtros de Filial
-- [ ] **Ação**: Usuário "Anderson" faz login, seleciona a filial **VGA** e faz a importação do BI SSW.
-- [ ] **Ação**: Outro usuário "Operador" abre o app em outro navegador (ou janela anônima) e seleciona a mesma filial e data de planejamento.
-- [ ] **Validação**: O Operador vê exatamente as mesmas cargas e o mesmo plano na Mesa que Anderson importou, sincronizados via Supabase.
+## 3. Mesa de Roteirização (Núcleo)
+- [ ] Filtro de "Filial Operacional" (Cabeçalho) não pode trazer localização física diferente de seu destino planejado (veja `00_RULES.md`).
+- [ ] A rolagem e mudança visual do tema (Light/Dark) obedece à densidade predefinida sem engasgos.
+- [ ] Somatório do rodapé reflete EXATAMENTE as linhas (Cargas) selecionadas pelos checkboxes (Valores R$, Volumes e Peso Bruto).
+- [ ] Cargas em Ocorrências de Bloqueio (ex: Retidas, Devolvidas) não podem ser marcadas.
 
-### Cenário 2: Preservação de Estado Local (Sticky Filters)
-- [ ] **Ação**: Anderson filtra a Mesa pela **Rota 04**.
-- [ ] **Ação**: Anderson navega para outra tela (ex: Finalização ou Configurações).
-- [ ] **Ação**: Anderson retorna para a tela da Mesa.
-- [ ] **Validação**: O filtro de Rota continua ativo e pré-selecionado na **Rota 04** sem redefinir o estado.
+## 4. Pré-Romaneio (Embarque)
+- [ ] Ao clicar "Consolidar Selecionados" ou "Gerar Romaneio", a placa (ou simulada) é aceita.
+- [ ] A carga migra de 'A Planejar' para 'Agrupado' (ou 'Em Viagem').
+- [ ] O Checklist do armazém gerado em Popup não esconde linhas. Suporta impressão PDF (Ctrl+P) sem quebrar design dark na folha de papel.
 
-### Cenário 3: Atualização em Tempo Real de Roteirização
-- [ ] **Ação**: Anderson altera a rota de um CTRC para a **Rota 04** (ou adiciona uma observação operacional).
-- [ ] **Ação**: Operador recarrega ou aguarda sincronização na mesma tela.
-- [ ] **Validação**: A alteração de rota aparece na tela do Operador, sincronizada de forma transparente e gravada no Supabase.
+## 5. Configurações Logísticas (CRUDs de Frota/Risco)
+- [ ] Cadastrar Novo Veículo insere localmente e empurra via Sync_Queue ao Supabase.
+- [ ] Alterar o limite financeiro GR reflete num alerta real ao somar cargas perigosas na Mesa (Teste: adicionar 10 NFs caras num veículo próprio limite 500k; o sistema avisa).
 
-### Cenário 4: Criação de Pré-Romaneio e Vinculação de CTRCs
-- [ ] **Ação**: Anderson seleciona cargas e clica em "Gerar Pré-Romaneio" para a rota designada.
-- [ ] **Ação**: O Operador acessa a aba de "Finalização" ou "Pré-Romaneios Ativos".
-- [ ] **Validação**: O Operador visualiza o pré-romaneio recém-criado e consegue conferir todos os CTRCs vinculados a ele, com status inicial correto e totais calculados (peso, volumes, valor).
-
-### Cenário 5: Resiliência Offline (Fallbacks Robustos)
-- [ ] **Ação**: Simular desconexão de rede ou Supabase offline (ex: alterando chave ou desconectando rede local).
-- [ ] **Ação**: Realizar uma nova importação de arquivo ou alteração local de CTRC.
-- [ ] **Validação**: O aplicativo continua operando normalmente, exibindo um `console.warn` de falha de rede sem travar a interface e salvando com sucesso localmente via IndexedDB.
-- [ ] **Ação**: Voltar a rede / Supabase para o estado online.
-- [ ] **Validação**: O aplicativo restabelece a conectividade e não perde dados operacionais no IndexedDB.
-
----
-
-## Critérios de Qualidade e Segurança Operacional
-
-- [ ] **Build TypeScript**: O projeto compila com sucesso (`npm run build`) sem erros de tipo.
-- [ ] **Sem Duplicidade de Dados**: A chave única composta no Supabase e IndexedDB (`company_code` + `ctrc_id`) garante que reinserir dados não crie registros duplicados.
-- [ ] **Sem DELETE Físico**: Nenhuma operação de deleção física é executada em dados operacionais. Cancelamentos de pré-romaneios mudam o status para `CANCELADO` de forma lógica, retornando os CTRCs associados para a Mesa.
-- [ ] **Segurança de Secrets**: Nenhuma chave privada ou `service_role` foi exposta no código frontend. Todas as conexões utilizam autenticação cliente segura de nível de usuário.
-- [ ] **Modo Demo/Offline Integrado**: Se as credenciais do Supabase não estiverem configuradas ou se o backend estiver instável, o app opera localmente em IndexedDB de forma perfeita, sem crashar ou travar a experiência do usuário.
-
+## 6. Supabase e Sincronismo
+- [ ] A `sync_queue` do IndexedDB se esvazia espontaneamente caso tenha internet ativa (Worker Background em app.tsx).
+- [ ] Desligar a rede e operar (Ex: gerar Pré-romaneio offline) enfileira tarefas na `sync_queue` que não morrem no recarregamento (F5) da página.
