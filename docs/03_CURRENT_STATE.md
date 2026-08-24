@@ -1,29 +1,38 @@
 # Estado Atual do Projeto
 
 **Versão Consolidada Base:** `v1.25.0`
-**Fase:** Operação Estável da Mesa de Roteirização.
+**Fase Atual:** Formalização da Integração Resiliente SSW (AISDD).
 
-O código atual foi inspecionado de acordo com a documentação AISDD. A infraestrutura base funciona sob o padrão Offline-First (Dexie IndexedDB) integrado ao Supabase.
+O código atual foi verificado contra a especificação AISDD. A infraestrutura base funciona sob o padrão Offline-First (Dexie IndexedDB) integrado ao Supabase. Toda a nova capacidade de integração direta ao SSW está formalizada documentalmente e aguarda implementação a partir da tarefa de infraestrutura `SSW-ARCH-001`.
 
-## Módulos e Funcionalidades
+---
 
-| Funcionalidade | Status | Observações e Riscos (Pendências) |
+## Tabela de Módulos e Status AISDD
+
+| Módulo / Funcionalidade | Status AISDD | Observações e Riscos |
 |---|---|---|
-| Autenticação (Login) | 🟡 Parcial | Funciona bem usando fallback local para `master`/`anderson`. O Supabase Auth real ainda possui trechos de código com `if(false)` ou catch silenciosos na integração nativa. |
-| Estrutura Base (UI, Temas) | ✅ Completo | Tema Dark/Light e densidade aplicados via Contexto e classes do Tailwind. Menu lateral consolidado. |
-| Importação (SSW) | ✅ Completo | Normalização e persistência no banco local estão funcionais. Falhas de parse no roteamento da Praça de Destino (VGA vs BHZ) parecem já estar tratadas via rules, mas demandam cobertura de testes. |
-| Mesa de Roteirização | ✅ Completo | O coração do app, filtros dinâmicos, totações em real-time e seleções estão implementados. A interface "Planilha" densa está funcional. (Base: `RoteirizacaoView.tsx`) |
-| Regras Operacionais na Mesa | 🟡 Parcial | Filtros por "Setor Ocorrencia" e mapeamento "Localização x Destino" estão ativos. Porém a tratativa robusta de exceções de string na extração pode exigir manutenções caso o formato SSW altere. |
-| Pré-Romaneio (Pré-Separação) | ✅ Completo | O fluxo de consolidar selecionados em um pré-romaneio e imprimir funciona perfeitamente, salvando na base local e marcando para sync. |
-| Gestão de Frota e GR | 🟡 Parcial | Cadastros funcionam. O cálculo de bloqueio de GR emite alerta vermelho na Mesa, mas a lógica de liberação (Token, etc.) ainda não impede a impressão. |
-| Dashboards e KPIs | ⚪ Não Iniciado / Mock | A tela `DashboardView` contém código renderizando componentes bonitos, mas as métricas de `kpiDashboardService.ts` ainda dependem de muitos dados falsos ou dados estáticos, não conectando 100% com a base real importada em alguns pontos. |
-| Sincronismo Supabase | 🟡 Parcial | Classes de Repositórios Supabase existem (`userPresence`, `shipments`, `preRomaneio`), mas a transição total de funções legadas dento do `src/supabase.ts` genérico para as classes orientadas a domínio ainda está incompleta. Muitos blocos `try/catch` silenciosos ao falhar comunicação. |
+| **Autenticação (Login Local & Supabase)** | `[EXISTENTE NO ROUTER]` | Funciona bem usando fallback local (`master`/`anderson`). Supabase Auth em evolução. |
+| **Estrutura Base (UI, Temas Dark/Light)** | `[EXISTENTE NO ROUTER]` | Tema Dark/Light e densidade aplicados via Contexto e classes do Tailwind. Menu lateral consolidado. |
+| **Importação Manual de Arquivos SSW (CSV/TXT)** | `[EXISTENTE NO ROUTER]` | Normalização e persistência no banco local estão funcionais. Serve como fallback operacional definitivo. |
+| **Mesa de Roteirização (Planilha Dinâmica)** | `[EXISTENTE NO ROUTER]` | Núcleo central estável; filtros dinâmicos, totações em real-time e seleções implementadas (`RoteirizacaoView.tsx`). |
+| **Regras Operacionais na Mesa (Filial/Destino/GR)** | `[EXISTENTE NO ROUTER]` | Filtros por "Setor Ocorrencia" e mapeamento "Localização x Destino" ativos. Alertas de GR funcionais. |
+| **Pré-Romaneio (Agrupamento e Separação)** | `[EXISTENTE NO ROUTER]` | Fluxo de consolidar selecionados em pré-romaneio e imprimir checklist funciona perfeitamente. |
+| **Gestão de Frota e Configurações** | `[EXISTENTE NO ROUTER]` | Cadastros de veículos e parâmetros funcionando no IndexedDB e sync Supabase. |
+| **Dashboards e KPIs** | `[EXISTENTE NO ROUTER]` | Telas desenhadas; cálculos em processo de enriquecimento com a base local. |
+| **Fundação SSW (Registry, Signatures, Resilience)** | `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Próxima tarefa de implementação (`SSW-ARCH-001`). Nenhuma linha de código criada no Router ainda. |
+| **SSW 455 (Download Automático de Entregas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Fluxo `0230 -> 1440 -> 0424` descoberto e testado no SSWTools; aguarda ciclo `SSW-455-001`. |
+| **SSW 101 (Consulta CTRC/NF)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-101-001`). |
+| **SSW 029 (Previsão de Cargas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
+| **SSW 030 + 023 (Manifestos e CTRCs)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
+| **SSW 264 (Descarga Física na Doca)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-UNLOADING-001`). |
+| **Consolidação Recebimento/Descarga (R/D)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RD-001`). |
+| **SSW 063 (Emissões e Faturamento)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-063-001`). |
+| **Roteirização Preditiva Multi-Estados** | `[PLANEJADO]` / `[NÃO IMPLEMENTADO]` | Visão futura pós-consolidação de todas as fontes de carga. |
 
-## Qualidade e Erros Identificados
-- Existem funções legadas (ou duplicadas) de sync no arquivo raiz `src/supabase.ts` e novos Repositories na pasta `infrastructure/supabase`. 
-- Há instâncias de logs perdidos ou dependentes do `console.warn` em falhas graves do IndexedDB/Supabase que poderiam prejudicar a auditoria.
-- Códigos `TODO:` foram identificados em arquivos como `useRoteirizacaoFilters.ts` referenciando fases futuras (ex: base dinâmica de Cidades/Rotas).
+---
 
-## Riscos Atuais
-- **Perda de Dados Silenciosa**: O sincronismo se falhar repetidas vezes pode lotar o `sync_queue` do Dexie sem avisar criticamente o usuário final.
-- **Inconsistência de Supabase Rules**: RLS e Políticas no banco de produção (PostgreSQL) podem não estar perfeitamente alinhadas com as consultas front-end feitas pelos `repositories`.
+## Riscos Atuais e Mitigações
+1. **Volatilidade de Endpoints do SSW**: Mitigada pela arquitetura de `SswCapabilityRegistry`, `SswCapabilitySignature` e `SswDiscoveryEngine`.
+2. **Exposição de Credenciais**: Mitigada pelo isolamento estrito via Backend Proxy do Router (React nunca toca credenciais do SSW).
+3. **Sobrecarga no Servidor SSW**: Mitigada pelo `SswCircuitBreaker` com backoff progressivo (5m, 15m, 30m, 60m) e políticas de cache Local-First.
+4. **Continuidade Operacional**: Mitigada pela manutenção permanente da importação manual de relatórios (CSV/TXT) como fallback de contingência.

@@ -1,6 +1,20 @@
 # RotaOperational - Registro de Versão (Changelog)
 
-Este arquivo utiliza a filosofia do Conventional Commits para detalhar as iterações históricas do projeto. As versões antigas foram inferidas a partir do histórico dos documentos substituídos e logs anteriores.
+Este arquivo utiliza a filosofia do Conventional Commits para registrar o histórico de evolução do projeto.
+
+---
+
+## [v1.26.0-doc] — 2026-08-24
+### Formalização Arquitetural da Integração Resiliente SSW (AISDD)
+- **docs(ssw)**: Formalização do Router como camada operacional inteligente sobre o SSW com arquitetura Local-First.
+- **docs(ssw)**: Definição do princípio de isolamento estrito de endpoints (`/bin/sswXXXX`) fora das Views e serviços gerais.
+- **docs(ssw)**: Especificação formal das capabilities: SSW 455, SSW 101, SSW 063, SSW 029, SSW 030, SSW 023, SSW 264 e R/D.
+- **docs(ssw)**: Modelagem do `SswCapabilityRegistry`, `SswCapabilitySignature`, `Confidence Score` e motor de `Discovery Engine`.
+- **docs(ssw)**: Definição dos componentes de resiliência: `SswCircuitBreaker` com backoff progressivo (5, 15, 30, 60 min), `SswRetryPolicy` e `SswIncidentAggregator`.
+- **docs(ssw)**: Registro das decisões de domínio: Princípio de Carga Destino (ADR-007) e Existência de Manifesto independente de detalhamento (ADR-008).
+- **docs(ssw)**: Definição do roadmap AISDD e da próxima tarefa de infraestrutura: `SSW-ARCH-001`.
+
+---
 
 ## [v1.25.0] — 2026-07-29
 ### Estabilização Geral da Mesa e Limpeza Documental AISDD
@@ -9,6 +23,8 @@ Este arquivo utiliza a filosofia do Conventional Commits para detalhar as itera�
 - **feat**: Validações pontuais da filial operacional corrigidas e validadas (Praca Destino).
 - **style**: Escala de zoom compacta consolidada para monitores logísticos (1366x768).
 
+---
+
 ## [v1.24.0] — 2026-06-23
 ### Auditoria de Regressão Operacional e Consolidação
 - **feat**: Fallback local aprimorado (auth local) com base de usuários estáticos seguros.
@@ -16,6 +32,8 @@ Este arquivo utiliza a filosofia do Conventional Commits para detalhar as itera�
 - **feat**: Criação do módulo "Cadastro de Frota e Regras GR" sem introdução de quebras duras, operando como alertas visuais de risco financeiro.
 - **fix**: Correção de sincronização na Mesa (Cargas vinculadas a pré-romaneios continuam visíveis em históricos mas bloqueadas para novas seleções).
 - **chore**: Suíte de compilação Typecheck rodando lisa (zero erros impeditivos de CI/CD).
+
+---
 
 ## [v1.23.0] — 2026-06-22
 ### Baseline Operacional Estável da Roteirização

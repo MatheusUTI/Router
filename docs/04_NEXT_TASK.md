@@ -1,46 +1,120 @@
 # Próxima Tarefa Recomendada
 
-**ID da Tarefa:** REF-001
-**Título:** Desacoplar `supabase.ts` monolítico e migrar fluxo para Repositórios Supabase Específicos.
+**ID da Tarefa:** `SSW-ARCH-001`  
+**Título:** Fundação da Integração SSW Resiliente e Isolada (Architecture Foundation)  
+**Status:** `[ARQUITETURA APROVADA]` / `[PRONTO PARA EXECUÇÃO]`
 
-## Contexto
-O projeto RotaOperational passou por uma organização de arquitetura que introduziu repositórios orientados a domínio na pasta `src/infrastructure/supabase/repositories/` (e.g., `preRomaneioSupabaseRepository.ts`, `shipmentSupabaseRepository.ts`).
-Entretanto, o arquivo `src/supabase.ts` continua atuando como um "God Object" contendo centenas de linhas com consultas diretas (queries de update, insert e delete massivo) repetindo as funcionalidades dos repositórios ou silenciando erros.
+---
 
-## Problema
-Isso gera duplicidade de lógica, dificulta testes automatizados de integração, aumenta o risco de dados assíncronos quebrarem no futuro, e confunde a manutenção.
+## 1. Contexto
+O projeto Router inicia a nova fase de integração direta e resiliente com o SSW, tendo como referência técnica a lógica descoberta e validada no projeto SSWTools. Para respeitar o princípio de isolamento e a regra de que endpoints não são contratos estáveis, é mandatório criar a infraestrutura base de capacidades, assinaturas funcionais, circuit breaker e gateway antes de qualquer chamada operacional.
 
-## Objetivo
-Refatorar a aplicação para que as funções de sincronismo parem de usar os métodos sujos do arquivo `src/supabase.ts` e passem a instanciar/usar unicamente as classes em `infrastructure/supabase/repositories/`. O arquivo `supabase.ts` deve apenas inicializar a conexão do cliente (exportar o `client`).
+---
 
-## Escopo
-- Limpar `src/supabase.ts`, deixando apenas a inicialização do client Supabase (`createClient`).
-- Transferir lógicas restantes de Sync não-cobertas (se houver) para seus respectivos Repositórios.
-- Atualizar importações em `App.tsx` e `SolucaoView` para usarem as dependências novas injetadas.
-- Preservar o fallback para Offline-first perfeitamente.
+## 2. Problema
+Espalhar requisições HTTP diretas ao SSW pelas telas ou hooks geraria acoplamento crítico, vulnerabilidade a quebras quando URLs mudarem e exposição indevida de cookies/credenciais no frontend React.
 
-## Fora do Escopo
-- Alterar o banco local `Dexie`.
-- Criar regras RLS (Políticas) no ambiente do Supabase na nuvem.
-- Implementar novas telas.
+---
 
-## Arquivos Candidatos
-- `src/supabase.ts`
-- `src/App.tsx` (que chama funções de sync no boot)
-- Qualquer componente (`SolucaoView`, `LoginView`) que possua imports importando funções espúrias de `supabase.ts`.
+## 3. Objetivo
+> **Construir a fundação isolada, segura e resiliente da integração SSW sem ainda alterar o comportamento das Views operacionais.**
 
-## Critérios de Aceite
-- `src/supabase.ts` exporta apenas a inicialização do Supabase Client e nenhuma lógica de negócio (CRUD).
-- Todos os processos de Sincronismo da inicialização do `App.tsx` continuam lendo os dados, sem travar (se online).
-- Sem erros de build (verificar rodando `npm run lint` ou `npm run build`).
+---
 
-## Commit Sugerido
-`refactor: replace monolithic supabase.ts calls with specific repository implementations`
+## 4. Escopo
+- **Definição de Tipos e Modelos de Integração (`src/integrations/ssw/types.ts`)**:
+  - Enums de capabilities (`REPORT_455_REQUEST`, `REPORT_QUEUE`, `REPORT_DOWNLOAD`, `CTRC_101`, `EMISSIONS_063`, `FORECAST_029`, `MANIFEST_030`, `MANIFEST_DETAIL_023`, `UNLOADING_264`).
+  - Interface `SswCapabilityEntry` (endpoint, método, confidence score, status, failureCount, lastSuccess).
+  - Interface `SswCapabilitySignature` (critérios semânticos de validação).
+  - Interface `SswIncident` (agregação de incidentes).
+- **Capability Registry (`src/integrations/ssw/registry/`)**:
+  - Implementação do `SswCapabilityRegistry` inicializado com as capabilities conhecidas e suas assinaturas funcionais base.
+- **Resilience Core (`src/integrations/ssw/resilience/`)**:
+  - `SswCircuitBreaker` com estados (`CLOSED`, `OPEN`, `HALF_OPEN`) e backoff progressivo (5m, 15m, 30m, 60m).
+  - `SswRetryPolicy` com backoff exponencial e jitter.
+  - `SswIncidentAggregator` para consolidação de falhas repetidas.
+- **Contratos do Discovery Engine & Gateway (`src/integrations/ssw/discovery/` & `gateways/`)**:
+  - Interfaces para `SswDiscoveryEngine`, `SswFormAnalyzer` e `SswGatewayClient`.
+- **Configuração do Proxy Gateway**:
+  - Definição dos contratos de comunicação segura entre React e o Backend Proxy.
 
-## Checklist
-- [ ] Mapear todas as funções exportadas em `supabase.ts`.
-- [ ] Transferir o que falta para `src/infrastructure/supabase/repositories`.
-- [ ] Mudar os imports no frontend (`App.tsx`, `components/*`).
-- [ ] Excluir lógicas do `supabase.ts`.
-- [ ] Executar Build e Lint.
-- [ ] Atualizar `03_CURRENT_STATE.md`.
+---
+
+## 5. Fora do Escopo (Não Fazer Neste Ciclo)
+- **NÃO** disparar consultas ou requisições ativas reais ao SSW.
+- **NÃO** alterar `RoteirizacaoView.tsx`, `App.tsx`, `DashboardView.tsx` ou qualquer outra View.
+- **NÃO** substituir o pipeline de importação manual de arquivos CSV/TXT.
+- **NÃO** construir telas ou componentes visuais de diagnóstico neste ciclo.
+- **NÃO** refatorar os repositórios locais existentes do Dexie.
+
+---
+
+## 6. Arquivos Candidatos para Criação
+- `src/integrations/ssw/types.ts`
+- `src/integrations/ssw/registry/capabilityRegistry.ts`
+- `src/integrations/ssw/resilience/circuitBreaker.ts`
+- `src/integrations/ssw/resilience/retryPolicy.ts`
+- `src/integrations/ssw/resilience/incidentAggregator.ts`
+- `src/integrations/ssw/discovery/types.ts`
+- `src/integrations/ssw/gateways/types.ts`
+
+---
+
+## 7. Contratos Principais
+```typescript
+export interface SswCapabilityEntry {
+  capabilityId: string;
+  currentEndpoint: string;
+  httpMethod: 'GET' | 'POST';
+  knownParameters: string[];
+  signature: SswCapabilitySignature;
+  confidence: number; // 0.00 a 1.00
+  status: 'ACTIVE' | 'DEGRADED' | 'DISCOVERING' | 'BLOCKED';
+  failureCount: number;
+  lastSuccess?: Date;
+  discoveryDate: Date;
+}
+```
+
+---
+
+## 8. Riscos e Mitigações
+- **Risco:** Incompatibilidade de tipagem com o restante do projeto.  
+  **Mitigação:** Tipos 100% isolados na pasta `src/integrations/ssw/` sem dependência circular com `src/types.ts`.
+- **Risco:** Impacto no comportamento das Views.  
+  **Mitigação:** Nenhuma View importará código da pasta de integração neste primeiro ciclo de infraestrutura.
+
+---
+
+## 9. Critérios de Aceite
+- [ ] Todas as interfaces e types de capabilities, registry, resilience e discovery criados.
+- [ ] `SswCapabilityRegistry` instancia e registra as 9 capabilities conhecidas com seus scores de confiança iniciais.
+- [ ] `SswCircuitBreaker` gerencia estados (`CLOSED`, `OPEN`, `HALF_OPEN`) com progressão de backoff configurada.
+- [ ] `SswIncidentAggregator` agrupa erros idênticos por capability com timestamps e contadores.
+- [ ] Zero impacto ou modificação em Views operacionais existentes.
+- [ ] Suíte de verificação de tipos e lint executando limpa (`npm run lint` ou `tsc --noEmit`).
+
+---
+
+## 10. Plano de Testes
+- Testes unitários para:
+  1. Registro e recuperação de capabilities no `SswCapabilityRegistry`.
+  2. Transições de estado e backoff do `SswCircuitBreaker`.
+  3. Agregação correta de incidentes no `SswIncidentAggregator`.
+
+---
+
+## 11. Rollback
+Exclusão do diretório `src/integrations/ssw/` sem nenhum impacto colateral no restante da base de código do Router.
+
+---
+
+## 12. Documentação Afetada
+- `docs/03_CURRENT_STATE.md`
+- `docs/04_NEXT_TASK.md`
+- `docs/08_CHANGELOG.md`
+
+---
+
+## 13. Commit Sugerido
+`feat(ssw): implement foundation for resilient SSW capability integration`
