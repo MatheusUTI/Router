@@ -31,7 +31,7 @@ export interface SswDiscoveryResult {
  * Contrato abstrato para analisadores de formulários HTML.
  * (A implementação de parsing com cheirinho de DOM/HTML fica isolada no backend para ciclos futuros).
  */
-export interface SswFormAnalyzer {
+export interface ISswFormAnalyzer {
   extractForms(htmlContent: string): Promise<SswFormDescriptor[]>;
   scoreFormCompatibility(
     form: SswFormDescriptor,
@@ -52,7 +52,7 @@ export interface SswCapabilityValidator {
 /**
  * Contrato abstrato do motor de Discovery.
  */
-export interface SswDiscoveryEngine {
+export interface ISswDiscoveryEngine {
   discoverCapability(
     capabilityId: SswCapabilityId,
     signature: SswCapabilitySignature,

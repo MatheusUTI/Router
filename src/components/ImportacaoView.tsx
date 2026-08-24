@@ -75,7 +75,58 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
   });
 
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isSswSyncing, setIsSswSyncing] = useState<boolean>(false);
+  const [sswSyncStatus, setSswSyncStatus] = useState<string | null>(null);
+  const [sswError, setSswError] = useState<string | null>(null);
+  const [sswSuccessInfo, setSswSuccessInfo] = useState<{ rowCount: number; timestamp: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSyncSsw = async () => {
+    setIsSswSyncing(true);
+    setSswError(null);
+    setSswSuccessInfo(null);
+    setSswSyncStatus('Conectando ao SSW e solicitando relatório 455...');
+
+    try {
+      const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
+      const username = adminUser?.username || 'operador';
+
+      const response = await fetch('/api/ssw/455/acquire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unid,
+          requestedBy: username,
+          pollIntervalMs: 2000,
+          maxWaitTimeMs: 60000
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Falha na aquisição do relatório 455 no SSW.');
+      }
+
+      if (data.csvContent) {
+        const dateStr = new Date().toISOString().slice(0, 10);
+        setFileName(`SSW_455_${unid}_${dateStr}.csv`);
+        loadCsvContent(data.csvContent);
+        setSswSuccessInfo({
+          rowCount: data.rowCount || 0,
+          timestamp: new Date().toLocaleTimeString('pt-BR')
+        });
+        setSswSyncStatus(`Relatório 455 obtido com sucesso (${data.rowCount || 0} registros)!`);
+      } else {
+        throw new Error('SSW retornou resposta sem conteúdo CSV.');
+      }
+    } catch (err: any) {
+      console.error('[SSW-UI] Erro ao sincronizar com SSW:', err);
+      setSswError(err.message || 'Erro de conexão com o SSW. Você pode importar o arquivo manualmente.');
+    } finally {
+      setIsSswSyncing(false);
+    }
+  };
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -866,7 +917,23 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               <p className="text-[11px] font-semibold text-[var(--router-text)] dark:text-white">Solte o arquivo do manifesto bruto aqui</p>
               <p className="text-[10px] text-[var(--router-text-muted)] text-[var(--router-text-muted)] mt-1 font-mono">Formato CSV ou TXT (Separadores comuns carregados automaticamente)</p>
 
-              <div className="flex gap-2.5 mt-4">
+              <div className="flex flex-wrap gap-2.5 mt-4 justify-center">
+                <button
+                  type="button"
+                  onClick={handleSyncSsw}
+                  disabled={isSswSyncing}
+                  className={`px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center gap-1.5 ${
+                    isSswSyncing ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px] animate-spin" style={{ display: isSswSyncing ? 'inline-block' : 'none' }}>
+                    sync
+                  </span>
+                  <span className="material-symbols-outlined text-[16px]" style={{ display: !isSswSyncing ? 'inline-block' : 'none' }}>
+                    cloud_sync
+                  </span>
+                  {isSswSyncing ? 'Sincronizando SSW...' : 'Sincronizar SSW (455)'}
+                </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -884,6 +951,46 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                 </button>
               </div>
             </div>
+
+            {/* SSW Status / Error Banner */}
+            {isSswSyncing && sswSyncStatus && (
+              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-emerald-300 text-xs">
+                <span className="material-symbols-outlined text-emerald-400 text-[18px] animate-spin">progress_activity</span>
+                <span>{sswSyncStatus}</span>
+              </div>
+            )}
+
+            {sswSuccessInfo && (
+              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-emerald-300 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
+                  <span>Relatório SSW 455 obtido com sucesso às {sswSuccessInfo.timestamp}</span>
+                </div>
+                <span className="font-mono bg-emerald-900/50 px-2 py-0.5 rounded text-[11px] font-bold">
+                  {sswSuccessInfo.rowCount} CTRCs
+                </span>
+              </div>
+            )}
+
+            {sswError && (
+              <div className="mt-3 bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl flex items-start gap-2.5 text-amber-200 text-xs">
+                <span className="material-symbols-outlined text-amber-400 text-[18px] shrink-0 mt-0.5">warning</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-amber-300">Integração SSW Indisponível ou Não Configurada</p>
+                  <p className="text-[11px] text-amber-200/80 mt-0.5">{sswError}</p>
+                  <p className="text-[10px] text-amber-300/60 mt-1">
+                    * O upload manual de arquivos CSV/TXT e a carga de exemplo continuam operando normalmente como contingência.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSswError(null)}
+                  className="text-amber-400 hover:text-amber-200 text-sm p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             {fileName && (
               <div className="mt-3 bg-[var(--router-surface)] bg-[var(--router-surface-2)] p-3 rounded-xl border border-[var(--router-border)] dark:border-outline-variant/60 flex items-center justify-between">

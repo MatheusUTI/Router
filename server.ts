@@ -4,6 +4,8 @@ import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import dns from "dns";
+import { getSsw455Service, getSswSessionManager } from "./server/ssw/sswServiceInstance";
+import { SswError } from "./src/integrations/ssw/types/errors";
 
 dotenv.config();
 
@@ -501,6 +503,171 @@ async function startServer() {
     }
 
     return res.json({ success: true, message: "Usuário removido da memória do servidor com sucesso!" });
+  });
+
+  // ==========================================
+  // SSW CAPABILITY & REPORT 455 API ENDPOINTS
+  // ==========================================
+
+  // SSW Health Diagnostic and summary
+  app.get("/api/ssw/health", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const sessionManager = getSswSessionManager();
+      const health = await sswService.getHealthSummary();
+      const sessionStatus = sessionManager.getSafeStatus();
+
+      return res.json({
+        success: true,
+        health,
+        session: sessionStatus
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao obter diagnóstico de saúde:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro interno ao obter telemetria SSW"
+      });
+    }
+  });
+
+  // Test SSW Connection
+  app.post("/api/ssw/test-connection", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      if (!sessionManager.isConfigured()) {
+        return res.status(400).json({
+          success: false,
+          error: "Credenciais SSW (SSW_USER e SSW_PASSWORD) não configuradas no backend."
+        });
+      }
+
+      const authenticated = await sessionManager.authenticate();
+      return res.json({
+        success: authenticated,
+        message: "Conexão com o SSW autenticada com sucesso!",
+        session: sessionManager.getSafeStatus()
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro no teste de conexão:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        error: err.message || "Falha na autenticação SSW",
+        code: isSswError ? err.code : "AUTH_FAILED"
+      });
+    }
+  });
+
+  // Request SSW 455 Report Generation
+  app.post("/api/ssw/455/request", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const { startDate, endDate, unid, dataTipo } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const job = await sswService.requestReport(
+        { startDate, endDate, unid, dataTipo },
+        requestedBy
+      );
+
+      return res.json({
+        success: true,
+        job
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao solicitar relatório 455:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        error: err.message || "Erro ao solicitar relatório 455 no SSW",
+        code: isSswError ? err.code : "REQUEST_FAILED"
+      });
+    }
+  });
+
+  // Check Job Status in Queue 156
+  app.get("/api/ssw/455/jobs/:id", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const jobId = req.params.id;
+      const job = await sswService.checkJobStatus(jobId);
+
+      return res.json({
+        success: true,
+        job
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao consultar status do job:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 404 : 500).json({
+        success: false,
+        error: err.message || "Job não encontrado ou erro na fila",
+        code: isSswError ? err.code : "JOB_ERROR"
+      });
+    }
+  });
+
+  // Download Completed Report CSV
+  app.post("/api/ssw/455/jobs/:id/download", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const jobId = req.params.id;
+      const jobStore = sswService.getJobStore();
+      const job = await jobStore.getJob(jobId);
+
+      if (!job) {
+        return res.status(404).json({
+          success: false,
+          error: `Job '${jobId}' não encontrado.`
+        });
+      }
+
+      const { csvContent, rowCount } = await sswService.downloadReport(job);
+
+      return res.json({
+        success: true,
+        job,
+        csvContent,
+        rowCount
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao baixar relatório:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        error: err.message || "Falha ao baixar CSV do relatório 455",
+        code: isSswError ? err.code : "DOWNLOAD_ERROR"
+      });
+    }
+  });
+
+  // Full Acquisition Flow: Request -> Poll Queue -> Download CSV
+  app.post("/api/ssw/455/acquire", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const { startDate, endDate, unid, dataTipo, pollIntervalMs, maxWaitTimeMs } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const result = await sswService.acquireReport(
+        { startDate, endDate, unid, dataTipo },
+        requestedBy,
+        { pollIntervalMs: pollIntervalMs || 2000, maxWaitTimeMs: maxWaitTimeMs || 60000 }
+      );
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-API] Exceção no fluxo consolidado de aquisição:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro inesperado durante a aquisição do relatório 455",
+        errorCode: "ACQUISITION_FAILED"
+      });
+    }
   });
 
   // Setup Vite as middleware or static file serving

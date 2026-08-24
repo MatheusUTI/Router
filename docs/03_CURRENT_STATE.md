@@ -19,8 +19,8 @@ O código atual foi verificado contra a especificação AISDD. A infraestrutura 
 | **Pré-Romaneio (Agrupamento e Separação)** | `[EXISTENTE NO ROUTER]` | Fluxo de consolidar selecionados em pré-romaneio e imprimir checklist funciona perfeitamente. |
 | **Gestão de Frota e Configurações** | `[EXISTENTE NO ROUTER]` | Cadastros de veículos e parâmetros funcionando no IndexedDB e sync Supabase. |
 | **Dashboards e KPIs** | `[EXISTENTE NO ROUTER]` | Telas desenhadas; cálculos em processo de enriquecimento com a base local. |
-| **Fundação SSW (Registry, Signatures, Resilience)** | `[EXISTENTE NO ROUTER]` | Implementada no ciclo `SSW-ARCH-001` (`src/integrations/ssw/` e `server/ssw/`), com cobertura unitária completa e sem chamadas externas ativas. |
-| **SSW 455 (Download Automático de Entregas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Fluxo `0230 -> 1440 -> 0424` descoberto e testado no SSWTools; aguarda ciclo `SSW-455-001`. |
+| **Fundação SSW (Registry, Signatures, Resilience)** | `[EXISTENTE NO ROUTER]` | Implementada no ciclo `SSW-ARCH-001` (`src/integrations/ssw/` e `server/ssw/`), com cobertura unitária completa. |
+| **SSW 455 (Download Automático de Entregas)** | `[EXISTENTE NO ROUTER]` | Implementado no ciclo `SSW-455-001`: pipeline completo (`0230 -> 1440 -> 0424`), adapter comum de ingestão, backend proxy e gatilho com fallback na UI. |
 | **SSW 101 (Consulta CTRC/NF)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-101-001`). |
 | **SSW 029 (Previsão de Cargas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
 | **SSW 030 + 023 (Manifestos e CTRCs)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |

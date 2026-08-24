@@ -98,3 +98,11 @@ Este arquivo mantém o histórico das decisões estruturais do **RotaOperational
 - **Justificativa**: Mantém a Mesa limpa e focada exclusivamente na carga, enquanto o supervisor recebe alertas contextuais logo ao iniciar a sessão.
 - **Impacto**: Módulo de Calendário Operacional com filtro por praça/filial e CRUD de edição master.
 
+---
+
+## ADR-013: Unificação de Parser e Ingestão Operacional via Adapter Comum (SSW 455 e Manual)
+- **Contexto**: O sistema passa a adquirir o Relatório 455 de duas formas: download automático via backend proxy ou upload manual de arquivo CSV/TXT pelo operador. Duplicar o código de parsing, conversão de tipos (Pt-Br float) e classificação de fluxo operacional criaria divergências de dados entre os dois métodos.
+- **Decisão**: Criar um adapter centralizado (`src/services/importCsvAdapter.ts`) que atua como a única fonte da verdade para transformação de CSV bruto em entidades `Ctrc`.
+- **Justificativa**: Garante que tanto a importação automática do SSW quanto a importação manual passem exatamente pelos mesmos passos de normalização, classificação de fluxo operacional (`LOCAL_DELIVERY`, `TRANSFER_OUT`, `TRANSFER_IN_DELIVERY`) e persistência.
+- **Impacto**: Elimina duplicação de regras de negócio, assegura integridade idêntica independente do canal de entrada e simplifica os testes automatizados.
+

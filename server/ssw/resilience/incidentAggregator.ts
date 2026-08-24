@@ -94,4 +94,11 @@ export class SswIncidentAggregator {
     const manualItems = await this.store.list({ status: SswIncidentStatus.MANUAL_REQUIRED });
     return [...openItems, ...manualItems];
   }
+
+  /**
+   * Alias para listActiveIncidents() para compatibilidade.
+   */
+  async getActiveIncidents(): Promise<SswIncident[]> {
+    return this.listActiveIncidents();
+  }
 }

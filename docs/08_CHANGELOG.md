@@ -4,7 +4,18 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 
 ---
 
-## [v1.26.0-doc] — 2026-08-24
+## [v1.26.0] — 2026-08-24
+### Integração Resiliente do Relatório SSW 455 (SSW-455-001)
+- **feat(ssw)**: Implementação do serviço orquestrador `Ssw455Service` (`server/ssw/services/ssw455Service.ts`) gerenciando o ciclo de vida completo da aquisição: Solicitação (`0230`) -> Polling na Fila 156 (`1440`) -> Download do CSV (`0424`).
+- **feat(ssw)**: Implementação do gerenciador de sessão isolado no backend `SswSessionManager` (`server/ssw/session/sessionManager.ts`) com autenticação automática, persistência de cookies HTTP, detecção de falso-200 (HTML de login) e renovação de credenciais.
+- **feat(ssw)**: Implementação dos gateways especializados: `Ssw455RequestGateway`, `SswReportQueueGateway` (com matching estrito de sequência/propriedade de usuário) e `SswReportDownloadGateway`.
+- **feat(ssw)**: Implementação do `SswFormAnalyzer` e `SswDiscoveryEngine` para análise estruturada de formulários e matching conservador de assinaturas (threshold >= 0.85).
+- **feat(ssw)**: Criação do adapter unificado `importCsvAdapter.ts` (`src/services/importCsvAdapter.ts`), assegurando que tanto a aquisição automática SSW 455 quanto o upload manual compartilhem exatamente as mesmas regras de parsing, sanitização, detecção de delimitador e classificação de fluxo operacional.
+- **feat(api)**: Exposição dos endpoints REST no backend proxy (`/api/ssw/health`, `/api/ssw/test-connection`, `/api/ssw/455/request`, `/api/ssw/455/jobs/:id`, `/api/ssw/455/jobs/:id/download`, `/api/ssw/455/acquire`).
+- **feat(ui)**: Adição do botão "Sincronizar SSW (455)" com animação de progresso, banner de status e contingência transparente no componente `ImportacaoView.tsx`.
+- **test(ssw)**: Suíte de testes automatizados completa em `test/ssw/ssw455.test.ts` cobrindo SessionManager, FormAnalyzer, DiscoveryEngine, Gateways (com mock HTTP e validação de falso-200), JobStore e orquestração ponta a ponta (100% de aprovação).
+- **docs(adr)**: Registro da decisão arquitetural ADR-013 sobre unificação do parser e ingestão operacional.
+
 ### Fundação da Integração SSW Resiliente e Isolada (SSW-ARCH-001)
 - **feat(ssw)**: Criação dos tipos compartilhados e contratos frontend-safe em `src/integrations/ssw/` (`SswCapabilityId`, `SswCapabilityStatus`, `SswCircuitState`, `SswIncidentStatus`, `SswCapabilitySignature`, `SswCapabilityEntry`, `SswHealthSummaryDTO`).
 - **feat(ssw)**: Implementação do `SswCapabilityRegistry` com porta de persistência desacoplada `RegistryStoragePort` e `InMemoryRegistryStorage`.

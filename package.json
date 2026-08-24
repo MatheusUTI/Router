@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "1.25.0",
+  "version": "1.26.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -9,7 +9,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "test": "tsx test/ssw/resilience.test.ts",
+    "test": "tsx test/ssw/resilience.test.ts && tsx test/ssw/ssw455.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

@@ -58,6 +58,13 @@ export class SswCapabilityRegistry {
   }
 
   /**
+   * Alias para list() para compatibilidade.
+   */
+  async getAll(): Promise<SswCapabilityEntry[]> {
+    return this.list();
+  }
+
+  /**
    * Atualiza o endpoint associado a uma capacidade, opcionalmente ajustando o confidence score.
    */
   async updateEndpoint(

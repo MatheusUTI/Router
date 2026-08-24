@@ -1,69 +1,47 @@
 # Próxima Tarefa Recomendada
 
-**ID da Tarefa:** `SSW-455-001`  
-**Título:** Integração Resiliente do Relatório SSW 455 (Download Automático de Entregas)  
+**ID da Tarefa:** `SSW-101-001`  
+**Título:** Integração Resiliente do Módulo SSW 101 (Consulta Individual de CTRC e Nota Fiscal)  
 **Status:** `[ARQUITETURA APROVADA]` / `[PRONTO PARA EXECUÇÃO]`
 
 ---
 
 ## 1. Contexto
-Com a fundação arquitetural da integração SSW concluída (`SSW-ARCH-001`) — contendo `SswCapabilityRegistry`, `SswCircuitBreaker`, `SswRetryPolicy`, `SswIncidentAggregator` e contratos seguros de Discovery/Gateway —, o projeto está pronto para a primeira integração de capability real: a aquisição automatizada do Relatório SSW 455 (cargas em trânsito e entregas da filial).
+Com a conclusão bem-sucedida do ciclo `SSW-455-001` — que viabilizou a aquisição automatizada e o download em lote do relatório de entregas da filial —, o Router agora necessita da capability de consulta pontual de CTRC e Nota Fiscal (SSW 101). Essa funcionalidade permite detalhar ocorrências, validar dados de faturamento em tempo real na Mesa de Roteirização e auditar CTRCs individuais sem demandar novo download massivo de relatório.
 
 ---
 
 ## 2. Problema
-Atualmente, o operador precisa acessar manualmente o sistema SSW legado, solicitar o relatório 455, aguardar a fila de processamento, realizar o download do arquivo CSV/TXT e importá-lo manualmente no Router. Esse processo manual consome tempo e atrasa o início da triagem física e montagem da Mesa de Roteirização.
+Quando o operador identifica divergências em um CTRC (ex: falta de nota fiscal, endereço incompleto ou ocorrência de cliente), ele precisa sair do Router, abrir o terminal SSW, digitar a opção `101`, buscar a chave ou número e consultar manualmente. Isso fragmenta a operação de triagem.
 
 ---
 
 ## 3. Objetivo
-> **Integrar a aquisição automatizada do relatório SSW 455 utilizando a nova fundação de capabilities e o proxy backend, convertendo o resultado diretamente no formato normalizado do Router e mantendo a importação manual como fallback permanente.**
+> **Implementar a capability `CTRC_101_QUERY` no backend proxy do Router para consulta pontual de CTRCs/Notas Fiscais no SSW, enriquecendo o registro em cache local com ocorrências atualizadas, detalhes de remetente/destinatário e histórico de pesagem, integrando a interface de detalhes na Mesa de Roteirização.**
 
 ---
 
 ## 4. Escopo
-- **Capabilities Envolvidas**:
-  - `REPORT_455_REQUEST` (solicitação de geração do relatório 455 por filial).
-  - `REPORT_QUEUE` (verificação de status na fila de relatórios do SSW).
-  - `REPORT_DOWNLOAD` (download do CSV/TXT gerado).
-- **Backend Proxy (`server/ssw/`)**:
-  - Implementação do client HTTP com sessão autenticada isolada no backend.
-  - Orquestração do pipeline: Solicitação -> Polling de Fila -> Download -> Parser -> Payload normalizado.
-- **Normalização e Ingestão**:
-  - Reutilização do parser/normalizador existente do Router para persistência direta no IndexedDB/Dexie.
-- **Resiliência e Fallback**:
-  - Envolvimento de todas as chamadas pelo `SswCircuitBreaker` e `SswRetryPolicy`.
-  - Notificação de incidentes via `SswIncidentAggregator` caso o formulário/endpoint do 455 seja alterado.
-  - Manutenção integral do botão e modal de "Importação Manual (CSV/TXT)" como via de contingência inabalável.
+- **Capability Envolvida**:
+  - `CTRC_101_QUERY` (consulta parametrizada por número/série ou chave de CT-e/NF).
+- **Backend Proxy (`server/ssw/gateways/`)**:
+  - Gateway de consulta `Ssw101QueryGateway` com parsing de tela estruturada do 101.
+  - Envolvimento com `SswCircuitBreaker` e `SswRetryPolicy`.
+- **Serviço & Cache (`server/ssw/services/`)**:
+  - `Ssw101Service` com cache inteligente para evitar sobrecarga repetitiva de requisições ao SSW.
 - **UI / Frontend**:
-  - Adição de gatilho "Sincronizar SSW 455" com feedback de progresso e tratamento visual de fallback.
+  - Modal/gaveta de detalhes rápidos de CTRC na Mesa de Roteirização acionável por clique no número do CTRC.
+  - Tratamento de status offline / fallback visual caso o SSW não responda.
 
 ---
 
-## 5. Fora do Escopo (Não Fazer Neste Ciclo)
-- **NÃO** alterar as capabilities de CTRC 101, Manifesto 030, Previsão 029 ou Descarga 264.
-- **NÃO** remover a tela ou a funcionalidade de upload manual de arquivos CSV.
-- **NÃO** expor credenciais ou cookies de sessão do SSW no frontend React.
+## 5. Critérios de Aceite
+- [ ] `Ssw101QueryGateway` consulta e extrai com precisão os campos do CTRC/NF.
+- [ ] Ocorrências mais recentes e dados fiscais enriquecem o CTRC sem corromper os dados preexistentes.
+- [ ] Resiliência com Circuit Breaker e Retry Policy ativa.
+- [ ] Suíte de testes unitários validando parsing e tratamento de erros.
 
 ---
 
-## 6. Critérios de Aceite
-- [ ] Pipeline 455 (`REPORT_455_REQUEST` -> `REPORT_QUEUE` -> `REPORT_DOWNLOAD`) opera de forma autônoma via backend proxy.
-- [ ] Falhas transitórias no SSW acionam retry e circuit breaker sem travar a interface do operador.
-- [ ] Dados obtidos do 455 são salvos no banco local (`ctrcs`) com o mesmo esquema e integridade da importação manual.
-- [ ] A importação manual de CSV/TXT continua 100% funcional.
-- [ ] Testes unitários e de integração do pipeline 455 executando com sucesso.
-
----
-
-## 7. Documentação Afetada
-- `docs/03_CURRENT_STATE.md`
-- `docs/04_NEXT_TASK.md`
-- `docs/07_HANDOFF.md`
-- `docs/08_CHANGELOG.md`
-
----
-
-## 8. Commit Sugerido
-`feat(ssw): implement automated SSW 455 report acquisition pipeline`
-
+## 6. Commit Sugerido
+`feat(ssw): implement automated SSW 101 single CTRC query capability`

@@ -3,16 +3,19 @@
 ## Contexto para a IA / Desenvolvedor
 O projeto **RotaOperational (Router)** encontra-se com sua base operacional da Mesa consolidada e estável (`v1.25.0`), operando sob o padrão Local-First (IndexedDB via Dexie) sincronizado com Supabase.
 
-A fundação arquitetural da integração SSW (**`SSW-ARCH-001`**) foi implementada com sucesso, estabelecendo os tipos compartilhados frontend-safe (`src/integrations/ssw/`), o núcleo de resiliência e registro backend-only (`server/ssw/`) e cobertura unitária com testes determinísticos (`npm test`).
+Os ciclos fundamentais de integração SSW foram concluídos com sucesso:
+1. **`SSW-ARCH-001`**: Fundação arquitetural, contratos, resiliência (Circuit Breaker, Retry Policy, Incident Aggregator) e Capability Registry.
+2. **`SSW-455-001`**: Pipeline completo de aquisição do Relatório SSW 455 (`0230 -> 1440 -> 0424`), adapter de parsing unificado (`importCsvAdapter.ts`), sessão autenticada isolada no backend proxy e gatilho de sincronização com fallback inabalável na UI.
 
 ---
 
 ## O Que Você Precisa Saber Antes de Codificar
 
 1. **Estado do Código:**
-   - A fundação resiliente SSW está pronta: `SswCapabilityRegistry`, `SswCircuitBreaker`, `SswRetryPolicy`, `SswIncidentAggregator` e contratos do Discovery/Gateway.
-   - Nenhuma chamada de rede real ao SSW foi disparada ainda.
-   - O projeto SSWTools serve como referência técnica para a implementação dos fluxos.
+   - O pipeline do SSW 455 está 100% operacional no backend (`server/ssw/services/ssw455Service.ts`) e exposto nas rotas `/api/ssw/*` em `server.ts`.
+   - O frontend em `ImportacaoView.tsx` possui o botão "Sincronizar SSW (455)" e alimenta o mesmo fluxo de dados da importação manual.
+   - Ambas as formas de entrada (SSW automático ou upload manual) compartilham o mesmo adapter (`src/services/importCsvAdapter.ts`).
+   - O suite de testes cobre a resiliência e a integração com 100% de sucesso (`npm test`).
 
 2. **Regras Dogmáticas:**
    - **NENHUMA View pode conhecer endpoints `/bin/sswXXXX`**.
@@ -22,9 +25,7 @@ A fundação arquitetural da integração SSW (**`SSW-ARCH-001`**) foi implement
 
 3. **Próximo Passo Imediato:**
    - Consulte `docs/04_NEXT_TASK.md`.
-   - A tarefa imediata é **`SSW-455-001`**: implementação da aquisição automatizada do Relatório SSW 455 através da fundação de capabilities recém-construída.
+   - A próxima tarefa recomendada é **`SSW-101-001`**: implementação da consulta pontual de CTRC e Nota Fiscal (SSW 101) na Mesa de Roteirização.
 
 4. **Validações:**
-   - Execute sempre `npm test`, `npm run lint` e `npm run build`.
-
-
+   - Execute sempre `npm test` e `npm run lint`.
