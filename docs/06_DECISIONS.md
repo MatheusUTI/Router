@@ -65,3 +65,36 @@ Este arquivo mantém o histórico das decisões estruturais do **RotaOperational
 - **Decisão**: A existência e status de um manifesto em viagem são determinados pela fonte 030, mesmo que os itens 023 ainda estejam em fila de retry.
 - **Justificativa**: Evita falsos negativos operacionais onde veículos em viagem sumiriam do radar do galpão por falhas pontuais de detalhamento.
 - **Impacto**: O sistema suporta manifestos em estado `EM_TRANSITO_SEM_DETALHAMENTO` até a resolução assíncrona dos itens.
+
+---
+
+## ADR-009: Código de Ocorrência como String Preservando Zeros à Esquerda
+- **Contexto**: O SSW e os bancos de ocorrências representam códigos com zeros à esquerda ou até 5 dígitos. Converter esses códigos para número remove zeros e quebra o mapeamento da ocorrência, setor de ocorrência e elegibilidade operacional.
+- **Decisão**: Código de ocorrência será sempre tratado e armazenado como `string`.
+- **Justificativa**: Evita perda de dígitos significativos, aumenta compatibilidade com o Dicionário de Ocorrências e elimina falsos "ocorrência não mapeada".
+- **Impacto**: Persistência, enriquecimento e exibição na UI preservam o código original como string formatada.
+
+---
+
+## ADR-010: Elegibilidade de Roteirização como Regra Interna de Segurança Operacional
+- **Contexto**: Nem todo CTRC importado do SSW representa mercadoria física pronta para entrega (já entregues, em rota, retidos administrativamente). Exibir todos por padrão na Mesa aumenta risco de erro de triagem física.
+- **Decisão**: A elegibilidade (`ROTEIRIZAVEL`, `REVISAR`, `NAO_ROTEIRIZAVEL`) opera como regra interna de segurança; o filtro principal da Mesa de Roteirização é o "Setor de Ocorrência".
+- **Justificativa**: Aproxima a interface do fluxo do operador de galpão mantendo proteção ativa contra seleção indevida de cargas retidas.
+- **Impacto**: Setores úteis abrem por padrão; setores não roteirizáveis ficam acessíveis por filtro manual ou geram aviso de segurança ao operador.
+
+---
+
+## ADR-011: Pré-Romaneio como Etapa Obrigatória Prévia à Alocação de Frota
+- **Contexto**: Na operação física de galpão, a rota e a separação por portão são definidas antes da convocação e amarração final do veículo, motorista e ajudante.
+- **Decisão**: O Pré-Romaneio é etapa intermediária obrigatória entre a Mesa de Roteirização e o Romaneio Final de Viagem.
+- **Justificativa**: Permite emitir checklist de separação física por portão de doca antes de definir a frota final, refletindo o fluxo real do armazém.
+- **Impacto**: O pré-romaneio agrupa por rota/portão e não exige veículo obrigatório no ato da pré-separação.
+
+---
+
+## ADR-012: Calendário Operacional e Avisos na Tela Inicial
+- **Contexto**: Feriados municipais/nacionais e avisos de tráfego afetam a entrega regional, mas poluir a Mesa de Roteirização com avisos gerais reduz a velocidade de triagem.
+- **Decisão**: Avisos operacionais e eventos de calendário aparecem centralizados na tela inicial/Dashboard, filtrados pela Unidade Operacional ativa do operador.
+- **Justificativa**: Mantém a Mesa limpa e focada exclusivamente na carga, enquanto o supervisor recebe alertas contextuais logo ao iniciar a sessão.
+- **Impacto**: Módulo de Calendário Operacional com filtro por praça/filial e CRUD de edição master.
+

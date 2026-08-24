@@ -5,6 +5,13 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 ---
 
 ## [v1.26.0-doc] — 2026-08-24
+### Auditoria Estrutural e Regularização de Repositório (REPO-CLEANUP-001)
+- **chore(repo)**: Auditoria comparativa completa entre a raiz e o diretório legado `Router-main/`.
+- **chore(repo)**: Consolidação das decisões arquiteturais históricas (ADR-009 a ADR-012) e remoção segura do snapshot obsoleto `Router-main/`.
+- **chore(version)**: Alinhamento das fontes de versão do projeto (`package.json` e `src/constants/appVersion.ts` fixados em `v1.25.0`).
+- **docs(architecture)**: Definição clara da fronteira entre Shared/Frontend-Safe (`src/integrations/ssw/`) e Backend-Only (`server/ssw/`).
+- **docs(state)**: Mapeamento formal das dívidas técnicas no documento de estado atual.
+
 ### Formalização Arquitetural da Integração Resiliente SSW (AISDD)
 - **docs(ssw)**: Formalização do Router como camada operacional inteligente sobre o SSW com arquitetura Local-First.
 - **docs(ssw)**: Definição do princípio de isolamento estrito de endpoints (`/bin/sswXXXX`) fora das Views e serviços gerais.

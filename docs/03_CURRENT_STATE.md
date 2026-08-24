@@ -31,8 +31,21 @@ O código atual foi verificado contra a especificação AISDD. A infraestrutura 
 
 ---
 
+## Dívidas Técnicas Mapeadas (Technical Debts)
+
+As seguintes dívidas técnicas foram registradas durante a auditoria `REPO-CLEANUP-001` para resolução em ciclos futuros específicos, sem impacto na estabilidade atual:
+
+1. **`src/supabase.ts` Monolítico**: Centralização excessiva de lógicas de autenticação, tabelas e helpers em um único arquivo legado.
+2. **Sobreposição Arquitetural Supabase**: Coexistência de `src/supabase.ts` com a camada moderna de repositórios em `src/infrastructure/supabase/`.
+3. **Uso de `localStorage` para Configuração do Supabase**: Armazenamento de URLs e chaves customizadas no cliente em vez de configuração unificada via variáveis de ambiente/backend.
+4. **Volume do Componente `App.tsx`**: Centralização de múltiplos estados de sincronização, modais e handlers no componente raiz.
+5. **Cobertura de Testes Automatizados**: Ausência de suíte de testes unitários e de integração automatizados em CI/CD.
+
+---
+
 ## Riscos Atuais e Mitigações
 1. **Volatilidade de Endpoints do SSW**: Mitigada pela arquitetura de `SswCapabilityRegistry`, `SswCapabilitySignature` e `SswDiscoveryEngine`.
 2. **Exposição de Credenciais**: Mitigada pelo isolamento estrito via Backend Proxy do Router (React nunca toca credenciais do SSW).
 3. **Sobrecarga no Servidor SSW**: Mitigada pelo `SswCircuitBreaker` com backoff progressivo (5m, 15m, 30m, 60m) e políticas de cache Local-First.
 4. **Continuidade Operacional**: Mitigada pela manutenção permanente da importação manual de relatórios (CSV/TXT) como fallback de contingência.
+

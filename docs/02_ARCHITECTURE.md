@@ -272,19 +272,39 @@ Fallback Manual (Upload de Arquivo): Sempre Disponível
 
 ---
 
-## 10. Estrutura de Diretórios Proposta para a Integração SSW
+## 10. Estrutura de Diretórios e Fronteira de Execução da Integração SSW
 
+A integração com o SSW obedece a uma separação estrita de fronteiras de execução entre o cliente (React SPA) e o backend ativo (`server.ts` Node/Express):
+
+```text
+React (Client-Side SPA)
+       ↓ (API Routes / Proxy Gateway)
+Router Backend (`server.ts` / `server/`)
+       ↓ (HTTP, Cookies de Sessão Autenticada, Circuit Breaker)
+SSW
+```
+
+### 10.1. Shared / Frontend-Safe (`src/integrations/ssw/`)
+Código, interfaces e contratos que podem ser importados com segurança pelo bundle frontend:
 ```text
 src/
 └── integrations/
     └── ssw/
-        ├── session/        # Gestão e validação de sessão autenticada / cookies
-        ├── registry/       # SswCapabilityRegistry e definições de capabilities
-        ├── discovery/      # DiscoveryEngine, FormAnalyzer e validadores
-        ├── resilience/     # CircuitBreaker, RetryPolicy, IncidentAggregator
-        ├── diagnostics/    # HealthMonitor e interfaces para o painel de diagnóstico
-        ├── gateways/       # Implementação dos clientes HTTP (via Backend Proxy)
-        ├── parsers/        # Parsers de respostas HTML/XML/CSV do SSW
-        └── domain/         # Modelos de domínio integrados (Forecast, Unloading, etc.)
+        ├── contracts/      # Interfaces de dados e contratos de resposta
+        └── types/          # Enums de capabilities, incidentes e status
 ```
-*(Nota: Estrutura modular de referência. Componentes serão criados estritamente conforme o roadmap AISDD).*
+
+### 10.2. Backend-Only (`server/ssw/` / `server.ts`)
+Todo código responsável por manipulação direta de rede, credenciais, cookies HTTP, headers de sessão, parsing HTML de formulários do SSW, discovery e rate limiting **é estritamente backend-only** e não pode ser empacotado nem importado pelo frontend:
+```text
+server/
+└── ssw/
+    ├── session/        # Gestão, renovação e isolamento da sessão autenticada / cookies
+    ├── registry/       # SswCapabilityRegistry e assinaturas de validação de formulários
+    ├── discovery/      # SswDiscoveryEngine e SswFormAnalyzer (parsing HTML)
+    ├── resilience/     # SswCircuitBreaker, RetryPolicy, IncidentAggregator
+    └── gateways/       # Clientes HTTP com rate-limiting para o domínio SSW
+```
+
+*(Nota: Esta estrutura é a referência dogmática para o ciclo `SSW-ARCH-001`. Nenhuma dependência do SSW é exposta no cliente).*
+

@@ -50,13 +50,17 @@ Espalhar requisições HTTP diretas ao SSW pelas telas ou hooks geraria acoplame
 ---
 
 ## 6. Arquivos Candidatos para Criação
-- `src/integrations/ssw/types.ts`
-- `src/integrations/ssw/registry/capabilityRegistry.ts`
-- `src/integrations/ssw/resilience/circuitBreaker.ts`
-- `src/integrations/ssw/resilience/retryPolicy.ts`
-- `src/integrations/ssw/resilience/incidentAggregator.ts`
-- `src/integrations/ssw/discovery/types.ts`
-- `src/integrations/ssw/gateways/types.ts`
+### Shared / Frontend-Safe:
+- `src/integrations/ssw/types.ts` (Enums de capabilities, incidentes e status)
+- `src/integrations/ssw/contracts/types.ts` (Contratos de dados e payloads seguros)
+
+### Backend-Only (`server/ssw/`):
+- `server/ssw/registry/capabilityRegistry.ts` (Registro de capabilities e validação de assinaturas)
+- `server/ssw/resilience/circuitBreaker.ts` (Circuit breaker e backoff progressivo)
+- `server/ssw/resilience/retryPolicy.ts` (Retry exponencial com jitter)
+- `server/ssw/resilience/incidentAggregator.ts` (Agregador de falhas e incidentes)
+- `server/ssw/discovery/discoveryEngine.ts` (Contratos e implementação base do Discovery Engine)
+- `server/ssw/gateways/sswClient.ts` (Cliente HTTP seguro proxy backend)
 
 ---
 
