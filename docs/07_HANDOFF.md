@@ -3,16 +3,16 @@
 ## Contexto para a IA / Desenvolvedor
 O projeto **RotaOperational (Router)** encontra-se com sua base operacional da Mesa consolidada e estável (`v1.25.0`), operando sob o padrão Local-First (IndexedDB via Dexie) sincronizado com Supabase.
 
-A auditoria estrutural e limpeza de snapshots legados (**`REPO-CLEANUP-001`**) foi concluída com êxito, eliminando qualquer ambiguidade de código ou documentação paralela.
+A fundação arquitetural da integração SSW (**`SSW-ARCH-001`**) foi implementada com sucesso, estabelecendo os tipos compartilhados frontend-safe (`src/integrations/ssw/`), o núcleo de resiliência e registro backend-only (`server/ssw/`) e cobertura unitária com testes determinísticos (`npm test`).
 
 ---
 
 ## O Que Você Precisa Saber Antes de Codificar
 
 1. **Estado do Código:**
-   - O Router está 100% funcional com importação manual de relatórios SSW (CSV/TXT).
-   - **NENHUMA integração de rede direta com o SSW foi implementada no Router ainda.**
-   - O projeto SSWTools serve como fonte da verdade técnica para os fluxos e endpoints já descobertos.
+   - A fundação resiliente SSW está pronta: `SswCapabilityRegistry`, `SswCircuitBreaker`, `SswRetryPolicy`, `SswIncidentAggregator` e contratos do Discovery/Gateway.
+   - Nenhuma chamada de rede real ao SSW foi disparada ainda.
+   - O projeto SSWTools serve como referência técnica para a implementação dos fluxos.
 
 2. **Regras Dogmáticas:**
    - **NENHUMA View pode conhecer endpoints `/bin/sswXXXX`**.
@@ -22,9 +22,9 @@ A auditoria estrutural e limpeza de snapshots legados (**`REPO-CLEANUP-001`**) f
 
 3. **Próximo Passo Imediato:**
    - Consulte `docs/04_NEXT_TASK.md`.
-   - A tarefa imediata é **`SSW-ARCH-001`**: construção da infraestrutura isolada (types/contracts em `src/integrations/ssw/` e componentes backend em `server/ssw/`).
-   - Não toque nas Views nem inicie chamadas de rede reais durante a tarefa `SSW-ARCH-001`.
+   - A tarefa imediata é **`SSW-455-001`**: implementação da aquisição automatizada do Relatório SSW 455 através da fundação de capabilities recém-construída.
 
 4. **Validações:**
-   - Execute sempre `npm run lint` ou `tsc --noEmit` para assegurar que nenhum erro de tipagem foi introduzido.
+   - Execute sempre `npm test`, `npm run lint` e `npm run build`.
+
 

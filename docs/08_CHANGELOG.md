@@ -5,6 +5,16 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 ---
 
 ## [v1.26.0-doc] — 2026-08-24
+### Fundação da Integração SSW Resiliente e Isolada (SSW-ARCH-001)
+- **feat(ssw)**: Criação dos tipos compartilhados e contratos frontend-safe em `src/integrations/ssw/` (`SswCapabilityId`, `SswCapabilityStatus`, `SswCircuitState`, `SswIncidentStatus`, `SswCapabilitySignature`, `SswCapabilityEntry`, `SswHealthSummaryDTO`).
+- **feat(ssw)**: Implementação do `SswCapabilityRegistry` com porta de persistência desacoplada `RegistryStoragePort` e `InMemoryRegistryStorage`.
+- **feat(ssw)**: Implementação do `SswCircuitBreaker` com controle de estados (`CLOSED`, `OPEN`, `HALF_OPEN`), backoff progressivo (5m, 15m, 30m, 60m) e injeção de clock para testes determinísticos.
+- **feat(ssw)**: Implementação do `SswRetryPolicy` com backoff exponencial, jitter configurável, predicado de erros retryable e injeção de temporizador.
+- **feat(ssw)**: Implementação do `SswIncidentAggregator` e `IncidentStorePort` com agregação de erros equivalentes, contadores de tentativas e resolução de incidentes.
+- **feat(ssw)**: Criação dos contratos declarativos para `SswDiscoveryEngine`, `SswFormAnalyzer`, `SswCapabilityValidator` e `SswGatewayClient`.
+- **test(ssw)**: Criação de suíte de testes unitários determinísticos em `test/ssw/resilience.test.ts` cobrindo Registry, Circuit Breaker, Retry Policy e Incident Aggregator (100% verde).
+- **security(ssw)**: Verificação de bundle garantindo isolamento total dos módulos backend fora do bundle do cliente.
+
 ### Auditoria Estrutural e Regularização de Repositório (REPO-CLEANUP-001)
 - **chore(repo)**: Auditoria comparativa completa entre a raiz e o diretório legado `Router-main/`.
 - **chore(repo)**: Consolidação das decisões arquiteturais históricas (ADR-009 a ADR-012) e remoção segura do snapshot obsoleto `Router-main/`.

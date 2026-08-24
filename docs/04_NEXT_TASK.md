@@ -1,124 +1,69 @@
 # Próxima Tarefa Recomendada
 
-**ID da Tarefa:** `SSW-ARCH-001`  
-**Título:** Fundação da Integração SSW Resiliente e Isolada (Architecture Foundation)  
+**ID da Tarefa:** `SSW-455-001`  
+**Título:** Integração Resiliente do Relatório SSW 455 (Download Automático de Entregas)  
 **Status:** `[ARQUITETURA APROVADA]` / `[PRONTO PARA EXECUÇÃO]`
 
 ---
 
 ## 1. Contexto
-O projeto Router inicia a nova fase de integração direta e resiliente com o SSW, tendo como referência técnica a lógica descoberta e validada no projeto SSWTools. Para respeitar o princípio de isolamento e a regra de que endpoints não são contratos estáveis, é mandatório criar a infraestrutura base de capacidades, assinaturas funcionais, circuit breaker e gateway antes de qualquer chamada operacional.
+Com a fundação arquitetural da integração SSW concluída (`SSW-ARCH-001`) — contendo `SswCapabilityRegistry`, `SswCircuitBreaker`, `SswRetryPolicy`, `SswIncidentAggregator` e contratos seguros de Discovery/Gateway —, o projeto está pronto para a primeira integração de capability real: a aquisição automatizada do Relatório SSW 455 (cargas em trânsito e entregas da filial).
 
 ---
 
 ## 2. Problema
-Espalhar requisições HTTP diretas ao SSW pelas telas ou hooks geraria acoplamento crítico, vulnerabilidade a quebras quando URLs mudarem e exposição indevida de cookies/credenciais no frontend React.
+Atualmente, o operador precisa acessar manualmente o sistema SSW legado, solicitar o relatório 455, aguardar a fila de processamento, realizar o download do arquivo CSV/TXT e importá-lo manualmente no Router. Esse processo manual consome tempo e atrasa o início da triagem física e montagem da Mesa de Roteirização.
 
 ---
 
 ## 3. Objetivo
-> **Construir a fundação isolada, segura e resiliente da integração SSW sem ainda alterar o comportamento das Views operacionais.**
+> **Integrar a aquisição automatizada do relatório SSW 455 utilizando a nova fundação de capabilities e o proxy backend, convertendo o resultado diretamente no formato normalizado do Router e mantendo a importação manual como fallback permanente.**
 
 ---
 
 ## 4. Escopo
-- **Definição de Tipos e Modelos de Integração (`src/integrations/ssw/types.ts`)**:
-  - Enums de capabilities (`REPORT_455_REQUEST`, `REPORT_QUEUE`, `REPORT_DOWNLOAD`, `CTRC_101`, `EMISSIONS_063`, `FORECAST_029`, `MANIFEST_030`, `MANIFEST_DETAIL_023`, `UNLOADING_264`).
-  - Interface `SswCapabilityEntry` (endpoint, método, confidence score, status, failureCount, lastSuccess).
-  - Interface `SswCapabilitySignature` (critérios semânticos de validação).
-  - Interface `SswIncident` (agregação de incidentes).
-- **Capability Registry (`src/integrations/ssw/registry/`)**:
-  - Implementação do `SswCapabilityRegistry` inicializado com as capabilities conhecidas e suas assinaturas funcionais base.
-- **Resilience Core (`src/integrations/ssw/resilience/`)**:
-  - `SswCircuitBreaker` com estados (`CLOSED`, `OPEN`, `HALF_OPEN`) e backoff progressivo (5m, 15m, 30m, 60m).
-  - `SswRetryPolicy` com backoff exponencial e jitter.
-  - `SswIncidentAggregator` para consolidação de falhas repetidas.
-- **Contratos do Discovery Engine & Gateway (`src/integrations/ssw/discovery/` & `gateways/`)**:
-  - Interfaces para `SswDiscoveryEngine`, `SswFormAnalyzer` e `SswGatewayClient`.
-- **Configuração do Proxy Gateway**:
-  - Definição dos contratos de comunicação segura entre React e o Backend Proxy.
+- **Capabilities Envolvidas**:
+  - `REPORT_455_REQUEST` (solicitação de geração do relatório 455 por filial).
+  - `REPORT_QUEUE` (verificação de status na fila de relatórios do SSW).
+  - `REPORT_DOWNLOAD` (download do CSV/TXT gerado).
+- **Backend Proxy (`server/ssw/`)**:
+  - Implementação do client HTTP com sessão autenticada isolada no backend.
+  - Orquestração do pipeline: Solicitação -> Polling de Fila -> Download -> Parser -> Payload normalizado.
+- **Normalização e Ingestão**:
+  - Reutilização do parser/normalizador existente do Router para persistência direta no IndexedDB/Dexie.
+- **Resiliência e Fallback**:
+  - Envolvimento de todas as chamadas pelo `SswCircuitBreaker` e `SswRetryPolicy`.
+  - Notificação de incidentes via `SswIncidentAggregator` caso o formulário/endpoint do 455 seja alterado.
+  - Manutenção integral do botão e modal de "Importação Manual (CSV/TXT)" como via de contingência inabalável.
+- **UI / Frontend**:
+  - Adição de gatilho "Sincronizar SSW 455" com feedback de progresso e tratamento visual de fallback.
 
 ---
 
 ## 5. Fora do Escopo (Não Fazer Neste Ciclo)
-- **NÃO** disparar consultas ou requisições ativas reais ao SSW.
-- **NÃO** alterar `RoteirizacaoView.tsx`, `App.tsx`, `DashboardView.tsx` ou qualquer outra View.
-- **NÃO** substituir o pipeline de importação manual de arquivos CSV/TXT.
-- **NÃO** construir telas ou componentes visuais de diagnóstico neste ciclo.
-- **NÃO** refatorar os repositórios locais existentes do Dexie.
+- **NÃO** alterar as capabilities de CTRC 101, Manifesto 030, Previsão 029 ou Descarga 264.
+- **NÃO** remover a tela ou a funcionalidade de upload manual de arquivos CSV.
+- **NÃO** expor credenciais ou cookies de sessão do SSW no frontend React.
 
 ---
 
-## 6. Arquivos Candidatos para Criação
-### Shared / Frontend-Safe:
-- `src/integrations/ssw/types.ts` (Enums de capabilities, incidentes e status)
-- `src/integrations/ssw/contracts/types.ts` (Contratos de dados e payloads seguros)
-
-### Backend-Only (`server/ssw/`):
-- `server/ssw/registry/capabilityRegistry.ts` (Registro de capabilities e validação de assinaturas)
-- `server/ssw/resilience/circuitBreaker.ts` (Circuit breaker e backoff progressivo)
-- `server/ssw/resilience/retryPolicy.ts` (Retry exponencial com jitter)
-- `server/ssw/resilience/incidentAggregator.ts` (Agregador de falhas e incidentes)
-- `server/ssw/discovery/discoveryEngine.ts` (Contratos e implementação base do Discovery Engine)
-- `server/ssw/gateways/sswClient.ts` (Cliente HTTP seguro proxy backend)
+## 6. Critérios de Aceite
+- [ ] Pipeline 455 (`REPORT_455_REQUEST` -> `REPORT_QUEUE` -> `REPORT_DOWNLOAD`) opera de forma autônoma via backend proxy.
+- [ ] Falhas transitórias no SSW acionam retry e circuit breaker sem travar a interface do operador.
+- [ ] Dados obtidos do 455 são salvos no banco local (`ctrcs`) com o mesmo esquema e integridade da importação manual.
+- [ ] A importação manual de CSV/TXT continua 100% funcional.
+- [ ] Testes unitários e de integração do pipeline 455 executando com sucesso.
 
 ---
 
-## 7. Contratos Principais
-```typescript
-export interface SswCapabilityEntry {
-  capabilityId: string;
-  currentEndpoint: string;
-  httpMethod: 'GET' | 'POST';
-  knownParameters: string[];
-  signature: SswCapabilitySignature;
-  confidence: number; // 0.00 a 1.00
-  status: 'ACTIVE' | 'DEGRADED' | 'DISCOVERING' | 'BLOCKED';
-  failureCount: number;
-  lastSuccess?: Date;
-  discoveryDate: Date;
-}
-```
-
----
-
-## 8. Riscos e Mitigações
-- **Risco:** Incompatibilidade de tipagem com o restante do projeto.  
-  **Mitigação:** Tipos 100% isolados na pasta `src/integrations/ssw/` sem dependência circular com `src/types.ts`.
-- **Risco:** Impacto no comportamento das Views.  
-  **Mitigação:** Nenhuma View importará código da pasta de integração neste primeiro ciclo de infraestrutura.
-
----
-
-## 9. Critérios de Aceite
-- [ ] Todas as interfaces e types de capabilities, registry, resilience e discovery criados.
-- [ ] `SswCapabilityRegistry` instancia e registra as 9 capabilities conhecidas com seus scores de confiança iniciais.
-- [ ] `SswCircuitBreaker` gerencia estados (`CLOSED`, `OPEN`, `HALF_OPEN`) com progressão de backoff configurada.
-- [ ] `SswIncidentAggregator` agrupa erros idênticos por capability com timestamps e contadores.
-- [ ] Zero impacto ou modificação em Views operacionais existentes.
-- [ ] Suíte de verificação de tipos e lint executando limpa (`npm run lint` ou `tsc --noEmit`).
-
----
-
-## 10. Plano de Testes
-- Testes unitários para:
-  1. Registro e recuperação de capabilities no `SswCapabilityRegistry`.
-  2. Transições de estado e backoff do `SswCircuitBreaker`.
-  3. Agregação correta de incidentes no `SswIncidentAggregator`.
-
----
-
-## 11. Rollback
-Exclusão do diretório `src/integrations/ssw/` sem nenhum impacto colateral no restante da base de código do Router.
-
----
-
-## 12. Documentação Afetada
+## 7. Documentação Afetada
 - `docs/03_CURRENT_STATE.md`
 - `docs/04_NEXT_TASK.md`
+- `docs/07_HANDOFF.md`
 - `docs/08_CHANGELOG.md`
 
 ---
 
-## 13. Commit Sugerido
-`feat(ssw): implement foundation for resilient SSW capability integration`
+## 8. Commit Sugerido
+`feat(ssw): implement automated SSW 455 report acquisition pipeline`
+
