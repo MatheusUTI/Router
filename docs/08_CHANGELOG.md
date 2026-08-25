@@ -88,3 +88,7 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 - **feat**: Cálculo dinâmico avançado de totais e cubagens em tempo real, independentemente da paginação.
 - **feat**: Lançamento funcional do módulo "Pré-Romaneio" para impressão operacional no solo (armazém).
 - **perf**: Utilização primária do Dexie Local para anular demoras inerentes ao carregamento Cloud, com Background Sync Worker acoplado.
+
+## [1.26.1] - 2026-08-25
+### Fixed
+- **VERCEL-RUNTIME-FIX-001**: Removida a configuração `"type": "module"` do `package.json` para evitar que a Vercel Serverless Function tente gerar um output ESM nativo. Em ESM, dependências do Express causavam fatal crash (`Error: Dynamic require of "path" is not supported`) e erros `ERR_MODULE_NOT_FOUND` nos imports relativos sem extensão `.js`. A compilação Vercel agora processa as APIs em CommonJS nativo.
