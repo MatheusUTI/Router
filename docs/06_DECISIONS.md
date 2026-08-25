@@ -106,3 +106,9 @@ Este arquivo mantém o histórico das decisões estruturais do **RotaOperational
 - **Justificativa**: Garante que tanto a importação automática do SSW quanto a importação manual passem exatamente pelos mesmos passos de normalização, classificação de fluxo operacional (`LOCAL_DELIVERY`, `TRANSFER_OUT`, `TRANSFER_IN_DELIVERY`) e persistência.
 - **Impacto**: Elimina duplicação de regras de negócio, assegura integridade idêntica independente do canal de entrada e simplifica os testes automatizados.
 
+---
+## ADR-014: Runtime Dual Local/Vercel (Backend API)
+- **Contexto**: O projeto é executado localmente via AI Studio usando um processo Express persistente (`tsx server.ts`), mas é deployado em produção na Vercel usando funções Serverless (`api/index.ts`). A Vercel não aceita chamadas a `app.listen()` em funções Serverless e requer arquivos de configuração específicos para gerenciar roteamento.
+- **Decisão**: Extrair toda a configuração e rotas do Express para um factory compartilhado (`server/createApp.ts`), que retorna a instância HTTP configurada. 
+- **Justificativa**: Garante que o mesmo código de regra de negócio, rotas e APIs funcione de forma transparente tanto como Servidor Local persistente (`server.ts`) quanto como Função Serverless Vercel (`api/index.ts`). O estado de execução (Session, Cache, Circuit Breaker) é preservado em memória apenas como otimização, sem quebrar as integrações vitais em caso de cold start da Função.
+- **Impacto**: Compatibilidade nativa Vercel Edge/Serverless Functions (eliminando erros 404 para rotas `/api/*`), persistência em memória mapeada como efêmera segura, separação limpa de endpoints backend vs frontend Vite em produção.
