@@ -1,11 +1,7 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
-import dns from "dns";
 import { getSsw455Service, getSsw101Service, getSswSessionManager, getSswConfigManager } from "./ssw/sswServiceInstance";
 import { SswError } from "../src/integrations/ssw/types/errors";
-
-dotenv.config();
 
 // Tracks verified offline Supabase hosts to avoid fetch failures/warnings
 const offlineHosts = new Set<string>();
@@ -25,6 +21,15 @@ function getHostFromUrl(url: string): string {
       }
     }
     return url;
+  }
+}
+
+function markHostOffline(url: string) {
+  const host = getHostFromUrl(url);
+  if (host && !offlineHosts.has(host)) {
+    console.log(`[BACKEND] Host '${host}' marcado como OFFLINE. Redirecionando todas as consultas para o banco local.`);
+    offlineHosts.add(host);
+    isMainSupabaseOffline = true;
   }
 }
 
@@ -67,57 +72,43 @@ const DEFAULT_APP_USERS = [
 // Memory cache for fallback users created during session if DB is offline or not migration setup
 let inMemoryUsers = [...DEFAULT_APP_USERS];
 
-export function createApp() {
-  const app = express();
-  app.use(express.json());
+let supabaseClient: any = null;
+let supabaseInitialized = false;
 
-  // Setup Supabase Client securely on the server side
+function getSystemSupabaseClient() {
+  if (supabaseInitialized) return supabaseClient;
+  supabaseInitialized = true;
+
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
   const supabaseKey = process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-
-  function markHostOffline(url: string) {
-    const host = getHostFromUrl(url);
-    if (host && !offlineHosts.has(host)) {
-      console.log(`[BACKEND] Host '${host}' marcado como OFFLINE. Redirecionando todas as consultas para o banco local.`);
-      offlineHosts.add(host);
-      if (url === supabaseUrl) {
-        isMainSupabaseOffline = true;
-      }
-    }
-  }
-
+  
   const mainHost = getHostFromUrl(supabaseUrl);
-  // Aggressively check placeholders or unreachable environments
   if (mainHost) {
     if (mainHost.includes("pwckzqzzewiuqoqqamdo") || mainHost === "your-supabase-project.supabase.co") {
-      console.log(`[BACKEND] Host '${mainHost}' é um endereço de rascunho/placeholder. Ignorando conexão remota ativa.`);
       isMainSupabaseOffline = true;
       offlineHosts.add(mainHost);
-    } else {
-      dns.lookup(mainHost, (err) => {
-        if (err) {
-          console.log(`[BACKEND] Host '${mainHost}' está offline/inacessível via DNS. Ativando modo local.`);
-          isMainSupabaseOffline = true;
-          offlineHosts.add(mainHost);
-        }
-      });
     }
   } else {
     isMainSupabaseOffline = true;
   }
 
-  let supabaseClient: any = null;
   if (supabaseUrl && supabaseKey && !isMainSupabaseOffline) {
     try {
       supabaseClient = createClient(supabaseUrl, supabaseKey);
-      console.log(`[BACKEND] Supabase configurado e inicializado com sucesso.`);
     } catch (err) {
-      // Avoid raw logs on instantiating
       isMainSupabaseOffline = true;
     }
   }
 
-  // Dynamic client initialization function per request based on client headers
+  return supabaseClient;
+}
+
+export function createApp() {
+  const app = express();
+  app.use(express.json());
+
+  // Supabase is initialized lazily per request now.
+
   function getRequestSupabaseClient(req: any) {
     const rxUrl = req.headers["x-supabase-url"] || req.headers["X-Supabase-Url"];
     const rxKey = req.headers["x-supabase-key"] || req.headers["X-Supabase-Key"];
@@ -130,15 +121,11 @@ export function createApp() {
       try {
         return createClient(rxUrl as string, rxKey as string);
       } catch (err) {
-        // Suppress print
         return null;
       }
     }
     
-    if (isMainSupabaseOffline) {
-      return null;
-    }
-    return supabaseClient;
+    return getSystemSupabaseClient();
   }
 
   // API Route - Health Check / Info
@@ -158,7 +145,6 @@ export function createApp() {
       status: "ok",
       runtime: isVercel ? "vercel" : "local",
       supabase_configured: !!activeSupabase,
-      supabase_url: supabaseUrl ? `${supabaseUrl.substring(0, 15)}...` : null,
       sswConfigured
     });
   });
