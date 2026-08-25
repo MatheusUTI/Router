@@ -1,8 +1,9 @@
-import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, DragEvent, ChangeEvent, FormEvent } from 'react';
 import { Ctrc, AppUser } from '../types';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 import { parseCtrcSeries, checkIsSubcontract } from '../utils/ctrcUtils';
 import { classifyOperationalFlow } from '../services/operationalFlowClassifier';
+import { SswLatestReportInfo } from '../integrations/ssw/types/jobs';
 
 interface ImportacaoViewProps {
   onAddCtrcs: (newCtrcs: Ctrc[]) => void;
@@ -76,57 +77,187 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
 
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSswSyncing, setIsSswSyncing] = useState<boolean>(false);
+  const [isSswGenerating, setIsSswGenerating] = useState<boolean>(false);
   const [sswSyncStatus, setSswSyncStatus] = useState<string | null>(null);
   const [sswError, setSswError] = useState<string | null>(null);
-  const [sswSuccessInfo, setSswSuccessInfo] = useState<{ rowCount: number; timestamp: string } | null>(null);
+  const [sswSuccessInfo, setSswSuccessInfo] = useState<{ rowCount: number; timestamp: string; sequence?: string } | null>(null);
+  const [latestReportInfo, setLatestReportInfo] = useState<SswLatestReportInfo | null>(null);
+  const [isFetchingLatest, setIsFetchingLatest] = useState<boolean>(false);
+  const [failedSequence, setFailedSequence] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSyncSsw = async () => {
+  // Consulta o último relatório 455 disponível para o usuário/unidade autenticados
+  const fetchLatestReportInfo = useCallback(async () => {
+    try {
+      setIsFetchingLatest(true);
+      const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
+      const res = await fetch(`/api/ssw/455/latest?unid=${encodeURIComponent(unid)}`);
+      const data = await res.json();
+      if (res.ok && data.success && data.latest) {
+        setLatestReportInfo(data.latest);
+      }
+    } catch (err) {
+      console.warn('[SSW-UI] Não foi possível verificar o último relatório 455 na fila:', err);
+    } finally {
+      setIsFetchingLatest(false);
+    }
+  }, [adminUser?.unid]);
+
+  useEffect(() => {
+    fetchLatestReportInfo();
+  }, [fetchLatestReportInfo]);
+
+  // AÇÃO 1: Sincronizar Último Relatório 455 Concluído (Sem solicitar nova emissão no SSW)
+  const handleSyncLatest = async () => {
     setIsSswSyncing(true);
     setSswError(null);
     setSswSuccessInfo(null);
-    setSswSyncStatus('Conectando ao SSW e solicitando relatório 455...');
+    setSswSyncStatus('Consultando Fila 156 e verificando o último relatório 455 do seu perfil...');
 
     try {
       const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
       const username = adminUser?.username || 'operador';
 
-      const response = await fetch('/api/ssw/455/acquire', {
+      const response = await fetch('/api/ssw/455/latest/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unid, requestedBy: username })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Não foi possível sincronizar o último relatório 455.');
+      }
+
+      if (data.csvContent) {
+        const seq = data.job?.sequence || 'Ultimo';
+        const dateStr = new Date().toISOString().slice(0, 10);
+        setFileName(`SSW_455_${unid}_Seq${seq}_${dateStr}.csv`);
+        loadCsvContent(data.csvContent);
+        setSswSuccessInfo({
+          rowCount: data.rowCount || 0,
+          timestamp: new Date().toLocaleTimeString('pt-BR'),
+          sequence: data.job?.sequence
+        });
+        setSswSyncStatus(`Último relatório 455 (Seq. ${seq}) sincronizado com sucesso (${data.rowCount || 0} CTRCs)!`);
+        setFailedSequence(null);
+        fetchLatestReportInfo();
+      } else {
+        throw new Error('SSW retornou resposta sem conteúdo CSV.');
+      }
+    } catch (err: any) {
+      console.error('[SSW-UI] Erro ao sincronizar último relatório SSW:', err);
+      setSswError(err.message || 'Erro ao sincronizar o último relatório SSW 455.');
+      setFailedSequence(latestReportInfo?.sequence || null);
+    } finally {
+      setIsSswSyncing(false);
+    }
+  };
+
+  // AÇÃO 2: Gerar Novo Relatório 455 no SSW (Emissão sob demanda explícita)
+  const handleGenerateNew = async () => {
+    setIsSswGenerating(true);
+    setSswError(null);
+    setSswSuccessInfo(null);
+    setSswSyncStatus('Solicitando geração de novo relatório 455 no SSW...');
+
+    try {
+      const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
+      const username = adminUser?.username || 'operador';
+
+      const response = await fetch('/api/ssw/455/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           unid,
           requestedBy: username,
-          pollIntervalMs: 2000,
-          maxWaitTimeMs: 60000
+          pollIntervalMs: 5000,
+          maxWaitTimeMs: 300000
         })
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Falha na aquisição do relatório 455 no SSW.');
+        throw new Error(data.error || 'Falha ao solicitar novo relatório 455 no SSW.');
       }
 
       if (data.csvContent) {
+        const seq = data.job?.sequence || 'Novo';
         const dateStr = new Date().toISOString().slice(0, 10);
-        setFileName(`SSW_455_${unid}_${dateStr}.csv`);
+        setFileName(`SSW_455_${unid}_Seq${seq}_${dateStr}.csv`);
         loadCsvContent(data.csvContent);
         setSswSuccessInfo({
           rowCount: data.rowCount || 0,
-          timestamp: new Date().toLocaleTimeString('pt-BR')
+          timestamp: new Date().toLocaleTimeString('pt-BR'),
+          sequence: data.job?.sequence
         });
-        setSswSyncStatus(`Relatório 455 obtido com sucesso (${data.rowCount || 0} registros)!`);
+        setSswSyncStatus(`Novo relatório 455 (Seq. ${seq}) gerado e importado com sucesso (${data.rowCount || 0} CTRCs)!`);
+        setFailedSequence(null);
+        fetchLatestReportInfo();
       } else {
         throw new Error('SSW retornou resposta sem conteúdo CSV.');
       }
     } catch (err: any) {
-      console.error('[SSW-UI] Erro ao sincronizar com SSW:', err);
-      setSswError(err.message || 'Erro de conexão com o SSW. Você pode importar o arquivo manualmente.');
+      console.error('[SSW-UI] Erro ao gerar novo relatório no SSW:', err);
+      setSswError(err.message || 'Erro durante a geração de novo relatório no SSW.');
+    } finally {
+      setIsSswGenerating(false);
+    }
+  };
+
+  // Tentar novamente a sincronização da mesma sequência sem gerar novo relatório
+  const handleRetry = async () => {
+    setIsSswSyncing(true);
+    setSswError(null);
+    setSswSuccessInfo(null);
+    setSswSyncStatus(`Tentando novamente o download ${failedSequence ? `da sequência ${failedSequence}` : 'do último relatório'}...`);
+
+    try {
+      const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
+      const username = adminUser?.username || 'operador';
+
+      const response = await fetch('/api/ssw/455/retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sequence: failedSequence,
+          unid,
+          requestedBy: username
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Não foi possível concluir o download na nova tentativa.');
+      }
+
+      if (data.csvContent) {
+        const seq = data.job?.sequence || failedSequence || 'Retry';
+        const dateStr = new Date().toISOString().slice(0, 10);
+        setFileName(`SSW_455_${unid}_Seq${seq}_${dateStr}.csv`);
+        loadCsvContent(data.csvContent);
+        setSswSuccessInfo({
+          rowCount: data.rowCount || 0,
+          timestamp: new Date().toLocaleTimeString('pt-BR'),
+          sequence: data.job?.sequence
+        });
+        setSswSyncStatus(`Relatório 455 (Seq. ${seq}) sincronizado com sucesso (${data.rowCount || 0} CTRCs)!`);
+        setFailedSequence(null);
+        fetchLatestReportInfo();
+      } else {
+        throw new Error('SSW retornou resposta sem conteúdo CSV.');
+      }
+    } catch (err: any) {
+      console.error('[SSW-UI] Erro na tentativa de retry:', err);
+      setSswError(err.message || 'Falha ao tentar novamente o download.');
     } finally {
       setIsSswSyncing(false);
     }
   };
+
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -888,6 +1019,48 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               Arraste seu arquivo de faturamento operacional ou use o botão para carregar.
             </p>
 
+            {/* Information Banner: Latest 455 available for authenticated user/unit */}
+            {latestReportInfo && (
+              <div className="mb-4 px-3.5 py-2.5 rounded-xl bg-[var(--router-surface-2)] border border-[var(--router-border)] flex flex-wrap items-center justify-between gap-2 text-xs shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[18px]">history</span>
+                  <div>
+                    {latestReportInfo.found && latestReportInfo.sequence ? (
+                      <>
+                        <span className="font-semibold text-[var(--router-text)] dark:text-white">Último 455 disponível: </span>
+                        <span className="font-mono font-bold text-primary">Seq. {latestReportInfo.sequence}</span>
+                        <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${
+                          latestReportInfo.downloadAvailable
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        }`}>
+                          {latestReportInfo.statusRaw || latestReportInfo.status || 'Concluído'}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-[var(--router-text-muted)]">
+                        Nenhum relatório 455 emitido anteriormente na fila para seu usuário/unidade.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--router-text-muted)]">
+                  {latestReportInfo.dateTime && (
+                    <span>Atualizado em: <strong className="text-[var(--router-text)] dark:text-white">{latestReportInfo.dateTime}</strong></span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={fetchLatestReportInfo}
+                    disabled={isFetchingLatest}
+                    title="Atualizar status da fila SSW"
+                    className="hover:text-primary transition-colors p-1 rounded hover:bg-[var(--router-surface)]"
+                  >
+                    <span className={`material-symbols-outlined text-[16px] ${isFetchingLatest ? 'animate-spin' : ''}`}>refresh</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Drag & Drop Frame */}
             <div
               onDragEnter={handleDrag}
@@ -918,12 +1091,14 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               <p className="text-[10px] text-[var(--router-text-muted)] text-[var(--router-text-muted)] mt-1 font-mono">Formato CSV ou TXT (Separadores comuns carregados automaticamente)</p>
 
               <div className="flex flex-wrap gap-2.5 mt-4 justify-center">
+                {/* AÇÃO 1 (Principal): Sincronizar Último 455 */}
                 <button
                   type="button"
-                  onClick={handleSyncSsw}
-                  disabled={isSswSyncing}
+                  onClick={handleSyncLatest}
+                  disabled={isSswSyncing || isSswGenerating}
+                  title="Reutiliza o último relatório 455 já concluído para seu usuário e unidade"
                   className={`px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center gap-1.5 ${
-                    isSswSyncing ? 'opacity-70 cursor-not-allowed' : ''
+                    isSswSyncing || isSswGenerating ? 'opacity-70 cursor-not-allowed' : ''
                   }`}
                 >
                   <span className="material-symbols-outlined text-[16px] animate-spin" style={{ display: isSswSyncing ? 'inline-block' : 'none' }}>
@@ -932,15 +1107,38 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
                   <span className="material-symbols-outlined text-[16px]" style={{ display: !isSswSyncing ? 'inline-block' : 'none' }}>
                     cloud_sync
                   </span>
-                  {isSswSyncing ? 'Sincronizando SSW...' : 'Sincronizar SSW (455)'}
+                  {isSswSyncing ? 'Sincronizando Último...' : 'Sincronizar Último 455'}
                 </button>
+
+                {/* AÇÃO 2 (Secundária): Gerar Novo 455 */}
+                <button
+                  type="button"
+                  onClick={handleGenerateNew}
+                  disabled={isSswSyncing || isSswGenerating}
+                  title="Solicita a geração de um novo relatório 455 no SSW e aguarda na fila"
+                  className={`px-4 py-2 bg-primary hover:bg-[#3d7edf] text-white text-xs font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 ${
+                    isSswSyncing || isSswGenerating ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px] animate-spin" style={{ display: isSswGenerating ? 'inline-block' : 'none' }}>
+                    progress_activity
+                  </span>
+                  <span className="material-symbols-outlined text-[16px]" style={{ display: !isSswGenerating ? 'inline-block' : 'none' }}>
+                    add_circle
+                  </span>
+                  {isSswGenerating ? 'Gerando Novo 455...' : 'Gerar Novo 455'}
+                </button>
+
+                {/* Contingência: Procurar Arquivo Manual */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-primary hover:bg-[#3d7edf] text-white text-xs font-bold rounded-lg transition-all shadow-sm active:scale-[0.98]"
+                  className="px-4 py-2 bg-[var(--router-surface-2)] hover:bg-[var(--router-surface-2)] text-[var(--router-text)] dark:text-slate-200 border border-[var(--router-border)] text-xs font-semibold rounded-lg transition-transform active:scale-[0.98]"
                 >
                   Procurar Arquivo
                 </button>
+
+                {/* Contingência: Demo */}
                 <button
                   type="button"
                   onClick={handleLoadDemo}
@@ -952,19 +1150,22 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               </div>
             </div>
 
-            {/* SSW Status / Error Banner */}
-            {isSswSyncing && sswSyncStatus && (
-              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-emerald-300 text-xs">
+            {/* SSW Processing Feedback */}
+            {(isSswSyncing || isSswGenerating) && sswSyncStatus && (
+              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-emerald-300 text-xs animate-fade-in">
                 <span className="material-symbols-outlined text-emerald-400 text-[18px] animate-spin">progress_activity</span>
-                <span>{sswSyncStatus}</span>
+                <span className="font-medium">{sswSyncStatus}</span>
               </div>
             )}
 
+            {/* SSW Success Info */}
             {sswSuccessInfo && (
-              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-emerald-300 text-xs">
+              <div className="mt-3 bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-emerald-300 text-xs animate-fade-in">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-400 text-[18px]">verified</span>
-                  <span>Relatório SSW 455 obtido com sucesso às {sswSuccessInfo.timestamp}</span>
+                  <span>
+                    Relatório SSW 455 {sswSuccessInfo.sequence ? `(Seq. ${sswSuccessInfo.sequence})` : ''} sincronizado com sucesso às {sswSuccessInfo.timestamp}
+                  </span>
                 </div>
                 <span className="font-mono bg-emerald-900/50 px-2 py-0.5 rounded text-[11px] font-bold">
                   {sswSuccessInfo.rowCount} CTRCs
@@ -972,20 +1173,45 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
               </div>
             )}
 
+            {/* SSW Error Banner with Retry Button */}
             {sswError && (
-              <div className="mt-3 bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl flex items-start gap-2.5 text-amber-200 text-xs">
-                <span className="material-symbols-outlined text-amber-400 text-[18px] shrink-0 mt-0.5">warning</span>
+              <div className="mt-3 bg-amber-950/40 border border-amber-500/40 p-3.5 rounded-xl flex items-start gap-3 text-amber-200 text-xs animate-shake">
+                <span className="material-symbols-outlined text-amber-400 text-[20px] shrink-0 mt-0.5">warning</span>
                 <div className="flex-1">
-                  <p className="font-semibold text-amber-300">Integração SSW Indisponível ou Não Configurada</p>
-                  <p className="text-[11px] text-amber-200/80 mt-0.5">{sswError}</p>
-                  <p className="text-[10px] text-amber-300/60 mt-1">
-                    * O upload manual de arquivos CSV/TXT e a carga de exemplo continuam operando normalmente como contingência.
-                  </p>
+                  <p className="font-bold text-amber-300">Não foi possível sincronizar o relatório 455</p>
+                  <p className="text-[11px] text-amber-200/90 mt-0.5 leading-relaxed">{sswError}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      disabled={isSswSyncing || isSswGenerating}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg shadow-sm transition-all flex items-center gap-1 active:scale-[0.98]"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">replay</span>
+                      Tentar novamente
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGenerateNew}
+                      disabled={isSswSyncing || isSswGenerating}
+                      className="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary-300 text-white font-semibold text-[11px] rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                      Gerar novo relatório
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-amber-950/50 hover:bg-amber-900/50 border border-amber-500/30 text-amber-200 font-semibold text-[11px] rounded-lg transition-colors"
+                    >
+                      Importar manualmente
+                    </button>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSswError(null)}
-                  className="text-amber-400 hover:text-amber-200 text-sm p-1"
+                  className="text-amber-400 hover:text-amber-200 text-sm p-1 rounded hover:bg-amber-900/30"
                 >
                   ✕
                 </button>

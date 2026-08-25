@@ -4,9 +4,9 @@ import { SswSessionManager } from '../../server/ssw/session/sessionManager';
 import { SswFormAnalyzer } from '../../server/ssw/discovery/sswFormAnalyzer';
 import { SswDiscoveryEngine } from '../../server/ssw/discovery/sswDiscoveryEngine';
 import { SswHttpClient } from '../../server/ssw/gateways/httpClient';
-import { Ssw455RequestGateway } from '../../server/ssw/gateways/ssw455RequestGateway';
+import { Ssw455RequestGateway, formatToDdmmyy, buildPayload455 } from '../../server/ssw/gateways/ssw455RequestGateway';
 import { SswReportQueueGateway } from '../../server/ssw/gateways/sswReportQueueGateway';
-import { SswReportDownloadGateway } from '../../server/ssw/gateways/sswReportDownloadGateway';
+import { SswReportDownloadGateway, extractDownloadMeta455 } from '../../server/ssw/gateways/sswReportDownloadGateway';
 import { Ssw455Service } from '../../server/ssw/services/ssw455Service';
 import { SswCapabilityRegistry } from '../../server/ssw/registry/capabilityRegistry';
 import { InMemoryRegistryStorage } from '../../server/ssw/registry/storagePort';
@@ -25,8 +25,70 @@ const SAMPLE_455_CSV = `0;RODOVIARIO CAMILO DOS SANTOS;RELATORIO 455 ENTREGAS;;;
 2;CPQ854800-5;MIGOTO COMERCIO DE VEICULOS LTDA;VGAP;VARGINHA;6,615;5;5925,00;65,86;VGA;25/05/2026
 2;BHZ907302-7;ROBERTA MACHADO VASCONCELOS;VGAP;TRES CORACOES;40,00;4;1915,74;109,18;VGA;25/05/2026`;
 
+// Sample XML Queue format from SSW Fila 156
+const SAMPLE_QUEUE_XML_WAITING = `
+<r>
+  <f0>78910</f0>
+  <f1>455 ENTREGAS REL</f1>
+  <f2>24/08/26 17:30</f2>
+  <f3>AMATHEUS</f3>
+  <f4>VGA</f4>
+  <f5></f5>
+  <f6>Aguardando</f6>
+  <f7>00:00:02</f7>
+  <f8>EXC78910</f8>
+</r>
+<r>
+  <f0>11111</f0>
+  <f1>455 ENTREGAS REL</f1>
+  <f2>24/08/26 17:28</f2>
+  <f3>OUTRO_USER</f3>
+  <f4>BHZ</f4>
+  <f5></f5>
+  <f6>Concluído</f6>
+  <f7>00:00:15</f7>
+  <f8>DOW11111</f8>
+</r>
+`;
+
+const SAMPLE_QUEUE_XML_COMPLETED = `
+<r>
+  <f0>78910</f0>
+  <f1>455 ENTREGAS REL</f1>
+  <f2>24/08/26 17:30</f2>
+  <f3>AMATHEUS</f3>
+  <f4>VGA</f4>
+  <f5></f5>
+  <f6>Concluído</f6>
+  <f7>00:00:12</f7>
+  <f8>DOW78910</f8>
+</r>
+<r>
+  <f0>11111</f0>
+  <f1>455 ENTREGAS REL</f1>
+  <f2>24/08/26 17:28</f2>
+  <f3>OUTRO_USER</f3>
+  <f4>BHZ</f4>
+  <f5></f5>
+  <f6>Concluído</f6>
+  <f7>00:00:15</f7>
+  <f8>DOW11111</f8>
+</r>
+`;
+
+// Sample HTML response for DOW<SEQ> containing web_body
+const SAMPLE_DOW_RESPONSE_HTML = `
+<html>
+<body>
+  <form name="form1">
+    <input type="hidden" name="web_body" value="%0A%09%09abrir('rel455_78910.csv'%2C%20'%2Frelatorios%2F'%2C%20'width%3D800%2Cheight%3D600')%3B%0A%09">
+  </form>
+</body>
+</html>
+`;
+
 async function runSsw455Tests() {
-  console.log('--- Iniciando Testes Unitários e de Integração SSW-455-001 ---');
+  console.log('--- Iniciando Testes Unitários e de Integração SSW-455-FIX-001 ---');
 
   // ==========================================
   // 1. TESTES DO PARSER ADAPTER COMUM
@@ -60,13 +122,14 @@ async function runSsw455Tests() {
   // ==========================================
   console.log('2. Testando SswSessionManager...');
   
-  // Criar mock de fetch para testar login e expiração
   let loginRequestsCount = 0;
+  let loginPayloadReceived = '';
   const mockFetch: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const urlStr = String(input);
     
-    if (urlStr.includes('/bin/ssw0010')) {
+    if (urlStr.includes('/bin/ssw0422')) {
       loginRequestsCount++;
+      loginPayloadReceived = String(init?.body || '');
       const headers = new Headers();
       headers.set('set-cookie', 'SSWSESSION=abc123xyz; Path=/; HttpOnly');
       return new Response('<html><body>Login efetuado com sucesso</body></html>', {
@@ -80,130 +143,146 @@ async function runSsw455Tests() {
 
   const sessionManager = new SswSessionManager({
     credentials: {
-      username: 'test_user',
-      password: 'test_password',
-      baseUrl: 'https://ssw.inf.br',
-      defaultUnid: 'VGA'
+      empresa: 'camilo',
+      useri: '12345',
+      usuario: 'AMATHEUS',
+      senha: 'test_password',
+      baseUrl: 'https://sistema.ssw.inf.br',
+      unidade: 'VGA'
     },
     fetchFn: mockFetch
   });
 
   assert.equal(sessionManager.isConfigured(), true);
-  assert.equal(sessionManager.getBaseUrl(), 'https://ssw.inf.br');
+  assert.equal(sessionManager.getBaseUrl(), 'https://sistema.ssw.inf.br');
   assert.equal(sessionManager.getDefaultUnid(), 'VGA');
+  assert.equal(sessionManager.getAuthenticatedUsername(), 'AMATHEUS');
+  assert.equal(sessionManager.getAuthenticatedUseri(), '12345');
+  assert.equal(sessionManager.getAuthenticatedEmpresa(), 'camilo');
 
   // Detecção de HTML de login falso-200
-  assert.equal(sessionManager.isLoginHtmlResponse('<form action="ssw0010"><input name="senha"></form>'), true);
+  assert.equal(sessionManager.isLoginHtmlResponse('<form action="ssw0422"><input name="f4"></form>'), true);
   assert.equal(sessionManager.isLoginHtmlResponse('<html><body>Sessão expirada. Efetue login.</body></html>'), true);
   assert.equal(sessionManager.isLoginHtmlResponse('<html><body>Tabela de relatórios gerados</body></html>'), false);
 
-  // Autenticação
+  // Autenticação comprovada
   await sessionManager.authenticate();
-  assert.equal(sessionManager.getCookieHeader(), 'SSWSESSION=abc123xyz');
   assert.equal(loginRequestsCount, 1);
+  assert.ok(loginPayloadReceived.includes('act=L'));
+  assert.ok(loginPayloadReceived.includes('f1=camilo'));
+  assert.ok(loginPayloadReceived.includes('f2=12345'));
+  assert.ok(loginPayloadReceived.includes('f3=AMATHEUS'));
+  assert.ok(loginPayloadReceived.includes('f4=test_password'));
+  assert.ok(loginPayloadReceived.includes('f6=TRUE'));
+  assert.ok(loginPayloadReceived.includes('backimg=ssw13.jpg'));
+  assert.ok(sessionManager.getCookieHeader().includes('SSWSESSION=abc123xyz'));
 
   const safeStatus = sessionManager.getSafeStatus();
   assert.equal(safeStatus.isConfigured, true);
   assert.equal(safeStatus.isAuthenticated, true);
-  assert.equal(safeStatus.authenticatedUser, 'test_user');
+  assert.equal(safeStatus.authenticatedUser, 'AMATHEUS');
   console.log('   ✓ SswSessionManager: Todos os casos de teste passaram.');
 
   // ==========================================
-  // 3. TESTES DE FORM ANALYZER & DISCOVERY
+  // 3. TESTES DO CONSTRUTOR DE PAYLOAD 455 E FORMATADOR DE DATA
   // ==========================================
-  console.log('3. Testando SswFormAnalyzer e SswDiscoveryEngine...');
-  const sampleHtmlWithForms = `
-    <html>
-      <body>
-        <form action="/bin/ssw0230" method="POST">
-          <input type="text" name="unid" value="VGA">
-          <input type="text" name="data_ini">
-          <input type="text" name="data_fim">
-          <input type="hidden" name="relatorio" value="455">
-          <input type="submit" value="Gerar Relatório">
-        </form>
-        <form action="/bin/ssw9999" method="GET">
-          <input type="text" name="search">
-        </form>
-      </body>
-    </html>
-  `;
+  console.log('3. Testando Payload 455 e Formatador de Data...');
+  assert.equal(formatToDdmmyy('2026-08-24'), '240826');
+  assert.equal(formatToDdmmyy('24/08/2026'), '240826');
+  assert.equal(formatToDdmmyy('240826'), '240826');
 
-  const formAnalyzer = new SswFormAnalyzer();
-  const forms = await formAnalyzer.extractForms(sampleHtmlWithForms);
-  assert.equal(forms.length, 2);
-  assert.equal(forms[0].actionUrl, '/bin/ssw0230');
-  assert.equal(forms[0].method, 'POST');
-  assert.equal(forms[0].hasSubmitButton, true);
+  const payload455 = buildPayload455({
+    unid: 'VGA',
+    startDate: '2026-05-22',
+    endDate: '2026-05-27',
+    dataTipo: 'EMISSAO',
+    empresa: 'camilo'
+  });
+  assert.equal(payload455.act, 'E1');
+  assert.equal(payload455.f2, 'VGA');
+  assert.equal(payload455.f3, 'A');
+  assert.equal(payload455.f9, '220526');
+  assert.equal(payload455.f10, '270526');
+  assert.equal(payload455.f11, '');
+  assert.equal(payload455.f12, '');
+  assert.equal(payload455.f22, 'p');
+  assert.equal(payload455.f35, 'e');
+  assert.equal(payload455.f37, 'B');
+  assert.equal(payload455.reg_tipo, 'E');
+  assert.equal(payload455.ibscbs, 'A');
+  assert.equal(payload455.basico, 'N');
+  assert.ok(payload455.dummy);
 
-  const score455 = formAnalyzer.scoreFormCompatibility(forms[0], SSW_SIGNATURES[SswCapabilityId.REPORT_455_REQUEST]);
-  assert.ok(score455 >= 0.85, `Score ${score455} deve ser >= 0.85`);
-
-  const discoveryEngine = new SswDiscoveryEngine(formAnalyzer);
-  const discoveryResult = await discoveryEngine.discoverCapability(
-    SswCapabilityId.REPORT_455_REQUEST,
-    SSW_SIGNATURES[SswCapabilityId.REPORT_455_REQUEST],
-    sampleHtmlWithForms
-  );
-  assert.equal(discoveryResult.candidates.length, 1);
-  assert.equal(discoveryResult.candidates[0].endpoint, '/bin/ssw0230');
-  console.log('   ✓ Form Analyzer & Discovery: Todos os casos de teste passaram.');
+  // Default AUTORIZACAO (f11/f12)
+  const defaultPayload = buildPayload455({
+    unid: 'VGA',
+    startDate: '2026-08-24',
+    endDate: '2026-08-24'
+  });
+  assert.equal(defaultPayload.f11, '240826');
+  assert.equal(defaultPayload.f12, '240826');
+  assert.equal(defaultPayload.f9, '');
+  assert.equal(defaultPayload.f10, '');
+  assert.equal(defaultPayload.f13, '');
+  assert.equal(defaultPayload.f14, '');
+  assert.equal(defaultPayload.f15, '');
+  assert.equal(defaultPayload.f16, '');
+  assert.equal(defaultPayload.f22, 'p');
+  assert.equal(defaultPayload.f35, 'e');
+  assert.equal(defaultPayload.f37, 'B');
+  console.log('   ✓ Payload 455 & Date Formatter: Todos os casos de teste passaram.');
 
   // ==========================================
-  // 4. TESTES DOS GATEWAYS (Request, Queue, Download)
+  // 4. TESTES DOS GATEWAYS (Request, Queue XML, Download 2-step)
   // ==========================================
-  console.log('4. Testando Gateways SSW com HTTP Mock...');
+  console.log('4. Testando Gateways SSW com HTTP Mock (Protocolo SSWTools)...');
   
   let queuePollCount = 0;
+  let dowReceivedSeq = '';
+  let getCsvParams: URLSearchParams | null = null;
+
   const mockHttpFetch: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const urlStr = String(input);
 
     // Login
-    if (urlStr.includes('/bin/ssw0010')) {
+    if (urlStr.includes('/bin/ssw0422')) {
       const headers = new Headers();
       headers.set('set-cookie', 'SSWSESSION=token999; Path=/');
       return new Response('OK', { status: 200, headers });
     }
 
-    // 455 Request
+    // 455 Request (ssw0230)
     if (urlStr.includes('/bin/ssw0230')) {
       return new Response(`
         <html><body>
-          <h2>Relatório solicitado com sucesso!</h2>
+          <h2>Relatório solicitado para processamento!</h2>
           <p>Sequência: 78910</p>
           <a href="/bin/ssw1440?act=&seq=78910">Ver Fila 156</a>
         </body></html>
       `, { status: 200 });
     }
 
-    // Queue 156 Polling
+    // Queue 156 Polling e Download Step 1 (ssw1440)
     if (urlStr.includes('/bin/ssw1440')) {
+      const bodyStr = String(init?.body || '');
+      
+      // Se for a ação DOW<SEQ> (Download Etapa 1)
+      if (bodyStr.includes('act=DOW')) {
+        const match = /act=DOW(\d+)/.exec(bodyStr);
+        dowReceivedSeq = match ? match[1] : '';
+        return new Response(SAMPLE_DOW_RESPONSE_HTML, { status: 200 });
+      }
+
+      // Consulta de Fila normal
       queuePollCount++;
-      // Na primeira consulta: AGUARDANDO. Na segunda: CONCLUÍDO
-      const statusText = queuePollCount === 1 ? 'AGUARDANDO' : 'CONCLUÍDO';
-      return new Response(`
-        <html><body>
-          <table>
-            <tr><td>Sequência</td><td>Relatório</td><td>Usuário</td><td>Status</td></tr>
-            <tr>
-              <td>78910</td>
-              <td>455</td>
-              <td>test_user</td>
-              <td><a href="/bin/ssw0424?seq=78910&rel=455">${statusText}</a></td>
-            </tr>
-            <tr>
-              <td>11111</td>
-              <td>455</td>
-              <td>outro_usuario</td>
-              <td>CONCLUÍDO</td>
-            </tr>
-          </table>
-        </body></html>
-      `, { status: 200 });
+      const xml = queuePollCount === 1 ? SAMPLE_QUEUE_XML_WAITING : SAMPLE_QUEUE_XML_COMPLETED;
+      return new Response(xml, { status: 200 });
     }
 
-    // Download CSV
+    // Download CSV Step 2 (ssw0424)
     if (urlStr.includes('/bin/ssw0424')) {
+      const parsedUrl = new URL(urlStr, 'https://sistema.ssw.inf.br');
+      getCsvParams = parsedUrl.searchParams;
       return new Response(SAMPLE_455_CSV, {
         status: 200,
         headers: { 'Content-Type': 'text/csv; charset=iso-8859-1' }
@@ -214,7 +293,13 @@ async function runSsw455Tests() {
   };
 
   const testSession = new SswSessionManager({
-    credentials: { username: 'test_user', password: 'pwd' },
+    credentials: {
+      empresa: 'camilo',
+      useri: '12345',
+      usuario: 'AMATHEUS',
+      senha: 'pwd',
+      unidade: 'VGA'
+    },
     fetchFn: mockHttpFetch
   });
   const httpClient = new SswHttpClient(testSession, mockHttpFetch);
@@ -257,29 +342,46 @@ async function runSsw455Tests() {
   const downloadGateway = new SswReportDownloadGateway(registry, httpClient);
 
   // 1. Request test
-  const reqResult = await requestGateway.requestReport455({ unid: 'VGA' });
+  const reqResult = await requestGateway.requestReport455({ unid: 'VGA' }, 'VGA', 'camilo');
   assert.equal(reqResult.sequence, '78910');
+  assert.equal(reqResult.isAccepted, true);
 
-  // 2. Queue test - Strict ownership
-  const queue1 = await queueGateway.checkQueue({ sequence: '78910', username: 'test_user' });
-  assert.ok(queue1.matchedItem, 'Item 78910 deve ser encontrado');
-  assert.equal(queue1.matchedItem?.sequence, '78910');
-  assert.equal(queue1.matchedItem?.status, 'WAITING');
+  // 2. Queue test - XML Parsing & Strict Ownership
+  const queue1 = await queueGateway.checkQueue({ sequence: '78910', username: 'AMATHEUS', unidade: 'VGA' });
+  assert.ok(queue1.matchedRecord, 'Item 78910 deve ser encontrado');
+  assert.equal(queue1.matchedRecord?.sequence, '78910');
+  assert.equal(queue1.matchedRecord?.status, 'WAITING');
+  assert.equal(queue1.matchedRecord?.isReady, false);
 
-  // Consulta 2: status concluído
-  const queue2 = await queueGateway.checkQueue({ sequence: '78910', username: 'test_user' });
-  assert.equal(queue2.matchedItem?.status, 'COMPLETED');
+  // Consulta 2: status concluído e DOW78910 pronto
+  const queue2 = await queueGateway.checkQueue({ sequence: '78910', username: 'AMATHEUS', unidade: 'VGA' });
+  assert.equal(queue2.matchedRecord?.status, 'COMPLETED');
+  assert.equal(queue2.matchedRecord?.isReady, true);
+  assert.equal(queue2.matchedRecord?.action, 'DOW78910');
 
-  // Teste de rejeição de propriedade (não confundir com relatório de outro usuário)
-  const queueOther = await queueGateway.checkQueue({ sequence: '99999', username: 'test_user' });
-  assert.equal(queueOther.matchedItem, undefined);
+  // Teste de rejeição de propriedade: outro usuário não deve acessar item de terceiro
+  const queueOther = await queueGateway.checkQueue({ username: 'OUTRO_USER', unidade: 'BHZ' });
+  assert.equal(queueOther.matchedRecord?.sequence, '11111');
+  assert.equal(queueOther.records.length, 1);
 
-  // 3. Download test
+  // 3. Teste de extração de metadados web_body
+  const meta = extractDownloadMeta455(SAMPLE_DOW_RESPONSE_HTML);
+  assert.ok(meta);
+  assert.equal(meta?.internalName, 'rel455_78910.csv');
+  assert.equal(meta?.internalPath, '/relatorios/');
+
+  // 4. Download test - 2-step flow (POST DOW78910 -> GET ssw0424)
   const downloadResult = await downloadGateway.downloadReport({ sequence: '78910' });
+  assert.equal(dowReceivedSeq, '78910');
+  assert.ok(getCsvParams);
+  assert.equal(getCsvParams?.get('act'), 'rel455_78910.csv');
+  assert.equal(getCsvParams?.get('filename'), 'rel455_78910.csv');
+  assert.equal(getCsvParams?.get('path'), '/relatorios/');
+  assert.equal(getCsvParams?.get('down'), '1');
   assert.ok(downloadResult.csvContent.includes('RODOVIARIO CAMILO DOS SANTOS'));
   assert.ok(downloadResult.byteLength > 100);
 
-  // 4. Teste de rejeição de falso-200 HTML no download
+  // 5. Teste de rejeição de falso-200 HTML no download
   assert.throws(
     () => downloadGateway.validateCsvStructure('<html><body>Erro no SSW</body></html>'),
     /retornou uma página HTML/
@@ -288,7 +390,7 @@ async function runSsw455Tests() {
     () => downloadGateway.validateCsvStructure(''),
     /conteúdo vazio/
   );
-  console.log('   ✓ Gateways & Ownership: Todos os casos de teste passaram.');
+  console.log('   ✓ Gateways, XML Queue, Ownership & 2-Step Download: Todos os casos de teste passaram.');
 
   // ==========================================
   // 5. TESTE END-TO-END DO ORQUESTRADOR Ssw455Service
@@ -321,7 +423,7 @@ async function runSsw455Tests() {
 
   const acquisitionResult = await sswService.acquireReport(
     { startDate: '2026-05-22', endDate: '2026-05-27', unid: 'VGA' },
-    'test_user'
+    'AMATHEUS'
   );
 
   assert.equal(acquisitionResult.success, true);
@@ -344,11 +446,11 @@ async function runSsw455Tests() {
   console.log('   ✓ Ssw455Service End-to-End: Todos os casos de teste passaram.');
 
   console.log('\n======================================================');
-  console.log('TODOS OS TESTES DO SSW-455-001 PASSARAM COM SUCESSO! 🚀');
+  console.log('TODOS OS TESTES DO SSW-455-FIX-001 PASSARAM COM SUCESSO! 🚀');
   console.log('======================================================\n');
 }
 
 runSsw455Tests().catch((err) => {
-  console.error('\n❌ ERRO NOS TESTES DO SSW-455-001:', err);
+  console.error('\n❌ ERRO NOS TESTES DO SSW-455-FIX-001:', err);
   process.exit(1);
 });

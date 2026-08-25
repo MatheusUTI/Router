@@ -9,7 +9,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "test": "tsx test/ssw/resilience.test.ts && tsx test/ssw/ssw455.test.ts",
+    "test": "tsx test/ssw/resilience.test.ts && tsx test/ssw/ssw455.test.ts && tsx test/ssw/ssw455_ux.test.ts && tsx test/ssw/ssw455_payload.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

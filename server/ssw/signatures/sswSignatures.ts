@@ -8,8 +8,8 @@ export const SSW_SIGNATURES: Record<SswCapabilityId, SswCapabilitySignature> = {
     capabilityId: SswCapabilityId.REPORT_455_REQUEST,
     expectedMethod: 'POST',
     expectedContentType: 'application/x-www-form-urlencoded',
-    requiredPayloadFields: ['unid', 'relatorio'],
-    expectedResponsePattern: '(?i)(?:solicitado|processando|fila|sequencia|sucesso|relatorio|ok)',
+    requiredPayloadFields: ['act', 'f2'],
+    expectedResponsePattern: '(?i)(?:solicita|processando|fila|sequencia|sucesso|relatorio|ok)',
     description: 'Solicitação de geração do Relatório SSW 455 de Entregas e Trânsito'
   },
   [SswCapabilityId.REPORT_QUEUE]: {

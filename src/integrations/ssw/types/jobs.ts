@@ -25,7 +25,7 @@ export interface Ssw455FilterParams {
   startDate?: string;
   endDate?: string;
   unid?: string;
-  dataTipo?: 'EMISSAO' | 'PREVISAO' | 'ENTREGA';
+  dataTipo?: 'EMISSAO' | 'AUTORIZACAO' | 'PREVISAO' | 'ENTREGA' | string;
   tipoRelatorio?: string;
 }
 
@@ -45,6 +45,23 @@ export interface SswReportJob {
   downloadAvailable: boolean;
   error?: string;
   metadata?: Record<string, unknown>;
+}
+
+/**
+ * Informações estruturadas sobre o último relatório 455 encontrado na Fila 156 do SSW.
+ */
+export interface SswLatestReportInfo {
+  found: boolean;
+  sequence?: string;
+  reportType?: string;
+  dateTime?: string;
+  username?: string;
+  unidade?: string;
+  status?: SswReportJobStatus;
+  statusRaw?: string;
+  downloadAvailable: boolean;
+  action?: string;
+  message?: string;
 }
 
 /**

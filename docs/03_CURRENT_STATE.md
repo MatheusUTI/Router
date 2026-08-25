@@ -20,7 +20,7 @@ O código atual foi verificado contra a especificação AISDD. A infraestrutura 
 | **Gestão de Frota e Configurações** | `[EXISTENTE NO ROUTER]` | Cadastros de veículos e parâmetros funcionando no IndexedDB e sync Supabase. |
 | **Dashboards e KPIs** | `[EXISTENTE NO ROUTER]` | Telas desenhadas; cálculos em processo de enriquecimento com a base local. |
 | **Fundação SSW (Registry, Signatures, Resilience)** | `[EXISTENTE NO ROUTER]` | Implementada no ciclo `SSW-ARCH-001` (`src/integrations/ssw/` e `server/ssw/`), com cobertura unitária completa. |
-| **SSW 455 (Download Automático de Entregas)** | `[EXISTENTE NO ROUTER]` | Implementado no ciclo `SSW-455-001`: pipeline completo (`0230 -> 1440 -> 0424`), adapter comum de ingestão, backend proxy e gatilho com fallback na UI. |
+| **SSW 455 (Download Automático de Entregas & UX Sob Demanda)** | `[EXISTENTE NO ROUTER]` | Ciclo `SSW-455-UX-001` concluído: split UX ("Sincronizar Último 455" vs "Gerar Novo 455"), matching estrito de ownership (usuário/unidade), retry direcionado sem re-emissão acidental e suíte de testes 100% verde. |
 | **SSW 101 (Consulta CTRC/NF)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-101-001`). |
 | **SSW 029 (Previsão de Cargas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
 | **SSW 030 + 023 (Manifestos e CTRCs)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |

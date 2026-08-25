@@ -5,7 +5,8 @@ O projeto **RotaOperational (Router)** encontra-se com sua base operacional da M
 
 Os ciclos fundamentais de integração SSW foram concluídos com sucesso:
 1. **`SSW-ARCH-001`**: Fundação arquitetural, contratos, resiliência (Circuit Breaker, Retry Policy, Incident Aggregator) e Capability Registry.
-2. **`SSW-455-001`**: Pipeline completo de aquisição do Relatório SSW 455 (`0230 -> 1440 -> 0424`), adapter de parsing unificado (`importCsvAdapter.ts`), sessão autenticada isolada no backend proxy e gatilho de sincronização com fallback inabalável na UI.
+2. **`SSW-455-001` & `SSW-455-FIX-001`**: Pipeline completo de aquisição do Relatório SSW 455 (`0230 -> 1440 -> 0424`), adapter de parsing unificado (`importCsvAdapter.ts`), sessão autenticada isolada no backend proxy e matching refinado de ownership.
+3. **`SSW-455-UX-001`**: Split UX operacional ("Sincronizar Último 455" vs "Gerar Novo 455"), recuperação e retry de sequência sem emissão redundante no SSW.
 
 ---
 

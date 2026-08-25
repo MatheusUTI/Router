@@ -13,6 +13,7 @@ import { SswReportDownloadGateway } from './gateways/sswReportDownloadGateway';
 import { InMemoryJobStore } from './services/jobStorePort';
 import { Ssw455Service } from './services/ssw455Service';
 import { SSW_SIGNATURES, DEFAULT_KNOWN_ENDPOINTS } from './signatures/sswSignatures';
+import { SswConfigManager, getSswConfigManager } from './config/configManager';
 
 let globalSswService: Ssw455Service | null = null;
 let globalRegistry: SswCapabilityRegistry | null = null;
@@ -78,9 +79,14 @@ export async function getSsw455Service(): Promise<Ssw455Service> {
   const incidentStore = new InMemoryIncidentStore();
   const incidentAggregator = new SswIncidentAggregator(incidentStore);
   const sessionManager = getSswSessionManager();
+  const configManager = getSswConfigManager(sessionManager);
   const httpClient = new SswHttpClient(sessionManager);
 
-  const requestGateway = new Ssw455RequestGateway(registry, httpClient);
+  const requestGateway = new Ssw455RequestGateway(
+    registry,
+    httpClient,
+    () => configManager.get455Config()
+  );
   const queueGateway = new SswReportQueueGateway(registry, httpClient);
   const downloadGateway = new SswReportDownloadGateway(registry, httpClient);
   const jobStore = new InMemoryJobStore();
@@ -99,3 +105,6 @@ export async function getSsw455Service(): Promise<Ssw455Service> {
 
   return globalSswService;
 }
+
+export { getSswConfigManager, SswConfigManager };
+

@@ -15,5 +15,6 @@ export * from './gateways/sswReportQueueGateway';
 export * from './gateways/sswReportDownloadGateway';
 export * from './session/sessionTypes';
 export * from './session/sessionManager';
+export * from './config/configManager';
 export * from './services/jobStorePort';
 export * from './services/ssw455Service';

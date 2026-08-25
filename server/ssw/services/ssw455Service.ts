@@ -3,7 +3,8 @@ import {
   SswReportJob,
   SswReportJobStatus,
   Ssw455FilterParams,
-  SswAcquisitionResult
+  SswAcquisitionResult,
+  SswLatestReportInfo
 } from '../../../src/integrations/ssw/types/jobs';
 import { SswError, SswErrorCode } from '../../../src/integrations/ssw/types/errors';
 import { SswHealthSummaryDTO } from '../../../src/integrations/ssw/contracts/dtos';
@@ -100,13 +101,29 @@ export class Ssw455Service {
 
     const defaultUnid = this.sessionManager.getDefaultUnid();
     const effectiveUnid = params.unid || defaultUnid;
+    const empresa = this.sessionManager.getAuthenticatedEmpresa();
+    const sswUser = this.sessionManager.getAuthenticatedUsername();
+
+    // 1. Obtém a maior sequência prévia do usuário na fila 156 (oldSeq)
+    let oldSeq = 0;
+    try {
+      const preQueue = await this.queueGateway.checkQueue({
+        username: sswUser,
+        unidade: effectiveUnid
+      });
+      oldSeq = preQueue.userMaxSequence || this.queueGateway.getMaxSequence(preQueue.records);
+    } catch {
+      // Falha não-bloqueante na verificação prévia
+      oldSeq = 0;
+    }
 
     try {
       const result = await this.retryPolicy.execute(
         async () => {
           return await this.requestGateway.requestReport455(
             { ...params, startDate: period.startDate, endDate: period.endDate, unid: effectiveUnid },
-            defaultUnid
+            defaultUnid,
+            empresa
           );
         }
       );
@@ -120,14 +137,19 @@ export class Ssw455Service {
       const job: SswReportJob = {
         id: jobId,
         sequence: result.sequence,
-        requestedBy,
+        requestedBy: sswUser || requestedBy,
         requestedAt: new Date().toISOString(),
         status: 'REQUESTED',
         period,
         reportType: '455',
         unid: effectiveUnid,
         lastCheckedAt: new Date().toISOString(),
-        downloadAvailable: false
+        downloadAvailable: false,
+        metadata: {
+          minSequence: oldSeq,
+          empresa,
+          operator: requestedBy
+        }
       };
 
       await this.jobStore.saveJob(job);
@@ -165,23 +187,28 @@ export class Ssw455Service {
     }
 
     try {
+      const minSeq = typeof job.metadata?.minSequence === 'number' ? job.metadata.minSequence : undefined;
+      const sswUser = this.sessionManager.getAuthenticatedUsername() || job.requestedBy;
+
       const queueCheck = await this.queueGateway.checkQueue({
         sequence: job.sequence,
-        expectedReportType: job.reportType,
-        username: job.requestedBy
+        username: sswUser,
+        unidade: job.unid,
+        minSequence: minSeq
       });
 
       await this.registry.recordSuccess(capId);
       this.circuitBreaker.recordSuccess(capId);
       await this.incidentAggregator.resolveIncident(capId);
 
-      if (queueCheck.matchedItem) {
-        const item = queueCheck.matchedItem;
+      if (queueCheck.matchedRecord) {
+        const item = queueCheck.matchedRecord;
         job.status = item.status;
         if (!job.sequence && item.sequence) {
           job.sequence = item.sequence;
         }
-        if (item.status === 'COMPLETED') {
+        if (item.isReady || item.status === 'COMPLETED') {
+          job.status = 'COMPLETED';
           job.downloadAvailable = true;
         }
       } else if (job.status === 'REQUESTED') {
@@ -215,8 +242,8 @@ export class Ssw455Service {
       signal?: AbortSignal;
     }
   ): Promise<SswReportJob> {
-    const pollIntervalMs = options?.pollIntervalMs || 2500;
-    const maxWaitTimeMs = options?.maxWaitTimeMs || 120000; // 2 minutos padrão
+    const pollIntervalMs = options?.pollIntervalMs || 5000;
+    const maxWaitTimeMs = options?.maxWaitTimeMs || 300000; // 5 minutos padrão
     const startTime = Date.now();
 
     let currentJob = { ...job };
@@ -358,6 +385,218 @@ export class Ssw455Service {
       };
     }
   }
+
+  /**
+   * Localiza o último relatório 455 na Fila 156 pertencente ao usuário e unidade autenticados.
+   * Aplica estritamente as regras de ownership (tipo 455, usuário, unidade) e validação de status.
+   */
+  public async findLatestCompletedReport(unid?: string): Promise<SswLatestReportInfo> {
+    const sswUser = this.sessionManager.getAuthenticatedUsername();
+    const defaultUnid = this.sessionManager.getDefaultUnid();
+    const effectiveUnid = unid || defaultUnid;
+
+    const queueResult = await this.queueGateway.checkQueue({
+      username: sswUser,
+      unidade: effectiveUnid
+    });
+
+    const uUpper = (sswUser || '').trim().toUpperCase();
+    const unidUpper = (effectiveUnid || '').trim().toUpperCase();
+
+    // Filtra estritamente relatórios 455 pertencentes ao usuário e unidade autenticados
+    const own455Records = queueResult.records.filter(r => {
+      const rep = (r.reportType || '').trim().toUpperCase();
+      const is455 = rep.startsWith('455') || rep.includes('455');
+      if (!is455) return false;
+
+      if (uUpper && r.username) {
+        const rUser = r.username.trim().toUpperCase();
+        if (rUser !== uUpper && !rUser.includes(uUpper) && !uUpper.includes(rUser)) {
+          return false;
+        }
+      }
+
+      if (unidUpper && r.unidade) {
+        const rUnid = r.unidade.trim().toUpperCase();
+        if (rUnid !== unidUpper) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    if (own455Records.length === 0) {
+      return {
+        found: false,
+        downloadAvailable: false,
+        message: 'Nenhum relatório 455 encontrado na fila para o seu usuário e unidade.'
+      };
+    }
+
+    // Ordena por número de sequência decrescente (maior/mais recente primeiro)
+    const sorted = own455Records.sort((a, b) => {
+      const numA = parseInt(a.sequence, 10) || 0;
+      const numB = parseInt(b.sequence, 10) || 0;
+      return numB - numA;
+    });
+
+    const latest = sorted[0];
+    const isCompleted = latest.status === 'COMPLETED' || /conclu/i.test(latest.statusRaw);
+    const hasDow = latest.isReady && /DOW\d+/i.test(latest.action);
+
+    return {
+      found: true,
+      sequence: latest.sequence,
+      reportType: latest.reportType,
+      dateTime: latest.dateTime,
+      username: latest.username,
+      unidade: latest.unidade,
+      status: latest.status,
+      statusRaw: latest.statusRaw,
+      downloadAvailable: isCompleted && hasDow,
+      action: latest.action
+    };
+  }
+
+  /**
+   * Sincroniza o último relatório 455 concluído da Fila 156 pertencente ao usuário.
+   * Não gera um novo relatório no SSW.
+   */
+  public async syncLatestReport(
+    unid?: string,
+    requestedBy = 'operador'
+  ): Promise<SswAcquisitionResult> {
+    const nowIso = new Date().toISOString();
+    const effectiveUnid = unid || this.sessionManager.getDefaultUnid();
+    const sswUser = this.sessionManager.getAuthenticatedUsername();
+
+    try {
+      const latestInfo = await this.findLatestCompletedReport(effectiveUnid);
+
+      if (!latestInfo.found || !latestInfo.sequence) {
+        throw new SswError(
+          SswErrorCode.JOB_NOT_FOUND,
+          'Nenhum relatório 455 foi encontrado na fila para o seu usuário/unidade. Utilize a opção "Gerar novo 455" para solicitar uma emissão.'
+        );
+      }
+
+      if (!latestInfo.downloadAvailable) {
+        throw new SswError(
+          SswErrorCode.QUEUE_UNAVAILABLE,
+          `O último relatório 455 encontrado (Seq. ${latestInfo.sequence}) ainda não está concluído (Status: ${latestInfo.statusRaw || latestInfo.status}). Aguarde a conclusão ou tente novamente.`
+        );
+      }
+
+      const job: SswReportJob = {
+        id: `sync_latest_${latestInfo.sequence}_${Date.now()}`,
+        sequence: latestInfo.sequence,
+        requestedBy: latestInfo.username || sswUser || requestedBy,
+        requestedAt: nowIso,
+        status: 'COMPLETED',
+        period: { startDate: '', endDate: '' },
+        reportType: latestInfo.reportType || '455',
+        unid: latestInfo.unidade || effectiveUnid,
+        lastCheckedAt: nowIso,
+        downloadAvailable: true
+      };
+
+      await this.jobStore.saveJob(job);
+
+      // Baixa diretamente pelo fluxo de 2 etapas existente
+      const { csvContent, rowCount } = await this.downloadReport(job);
+
+      return {
+        success: true,
+        job,
+        csvContent,
+        rowCount,
+        acquisitionTimestamp: nowIso
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        job: {
+          id: `failed_sync_${Date.now()}`,
+          requestedBy: sswUser || requestedBy,
+          requestedAt: nowIso,
+          status: 'FAILED',
+          period: { startDate: '', endDate: '' },
+          reportType: '455',
+          downloadAvailable: false,
+          error: err.message
+        },
+        acquisitionTimestamp: nowIso,
+        error: err.message || 'Erro ao sincronizar o último relatório SSW 455',
+        errorCode: err instanceof SswError ? err.code : SswErrorCode.NETWORK_ERROR
+      };
+    }
+  }
+
+  /**
+   * Tenta novamente o download de um relatório específico pela sequência já conhecida.
+   * Não gera um novo relatório no SSW.
+   */
+  public async retryReport(
+    sequence?: string,
+    requestedBy = 'operador',
+    unid?: string
+  ): Promise<SswAcquisitionResult> {
+    const nowIso = new Date().toISOString();
+    const effectiveUnid = unid || this.sessionManager.getDefaultUnid();
+    const sswUser = this.sessionManager.getAuthenticatedUsername();
+
+    if (!sequence || typeof sequence !== 'string' || !sequence.trim()) {
+      return this.syncLatestReport(effectiveUnid, requestedBy);
+    }
+
+    const cleanSeq = sequence.trim();
+
+    try {
+      const job: SswReportJob = {
+        id: `retry_${cleanSeq}_${Date.now()}`,
+        sequence: cleanSeq,
+        requestedBy: sswUser || requestedBy,
+        requestedAt: nowIso,
+        status: 'COMPLETED',
+        period: { startDate: '', endDate: '' },
+        reportType: '455',
+        unid: effectiveUnid,
+        lastCheckedAt: nowIso,
+        downloadAvailable: true
+      };
+
+      const { csvContent, rowCount } = await this.downloadReport(job);
+      await this.jobStore.saveJob(job);
+
+      return {
+        success: true,
+        job,
+        csvContent,
+        rowCount,
+        acquisitionTimestamp: nowIso
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        job: {
+          id: `failed_retry_${cleanSeq}_${Date.now()}`,
+          sequence: cleanSeq,
+          requestedBy: sswUser || requestedBy,
+          requestedAt: nowIso,
+          status: 'FAILED',
+          period: { startDate: '', endDate: '' },
+          reportType: '455',
+          downloadAvailable: false,
+          error: err.message
+        },
+        acquisitionTimestamp: nowIso,
+        error: err.message || `Erro ao tentar novamente o download da sequência ${cleanSeq}`,
+        errorCode: err instanceof SswError ? err.code : SswErrorCode.NETWORK_ERROR
+      };
+    }
+  }
+
 
   /**
    * Compila o resumo consolidado de saúde da integração SSW para visualização e telemetria.

@@ -41,6 +41,7 @@ import {
   mergeGeneric,
 } from "../supabase";
 import { SystemLogsPanel } from "./configuracoes/SystemLogsPanel";
+import SswIntegrationConfigView from "./configuracoes/SswIntegrationConfigView";
 import { IS_DEMO_MODE } from "../constants/runtimeMode";
 import {
   initialVehicles,
@@ -92,6 +93,8 @@ export default function ConfiguracoesView({
   onSyncFromSupabase,
   onRefreshAllLocalData,
 }: ConfiguracoesViewProps) {
+  const [activeTab, setActiveTab] = useState<"ssw" | "governanca" | "aparencia" | "resets">("ssw");
+
   // --- States for Theme Engine ---
   const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("router_theme");
@@ -1048,15 +1051,15 @@ export default function ConfiguracoesView({
 
   return (
     <div className="space-y-6 text-[#dae2fd]">
-      <div>
-        <h2 className="text-3xl font-bold font-sans text-on-surface tracking-tight">
-          Governança Integrada
-        </h2>
-        <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
-          Configurações de controle institucional, permissões de usuários
-          integradas ao Supabase Database e sincronizadores operacionais de
-          manifesto.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold font-sans text-on-surface tracking-tight">
+            Configurações & Governança
+          </h2>
+          <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
+            Central de integração SSW, conexões na nuvem, controle institucional e personalização operacional.
+          </p>
+        </div>
       </div>
 
       {message && (
@@ -1073,13 +1076,75 @@ export default function ConfiguracoesView({
         </div>
       )}
 
-      {/* Profile and resets row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Settings card */}
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-on-surface mb-3 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--router-primary)] text-[18px]">
+      {/* Tabs navigation */}
+      <div className="flex items-center gap-2 p-1.5 bg-surface-container rounded-2xl border border-outline-variant/60 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab("ssw")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeTab === "ssw"
+              ? "bg-[var(--router-primary)] text-on-primary shadow-sm"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">hub</span>
+          <span>Integração SSW</span>
+          <span className="px-2 py-0.5 text-[9px] bg-emerald-500/20 text-emerald-300 rounded-full font-mono font-semibold">
+            455 Ativo
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("governanca")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeTab === "governanca"
+              ? "bg-[var(--router-primary)] text-on-primary shadow-sm"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">shield_person</span>
+          <span>Governança & Nuvem</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("aparencia")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeTab === "aparencia"
+              ? "bg-[var(--router-primary)] text-on-primary shadow-sm"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">palette</span>
+          <span>Aparência & Tema</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("resets")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeTab === "resets"
+              ? "bg-[var(--router-primary)] text-on-primary shadow-sm"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">alt_route</span>
+          <span>Filiais & Base Local</span>
+        </button>
+      </div>
+
+      {/* Tab 1: SSW Integration */}
+      {activeTab === "ssw" && <SswIntegrationConfigView />}
+
+      {/* Tab 2: Governança & Nuvem */}
+      {activeTab === "governanca" && (
+        <div className="space-y-6">
+          {/* Profile Settings card */}
+          <div className="bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-on-surface mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--router-primary)] text-[18px]">
                 manage_accounts
               </span>
               Seu Perfil de Operador
@@ -1201,7 +1266,12 @@ export default function ConfiguracoesView({
             Supabase ativo, sincronizará com sua conta `{adminUser.username}`.
           </div>
         </div>
+        </div>
+      )}
 
+      {/* Tab 4: Filiais & Base Local */}
+      {activeTab === "resets" && (
+        <div className="space-y-6">
         {/* Resets card */}
         <div className="bg-surface-container rounded-xl border border-outline-variant p-5 flex flex-col justify-between">
           <div>
@@ -1283,8 +1353,12 @@ export default function ConfiguracoesView({
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
+      {/* Tab 3: Aparência & Tema */}
+      {activeTab === "aparencia" && (
+      <div className="space-y-6">
       {/* Seção Aparência / Tema (Router Theme Engine) */}
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left">
         <div>
@@ -1398,7 +1472,12 @@ export default function ConfiguracoesView({
           </span>
         </div>
       </div>
+      </div>
+      )}
 
+      {/* Continuar Governança */}
+      {activeTab === "governanca" && (
+        <div className="space-y-6">
       {/* Database dependent - Users management. Visible to all but only editable/deletable by Master users */}
       <div className="bg-surface-container rounded-xl border border-outline-variant p-5 space-y-5 text-left">
         <div>
@@ -2780,6 +2859,8 @@ export default function ConfiguracoesView({
           </div>
         </div>
       </div>
+      </div>
+      )}
 
       {/* Reusable Sandbox-compliant Custom Alert Modal */}
       {alertModal && (

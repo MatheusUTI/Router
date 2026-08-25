@@ -5,6 +5,25 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 ---
 
 ## [v1.26.0] — 2026-08-24
+### Alinhamento Estrito dos Parâmetros de Geração SSW 455 com SSWTools
+- **fix(ssw)**: Alinhamento exato de todos os parâmetros e defaults do payload de geração do relatório 455 (`POST /bin/ssw0230`) com a implementação do SSWTools:
+  - `tipo_periodo`: padrão "autorizacao", mapeado exclusivamente em `f11`/`f12` (mantendo `f9`/`f10`/`f13`/`f14`/`f15`/`f16` vazios).
+  - `f22` (entrega): ajustado para `"p"` minúsculo.
+  - `f35` (arquivo): ajustado para `"e"` minúsculo.
+  - `f37` (dados complementares): ajustado para `"B"`.
+  - Remoção de chaves não conformes (`reg_sigla`).
+- **test(ssw)**: Criação do teste unitário de conformidade e comparação chave-a-chave com fixture oficial (`test/ssw/ssw455_payload.test.ts`), garantindo zero discrepâncias de case, campos ausentes ou extras.
+
+### Sincronização Sob Demanda e Split UX do SSW 455 (SSW-455-UX-001)
+- **feat(ssw)**: Implementação dos métodos de recuperação e reutilização em `Ssw455Service` (`findLatestCompletedReport`, `syncLatestReport` e `retryReport`), eliminando re-emissões acidentais na fila do SSW.
+- **feat(api)**: Novos endpoints no backend proxy: `GET /api/ssw/455/latest`, `POST /api/ssw/455/latest/sync`, `POST /api/ssw/455/retry`, `POST /api/ssw/455/:sequence/retry` e `POST /api/ssw/455/generate`.
+- **feat(ui)**: Divisão explícita das ações na tela de Importação (`ImportacaoView.tsx`):
+  - Botão principal: `Sincronizar Último 455` (reutiliza o último relatório já emitido e concluído para o usuário/unidade).
+  - Botão secundário: `Gerar Novo 455` (solicita nova emissão explícita no SSW).
+  - Botão contextual: `Tentar novamente` no banner de erro (re-executa o download sem solicitar novo relatório).
+  - Banner informativo com exibição da sequência mais recente disponível, status de conclusão e timestamp de atualização.
+- **test(ssw)**: Suíte de testes dedicada `test/ssw/ssw455_ux.test.ts` cobrindo regras de ownership, sincronização sem emissão e retries direcionados (100% de aprovação).
+
 ### Integração Resiliente do Relatório SSW 455 (SSW-455-001)
 - **feat(ssw)**: Implementação do serviço orquestrador `Ssw455Service` (`server/ssw/services/ssw455Service.ts`) gerenciando o ciclo de vida completo da aquisição: Solicitação (`0230`) -> Polling na Fila 156 (`1440`) -> Download do CSV (`0424`).
 - **feat(ssw)**: Implementação do gerenciador de sessão isolado no backend `SswSessionManager` (`server/ssw/session/sessionManager.ts`) com autenticação automática, persistência de cookies HTTP, detecção de falso-200 (HTML de login) e renovação de credenciais.

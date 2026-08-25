@@ -4,7 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import dns from "dns";
-import { getSsw455Service, getSswSessionManager } from "./server/ssw/sswServiceInstance";
+import { getSsw455Service, getSswSessionManager, getSswConfigManager } from "./server/ssw/sswServiceInstance";
 import { SswError } from "./src/integrations/ssw/types/errors";
 
 dotenv.config();
@@ -508,6 +508,128 @@ async function startServer() {
   // ==========================================
   // SSW CAPABILITY & REPORT 455 API ENDPOINTS
   // ==========================================
+  // SSW CAPABILITY & CONFIGURATION ENDPOINTS
+  // ==========================================
+
+  // Get Central SSW Configuration (Safe masked view)
+  app.get("/api/ssw/config", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      const configManager = getSswConfigManager(sessionManager);
+      const config = configManager.getPublicConfig();
+
+      return res.json({
+        success: true,
+        config
+      });
+    } catch (err: any) {
+      console.error("[SSW-CONFIG-API] Erro ao recuperar configuração:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro ao recuperar configuração central do SSW"
+      });
+    }
+  });
+
+  // Update SSW Configuration (Connection and/or Capabilities)
+  app.put("/api/ssw/config", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      const configManager = getSswConfigManager(sessionManager);
+      const { connection, capabilities } = req.body || {};
+
+      if (connection) {
+        configManager.updateConnectionConfig(connection);
+      }
+
+      if (capabilities && capabilities['455']) {
+        configManager.update455Config(capabilities['455']);
+      }
+
+      return res.json({
+        success: true,
+        message: "Configurações da integração SSW atualizadas com sucesso!",
+        config: configManager.getPublicConfig()
+      });
+    } catch (err: any) {
+      console.error("[SSW-CONFIG-API] Erro ao salvar configuração:", err);
+      return res.status(400).json({
+        success: false,
+        error: err.message || "Falha ao salvar configurações do SSW"
+      });
+    }
+  });
+
+  app.post("/api/ssw/config", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      const configManager = getSswConfigManager(sessionManager);
+      const { connection, capabilities } = req.body || {};
+
+      if (connection) {
+        configManager.updateConnectionConfig(connection);
+      }
+
+      if (capabilities && capabilities['455']) {
+        configManager.update455Config(capabilities['455']);
+      }
+
+      return res.json({
+        success: true,
+        message: "Configurações da integração SSW atualizadas com sucesso!",
+        config: configManager.getPublicConfig()
+      });
+    } catch (err: any) {
+      console.error("[SSW-CONFIG-API] Erro ao salvar configuração:", err);
+      return res.status(400).json({
+        success: false,
+        error: err.message || "Falha ao salvar configurações do SSW"
+      });
+    }
+  });
+
+  // Restore SSW 455 Capability Defaults (Strict SSWTools Baseline)
+  app.post("/api/ssw/config/455/restore-defaults", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      const configManager = getSswConfigManager(sessionManager);
+      const restored = configManager.restore455Defaults();
+
+      return res.json({
+        success: true,
+        message: "Parâmetros padrão do SSWTools restaurados com sucesso para o Relatório 455!",
+        config455: restored,
+        fullConfig: configManager.getPublicConfig()
+      });
+    } catch (err: any) {
+      console.error("[SSW-CONFIG-API] Erro ao restaurar defaults 455:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro ao restaurar parâmetros padrão do SSWTools"
+      });
+    }
+  });
+
+  // Validate SSW 455 Capability Configuration
+  app.post("/api/ssw/config/455/validate", async (req, res) => {
+    try {
+      const sessionManager = getSswSessionManager();
+      const configManager = getSswConfigManager(sessionManager);
+      const params = req.body || {};
+      const result = configManager.validate455Config(params);
+
+      return res.json({
+        success: true,
+        validation: result
+      });
+    } catch (err: any) {
+      console.error("[SSW-CONFIG-API] Erro na validação da config 455:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro ao validar configuração 455"
+      });
+    }
+  });
 
   // SSW Health Diagnostic and summary
   app.get("/api/ssw/health", async (req, res) => {
@@ -642,7 +764,129 @@ async function startServer() {
     }
   });
 
-  // Full Acquisition Flow: Request -> Poll Queue -> Download CSV
+  // Get Latest Completed Report 455 for Current Profile/Unidade
+  app.get("/api/ssw/455/latest", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const unid = (req.query.unid as string) || undefined;
+      const latest = await sswService.findLatestCompletedReport(unid);
+
+      return res.json({
+        success: true,
+        latest
+      });
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao buscar último relatório 455:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        error: err.message || "Erro ao consultar último relatório 455",
+        code: isSswError ? err.code : "LATEST_QUERY_ERROR"
+      });
+    }
+  });
+
+  // Sync Latest Completed Report 455 (without requesting new report generation)
+  app.post("/api/ssw/455/latest/sync", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const { unid } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const result = await sswService.syncLatestReport(unid, requestedBy);
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-API] Erro ao sincronizar último relatório 455:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro inesperado ao sincronizar último relatório 455",
+        errorCode: "SYNC_LATEST_FAILED"
+      });
+    }
+  });
+
+  // Retry Download for a Specific Sequence (without requesting new report generation)
+  app.post("/api/ssw/455/retry", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const { sequence, unid } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const result = await sswService.retryReport(sequence, requestedBy, unid);
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-API] Erro no retry do relatório:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro inesperado ao tentar novamente o download",
+        errorCode: "RETRY_FAILED"
+      });
+    }
+  });
+
+  app.post("/api/ssw/455/:sequence/retry", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const sequence = req.params.sequence;
+      const { unid } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const result = await sswService.retryReport(sequence, requestedBy, unid);
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-API] Erro no retry por sequência:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro inesperado ao tentar novamente o download",
+        errorCode: "RETRY_FAILED"
+      });
+    }
+  });
+
+  // Generate New SSW 455 Report (Explicit On-Demand Request)
+  app.post("/api/ssw/455/generate", async (req, res) => {
+    try {
+      const sswService = await getSsw455Service();
+      const { startDate, endDate, unid, dataTipo, pollIntervalMs, maxWaitTimeMs } = req.body || {};
+      const requestedBy = (req.body?.requestedBy || "operador").trim();
+
+      const result = await sswService.acquireReport(
+        { startDate, endDate, unid, dataTipo },
+        requestedBy,
+        { pollIntervalMs: pollIntervalMs || 5000, maxWaitTimeMs: maxWaitTimeMs || 300000 }
+      );
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-API] Exceção na geração sob demanda de relatório 455:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro inesperado durante a geração do relatório 455",
+        errorCode: "GENERATION_FAILED"
+      });
+    }
+  });
+
+  // Full Acquisition Flow: Request -> Poll Queue -> Download CSV (Backward Compatibility)
   app.post("/api/ssw/455/acquire", async (req, res) => {
     try {
       const sswService = await getSsw455Service();
@@ -652,7 +896,7 @@ async function startServer() {
       const result = await sswService.acquireReport(
         { startDate, endDate, unid, dataTipo },
         requestedBy,
-        { pollIntervalMs: pollIntervalMs || 2000, maxWaitTimeMs: maxWaitTimeMs || 60000 }
+        { pollIntervalMs: pollIntervalMs || 5000, maxWaitTimeMs: maxWaitTimeMs || 300000 }
       );
 
       if (!result.success) {
