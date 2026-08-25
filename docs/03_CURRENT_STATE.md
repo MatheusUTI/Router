@@ -21,7 +21,7 @@ O código atual foi verificado contra a especificação AISDD. A infraestrutura 
 | **Dashboards e KPIs** | `[EXISTENTE NO ROUTER]` | Telas desenhadas; cálculos em processo de enriquecimento com a base local. |
 | **Fundação SSW (Registry, Signatures, Resilience)** | `[EXISTENTE NO ROUTER]` | Implementada no ciclo `SSW-ARCH-001` (`src/integrations/ssw/` e `server/ssw/`), com cobertura unitária completa. |
 | **SSW 455 (Download Automático de Entregas & UX Sob Demanda)** | `[EXISTENTE NO ROUTER]` | Ciclo `SSW-455-UX-001` concluído: split UX ("Sincronizar Último 455" vs "Gerar Novo 455"), matching estrito de ownership (usuário/unidade), retry direcionado sem re-emissão acidental e suíte de testes 100% verde. |
-| **SSW 101 (Consulta CTRC/NF)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-101-001`). |
+| **SSW 101 (Consulta CTRC/NF Sob Demanda)** | `[EXISTENTE NO ROUTER]` | Ciclo `SSW-101-001` concluído: Gateway, parser HTML resiliente, serviço com cache TTL + Circuit Breaker + Retry Policy, DTOs de rastreamento completo e integração visual com `CtrcDetailDrawer` na Mesa de Roteirização e no Monitor SSW. |
 | **SSW 029 (Previsão de Cargas)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
 | **SSW 030 + 023 (Manifestos e CTRCs)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-RECEIVING-001`). |
 | **SSW 264 (Descarga Física na Doca)** | `[CONFIRMADO NO SSWTOOLS]` / `[ARQUITETURA APROVADA]` / `[NÃO IMPLEMENTADO]` | Confirmado no SSWTools; planejado no roadmap (`SSW-UNLOADING-001`). |

@@ -9,6 +9,7 @@ interface CargaItemProps {
   onToggle: (id: string) => void;
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
   densityMode?: DensityMode;
+  onOpenCtrcDetail?: (ctrcId: string, initialNf?: string) => void;
 }
 
 const resolvePlanningStyle = (status: PlanningStatus | undefined) => {
@@ -254,6 +255,7 @@ export default function CargaItem({
   onToggle,
   onUpdatePlanning,
   densityMode = 'default',
+  onOpenCtrcDetail,
 }: CargaItemProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
@@ -269,6 +271,11 @@ export default function CargaItem({
   const handleOpenSswCtrc = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     event.stopPropagation();
+
+    if (onOpenCtrcDetail) {
+      onOpenCtrcDetail(item.id, item.nf);
+      return;
+    }
 
     const url = buildSswLink(item);
 
@@ -1050,17 +1057,32 @@ export default function CargaItem({
             {/* Dropdown Header */}
             <div className={`${dropHeaderPad} bg-[var(--router-surface-2)] border-b border-[var(--router-border)] flex items-center justify-between rounded-t-xl`}>
               <span className={`${dropHeaderText} font-sans font-black text-[var(--router-primary)] uppercase tracking-widest flex items-center gap-1.5`}>
-                🛡️ Parâmetros CTRC {item.id}
+                🛡️ CTRC {item.id}
               </span>
-              <button 
-                onClick={() => {
-                  setDropdownOpen(false);
-                  setMenuPosition(null);
-                }}
-                className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer"
-              >
-                <X size={12} />
-              </button>
+              <div className="flex items-center gap-1">
+                {onOpenCtrcDetail && (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      setMenuPosition(null);
+                      onOpenCtrcDetail(item.id, item.nf);
+                    }}
+                    className="px-2 py-0.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/30 rounded text-[9px] font-mono font-bold uppercase transition-colors cursor-pointer"
+                    title="Consultar Detalhes SSW 101"
+                  >
+                    101
+                  </button>
+                )}
+                <button 
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setMenuPosition(null);
+                  }}
+                  className="text-[var(--router-text-muted)] hover:text-[var(--router-text)] dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              </div>
             </div>
             
             {/* Option block 1: Route overwrite */}

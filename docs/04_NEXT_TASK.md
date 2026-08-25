@@ -1,23 +1,18 @@
 # Próxima Tarefa Recomendada
 
-**ID da Tarefa:** `SSW-101-001`  
-**Título:** Integração Resiliente do Módulo SSW 101 (Consulta Individual de CTRC e Nota Fiscal)  
+**ID da Tarefa:** `SSW-RECEIVING-001`  
+**Título:** Integração Resiliente dos Módulos SSW 029 (Previsão de Cargas) e SSW 030 + 023 (Manifestos e CTRCs de Transferência)  
 **Status:** `[ARQUITETURA APROVADA]` / `[PRONTO PARA EXECUÇÃO]`
 
 ---
 
 ## 1. Contexto
-Com a conclusão bem-sucedida do ciclo `SSW-455-001` — que viabilizou a aquisição automatizada e o download em lote do relatório de entregas da filial —, o Router agora necessita da capability de consulta pontual de CTRC e Nota Fiscal (SSW 101). Essa funcionalidade permite detalhar ocorrências, validar dados de faturamento em tempo real na Mesa de Roteirização e auditar CTRCs individuais sem demandar novo download massivo de relatório.
+Com a conclusão do ciclo `SSW-101-001` (Consulta analítica sob demanda de CTRC/NF com drawer de rastreamento e cache resiliente) e `SSW-455-UX-001` (Download e sincronização de relatório de entregas), a próxima fronteira é a ingestão automatizada de previsões de transferência e manifestos em trânsito para a filial.
 
 ---
 
-## 2. Problema
-Quando o operador identifica divergências em um CTRC (ex: falta de nota fiscal, endereço incompleto ou ocorrência de cliente), ele precisa sair do Router, abrir o terminal SSW, digitar a opção `101`, buscar a chave ou número e consultar manualmente. Isso fragmenta a operação de triagem.
-
----
-
-## 3. Objetivo
-> **Implementar a capability `CTRC_101_QUERY` no backend proxy do Router para consulta pontual de CTRCs/Notas Fiscais no SSW, enriquecendo o registro em cache local com ocorrências atualizadas, detalhes de remetente/destinatário e histórico de pesagem, integrando a interface de detalhes na Mesa de Roteirização.**
+## 2. Objetivo
+> **Implementar as capabilities de Previsão de Cargas (`FORECAST_029`), Manifestos (`MANIFEST_030`) e Detalhamento de Manifestos (`MANIFEST_DETAIL_023`) para alimentar a visão prévia de recebimento e descarregamento na esteira logística.**
 
 ---
 

@@ -13,8 +13,13 @@ export * from './gateways/httpClient';
 export * from './gateways/ssw455RequestGateway';
 export * from './gateways/sswReportQueueGateway';
 export * from './gateways/sswReportDownloadGateway';
+export * from './gateways/ssw101Parser';
+export * from './gateways/ssw101QueryGateway';
 export * from './session/sessionTypes';
 export * from './session/sessionManager';
 export * from './config/configManager';
 export * from './services/jobStorePort';
 export * from './services/ssw455Service';
+export * from './services/ssw101Service';
+export * from './sswServiceInstance';
+

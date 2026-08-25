@@ -25,6 +25,7 @@ import ConsolidacaoDrawer from './ConsolidacaoDrawer';
 import SelectionSummary from './SelectionSummary';
 import OperationalNoticesBanner from './OperationalNoticesBanner';
 import RoteirizacaoDiagnosticsPanel from './RoteirizacaoDiagnosticsPanel';
+import { CtrcDetailDrawer } from './CtrcDetailDrawer';
 
 // Custom Hooks
 import { useRoteirizacaoFilters, isLogisticallyCompatible } from './hooks/useRoteirizacaoFilters';
@@ -82,6 +83,11 @@ export default function RoteirizacaoView({
   
   // Operational Diagnostics Panel open state
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
+
+  // SSW 101 CTRC Detail Drawer State
+  const [isCtrcDetailOpen, setIsCtrcDetailOpen] = useState<boolean>(false);
+  const [detailCtrcId, setDetailCtrcId] = useState<string | undefined>(undefined);
+  const [detailInitialNf, setDetailInitialNf] = useState<string | undefined>(undefined);
 
   // Operational Notices state management
   const [isAvisosOpen, setIsAvisosOpen] = useState<boolean>(true);
@@ -1358,6 +1364,11 @@ export default function RoteirizacaoView({
             setExcelOcorrSectorFilter={setExcelOcorrSectorFilter}
             onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
             diagnostics={diagnostics}
+            onOpenCtrcDetail={(id, nf) => {
+              setDetailCtrcId(id);
+              setDetailInitialNf(nf);
+              setIsCtrcDetailOpen(true);
+            }}
           />
         )}
       </div>
@@ -1409,6 +1420,18 @@ export default function RoteirizacaoView({
         onClearFilters={handleClearFilters}
         adminUser={adminUser}
         onRefreshCtrcs={onRefreshCtrcs}
+      />
+
+      {/* SSW 101 CTRC Detail & Tracking Drawer */}
+      <CtrcDetailDrawer
+        isOpen={isCtrcDetailOpen}
+        onClose={() => {
+          setIsCtrcDetailOpen(false);
+          setDetailCtrcId(undefined);
+          setDetailInitialNf(undefined);
+        }}
+        ctrcId={detailCtrcId}
+        initialNf={detailInitialNf}
       />
 
       {/* Pre-Romaneio Summary Modal */}

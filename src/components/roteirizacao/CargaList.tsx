@@ -21,6 +21,7 @@ interface CargaListProps {
   onUpdateDensity?: (density: DensityMode) => void;
   totalCtrcsCount?: number;
   onClearFilters?: () => void;
+  onOpenCtrcDetail?: (ctrcId: string, initialNf?: string) => void;
 
   // Migrated Filters Props
   adminUser: AppUser;
@@ -133,6 +134,7 @@ export default function CargaList({
   setExcelOcorrSectorFilter,
   onOpenDiagnostics,
   diagnostics,
+  onOpenCtrcDetail,
 }: CargaListProps) {
   // Check master selection
   const visibleIds = filteredCtrcs.map((c) => c.id);
@@ -688,6 +690,7 @@ export default function CargaList({
                 onToggle={onToggleItem}
                 onUpdatePlanning={onUpdatePlanning}
                 densityMode={densityMode}
+                onOpenCtrcDetail={onOpenCtrcDetail}
               />
             ))}
           </div>

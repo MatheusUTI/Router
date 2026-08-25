@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Ctrc } from '../types';
 import { db } from '../infrastructure/localdb/db';
-import { Search, ExternalLink, RefreshCw, FileText, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-react';
+import { Search, ExternalLink, RefreshCw, FileText, CheckCircle2, AlertTriangle, HelpCircle, Layers, Eye } from 'lucide-react';
+import { CtrcDetailDrawer } from './roteirizacao/CtrcDetailDrawer';
 
 interface CtrcSswViewProps {
   onRefreshCtrcs?: () => void;
@@ -95,6 +96,8 @@ export default function CtrcSswView({ onRefreshCtrcs }: CtrcSswViewProps) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [unitFilter, setUnitFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCtrcForDrawer, setSelectedCtrcForDrawer] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const loadCtrcs = async () => {
     setIsLoading(true);
@@ -298,7 +301,17 @@ export default function CtrcSswView({ onRefreshCtrcs }: CtrcSswViewProps) {
                   return (
                     <tr key={item.id} className="hover:bg-[var(--router-surface-3)]/40 transition-colors">
                       <td className="px-4 py-3.5 font-bold font-mono text-on-surface text-[13px]">
-                        {item.id}
+                        <button
+                          onClick={() => {
+                            setSelectedCtrcForDrawer(item.id);
+                            setIsDrawerOpen(true);
+                          }}
+                          className="hover:underline text-indigo-400 hover:text-indigo-300 font-bold font-mono text-left cursor-pointer flex items-center gap-1.5"
+                          title="Abrir detalhamento analítico e rastreamento SSW 101"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          {item.id}
+                        </button>
                       </td>
                       <td className="px-4 py-3.5 font-mono text-[var(--router-text-soft)]">
                         {item.nf || '—'}
@@ -345,22 +358,30 @@ export default function CtrcSswView({ onRefreshCtrcs }: CtrcSswViewProps) {
                         </button>
                       </td>
                       <td className="px-4 py-3.5 text-right font-sans">
-                        {sswUrl ? (
-                          <a
-                            href={sswUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 bg-primary text-on-primary hover:bg-primary-fixed hover:text-primary font-bold px-2.5 py-1 rounded-lg text-[11px] transition-colors"
-                            title="Consultar CTRC no SSW corporativo"
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setSelectedCtrcForDrawer(item.id);
+                              setIsDrawerOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold px-2 py-1 rounded-lg text-[11px] transition-colors cursor-pointer"
+                            title="Consultar CTRC 101 no app"
                           >
-                            <span>SSW</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-[var(--router-text-muted)]" title="Formato inválido para SSW">
-                            Sem link
-                          </span>
-                        )}
+                            <FileText className="w-3 h-3" />
+                            <span>101</span>
+                          </button>
+                          {sswUrl && (
+                            <a
+                              href={sswUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-bold px-2 py-1 rounded-lg text-[11px] transition-colors"
+                              title="Abrir no portal SSW externo"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -374,6 +395,16 @@ export default function CtrcSswView({ onRefreshCtrcs }: CtrcSswViewProps) {
           <span className="font-mono text-[var(--router-text-muted)]">Consulta Operacional de CTRC (SSW Integração)</span>
         </div>
       </div>
+
+      {/* Drawer Analítico SSW 101 */}
+      <CtrcDetailDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedCtrcForDrawer(null);
+        }}
+        ctrcId={selectedCtrcForDrawer || undefined}
+      />
     </div>
   );
 }

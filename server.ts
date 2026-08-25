@@ -4,7 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import dns from "dns";
-import { getSsw455Service, getSswSessionManager, getSswConfigManager } from "./server/ssw/sswServiceInstance";
+import { getSsw455Service, getSsw101Service, getSswSessionManager, getSswConfigManager } from "./server/ssw/sswServiceInstance";
 import { SswError } from "./src/integrations/ssw/types/errors";
 
 dotenv.config();
@@ -910,6 +910,139 @@ async function startServer() {
         success: false,
         error: err.message || "Erro inesperado durante a aquisição do relatório 455",
         errorCode: "ACQUISITION_FAILED"
+      });
+    }
+  });
+
+  // ==========================================
+  // SSW 101 ON-DEMAND CTRC / NF API ENDPOINTS
+  // ==========================================
+
+  // Universal SSW 101 Query (CTRC, NF or Key)
+  app.post("/api/ssw/101/query", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      const requestDto = req.body || {};
+
+      if (!requestDto.tipoConsulta) {
+        return res.status(400).json({
+          success: false,
+          error: "O campo 'tipoConsulta' ('CTRC', 'NF' ou 'CHAVE') é obrigatório."
+        });
+      }
+
+      const result = await ssw101Service.query(requestDto);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-101-API] Erro na consulta 101:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        found: false,
+        resultsCount: 0,
+        error: err.message || "Falha na consulta SSW 101",
+        code: isSswError ? err.code : "QUERY_FAILED"
+      });
+    }
+  });
+
+  // Query CTRC by ID / code directly
+  app.get("/api/ssw/101/ctrc/:id", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      const id = req.params.id;
+      const forceFresh = req.query.fresh === 'true' || req.query.fresh === '1';
+
+      const result = await ssw101Service.queryCtrc(id, undefined, forceFresh);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-101-API] Erro ao consultar CTRC:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        found: false,
+        resultsCount: 0,
+        error: err.message || "Erro ao consultar CTRC no SSW 101",
+        code: isSswError ? err.code : "CTRC_QUERY_FAILED"
+      });
+    }
+  });
+
+  // Query NF by number directly
+  app.get("/api/ssw/101/nf/:numero", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      const numero = req.params.numero;
+      const cnpj = (req.query.cnpj as string) || undefined;
+      const forceFresh = req.query.fresh === 'true' || req.query.fresh === '1';
+
+      const result = await ssw101Service.queryNf(numero, cnpj, forceFresh);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-101-API] Erro ao consultar NF:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        found: false,
+        resultsCount: 0,
+        error: err.message || "Erro ao consultar NF no SSW 101",
+        code: isSswError ? err.code : "NF_QUERY_FAILED"
+      });
+    }
+  });
+
+  // Query by 44-digit CT-e / NF-e Access Key
+  app.get("/api/ssw/101/chave/:chave", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      const chave = req.params.chave;
+      const forceFresh = req.query.fresh === 'true' || req.query.fresh === '1';
+
+      const result = await ssw101Service.queryChave(chave, forceFresh);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("[SSW-101-API] Erro ao consultar chave:", err);
+      const isSswError = err instanceof SswError;
+      return res.status(isSswError ? 400 : 500).json({
+        success: false,
+        found: false,
+        resultsCount: 0,
+        error: err.message || "Erro ao consultar chave no SSW 101",
+        code: isSswError ? err.code : "CHAVE_QUERY_FAILED"
+      });
+    }
+  });
+
+  // Clear SSW 101 In-Memory Cache
+  app.post("/api/ssw/101/clear-cache", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      ssw101Service.clearCache();
+      return res.json({
+        success: true,
+        message: "Cache da consulta SSW 101 limpo com sucesso!"
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro ao limpar cache SSW 101"
+      });
+    }
+  });
+
+  // Get SSW 101 Cache Statistics
+  app.get("/api/ssw/101/cache-stats", async (req, res) => {
+    try {
+      const ssw101Service = await getSsw101Service();
+      const stats = ssw101Service.getCacheStats();
+      return res.json({
+        success: true,
+        stats
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Erro ao obter estatísticas do cache 101"
       });
     }
   });

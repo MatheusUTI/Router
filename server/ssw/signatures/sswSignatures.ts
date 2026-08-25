@@ -76,5 +76,10 @@ export const DEFAULT_KNOWN_ENDPOINTS: Partial<Record<SswCapabilityId, { endpoint
     endpoint: '/bin/ssw0424',
     method: 'GET',
     confidence: 0.95
+  },
+  [SswCapabilityId.CTRC_101]: {
+    endpoint: '/bin/ssw0101',
+    method: 'POST',
+    confidence: 0.95
   }
 };

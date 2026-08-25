@@ -13,6 +13,7 @@ interface CargaGroupProps {
   onToggleGroupSelection: (ids: string[]) => void;
   onUpdatePlanning?: (ctrcId: string, patch: Partial<RoutePlanningItem>) => void;
   densityMode?: DensityMode;
+  onOpenCtrcDetail?: (ctrcId: string, initialNf?: string) => void;
 }
 
 export default function CargaGroup({
@@ -25,6 +26,7 @@ export default function CargaGroup({
   onToggleGroupSelection,
   onUpdatePlanning,
   densityMode,
+  onOpenCtrcDetail,
 }: CargaGroupProps) {
   // Aggregate stats of this group's CTRCs
   const totalWeight = items.reduce((sum, item) => sum + (item.peso_r || item.weight || 0), 0);
@@ -173,6 +175,7 @@ export default function CargaGroup({
               onToggle={onToggleItem}
               onUpdatePlanning={onUpdatePlanning}
               densityMode={densityMode}
+              onOpenCtrcDetail={onOpenCtrcDetail}
             />
           ))}
         </div>

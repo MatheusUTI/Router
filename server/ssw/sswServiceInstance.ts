@@ -12,12 +12,18 @@ import { SswReportQueueGateway } from './gateways/sswReportQueueGateway';
 import { SswReportDownloadGateway } from './gateways/sswReportDownloadGateway';
 import { InMemoryJobStore } from './services/jobStorePort';
 import { Ssw455Service } from './services/ssw455Service';
+import { Ssw101Service } from './services/ssw101Service';
+import { Ssw101QueryGateway } from './gateways/ssw101QueryGateway';
 import { SSW_SIGNATURES, DEFAULT_KNOWN_ENDPOINTS } from './signatures/sswSignatures';
 import { SswConfigManager, getSswConfigManager } from './config/configManager';
 
 let globalSswService: Ssw455Service | null = null;
+let globalSsw101Service: Ssw101Service | null = null;
 let globalRegistry: SswCapabilityRegistry | null = null;
 let globalSessionManager: SswSessionManager | null = null;
+let globalCircuitBreaker: SswCircuitBreaker | null = null;
+let globalRetryPolicy: SswRetryPolicy | null = null;
+let globalIncidentAggregator: SswIncidentAggregator | null = null;
 
 /**
  * Inicializa e popula o registro canônico de capacidades SSW com as assinaturas e endpoints conhecidos.
@@ -59,25 +65,55 @@ export function getSswSessionManager(): SswSessionManager {
 }
 
 /**
+ * Instancia ou retorna o singleton do Circuit Breaker global.
+ */
+export function getSswCircuitBreaker(): SswCircuitBreaker {
+  if (!globalCircuitBreaker) {
+    globalCircuitBreaker = new SswCircuitBreaker({
+      failureThreshold: 3,
+      successThreshold: 2,
+      backoffStepsMs: [30000, 120000, 300000] // 30s, 2m, 5m
+    });
+  }
+  return globalCircuitBreaker;
+}
+
+/**
+ * Instancia ou retorna o singleton da Retry Policy global.
+ */
+export function getSswRetryPolicy(): SswRetryPolicy {
+  if (!globalRetryPolicy) {
+    globalRetryPolicy = new SswRetryPolicy({
+      maxAttempts: 3,
+      baseDelayMs: 1000,
+      maxDelayMs: 5000,
+      backoffFactor: 2.0
+    });
+  }
+  return globalRetryPolicy;
+}
+
+/**
+ * Instancia ou retorna o singleton do Incident Aggregator global.
+ */
+export function getSswIncidentAggregator(): SswIncidentAggregator {
+  if (!globalIncidentAggregator) {
+    const incidentStore = new InMemoryIncidentStore();
+    globalIncidentAggregator = new SswIncidentAggregator(incidentStore);
+  }
+  return globalIncidentAggregator;
+}
+
+/**
  * Instancia ou retorna o serviço singleton Ssw455Service.
  */
 export async function getSsw455Service(): Promise<Ssw455Service> {
   if (globalSswService) return globalSswService;
 
   const registry = await setupSswCapabilityRegistry();
-  const circuitBreaker = new SswCircuitBreaker({
-    failureThreshold: 3,
-    successThreshold: 2,
-    backoffStepsMs: [30000, 120000, 300000] // 30s, 2m, 5m
-  });
-  const retryPolicy = new SswRetryPolicy({
-    maxAttempts: 3,
-    baseDelayMs: 1000,
-    maxDelayMs: 5000,
-    backoffFactor: 2.0
-  });
-  const incidentStore = new InMemoryIncidentStore();
-  const incidentAggregator = new SswIncidentAggregator(incidentStore);
+  const circuitBreaker = getSswCircuitBreaker();
+  const retryPolicy = getSswRetryPolicy();
+  const incidentAggregator = getSswIncidentAggregator();
   const sessionManager = getSswSessionManager();
   const configManager = getSswConfigManager(sessionManager);
   const httpClient = new SswHttpClient(sessionManager);
@@ -106,5 +142,33 @@ export async function getSsw455Service(): Promise<Ssw455Service> {
   return globalSswService;
 }
 
-export { getSswConfigManager, SswConfigManager };
+/**
+ * Instancia ou retorna o serviço singleton Ssw101Service.
+ */
+export async function getSsw101Service(): Promise<Ssw101Service> {
+  if (globalSsw101Service) return globalSsw101Service;
+
+  const registry = await setupSswCapabilityRegistry();
+  const circuitBreaker = getSswCircuitBreaker();
+  const retryPolicy = getSswRetryPolicy();
+  const incidentAggregator = getSswIncidentAggregator();
+  const sessionManager = getSswSessionManager();
+  const httpClient = new SswHttpClient(sessionManager);
+
+  const queryGateway = new Ssw101QueryGateway(registry, httpClient);
+
+  globalSsw101Service = new Ssw101Service({
+    registry,
+    circuitBreaker,
+    retryPolicy,
+    incidentAggregator,
+    sessionManager,
+    queryGateway
+  });
+
+  return globalSsw101Service;
+}
+
+export { getSswConfigManager, SswConfigManager, Ssw101Service };
+
 
