@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Ctrc, OperationalNotice } from '../../types';
-import { OperationalCalendarRepository } from '../../infrastructure/localdb/repositories/operationalCalendarRepository';
+import { OperationalCalendarRepository } from '../../infrastructure/repositories';
 import { AlertTriangle, Info, ChevronDown, ChevronUp, Calendar, MapPin, RefreshCw, X } from 'lucide-react';
 
 interface OperationalNoticesBannerProps {

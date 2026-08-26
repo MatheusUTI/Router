@@ -4,11 +4,11 @@
   "version": "1.26.0",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && esbuild server/vercel.ts --bundle --platform=node --format=cjs --packages=external --footer:js=\"module.exports = module.exports.default || module.exports;\" --sourcemap --outfile=api/index.cjs",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "test": "tsx test/ssw/resilience.test.ts && tsx test/ssw/ssw455.test.ts && tsx test/ssw/ssw455_ux.test.ts && tsx test/ssw/ssw455_payload.test.ts && tsx test/bootstrap.serverless.test.ts && tsx test/vercel.routing.test.ts && node test/runtime.cjs.test.js",
+    "test": "tsx test/ssw/resilience.test.ts && tsx test/ssw/ssw455.test.ts && tsx test/ssw/ssw455_ux.test.ts && tsx test/ssw/ssw455_payload.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,7 +16,9 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "@tailwindcss/vite": "^4.1.14",
+    "@types/cors": "^2.8.19",
     "@vitejs/plugin-react": "^5.0.4",
+    "cors": "^2.8.6",
     "dexie": "^4.4.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",

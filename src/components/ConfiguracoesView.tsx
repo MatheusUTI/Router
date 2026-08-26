@@ -13,11 +13,11 @@ import {
   PreRomaneio,
 } from "../types";
 import { db, RomaneioSave } from "../infrastructure/localdb/db";
-import { SyncQueueRepository } from "../infrastructure/localdb/repositories/syncQueueRepository";
-import { CtrcRepository } from "../infrastructure/localdb/repositories/ctrcRepository";
-import { RoutePlanningRepository } from "../infrastructure/localdb/repositories/routePlanningRepository";
-import { PreRomaneioRepository } from "../infrastructure/localdb/repositories/preRomaneioRepository";
-import { TripRepository } from "../infrastructure/localdb/repositories/tripRepository";
+import { syncQueueRepository } from "../infrastructure/repositories";
+import { ctrcRepository } from "../infrastructure/repositories";
+import { routePlanningRepository } from "../infrastructure/repositories";
+import { preRomaneioRepository } from "../infrastructure/repositories";
+import { tripRepository } from "../infrastructure/repositories";
 import {
   DEFAULT_OPERATIONAL_UNIT,
   OPERATIONAL_UNITS,
@@ -174,7 +174,7 @@ export default function ConfiguracoesView({
   } | null>(null);
 
   useEffect(() => {
-    SyncQueueRepository.getSummary().then(setQueueSummary).catch(console.warn);
+    syncQueueRepository.getSummary().then(setQueueSummary).catch(console.warn);
   }, []);
 
   const handleExportOperationalState = async () => {
@@ -189,10 +189,10 @@ export default function ConfiguracoesView({
         );
       }
 
-      const ctrcs = await CtrcRepository.getAll();
-      const routePlanningItems = await RoutePlanningRepository.getAll();
-      const preRomaneios = await PreRomaneioRepository.getAll();
-      const savedRomaneios = await TripRepository.getAll();
+      const ctrcs = await ctrcRepository.getAll();
+      const routePlanningItems = await routePlanningRepository.getAll();
+      const preRomaneios = await preRomaneioRepository.getAll();
+      const savedRomaneios = await tripRepository.getAll();
 
       const res = await exportOperationalStateToSupabase({
         ctrcs,
@@ -242,10 +242,10 @@ export default function ConfiguracoesView({
 
       const remote = res.data;
 
-      const localCtrcs = await CtrcRepository.getAll();
-      const localPlanning = await RoutePlanningRepository.getAll();
-      const localPre = await PreRomaneioRepository.getAll();
-      const localSaved = await TripRepository.getAll();
+      const localCtrcs = await ctrcRepository.getAll();
+      const localPlanning = await routePlanningRepository.getAll();
+      const localPre = await preRomaneioRepository.getAll();
+      const localSaved = await tripRepository.getAll();
 
       const mergedCtrcs = mergeGeneric(
         localCtrcs,
@@ -276,11 +276,11 @@ export default function ConfiguracoesView({
         "saved",
       );
 
-      if (mergedCtrcs.length > 0) await CtrcRepository.putMany(mergedCtrcs);
+      if (mergedCtrcs.length > 0) await ctrcRepository.putMany(mergedCtrcs);
       if (mergedPlanning.length > 0)
-        await RoutePlanningRepository.putMany(mergedPlanning);
-      if (mergedPre.length > 0) await PreRomaneioRepository.putMany(mergedPre);
-      if (mergedSaved.length > 0) await TripRepository.bulkPut(mergedSaved);
+        await routePlanningRepository.putMany(mergedPlanning);
+      if (mergedPre.length > 0) await preRomaneioRepository.putMany(mergedPre);
+      if (mergedSaved.length > 0) await tripRepository.bulkPut(mergedSaved);
 
       if (onRefreshAllLocalData) {
         await onRefreshAllLocalData();
@@ -322,10 +322,10 @@ export default function ConfiguracoesView({
         );
       }
 
-      const localCtrcs = await CtrcRepository.getAll();
-      const localPlanning = await RoutePlanningRepository.getAll();
-      const localPre = await PreRomaneioRepository.getAll();
-      const localSaved = await TripRepository.getAll();
+      const localCtrcs = await ctrcRepository.getAll();
+      const localPlanning = await routePlanningRepository.getAll();
+      const localPre = await preRomaneioRepository.getAll();
+      const localSaved = await tripRepository.getAll();
 
       const mergeRes = await syncOperationalStateWithSupabase({
         ctrcs: localCtrcs,
@@ -342,13 +342,13 @@ export default function ConfiguracoesView({
 
       const merged = mergeRes.mergedData;
 
-      if (merged.ctrcs.length > 0) await CtrcRepository.putMany(merged.ctrcs);
+      if (merged.ctrcs.length > 0) await ctrcRepository.putMany(merged.ctrcs);
       if (merged.routePlanningItems.length > 0)
-        await RoutePlanningRepository.putMany(merged.routePlanningItems);
+        await routePlanningRepository.putMany(merged.routePlanningItems);
       if (merged.preRomaneios.length > 0)
-        await PreRomaneioRepository.putMany(merged.preRomaneios);
+        await preRomaneioRepository.putMany(merged.preRomaneios);
       if (merged.savedRomaneios.length > 0)
-        await TripRepository.bulkPut(merged.savedRomaneios);
+        await tripRepository.bulkPut(merged.savedRomaneios);
 
       const exportRes = await exportOperationalStateToSupabase(merged);
 
@@ -516,7 +516,7 @@ export default function ConfiguracoesView({
 
   const loadDbStats = async () => {
     try {
-      await SyncQueueRepository.cleanupOldItems();
+      await syncQueueRepository.cleanupOldItems();
 
       const ctrcsCount = await db.ctrcs.count();
       const vehiclesCount = await db.vehicles.count();
@@ -524,9 +524,9 @@ export default function ConfiguracoesView({
       const romaneiosCount = await db.savedRomaneios.count();
       const occurrencesCount = await db.occurrences.count();
       const syncQueueCount = await db.sync_queue.count();
-      const pendingSyncsArray = await SyncQueueRepository.getPending();
-      const allSyncItems = await SyncQueueRepository.getAll();
-      const summary = await SyncQueueRepository.getSummary();
+      const pendingSyncsArray = await syncQueueRepository.getPending();
+      const allSyncItems = await syncQueueRepository.getAll();
+      const summary = await syncQueueRepository.getSummary();
 
       setDbStats({
         ctrcs: ctrcsCount,
@@ -546,7 +546,7 @@ export default function ConfiguracoesView({
 
   const handleClearSyncQueue = async () => {
     try {
-      await SyncQueueRepository.clearCompleted();
+      await syncQueueRepository.clearCompleted();
       await loadDbStats();
       setSupabaseStatus(
         "✓ Fila de sincronização concluída purgada do IndexedDB com sucesso!",

@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Ctrc, Vehicle, AppUser, CurvaAClient, DeliveryOccurrence, RoteirizacaoItem, CidadeRota, CurvaAClientLocal, Helper, RoutePlanningItem, DensityMode, RoteirizacaoPreferences, PreRomaneio, RouteGateMap, CriticClient, RoteirizacaoDiagnostics, CidadeAtendidaSSW } from '../../types';
-import { OccurrenceRepository } from '../../infrastructure/localdb/repositories/occurrenceRepository';
-import { CidadeRotaRepository } from '../../infrastructure/localdb/repositories/cidadeRotaRepository';
-import { CurvaAClientRepository } from '../../infrastructure/localdb/repositories/curvaAClientRepository';
-import { HelperRepository } from '../../infrastructure/localdb/repositories/helperRepository';
-import { RoutePlanningRepository } from '../../infrastructure/localdb/repositories/routePlanningRepository';
-import { UserPreferenceRepository } from '../../infrastructure/localdb/repositories/userPreferenceRepository';
-import { RouteGateRepository } from '../../infrastructure/localdb/repositories/routeGateRepository';
-import { PreRomaneioRepository } from '../../infrastructure/localdb/repositories/preRomaneioRepository';
-import { CidadeAtendidaSSWRepository } from '../../infrastructure/localdb/repositories/cidadeAtendidaSSWRepository';
-import { AuditLogRepository } from '../../infrastructure/localdb/repositories/auditLogRepository';
+import { routingPlanService } from '../../application/services/RoutingPlanService';
+import { occurrenceRepository } from '../../infrastructure/repositories';
+import { cidadeRotaRepository } from '../../infrastructure/repositories';
+import { curvaAClientRepository } from '../../infrastructure/repositories';
+import { helperRepository } from '../../infrastructure/repositories';
+import { routePlanningRepository } from '../../infrastructure/repositories';
+import { userPreferenceRepository } from '../../infrastructure/repositories';
+import { routeGateRepository } from '../../infrastructure/repositories';
+import { preRomaneioRepository } from '../../infrastructure/repositories';
+import { cidadeAtendidaSSWRepository } from '../../infrastructure/repositories';
+import { auditLogRepository } from '../../infrastructure/repositories';
 import { RoteirizacaoEnrichmentService } from './services/roteirizacaoEnrichmentService';
-import { routingPlanSupabaseRepository } from '../../infrastructure/supabase/repositories/routingPlanSupabaseRepository';
-import { routingPlanItemSupabaseRepository } from '../../infrastructure/supabase/repositories/routingPlanItemSupabaseRepository';
+
+
 import { preRomaneioSupabaseRepository } from '../../infrastructure/supabase/repositories/preRomaneioSupabaseRepository';
 
-import { UserPresenceSupabaseRepository } from '../../infrastructure/supabase/repositories/userPresenceSupabaseRepository';
+
 import { checkSupabaseHealth } from '../../infrastructure/supabase/client';
 
 // Modular Imports
@@ -136,11 +137,11 @@ export default function RoteirizacaoView({
       setIsNormalizing(true);
       try {
         const [occList, crList, caList, hList, sswList] = await Promise.all([
-          OccurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
-          CidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
-          CurvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
-          HelperRepository.getAll().catch(() => [] as Helper[]),
-          CidadeAtendidaSSWRepository.getAll().catch(() => [] as CidadeAtendidaSSW[]),
+          occurrenceRepository.getAll().catch(() => [] as DeliveryOccurrence[]),
+          cidadeRotaRepository.getAll().catch(() => [] as CidadeRota[]),
+          curvaAClientRepository.getAll().catch(() => [] as CurvaAClientLocal[]),
+          helperRepository.getAll().catch(() => [] as Helper[]),
+          cidadeAtendidaSSWRepository.getAll().catch(() => [] as CidadeAtendidaSSW[]),
         ]);
 
         setDbOccurrencesList(occList);
@@ -161,184 +162,41 @@ export default function RoteirizacaoView({
   const performFullSync = async (active = true, showToast = true) => {
     const companyCode = adminUser?.unid || 'SPO';
     const username = adminUser?.username || 'admin';
+    const adminUserName = adminUser?.name || '';
+    const isAdminMaster = !!adminUser?.is_master;
     
     setIsSyncingPlan(true);
 
     try {
-      // Health check first
-      const isOnline = await checkSupabaseHealth();
-      setOnlineStatus(isOnline);
-      if (!isOnline) {
-        if (showToast) {
-          setToastMessage('⚠️ Supabase offline. Trabalhando localmente.');
-          setTimeout(() => setToastMessage(null), 3000);
-        }
-        return;
+      const result = await routingPlanService.performFullSync(
+        companyCode,
+        username,
+        planningDate,
+        activeRoutingPlan?.id,
+        isAdminMaster,
+        adminUserName
+      );
+      
+      setOnlineStatus(result.isOnline);
+      if (!result.isOnline && showToast) {
+        setToastMessage('⚠️ Supabase offline. Trabalhando localmente.');
+        setTimeout(() => setToastMessage(null), 3000);
       }
-
-      // Sync Presence
-      await UserPresenceSupabaseRepository.heartbeatPresence({
-        id: username,
-        username: username,
-        name: adminUser?.name || '',
-        role: adminUser?.is_master ? 'master' : 'user',
-        company_code: companyCode,
-        current_view: 'Mesa de Roteirização',
-        current_plan_id: activeRoutingPlan?.id || '',
-        status: 'ONLINE'
-      });
-
-      const activeUsers = await UserPresenceSupabaseRepository.getActiveUsers();
+      
       if (active) {
-        setActiveUsersList(activeUsers);
-        setActiveUsersCount(activeUsers.length);
-      }
-
-      // Step A: Load Local Cache first for immediate, non-blocking render
-      try {
-        const localItems = await RoutePlanningRepository.getByDate(planningDate);
-        if (active) {
-          setRoutePlanningItems(localItems);
-        }
-      } catch (err) {
-        console.warn('[Roteirizacao] Erro ao carregar planejamento local:', err);
-      }
-
-      // Step B: Connect to Supabase to fetch/create collaborative state
-      const planRes = await routingPlanSupabaseRepository.getOrCreatePlan(companyCode, planningDate, username);
-      if (!active) return;
-
-      if (planRes.success && planRes.data) {
-        setActiveRoutingPlan(planRes.data);
-        const planId = planRes.data.id;
-        
-        const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(planId);
-        if (itemsRes.success && itemsRes.data && active) {
-          const remoteItems = itemsRes.data;
-          
-          if (remoteItems.length > 0) {
-            const mappedRemoteItems: RoutePlanningItem[] = remoteItems.map((item) => ({
-              id: `${item.planningDate}_${item.ctrcId}`,
-              ctrcId: item.ctrcId,
-              planningDate: item.planningDate,
-              suggestedRoute: item.suggestedRoute || '',
-              operationalRoute: item.operationalRoute,
-              manualPriority: item.manualPriority as any,
-              planningStatus: (item.planningStatus || 'A_PLANEJAR') as any,
-              operationalNote: item.operationalNote,
-              vehicleId: item.vehicleId,
-              vehiclePlate: item.vehiclePlate,
-              driverName: item.driverName,
-              helperName: item.helperName,
-              lockedByUser: !!item.lockedByUser,
-              updatedBy: item.updatedBy,
-              createdAt: item.createdAt || new Date().toISOString(),
-              updatedAt: item.updatedAt || new Date().toISOString(),
-            }));
-            
-            // Seed/update local cache with remote changes
-            await RoutePlanningRepository.putMany(mappedRemoteItems);
-            
-            // Load the final unified state from local cache
-            const unifiedItems = await RoutePlanningRepository.getByDate(planningDate);
-            setRoutePlanningItems(unifiedItems);
-          } else {
-            // Use systemLogService for better visibility instead of console.log
-            const { systemLogService } = await import('../../services/systemLogService');
-            systemLogService.logWarn('Roteirizacao', `Plano ${planId} vazio (0 itens). Buscando shipments para hidratar...`);
-            try {
-              const { shipmentSupabaseRepository } = await import('../../infrastructure/supabase/repositories/shipmentSupabaseRepository');
-              
-              const shipmentRes = await shipmentSupabaseRepository.getRecentShipments(31, companyCode, true);
-              if (shipmentRes.success && shipmentRes.data) {
-                const activeShipments = shipmentRes.data;
-                
-                // CR-ECOSSISTEMA-ROTEIRIZACAO-SYNC-01: Filter only for this planningDate
-                const filteredShipments = activeShipments.filter(s => s.raw_payload?.planningDate === planningDate);
-                
-                systemLogService.logInfo('Roteirizacao', `Encontrados ${activeShipments.length} shipments ativos gerais, ${filteredShipments.length} para a data ${planningDate}.`);
-                
-                const newItemsToSync = filteredShipments.map((shipment) => {
-                  const ctrcId = shipment.raw_payload?.id || shipment.ctrc_number;
-                  const suggestedRoute = shipment.raw_payload?.setor || undefined;
-                  const manualPriority = shipment.raw_payload?.manualPriority || undefined;
-                  const operationalNote = shipment.raw_payload?.operationalNote || undefined;
-                  
-                  return {
-                    id: `${planId}_${ctrcId}`,
-                    planId: planId,
-                    shipmentUniqueKey: `${companyCode}_${ctrcId}`,
-                    ctrcId: ctrcId,
-                    planningDate: planningDate,
-                    companyCode: companyCode,
-                    suggestedRoute: suggestedRoute,
-                    planningStatus: 'A_PLANEJAR',
-                    manualPriority: manualPriority,
-                    operationalNote: operationalNote,
-                    updatedBy: username,
-                  };
-                });
-                
-                if (newItemsToSync.length > 0) {
-                  systemLogService.logInfo('Roteirizacao', `Criando ${newItemsToSync.length} routing_plan_items no Supabase...`);
-                  const BATCH_SIZE = 500;
-                  for (let i = 0; i < newItemsToSync.length; i += BATCH_SIZE) {
-                    const batch = newItemsToSync.slice(i, i + BATCH_SIZE);
-                    await routingPlanItemSupabaseRepository.upsertItems(batch);
-                  }
-                  
-                  const localRouteItems = newItemsToSync.map((item) => ({
-                    id: `${item.planningDate}_${item.ctrcId}`,
-                    ctrcId: item.ctrcId,
-                    planningDate: item.planningDate,
-                    suggestedRoute: item.suggestedRoute || '',
-                    planningStatus: 'A_PLANEJAR' as any,
-                    updatedBy: username,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                  }));
-                  
-                  await RoutePlanningRepository.putMany(localRouteItems);
-                  setRoutePlanningItems(localRouteItems);
-                  systemLogService.logSuccess('Roteirizacao', `Total final da Mesa após hidratação: ${localRouteItems.length} itens.`);
-                }
-              }
-            } catch (err: any) {
-              systemLogService.logError("Roteirizacao", "Erro ao hidratar plano a partir de shipments", err);
-            }
-          }
-          
-          if (showToast) {
-            setToastMessage('🔄 Mesa sincronizada com o Supabase');
-            setTimeout(() => setToastMessage(null), 3000);
-          }
-          setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-        }
-      } else {
-        console.warn('[Roteirizacao] Supabase não retornou plano. Operando em modo offline.');
-      }
-
-      // Step C: Sync Pre-Romaneios from Supabase for this date and unit
-      try {
-        const preRes = await preRomaneioSupabaseRepository.getPreRomaneiosByDateAndUnit(companyCode, planningDate);
-        if (preRes.success && preRes.data && active) {
-          const remotePre = preRes.data.filter(pr => pr.status !== 'CANCELADO');
-          if (remotePre.length > 0) {
-            await PreRomaneioRepository.putMany(remotePre);
-            // Trigger parent CTRC re-partition so newly fetched pre-romaneios map their CTRCs as linked
-            if (onRefreshCtrcs) {
-              onRefreshCtrcs();
-            }
-          }
-        }
-      } catch (preErr) {
-        console.warn('[Roteirizacao] Erro ao sincronizar pré-romaneios do Supabase:', preErr);
+        setActiveUsersList(result.activeUsers);
+        setActiveUsersCount(result.activeUsers.length);
+        if (result.activePlan) setActiveRoutingPlan(result.activePlan);
+        setRoutePlanningItems(result.items);
       }
     } catch (err) {
-      console.warn('[Roteirizacao] Falha na sincronia remota (Mesa Colaborativa offline):', err);
-      setOnlineStatus(false);
+      console.error('[Roteirizacao] Erro sincronizando plano:', err);
+      if (showToast) {
+        setToastMessage('❌ Erro de conexão ao sincronizar mesa.');
+        setTimeout(() => setToastMessage(null), 3000);
+      }
     } finally {
-      if (active) setIsSyncingPlan(false);
+      setIsSyncingPlan(false);
     }
   };
 
@@ -388,7 +246,7 @@ export default function RoteirizacaoView({
       if (patch.operationalRoute !== undefined && (!oldItem || oldItem.operationalRoute !== patch.operationalRoute)) {
         const oldRoute = oldItem?.operationalRoute || 'NENHUMA';
         const newRoute = patch.operationalRoute || 'NENHUMA';
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: userName,
           isMaster,
           entityType: 'ROUTING_PLAN_ITEM',
@@ -405,7 +263,7 @@ export default function RoteirizacaoView({
       if (patch.planningStatus !== undefined && (!oldItem || oldItem.planningStatus !== patch.planningStatus)) {
         const oldStatus = oldItem?.planningStatus || 'A_PLANEJAR';
         const newStatus = patch.planningStatus;
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: userName,
           isMaster,
           entityType: 'ROUTING_PLAN_ITEM',
@@ -422,7 +280,7 @@ export default function RoteirizacaoView({
       if (patch.operationalNote !== undefined && (!oldItem || oldItem.operationalNote !== patch.operationalNote)) {
         const oldNote = oldItem?.operationalNote || '';
         const newNote = patch.operationalNote || '';
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: userName,
           isMaster,
           entityType: 'ROUTING_PLAN_ITEM',
@@ -439,7 +297,7 @@ export default function RoteirizacaoView({
       if (patch.vehiclePlate !== undefined && (!oldItem || oldItem.vehiclePlate !== patch.vehiclePlate)) {
         const oldPlate = oldItem?.vehiclePlate || 'NENHUM';
         const newPlate = patch.vehiclePlate || 'NENHUM';
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: userName,
           isMaster,
           entityType: 'ROUTING_PLAN_ITEM',
@@ -456,7 +314,7 @@ export default function RoteirizacaoView({
       if (patch.driverName !== undefined && (!oldItem || oldItem.driverName !== patch.driverName)) {
         const oldDriver = oldItem?.driverName || 'NENHUM';
         const newDriver = patch.driverName || 'NENHUM';
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: userName,
           isMaster,
           entityType: 'ROUTING_PLAN_ITEM',
@@ -469,7 +327,7 @@ export default function RoteirizacaoView({
         }).catch((err) => console.warn('[Audit] Erro ao registrar log de motorista:', err));
       }
 
-      const updatedItem = await RoutePlanningRepository.upsertForCtrc(ctrcId, planningDate, patch);
+      const updatedItem = await routePlanningRepository.upsertForCtrc(ctrcId, planningDate, patch);
       
       setRoutePlanningItems((prev) => {
         const index = prev.findIndex((p) => p.id === updatedItem.id);
@@ -505,7 +363,7 @@ export default function RoteirizacaoView({
           updatedBy: adminUser?.username || 'admin',
         };
 
-        routingPlanItemSupabaseRepository.upsertItem(remoteItem).catch((err) => {
+        routingPlanService.upsertItem(remoteItem as any).catch((err) => {
           console.warn('[Roteirizacao] Erro silencioso ao salvar item no Supabase:', err);
         });
       }
@@ -977,7 +835,7 @@ export default function RoteirizacaoView({
     if (!adminUser || !adminUser.username) return;
     try {
       const username = adminUser.username;
-      const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+      const localPref = await userPreferenceRepository.getLocalPreference(username, 'roteirizacao');
       const existingRoteirizacao = localPref?.preferences?.roteirizacao || {};
       
       const newRoteirizacao = {
@@ -986,14 +844,14 @@ export default function RoteirizacaoView({
       };
 
       // 1. Salvar localmente imediatamente
-      const updated = await UserPreferenceRepository.mergeLocalPreference(
+      const updated = await userPreferenceRepository.mergeLocalPreference(
         username,
         'roteirizacao',
         { roteirizacao: newRoteirizacao }
       );
       
       // 2. Chamar o push para o Supabase em background (não-bloqueante)
-      UserPreferenceRepository.pushUserPreferenceToCloud(updated).catch((err) => {
+      userPreferenceRepository.pushUserPreferenceToCloud(updated).catch((err) => {
         console.warn('[Roteirizacao] Erro silencioso ao tentar sincronizar preferência com nuvem:', err);
       });
     } catch (err) {
@@ -1010,7 +868,7 @@ export default function RoteirizacaoView({
       
       try {
         // 1. Load Local cached preferences first (for instant apply)
-        const localPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        const localPref = await userPreferenceRepository.getLocalPreference(username, 'roteirizacao');
         if (localPref && localPref.preferences && localPref.preferences.roteirizacao) {
           const rotPref = localPref.preferences.roteirizacao;
           if (rotPref.densityMode) {
@@ -1026,10 +884,10 @@ export default function RoteirizacaoView({
         setIsPrefLoaded(true);
 
         // 2. Tentar sincronizar e buscar preferências atualizadas do Supabase em background
-        await UserPreferenceRepository.syncUserPreferences(username);
+        await userPreferenceRepository.syncUserPreferences(username);
 
         // 3. Recarregar após a sincronia em background se houver alguma versão mais nova
-        const syncedPref = await UserPreferenceRepository.getLocalPreference(username, 'roteirizacao');
+        const syncedPref = await userPreferenceRepository.getLocalPreference(username, 'roteirizacao');
         if (syncedPref && syncedPref.preferences && syncedPref.preferences.roteirizacao) {
           const rotPref = syncedPref.preferences.roteirizacao;
           if (rotPref.densityMode) {
@@ -1135,7 +993,7 @@ export default function RoteirizacaoView({
       });
 
       // 2. Fetch all seeded route gate maps
-      const allGates = await RouteGateRepository.getAll();
+      const allGates = await routeGateRepository.getAll();
 
       const newPreRomaneios: PreRomaneio[] = [];
       const nowStr = new Date().toISOString();
@@ -1185,11 +1043,11 @@ export default function RoteirizacaoView({
     if (!generatedPreRomaneios) return;
     try {
       // 1. Persist the pre-romaneios
-      await PreRomaneioRepository.putMany(generatedPreRomaneios);
+      await preRomaneioRepository.putMany(generatedPreRomaneios);
 
       // Audit Log for created pre-romaneios
       for (const pr of generatedPreRomaneios) {
-        AuditLogRepository.log({
+        auditLogRepository.log({
           user: adminUser.name || adminUser.username || 'admin',
           isMaster: adminUser.is_master || false,
           entityType: 'PRE_ROMANEIO',

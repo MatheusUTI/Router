@@ -117,3 +117,9 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 ### Fixed
 - **VERCEL-RUNTIME-FIX-007**: Resolução definitiva do erro `SyntaxError: Cannot use import statement outside a module` no runtime Serverless da Vercel. O código-fonte TypeScript foi realocado para `server/vercel.ts`, removendo o arquivo conflitante `api/index.ts`. O pipeline de build (`npm run build`) agora gera diretamente o artefato CommonJS `api/index.cjs` via esbuild, com `module.exports = app`. O arquivo foi validado em Node.js puro (`test/runtime.cjs.test.js`), confirmando que nenhuma instrução ESM está presente e que requisições HTTP (GET/POST) são processadas com sucesso pela aplicação Express.
 
+## [1.27.0] - 2026-08-26
+### Refactored
+- **DEPLOY-ARCH-001**: Separação completa de infraestrutura. Frontend estático movido exclusivamente para a Vercel e backend Express realocado como um servidor Node persistente (no Render ou plataforma equivalente). Removidos todos os adapters Serverless e workarounds da Vercel (`api/index.cjs`, `vercel.ts`, rewrite rules etc). Adicionado sistema unificado de base URL com `getApiUrl()` e CORS seguro.
+
+### Added
+- **LOCAL-ARCH-001**: Estabelecido baseline arquitetural de Local-First, diagnosticando dependências e elaborando plano de migração progressiva (Zero Big-Bang) focado em isolamento, autenticação offline e independência do Supabase como fonte de verdade primária.

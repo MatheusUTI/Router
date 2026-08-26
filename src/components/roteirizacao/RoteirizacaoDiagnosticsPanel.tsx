@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { RoteirizacaoDiagnostics } from '../../types';
 import { AlertTriangle, Clipboard, Check, RefreshCw, X, ChevronRight, BarChart2 } from 'lucide-react';
-import { CtrcRepository } from '../../infrastructure/localdb/repositories/ctrcRepository';
+import { CtrcRepository } from '../../infrastructure/repositories';
 
 interface RoteirizacaoDiagnosticsPanelProps {
   diagnostics: RoteirizacaoDiagnostics;

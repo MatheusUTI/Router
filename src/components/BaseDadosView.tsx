@@ -11,8 +11,8 @@ import {
   VehicleRegistry
 } from '../types';
 import { db } from '../infrastructure/localdb/db';
-import { OperationalUnitBIRepository } from '../infrastructure/localdb/repositories/operationalUnitBIRepository';
-import { OperationalCalendarRepository } from '../infrastructure/localdb/repositories/operationalCalendarRepository';
+import { OperationalUnitBIRepository } from '../infrastructure/repositories';
+import { OperationalCalendarRepository } from '../infrastructure/repositories';
 import OcorrenciasView from './OcorrenciasView';
 import CidadesRotasView from './CidadesRotasView';
 import CurvaAView from './CurvaAView';

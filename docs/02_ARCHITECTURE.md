@@ -308,3 +308,12 @@ server/
 
 *(Nota: Esta estrutura é a referência dogmática para o ciclo `SSW-ARCH-001`. Nenhuma dependência do SSW é exposta no cliente).*
 
+
+## 9. Arquitetura de Deploy (Deployment Architecture)
+
+O sistema foi arquitetado com uma separação clara entre Frontend e Backend persistente, abandonando funções Serverless:
+
+- **Vercel (Frontend Exclusivo)**: Hospeda de forma estática o SPA React/Vite. Responsável unicamente pela interface do usuário e roteamento de SPA.
+- **Render (Backend Persistente)**: Executa um processo Node.js Express de longa duração (`dist/server.cjs`). Gerencia sessões SSW, proxy de requisições, queries ao Supabase e regras de negócio.
+- **Comunicação**: O Frontend utiliza o utilitário `getApiUrl()` configurado via variável de ambiente `VITE_API_BASE_URL` para se comunicar com o Render em produção ou com o `localhost:3000` em desenvolvimento.
+- **CORS e Segurança**: O backend (Express) implementa políticas CORS estritas que autorizam apenas origens aprovadas (URL da Vercel e localhost). Segredos do SSW nunca deixam o ambiente protegido do Render.

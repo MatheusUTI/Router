@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 import { Ctrc, Vehicle, AppUser, PreRomaneio, CurvaAClientLocal, VehicleRegistry, VehicleGrRule } from '../types';
 import { calculateSuggestedGrLimit } from '../utils/grUtils';
-import { PreRomaneioRepository } from '../infrastructure/localdb/repositories/preRomaneioRepository';
-import { AuditLogRepository } from '../infrastructure/localdb/repositories/auditLogRepository';
-import { CtrcRepository } from '../infrastructure/localdb/repositories/ctrcRepository';
-import { CurvaAClientRepository } from '../infrastructure/localdb/repositories/curvaAClientRepository';
+import { preRomaneioRepository } from '../infrastructure/repositories';
+import { auditLogRepository } from '../infrastructure/repositories';
+import { ctrcRepository } from '../infrastructure/repositories';
+import { curvaAClientRepository } from '../infrastructure/repositories';
 import { isClienteCurvaA } from './roteirizacao/helpers/isClienteCurvaA';
 import { isActivePreRomaneio } from './roteirizacao/helpers/isActivePreRomaneio';
 import { PreRomaneioPrintView } from './PreRomaneioPrintView';
@@ -73,7 +73,7 @@ export default function FinalizacaoView({
 
   const [curvaAClients, setCurvaAClients] = useState<CurvaAClientLocal[]>([]);
   useEffect(() => {
-    CurvaAClientRepository.getAll().then(setCurvaAClients).catch(err => console.error('[FinalizacaoView] error loading Curva A list:', err));
+    curvaAClientRepository.getAll().then(setCurvaAClients).catch(err => console.error('[FinalizacaoView] error loading Curva A list:', err));
   }, []);
 
   const isAgregadoVehicle = (vehiclePlate: string = '', driverName: string = '') => {
@@ -266,14 +266,14 @@ export default function FinalizacaoView({
         if (preRes.success && preRes.data) {
           const remotePre = preRes.data.filter(pr => pr.status !== 'CANCELADO');
           if (remotePre.length > 0) {
-            await PreRomaneioRepository.putMany(remotePre);
+            await preRomaneioRepository.putMany(remotePre);
           }
         }
       } catch (e) {
         console.warn('Erro ao buscar pre-romaneios do Supabase:', e);
       }
       
-      let prs = await PreRomaneioRepository.getAll();
+      let prs = await preRomaneioRepository.getAll();
       prs = prs.filter(pr => isActivePreRomaneio(pr));
       
       // Filter strictly by selected date OR active import batch if looking at today
@@ -287,7 +287,7 @@ export default function FinalizacaoView({
       
       const allCtrcIds = Array.from(new Set(prs.flatMap(p => p.ctrcIds || [])));
       if (allCtrcIds.length > 0) {
-        const ctrcs = await CtrcRepository.getByIds(allCtrcIds);
+        const ctrcs = await ctrcRepository.getByIds(allCtrcIds);
         const map: Record<string, Ctrc> = {};
         ctrcs.forEach(c => {
           map[c.id] = c;
@@ -334,7 +334,7 @@ export default function FinalizacaoView({
         description = `Campo ${String(field)} do pré-romaneio ${pr.route} alterado de '${oldVal || ''}' para '${val || ''}' por ${userName}`;
       }
 
-      AuditLogRepository.log({
+      auditLogRepository.log({
         user: userName,
         isMaster,
         entityType: 'PRE_ROMANEIO',
@@ -356,27 +356,27 @@ export default function FinalizacaoView({
     try {
       if (field === 'status') {
         const newStatus = val as any;
-        await PreRomaneioRepository.updateStatus(prId, newStatus);
+        await preRomaneioRepository.updateStatus(prId, newStatus);
 
         if (newStatus === 'CANCELADO' && prevStatus !== 'CANCELADO') {
           if (pr.ctrcIds && pr.ctrcIds.length > 0) {
-            const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+            const prCtrcs = await ctrcRepository.getByIds(pr.ctrcIds);
             const updated = prCtrcs.map(c => ({ 
               ...c, 
               status: 'Disponível' as const,
               preRomaneioId: undefined 
             }));
-            await CtrcRepository.putMany(updated);
+            await ctrcRepository.putMany(updated);
           }
         } else if (prevStatus === 'CANCELADO' && newStatus !== 'CANCELADO') {
           if (pr.ctrcIds && pr.ctrcIds.length > 0) {
-            const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+            const prCtrcs = await ctrcRepository.getByIds(pr.ctrcIds);
             const updated = prCtrcs.map(c => ({ 
               ...c, 
               status: 'Separando' as const,
               preRomaneioId: prId 
             }));
-            await CtrcRepository.putMany(updated);
+            await ctrcRepository.putMany(updated);
           }
         }
         
@@ -386,7 +386,7 @@ export default function FinalizacaoView({
           await onRefreshCtrcs();
         }
       } else {
-        await PreRomaneioRepository.updateAssignment(prId, { [field]: val });
+        await preRomaneioRepository.updateAssignment(prId, { [field]: val });
         triggerToast(`Campo ${String(field)} do pré-romaneio ${pr.route} atualizado.`);
         loadPreRomaneiosData();
       }
@@ -403,18 +403,18 @@ export default function FinalizacaoView({
     
     try {
       if (pr.ctrcIds && pr.ctrcIds.length > 0) {
-        const prCtrcs = await CtrcRepository.getByIds(pr.ctrcIds);
+        const prCtrcs = await ctrcRepository.getByIds(pr.ctrcIds);
         const updated = prCtrcs.map(c => ({ 
           ...c, 
           status: 'Disponível' as const,
           preRomaneioId: undefined 
         }));
-        await CtrcRepository.putMany(updated);
+        await ctrcRepository.putMany(updated);
       }
       
       const userName = adminUser?.name || adminUser?.username || 'admin';
       
-      await PreRomaneioRepository.delete(pr.id, userName, 'Cancelamento operacional');
+      await preRomaneioRepository.delete(pr.id, userName, 'Cancelamento operacional');
 
       if (pr.planId) {
         try {
@@ -442,7 +442,7 @@ export default function FinalizacaoView({
 
       // Audit Log for cancellation of pre-romaneio
       const isMaster = adminUser?.is_master || false;
-      AuditLogRepository.log({
+      auditLogRepository.log({
         user: userName,
         isMaster,
         entityType: 'PRE_ROMANEIO',

@@ -4,6 +4,7 @@ import { DEFAULT_OPERATIONAL_UNIT } from '../constants/operationalUnits';
 import { parseCtrcSeries, checkIsSubcontract } from '../utils/ctrcUtils';
 import { classifyOperationalFlow } from '../services/operationalFlowClassifier';
 import { SswLatestReportInfo } from '../integrations/ssw/types/jobs';
+import { getApiUrl } from '../config/api';
 
 interface ImportacaoViewProps {
   onAddCtrcs: (newCtrcs: Ctrc[]) => void;
@@ -91,7 +92,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
     try {
       setIsFetchingLatest(true);
       const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
-      const res = await fetch(`/api/ssw/455/latest?unid=${encodeURIComponent(unid)}`);
+      const res = await fetch(getApiUrl(`/api/ssw/455/latest?unid=${encodeURIComponent(unid)}`));
       const data = await res.json();
       if (res.ok && data.success && data.latest) {
         setLatestReportInfo(data.latest);
@@ -118,7 +119,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
       const username = adminUser?.username || 'operador';
 
-      const response = await fetch('/api/ssw/455/latest/sync', {
+      const response = await fetch(getApiUrl('/api/ssw/455/latest/sync'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ unid, requestedBy: username })
@@ -166,7 +167,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
       const username = adminUser?.username || 'operador';
 
-      const response = await fetch('/api/ssw/455/generate', {
+      const response = await fetch(getApiUrl('/api/ssw/455/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -218,7 +219,7 @@ export default function ImportacaoView({ onAddCtrcs, adminUser }: ImportacaoView
       const unid = adminUser?.unid || DEFAULT_OPERATIONAL_UNIT;
       const username = adminUser?.username || 'operador';
 
-      const response = await fetch('/api/ssw/455/retry', {
+      const response = await fetch(getApiUrl('/api/ssw/455/retry'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

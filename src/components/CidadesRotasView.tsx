@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, DragEvent } from 'react';
 import { CidadeRota, CidadeAtendidaSSW } from '../types';
-import { CidadeRotaRepository } from '../infrastructure/localdb/repositories/cidadeRotaRepository';
-import { CidadeAtendidaSSWRepository } from '../infrastructure/localdb/repositories/cidadeAtendidaSSWRepository';
+import { CidadeRotaRepository } from '../infrastructure/repositories';
+import { CidadeAtendidaSSWRepository } from '../infrastructure/repositories';
 import { initialCidadesRotas } from '../data';
 
 interface CidadesRotasViewProps {

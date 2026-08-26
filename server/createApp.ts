@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import { getSsw455Service, getSsw101Service, getSswSessionManager, getSswConfigManager } from "./ssw/sswServiceInstance";
 import { SswError } from "../src/integrations/ssw/types/errors";
@@ -105,6 +106,24 @@ function getSystemSupabaseClient() {
 
 export function createApp() {
   const app = express();
+  
+  // Setup CORS to allow frontend Vercel origin and localhost
+  const allowedOrigins = process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000", "http://localhost:4173"] 
+    : ["http://localhost:5173", "http://localhost:3000", "http://localhost:4173"];
+    
+  app.use(cors({
+    origin: function(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  }));
+
   app.use(express.json());
 
   // Supabase is initialized lazily per request now.

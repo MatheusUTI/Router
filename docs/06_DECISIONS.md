@@ -112,3 +112,12 @@ Este arquivo mantém o histórico das decisões estruturais do **RotaOperational
 - **Decisão**: Extrair toda a configuração e rotas do Express para um factory compartilhado (`server/createApp.ts`), que retorna a instância HTTP configurada. 
 - **Justificativa**: Garante que o mesmo código de regra de negócio, rotas e APIs funcione de forma transparente tanto como Servidor Local persistente (`server.ts`) quanto como Função Serverless Vercel (`api/index.ts`). O estado de execução (Session, Cache, Circuit Breaker) é preservado em memória apenas como otimização, sem quebrar as integrações vitais em caso de cold start da Função.
 - **Impacto**: Compatibilidade nativa Vercel Edge/Serverless Functions (eliminando erros 404 para rotas `/api/*`), persistência em memória mapeada como efêmera segura, separação limpa de endpoints backend vs frontend Vite em produção.
+## [DECISION-011] Arquitetura de Deploy Desacoplada (Frontend/Backend)
+**Contexto**: O uso de Serverless Functions (Vercel) para a camada backend do Router, que precisa gerenciar estados de sessão legados do SSW (cookies), long-polling, requisições lentas e isolamento de dependências.
+**Decisão**: Mover a camada do Express (API + Integração SSW) para uma infraestrutura persistente e autônoma Node.js (ex: Render) e utilizar a Vercel exclusivamente para o Frontend (React SPA + estáticos).
+**Justificativa**: Simplifica imensamente o CI/CD; o SSW depende intrinsecamente de sessões estaduais (HTTP-only cookies na borda do servidor) e long polling, incompatíveis com os curtos timeouts e cold starts nativos de Serverless; evita refatorações extremas de CommonJS/ESM requeridas pela plataforma serverless.
+
+## [DECISION-012] Local-First Operational Source of Truth
+**Contexto**: O sistema atualmente depende primariamente da Vercel para frontend e Render (Node.js) para integrações e backend, com uso extensivo do IndexedDB/Dexie no navegador. Algumas integrações cloud-only (Supabase) causam impacto na continuidade das operações caso haja falha de internet.
+**Decisão**: RotaOperational será um sistema LOCAL-FIRST. A base de dados local (atualmente IndexedDB, com futura migração avaliada para SQLite em ambiente desktop/Node) passa a ser a **única fonte da verdade** para a operação. A nuvem (Supabase) passará a ser estritamente uma camada de sincronização, colaboração e backup.
+**Justificativa**: A logística não pode parar por falta de conectividade externa se a frota, a carga e os operadores estão fisicamente presentes na unidade operacional.

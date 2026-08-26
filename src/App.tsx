@@ -58,6 +58,7 @@ import { RouteGateRepository } from "./infrastructure/localdb/repositories/route
 import { PreRomaneioRepository } from "./infrastructure/localdb/repositories/preRomaneioRepository";
 import { UserPreferenceRepository } from "./infrastructure/localdb/repositories/userPreferenceRepository";
 import { APP_VERSION } from "./constants/appVersion";
+import { getApiUrl } from "./config/api";
 
 // Diagnostics master switch to reduce console verbosity
 const ENABLE_ROUTER_DIAGNOSTICS = false;
@@ -193,6 +194,7 @@ export async function partitionCtrcs(
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>("login");
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'available' | 'unavailable' | 'error'>('checking');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("router_theme");
@@ -204,6 +206,28 @@ export default function App() {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("router_theme", theme);
   }, [theme]);
+
+  // Check backend health on mount
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        setBackendStatus('checking');
+        const res = await fetch(getApiUrl("/api/health"), {
+          method: 'GET',
+          // timeout handling implicitly or rely on fetch
+        });
+        if (res.ok) {
+          setBackendStatus('available');
+        } else {
+          setBackendStatus('error');
+        }
+      } catch (err) {
+        console.error("Backend health check failed:", err);
+        setBackendStatus('unavailable');
+      }
+    };
+    checkBackend();
+  }, []);
 
   // Load and apply initial density & contrast on mount
   useEffect(() => {
@@ -1934,13 +1958,43 @@ export default function App() {
   };
 
   if (currentView === "login") {
-    return <LoginView onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        {backendStatus === 'checking' && (
+          <div className="fixed top-0 inset-x-0 z-[200] bg-blue-500/90 text-white text-xs font-medium py-1.5 px-4 text-center backdrop-blur-sm shadow-sm flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+            Conectando ao servidor...
+          </div>
+        )}
+        {(backendStatus === 'error' || backendStatus === 'unavailable') && (
+          <div className="fixed top-0 inset-x-0 z-[200] bg-red-500/90 text-white text-xs font-medium py-1.5 px-4 text-center backdrop-blur-sm shadow-sm flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-[14px]">cloud_off</span>
+            Servidor indisponível. Algumas funções podem falhar.
+            <button onClick={() => window.location.reload()} className="underline ml-2 font-bold cursor-pointer hover:text-white/80">Tentar novamente</button>
+          </div>
+        )}
+        <LoginView onLoginSuccess={handleLoginSuccess} />
+      </>
+    );
   }
 
   return (
     <div
       className={`router-app font-sans antialiased ${currentView === "roteirizacao" ? "pt-0" : "pt-16"} md:pl-[72px] transition-all duration-300`}
     >
+      {backendStatus === 'checking' && (
+        <div className="fixed top-0 inset-x-0 z-[200] bg-blue-500/90 text-white text-xs font-medium py-1.5 px-4 text-center backdrop-blur-sm shadow-sm flex items-center justify-center gap-2">
+          <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+          Conectando ao servidor...
+        </div>
+      )}
+      {(backendStatus === 'error' || backendStatus === 'unavailable') && (
+        <div className="fixed top-0 inset-x-0 z-[200] bg-red-500/90 text-white text-xs font-medium py-1.5 px-4 text-center backdrop-blur-sm shadow-sm flex items-center justify-center gap-2">
+          <span className="material-symbols-outlined text-[14px]">cloud_off</span>
+          Servidor indisponível. Algumas funções podem falhar.
+          <button onClick={() => window.location.reload()} className="underline ml-2 font-bold cursor-pointer hover:text-white/80">Tentar novamente</button>
+        </div>
+      )}
       {/* Collapsible overlay sidebar */}
       <Sidebar
         currentView={currentView}

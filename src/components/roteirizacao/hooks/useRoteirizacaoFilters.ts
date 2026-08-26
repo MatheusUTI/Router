@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { RoteirizacaoItem, AppUser, RoteirizacaoSortField, SortDirection } from '../../../types';
 import { DEFAULT_OPERATIONAL_UNIT } from '../../../constants/operationalUnits';
-import { UserPreferenceRepository } from '../../../infrastructure/localdb/repositories/userPreferenceRepository';
+import { UserPreferenceRepository } from '../../../infrastructure/repositories';
 
 export const DEFAULT_ROUTE_SECTORS = [
   'Agendamento',

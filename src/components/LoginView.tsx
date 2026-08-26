@@ -2,6 +2,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { AppUser } from '../types';
 import { getAppUsers, isSupabaseConfigured, supabase, getSavedCredentials } from '../supabase';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../constants/operationalUnits';
+import { getApiUrl } from '../config/api';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AppUser) => void;
@@ -91,7 +92,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       }
 
       // Authenticate via server-side endpoint /api/auth/login
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(getApiUrl("/api/auth/login"), {
         method: "POST",
         headers,
         body: JSON.stringify({ username: cleanUser, password: cleanPass })

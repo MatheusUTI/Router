@@ -1,3 +1,4 @@
+import { getApiUrl } from './config/api';
 import { createClient } from '@supabase/supabase-js';
 import { Vehicle, DriverScore, Ctrc, Ticket, CriticClient, AppUser, DeliveryOccurrence, CurvaAClient, RoutePlanningItem, PreRomaneio } from './types';
 import { RomaneioSave } from './infrastructure/localdb/db';
@@ -244,7 +245,7 @@ export async function getAppUsers(): Promise<AppUser[]> {
       headers["x-supabase-url"] = creds.url;
       headers["x-supabase-key"] = creds.key;
     }
-    const res = await fetch("/api/auth/users", { headers });
+    const res = await fetch(getApiUrl("/api/auth/users"), { headers });
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.users) {
@@ -330,7 +331,7 @@ export async function saveAppUser(user: AppUser): Promise<{ success: boolean; me
       headers["x-supabase-url"] = creds.url;
       headers["x-supabase-key"] = creds.key;
     }
-    const res = await fetch("/api/auth/users", {
+    const res = await fetch(getApiUrl("/api/auth/users"), {
       method: "POST",
       headers,
       body: JSON.stringify(updatedUser)
@@ -375,7 +376,7 @@ export async function deleteAppUser(username: string): Promise<{ success: boolea
       headers["x-supabase-url"] = creds.url;
       headers["x-supabase-key"] = creds.key;
     }
-    const res = await fetch(`/api/auth/users/${encodeURIComponent(username)}`, {
+    const res = await fetch(getApiUrl(`/api/auth/users/${encodeURIComponent(username)}`), {
       method: "DELETE",
       headers
     });
