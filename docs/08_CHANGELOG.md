@@ -103,5 +103,9 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 
 ## [1.26.4] - 2026-08-26
 ### Fixed
-- **VERCEL-RUNTIME-FIX-004**: Eliminação do conflito de rotas e nomes de arquivo no Vercel CLI (`Two or more files have conflicting paths or names: api/index.js vs api/index.ts`). O artefato CommonJS autocontido agora é gerado em `api/vercel.cjs` (com basename único `vercel` e extensão `.cjs`), preservando `api/index.ts` intacto como código-fonte. O `vercel.json` foi configurado com o rewrite `/api/(.*) -> /api/vercel.cjs`. Os testes de regressão de runtime CommonJS no Node.js puro (`test/runtime.cjs.test.js`) foram atualizados para validar `api/vercel.cjs`.
+- **VERCEL-RUNTIME-FIX-004**: Eliminação do conflito de rotas e nomes de arquivo no Vercel CLI (`Two or more files have conflicting paths or names: api/index.js vs api/index.ts`).
+
+## [1.26.5] - 2026-08-26
+### Fixed
+- **VERCEL-RUNTIME-FIX-005**: Correção da precedência de roteamento na Vercel impedindo que o fallback SPA do Vite engula requisições `/api/*`. O `vercel.json` foi configurado com rewrites explícitos (`/api/(.*) -> /api` e `/((?!api($|/)).*) -> /index.html`). O entrypoint oficial `api/index.ts` é compilado diretamente pela engine `@vercel/node` como Function Serverless, recebendo todos os verbos HTTP (GET, POST) e respondendo `application/json` em vez do `index.html` estático (que causava erro 405 Method Not Allowed em POST e erro de parse JSON no frontend). Criado teste de regressão em `test/vercel.routing.test.ts`.
 
