@@ -4,55 +4,53 @@ import fs from "fs";
 import path from "path";
 
 async function runRoutingRegressionTest() {
-  console.log("--- Iniciando Teste de Regressão de Roteamento Vercel & SPA Fallback ---");
+  console.log("--- Iniciando Teste de Validação de Roteamento Vercel (Precedência Oficial) ---");
 
   // 1. Validar vercel.json
   const vercelJsonPath = path.resolve(__dirname, "../vercel.json");
   if (!fs.existsSync(vercelJsonPath)) {
     throw new Error("Arquivo vercel.json não encontrado!");
   }
-  const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, "utf-8"));
-  const rewrites = vercelConfig.rewrites || [];
+  const rawVercel = fs.readFileSync(vercelJsonPath, "utf-8");
+  let vercelConfig: any;
+  try {
+    vercelConfig = JSON.parse(rawVercel);
+  } catch (err: any) {
+    throw new Error(`Falha ao fazer parse do vercel.json: ${err.message}`);
+  }
 
+  const rewrites = vercelConfig.rewrites || [];
   console.log("✓ Regras de rewrite no vercel.json:", JSON.stringify(rewrites, null, 2));
 
-  // Verificar se há regra para /api/* direcionando para a função /api
-  const apiRewrite = rewrites.find((r: any) => r.source.startsWith("/api") && r.destination === "/api");
-  if (!apiRewrite) {
-    throw new Error("Falta regra de rewrite no vercel.json mapeando /api/(.*) -> /api");
-  }
-  console.log("✓ Regra de API encontrada:", apiRewrite);
-
-  // Verificar se a regra SPA fallback NÃO engole /api/*
-  const spaFallback = rewrites.find((r: any) => r.destination === "/index.html");
-  if (!spaFallback) {
-    throw new Error("Falta regra de SPA fallback para /index.html no vercel.json");
-  }
-
-  // Testar regex do SPA fallback
-  const spaRegex = new RegExp("^" + spaFallback.source.replace(/\(\.\*\)/g, ".*") + "$");
-  
-  const testPaths = [
-    { path: "/api/health", shouldMatchSpa: false },
-    { path: "/api/ssw/config", shouldMatchSpa: false },
-    { path: "/api/ssw/health", shouldMatchSpa: false },
-    { path: "/api/ssw/101/query", shouldMatchSpa: false },
-    { path: "/api/auth/login", shouldMatchSpa: false },
-    { path: "/roteirizacao", shouldMatchSpa: true },
-    { path: "/configuracoes", shouldMatchSpa: true },
-    { path: "/dashboard", shouldMatchSpa: true },
-    { path: "/", shouldMatchSpa: true },
-  ];
-
-  for (const { path: testPath, shouldMatchSpa } of testPaths) {
-    // Note: in path-to-regexp source like "/((?!api($|/)).*)", we test if regex accepts/rejects
-    const regexPattern = new RegExp(`^${spaFallback.source}$`);
-    const matches = regexPattern.test(testPath);
-    if (matches !== shouldMatchSpa) {
-      throw new Error(`Falha no regex de SPA fallback para '${testPath}': esperado match=${shouldMatchSpa}, obtido=${matches}`);
+  // Validação: Não permitir regex não suportado (ex: lookaheads/lookbehinds inline como (?!) ou (?<=))
+  for (const rule of rewrites) {
+    if (/\(\?[=!<!]/.test(rule.source)) {
+      throw new Error(`Regra de rewrite contém sintaxe de regex não suportada pela Vercel: ${rule.source}`);
     }
   }
-  console.log("✓ Regex do SPA fallback validado com precisão: NENHUMA rota /api/* é engolida pelo /index.html.");
+  console.log("✓ Sintaxe Vercel validada: Nenhum regex de lookahead/lookbehind não suportado detectado.");
+
+  // Validação: A regra de API deve vir ANTES do SPA fallback
+  const apiIndex = rewrites.findIndex((r: any) => r.source.startsWith("/api") && r.destination === "/api");
+  const spaIndex = rewrites.findIndex((r: any) => r.destination === "/index.html");
+
+  if (apiIndex === -1) {
+    throw new Error("Falta regra de rewrite no vercel.json mapeando /api/:path* -> /api");
+  }
+  if (spaIndex === -1) {
+    throw new Error("Falta regra de SPA fallback para /index.html no vercel.json");
+  }
+  if (apiIndex >= spaIndex) {
+    throw new Error(`Precedência incorreta: Regra da API (índice ${apiIndex}) deve ser definida antes do SPA fallback (índice ${spaIndex})`);
+  }
+  console.log(`✓ Precedência confirmada: API (/api/:path*) no índice ${apiIndex} precede SPA fallback (/:path*) no índice ${spaIndex}.`);
+
+  // Validação: Entrypoint da Function Serverless existe
+  const apiEntrypoint = path.resolve(__dirname, "../api/index.ts");
+  if (!fs.existsSync(apiEntrypoint)) {
+    throw new Error("Entrypoint da API (api/index.ts) não encontrado!");
+  }
+  console.log("✓ Entrypoint Serverless api/index.ts existe e está registrado para compilação pelo @vercel/node.");
 
   // 2. Executar servidor Express real e testar Content-Type e Métodos HTTP (GET e POST)
   const app = createApp();

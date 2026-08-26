@@ -107,5 +107,9 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 
 ## [1.26.5] - 2026-08-26
 ### Fixed
-- **VERCEL-RUNTIME-FIX-005**: Correção da precedência de roteamento na Vercel impedindo que o fallback SPA do Vite engula requisições `/api/*`. O `vercel.json` foi configurado com rewrites explícitos (`/api/(.*) -> /api` e `/((?!api($|/)).*) -> /index.html`). O entrypoint oficial `api/index.ts` é compilado diretamente pela engine `@vercel/node` como Function Serverless, recebendo todos os verbos HTTP (GET, POST) e respondendo `application/json` em vez do `index.html` estático (que causava erro 405 Method Not Allowed em POST e erro de parse JSON no frontend). Criado teste de regressão em `test/vercel.routing.test.ts`.
+- **VERCEL-RUNTIME-FIX-005**: Correção da precedência de roteamento na Vercel impedindo que o fallback SPA do Vite engula requisições `/api/*`. O entrypoint oficial `api/index.ts` é compilado diretamente pela engine `@vercel/node` como Function Serverless.
+
+## [1.26.6] - 2026-08-26
+### Fixed
+- **VERCEL-RUNTIME-FIX-006**: Remoção de sintaxe de regex não suportada pela Vercel (`/((?!api($|/)).*)`) e adoção de padrões de rota oficiais baseados em `path-to-regexp` (`/api/:path*` -> `/api`, `/:path*` -> `/index.html`). A precedência de avaliação por ordem garante que requisições `/api/*` sejam encaminhadas para a Function Serverless do Express sem interferência do SPA fallback, enquanto rotas do cliente e assets estáticos são servidos normalmente. Atualizado teste de regressão em `test/vercel.routing.test.ts`.
 
