@@ -7,7 +7,8 @@
 - `VERCEL-RUNTIME-FIX-003` aligned the Vercel serverless entrypoint module format: bundled `api/index.ts` into a self-contained CommonJS artifact using esbuild.
 - `VERCEL-RUNTIME-FIX-004` resolved the path conflict in Vercel CLI.
 - `VERCEL-RUNTIME-FIX-005` established API routing before SPA fallback.
-- `VERCEL-RUNTIME-FIX-006` resolved deployment validation errors on Vercel by removing unsupported negative lookahead regex `/((?!api($|/)).*)` and adopting official Vercel route patterns (`/api/:path*` -> `/api`, `/:path*` -> `/index.html`). Order-based rewrite precedence guarantees `/api/*` requests reach the serverless Express app (`api/index.ts`), static assets are served normally, and non-API deep links route to `/index.html`.
+- `VERCEL-RUNTIME-FIX-006` resolved deployment validation errors on Vercel by removing unsupported negative lookahead regex `/((?!api($|/)).*)` and adopting official Vercel route patterns (`/api/:path*` -> `/api`, `/:path*` -> `/index.html`).
+- `VERCEL-RUNTIME-FIX-007` solved the runtime CommonJS syntax crash (`Cannot use import statement outside a module`) in production Vercel functions. Relocated the TypeScript source entrypoint to `server/vercel.ts`, removed conflicting `api/index.ts`, and bundled the production Serverless Function directly into `api/index.cjs` via esbuild. Pure CommonJS execution was verified natively via `test/runtime.cjs.test.js`, guaranteeing that all HTTP methods (GET, POST) on `/api/*` reach the Express application.
 - SSW 455 integration is stable, robust, and correctly separates parsing, orchestration, and polling.
 - SSW 101 integration is in place with resilient gateways.
 - Contract test suite covers Vercel serverless bootstrap and confirms stable behavior.

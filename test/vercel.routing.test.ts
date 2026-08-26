@@ -46,11 +46,11 @@ async function runRoutingRegressionTest() {
   console.log(`✓ Precedência confirmada: API (/api/:path*) no índice ${apiIndex} precede SPA fallback (/:path*) no índice ${spaIndex}.`);
 
   // Validação: Entrypoint da Function Serverless existe
-  const apiEntrypoint = path.resolve(__dirname, "../api/index.ts");
+  const apiEntrypoint = path.resolve(__dirname, "../api/index.cjs");
   if (!fs.existsSync(apiEntrypoint)) {
-    throw new Error("Entrypoint da API (api/index.ts) não encontrado!");
+    throw new Error("Entrypoint da API (api/index.cjs) não encontrado!");
   }
-  console.log("✓ Entrypoint Serverless api/index.ts existe e está registrado para compilação pelo @vercel/node.");
+  console.log("✓ Entrypoint Serverless api/index.cjs existe e está registrado para execução pelo @vercel/node.");
 
   // 2. Executar servidor Express real e testar Content-Type e Métodos HTTP (GET e POST)
   const app = createApp();

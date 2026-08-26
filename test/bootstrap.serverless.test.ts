@@ -1,4 +1,4 @@
-import app from "../api/index";
+import app from "../server/vercel";
 import http from "http";
 
 async function run() {
