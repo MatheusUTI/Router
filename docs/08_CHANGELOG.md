@@ -92,3 +92,12 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 ## [1.26.1] - 2026-08-25
 ### Fixed
 - **VERCEL-RUNTIME-FIX-001**: Removida a configuração `"type": "module"` do `package.json` para evitar que a Vercel Serverless Function tente gerar um output ESM nativo. Em ESM, dependências do Express causavam fatal crash (`Error: Dynamic require of "path" is not supported`) e erros `ERR_MODULE_NOT_FOUND` nos imports relativos sem extensão `.js`. A compilação Vercel agora processa as APIs em CommonJS nativo.
+
+## [1.26.2] - 2026-08-25
+### Fixed
+- **VERCEL-RUNTIME-FIX-002**: Refatoração do `server/createApp.ts` para torná-lo um módulo 100% puro durante o import em ambiente Serverless (Vercel). Removemos a inicialização síncrona do `dotenv` e tornamos a instanciação do cliente Supabase, resolução de DNS (`dns.lookup`) e parser de variáveis de ambiente completamente _lazy_ (acionadas apenas no ciclo de vida do request HTTP, e não no import do módulo). Adicionado teste de bootstrap simulando o gateway Vercel, validando que o cold start sem credenciais retorna HTTP 200 no `/api/health`.
+
+## [1.26.3] - 2026-08-25
+### Fixed
+- **VERCEL-RUNTIME-FIX-003**: Alinhamento do formato de módulo do entrypoint Serverless da Vercel (`api/index.js`). Como o `package.json` opera em modo CommonJS (sem `"type": "module"`), o arquivo `api/index.ts` passa a ser explicitamente empacotado pelo `esbuild` durante o `npm run build` como um bundle CommonJS autocontido (`api/index.js`) com compatibilidade direta para `module.exports = app`. O arquivo `vercel.json` foi atualizado para apontar os rewrites de `/api/(.*)` para `/api/index.js`. Criado teste automatizado de execução direta no Node.js puro (`test/runtime.cjs.test.js`), eliminando o erro de produção `SyntaxError: Cannot use import statement outside a module`.
+
