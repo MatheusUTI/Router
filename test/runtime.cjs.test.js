@@ -5,7 +5,7 @@ const fs = require("fs");
 async function runRuntimeValidation() {
   console.log("--- Iniciando Validação de Runtime CommonJS (Vercel Serverless Entrypoint) ---");
 
-  const entrypointPath = path.resolve(__dirname, "../api/index.js");
+  const entrypointPath = path.resolve(__dirname, "../api/vercel.cjs");
   if (!fs.existsSync(entrypointPath)) {
     throw new Error(`Artefato compilado para Vercel não encontrado em: ${entrypointPath}. Execute 'npm run build' antes do teste.`);
   }
@@ -13,23 +13,23 @@ async function runRuntimeValidation() {
   // Validação 1: O arquivo NÃO pode conter 'import ' ou 'export ' no topo do código
   const rawContent = fs.readFileSync(entrypointPath, "utf-8");
   if (/^import\s+/m.test(rawContent) || /^export\s+default/m.test(rawContent)) {
-    throw new Error("O arquivo api/index.js contém instruções ESM (import/export). Deve ser um bundle CommonJS puro.");
+    throw new Error("O arquivo api/vercel.cjs contém instruções ESM (import/export). Deve ser um bundle CommonJS puro.");
   }
-  console.log("✓ Sintaxe: api/index.js validado como bundle CommonJS (sem imports ESM no arquivo compilado).");
+  console.log("✓ Sintaxe: api/vercel.cjs validado como bundle CommonJS (sem imports ESM no arquivo compilado).");
 
   // Validação 2: Require nativo do Node.js
   let app;
   try {
     app = require(entrypointPath);
   } catch (err) {
-    throw new Error(`Falha no require() nativo do Node.js sobre api/index.js: ${err.message}`);
+    throw new Error(`Falha no require() nativo do Node.js sobre api/vercel.cjs: ${err.message}`);
   }
 
   const handler = typeof app === "function" ? app : (app && typeof app.default === "function" ? app.default : null);
   if (!handler) {
-    throw new Error(`O export de api/index.js não é uma função Express válida. Recebido tipo: ${typeof app}`);
+    throw new Error(`O export de api/vercel.cjs não é uma função Express válida. Recebido tipo: ${typeof app}`);
   }
-  console.log("✓ Compatibilidade Node.js: require('../api/index.js') executado com sucesso e exporta app Express.");
+  console.log("✓ Compatibilidade Node.js: require('../api/vercel.cjs') executado com sucesso e exporta app Express.");
 
   // Validação 3: Execução HTTP real em servidor nativo
   const server = http.createServer(handler);

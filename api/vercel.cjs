@@ -4103,4 +4103,4 @@ function createApp() {
 var app = createApp();
 var index_default = app;
 module.exports = module.exports.default || module.exports;
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=vercel.cjs.map
