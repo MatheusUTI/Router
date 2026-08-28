@@ -154,6 +154,7 @@ export interface CriticClient {
 }
 
 export interface AppUser {
+  authMode?: 'ONLINE' | 'OFFLINE_CACHED';
   username: string;
   password?: string;
   name: string;
@@ -660,4 +661,14 @@ export interface KpiDashboardMetrics {
   periodStart: string;
   periodEnd: string;
   operationalGoal: number;
+}
+
+export interface LocalAuthRecord {
+  username: string; // PK
+  userProfile: AppUser;
+  salt: string;
+  verifier: string;
+  iterations: number;
+  validatedAt: string;
+  expiresAt: string;
 }

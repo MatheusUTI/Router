@@ -6,6 +6,7 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   adminName: string;
   adminRole: string;
+  authMode?: 'ONLINE' | 'OFFLINE_CACHED';
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +18,7 @@ export default function Sidebar({
   onViewChange,
   adminName,
   adminRole,
+  authMode,
   onLogout,
   isOpen,
   onClose,
@@ -218,7 +220,12 @@ export default function Sidebar({
                 </span>
               </div>
               <div className="text-left min-w-0 leading-normal transition-all duration-300 opacity-100 md:opacity-0 group-hover:md:opacity-100 md:w-0 group-hover:md:w-auto overflow-hidden whitespace-nowrap">
-                <p className="text-xs font-semibold text-on-surface truncate">{adminName}</p>
+                <p className="text-xs font-semibold text-on-surface truncate flex items-center gap-1">
+                  {adminName}
+                  {authMode === 'OFFLINE_CACHED' && (
+                    <span className="material-symbols-outlined text-[12px] text-orange-500" title="Sessão Local (Modo Offline)">cloud_off</span>
+                  )}
+                </p>
                 <p className="text-[9px] font-mono text-on-surface-variant truncate">{adminRole}</p>
               </div>
             </div>

@@ -418,25 +418,52 @@ export default function FinalizacaoView({
 
       if (pr.planId) {
         try {
-          const { routingPlanItemSupabaseRepository } = await import('../infrastructure/supabase/repositories/routingPlanItemSupabaseRepository');
-          const itemsRes = await routingPlanItemSupabaseRepository.getItemsByPlan(pr.planId);
-          if (itemsRes.success && itemsRes.data) {
-            const updatedItems = itemsRes.data
-              .filter(item => pr.ctrcIds?.includes(item.ctrcId))
-              .map(item => ({
-                ...item,
+          // LOCAL-DATA-002: Use Write-First local repository instead of direct Supabase query
+          const { routePlanningRepository } = await import('../infrastructure/repositories');
+          const { addToSyncQueue, SyncQueueRepository } = await import('../infrastructure/localdb/repositories/syncQueueRepository');
+          
+          const localItems = await routePlanningRepository.getByDate(pr.planId); // planId == planningDate
+          
+          if (localItems && localItems.length > 0) {
+            const itemsToRevert = localItems.filter(item => pr.ctrcIds?.includes(item.ctrcId));
+            
+            for (const item of itemsToRevert) {
+              const updatedItem = await routePlanningRepository.upsertForCtrc(item.ctrcId, item.planningDate, {
                 planningStatus: 'A_PLANEJAR',
                 operationalRoute: item.operationalRoute === pr.route ? undefined : item.operationalRoute,
-                updatedAt: new Date().toISOString(),
                 updatedBy: userName
-              }));
-            
-            if (updatedItems.length > 0) {
-              await routingPlanItemSupabaseRepository.upsertItems(updatedItems);
+              });
+              
+              // Only enqueue if we have company code and active routing plan
+              const companyCode = localStorage.getItem('user_unit') || 'SPO';
+              // For simplicity, we reconstruct the remote payload exactly as expected by Supabase
+              const remoteItem = {
+                id: `${pr.planId}_${item.ctrcId}`,
+                planId: pr.planId,
+                shipmentUniqueKey: `${companyCode}_${item.ctrcId}`,
+                ctrcId: item.ctrcId,
+                planningDate: item.planningDate,
+                companyCode: companyCode,
+                suggestedRoute: updatedItem.suggestedRoute || undefined,
+                operationalRoute: updatedItem.operationalRoute || undefined,
+                planningStatus: updatedItem.planningStatus || 'A_PLANEJAR',
+                manualPriority: updatedItem.manualPriority || undefined,
+                operationalNote: updatedItem.operationalNote || undefined,
+                vehicleId: updatedItem.vehicleId || undefined,
+                vehiclePlate: updatedItem.vehiclePlate || undefined,
+                driverName: updatedItem.driverName || undefined,
+                helperName: updatedItem.helperName || undefined,
+                lockedByUser: updatedItem.lockedByUser ? String(updatedItem.lockedByUser) : undefined,
+                updatedBy: userName,
+              };
+              
+              await addToSyncQueue('route_planning_item', 'UPDATE', remoteItem);
             }
+            
+            SyncQueueRepository.processSyncQueue().catch(() => {});
           }
         } catch (e) {
-          console.warn('[FinalizacaoView] Erro ao reverter itens de planejamento no Supabase:', e);
+          console.warn('[FinalizacaoView] Erro ao reverter itens de planejamento via Fila de Sincronização:', e);
         }
       }
 

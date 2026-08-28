@@ -1,9 +1,9 @@
-# Próxima Tarefa: LOCAL-DATA-001
+# Próxima Tarefa: SYNC-ARCH-001
 
 ## Objetivo
-Estabelecer o motor de escrita local (Write-First) usando Dexie/IndexedDB (e preparando para SQLite no futuro) como a única fonte da verdade em tempo de execução para a Mesa Operacional. Desconectar temporariamente a orquestração síncrona obrigatória da nuvem (Supabase) do critical path de UI.
+A autenticação offline segura foi implementada. O próximo passo vital é o SYNC-ARCH-001 para extrair o enfileiramento de processamento em background Web Worker, aliviando o main thread.
 
 ## Passo a Passo Sugerido
-1. Modificar os casos de uso críticos (ex: assinar pré-romaneio) para salvar os dados com sucesso no Local DB (Write-First) sem bloquear na resposta do Supabase.
-2. Adicionar o registro na "Fila de Sincronismo" interna sempre que houver modificações locais offline.
-3. Testar a experiência desconectada da rede para garantir que os dados não sejam perdidos.
+1. Implementar Web Worker para sincronização em background.
+2. Migrar o SyncQueueRepository para operar através de mensagens com o Web Worker.
+3. Garantir que a UI não sofra stuttering/bloqueios durante a sincronização em massa com o Supabase.

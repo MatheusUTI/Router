@@ -2001,6 +2001,7 @@ export default function App() {
         onViewChange={handleViewChange}
         adminName={adminProfile.name}
         adminRole={adminProfile.role}
+        authMode={adminProfile.authMode}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -3,6 +3,7 @@ import { AppUser } from '../types';
 import { getAppUsers, isSupabaseConfigured, supabase, getSavedCredentials } from '../supabase';
 import { DEFAULT_OPERATIONAL_UNIT, getOperationalUnits } from '../constants/operationalUnits';
 import { getApiUrl } from '../config/api';
+import { LocalAuthService } from '../application/services/LocalAuthService';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AppUser) => void;
@@ -36,6 +37,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   const activeUnits = availableUnits.filter(u => u.active);
 
+  
   const handleLoginSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -54,77 +56,90 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     const uNormal = cleanUser.toLowerCase();
     const uNoDomain = uNormal.endsWith("@rotaoperational.com") ? uNormal.replace("@rotaoperational.com", "") : uNormal;
 
-    const tryLocalFallback = async (): Promise<boolean> => {
+    const performOfflineAuth = async () => {
       try {
-        const localUsers = await getAppUsers();
-        const userMatch = localUsers.find(u => {
-          const dbUserLower = u.username.toLowerCase();
-          return (dbUserLower === uNormal || dbUserLower === uNoDomain) && u.password === cleanPass;
-        });
-
-        if (userMatch) {
-          setSuccessMsg("Autenticação efetuada com sucesso!");
-          const isMaster = !!userMatch.is_master;
+        const cachedUser = await LocalAuthService.attemptOfflineAuth(uNoDomain, cleanPass);
+        if (cachedUser) {
+          setSuccessMsg("Modo offline — acesso validado localmente.");
+          const isMaster = !!cachedUser.is_master;
           if (isMaster) {
             localStorage.setItem('master_last_unid', loginUnid);
           }
-          const finalUnid = isMaster ? loginUnid : (userMatch.unid || DEFAULT_OPERATIONAL_UNIT);
+          const finalUnid = isMaster ? loginUnid : (cachedUser.unid || DEFAULT_OPERATIONAL_UNIT);
+          
           setTimeout(() => {
             onLoginSuccess({
-              ...userMatch,
-              unid: finalUnid
-            });
+              ...cachedUser,
+              unid: finalUnid,
+              authMode: 'OFFLINE_CACHED'
+            } as any);
           }, 800);
           return true;
         }
-      } catch (localErr) {
-        console.error("Erro no login local de fallback:", localErr);
+      } catch (err) {
+        console.error("Erro na autorização offline:", err);
       }
       return false;
     };
 
+
     try {
-      const creds = getSavedCredentials();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (creds.url && creds.key) {
-        headers["x-supabase-url"] = creds.url;
-        headers["x-supabase-key"] = creds.key;
+      let res;
+      try {
+        // Authenticate via server-side endpoint /api/auth/login
+        res = await fetch(getApiUrl("/api/auth/login"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: cleanUser,
+            password: cleanPass
+          })
+        });
+      } catch (fetchErr: any) {
+        // NETWORK ERROR - Try offline auth
+        console.warn("API de login offline, testando login local fallback:", fetchErr);
+        const locallyAuthenticated = await performOfflineAuth();
+        if (!locallyAuthenticated) {
+          setErrorMsg("Servidor inacessível e não há sessão offline válida para este usuário.");
+        }
+        return;
       }
 
-      // Authenticate via server-side endpoint /api/auth/login
-      const res = await fetch(getApiUrl("/api/auth/login"), {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ username: cleanUser, password: cleanPass })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setSuccessMsg("Autenticação efetuada com sucesso!");
+      if (res.ok) {
+        const data = await res.json();
+        setSuccessMsg("Autenticação online efetuada com sucesso!");
+        
         const isMaster = !!data.user.is_master;
         if (isMaster) {
           localStorage.setItem('master_last_unid', loginUnid);
         }
         const finalUnid = isMaster ? loginUnid : (data.user.unid || DEFAULT_OPERATIONAL_UNIT);
+        
+        const userProfile = {
+          ...data.user,
+          unid: finalUnid
+        };
+
+        // Provision offline authorization!
+        await LocalAuthService.provisionOfflineAuth(uNoDomain, cleanPass, userProfile);
+
         setTimeout(() => {
           onLoginSuccess({
-            ...data.user,
-            unid: finalUnid
-          });
+            ...userProfile,
+            authMode: 'ONLINE'
+          } as any);
         }, 800);
       } else {
-        // Quando /api/auth/login responder erro, antes de mostrar o erro final:
-        const locallyAuthenticated = await tryLocalFallback();
-        if (!locallyAuthenticated) {
-          setErrorMsg("Credenciais inválidas ou usuário não sincronizado.");
-        }
+        // CREDENTIALS INVALID or other backend error
+        // DO NOT fallback to offline auth if the authoritative server rejected the credentials!
+        const errData = await res.json().catch(() => ({}));
+        setErrorMsg(errData.error || "Credenciais inválidas. Acesso negado pelo servidor.");
       }
     } catch (err: any) {
-      console.warn("API de login offline, testando login local fallback:", err);
-      const locallyAuthenticated = await tryLocalFallback();
-      if (!locallyAuthenticated) {
-        setErrorMsg("Credenciais inválidas ou usuário não sincronizado.");
-      }
+      console.error("Erro inesperado no login:", err);
+      setErrorMsg("Erro inesperado durante a autenticação.");
     } finally {
       setIsLoading(false);
     }

@@ -327,7 +327,14 @@ export default function RoteirizacaoView({
         }).catch((err) => console.warn('[Audit] Erro ao registrar log de motorista:', err));
       }
 
-      const updatedItem = await routePlanningRepository.upsertForCtrc(ctrcId, planningDate, patch);
+      // LOCAL-DATA-002: Delegate to Application Service to guarantee write-first with queue
+      const updatedItem = await routingPlanService.updatePlanningItem(
+        ctrcId,
+        planningDate,
+        patch,
+        adminUser,
+        activeRoutingPlan
+      );
       
       setRoutePlanningItems((prev) => {
         const index = prev.findIndex((p) => p.id === updatedItem.id);
@@ -339,34 +346,6 @@ export default function RoteirizacaoView({
           return [...prev, updatedItem];
         }
       });
-
-      // If active routing plan exists on Supabase, synchronize in background
-      if (activeRoutingPlan) {
-        const companyCode = adminUser?.unid || 'SPO';
-        const remoteItem = {
-          id: `${activeRoutingPlan.id}_${ctrcId}`,
-          planId: activeRoutingPlan.id,
-          shipmentUniqueKey: `${companyCode}_${ctrcId}`,
-          ctrcId: ctrcId,
-          planningDate: planningDate,
-          companyCode: companyCode,
-          suggestedRoute: updatedItem.suggestedRoute || undefined,
-          operationalRoute: updatedItem.operationalRoute || undefined,
-          planningStatus: updatedItem.planningStatus || 'A_PLANEJAR',
-          manualPriority: updatedItem.manualPriority || undefined,
-          operationalNote: updatedItem.operationalNote || undefined,
-          vehicleId: updatedItem.vehicleId || undefined,
-          vehiclePlate: updatedItem.vehiclePlate || undefined,
-          driverName: updatedItem.driverName || undefined,
-          helperName: updatedItem.helperName || undefined,
-          lockedByUser: updatedItem.lockedByUser ? String(updatedItem.lockedByUser) : undefined,
-          updatedBy: adminUser?.username || 'admin',
-        };
-
-        routingPlanService.upsertItem(remoteItem as any).catch((err) => {
-          console.warn('[Roteirizacao] Erro silencioso ao salvar item no Supabase:', err);
-        });
-      }
 
       setToastMessage(`📌 Ajuste salvo para CTRC ${ctrcId}`);
       setTimeout(() => setToastMessage(null), 3000);

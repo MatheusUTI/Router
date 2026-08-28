@@ -1,113 +1,7 @@
-import { db, SyncQueueItem } from "../db";
+const fs = require('fs');
+let code = fs.readFileSync('src/infrastructure/localdb/repositories/syncQueueRepository.ts', 'utf-8');
 
-/**
- * Adiciona uma ação operativa pendente na fila de sincronização secundária.
- */
-export async function addToSyncQueue(
-  entity:
-    | "ctrc"
-    | "vehicle"
-    | "driver"
-    | "romaneio"
-    | "occurrence"
-    | "cidade_rota"
-    | "route_planning_item"
-    | "pre_romaneio"
-    | "audit_log",
-  operation: "CREATE" | "UPDATE" | "DELETE",
-  payload: any,
-): Promise<number> {
-  const item: SyncQueueItem = {
-    entity,
-    operation,
-    payload,
-    created_at: new Date().toISOString(),
-    retry_count: 0,
-    status: "pending",
-  };
-  return db.sync_queue.add(item);
-}
-
-export const SyncQueueRepository = {
-  async getPending(): Promise<SyncQueueItem[]> {
-    return db.sync_queue.where("status").equals("pending").toArray();
-  },
-
-  async markAsCompleted(id: number): Promise<void> {
-    await db.sync_queue.update(id, { status: "completed" });
-  },
-
-  async markAsFailed(id: number, errorMessage: string): Promise<void> {
-    const item = await db.sync_queue.get(id);
-    if (item) {
-      const nextRetry = item.retry_count + 1;
-      await db.sync_queue.update(id, {
-        status: nextRetry >= 5 ? "failed" : "pending", // Re-enfileira automaticamente até 5 tentativas
-        retry_count: nextRetry,
-        errorMessage,
-      });
-    }
-  },
-
-  async delete(id: number): Promise<void> {
-    await db.sync_queue.delete(id);
-  },
-
-  async getAll(): Promise<SyncQueueItem[]> {
-    return db.sync_queue.toArray();
-  },
-
-  async clearCompleted(): Promise<void> {
-    await db.sync_queue.where("status").equals("completed").delete();
-  },
-
-  async cleanupOldItems(): Promise<void> {
-    const now = Date.now();
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
-    const allItems = await db.sync_queue.toArray();
-
-    const idsToDelete = allItems
-      .filter((item) => {
-        const itemDate = new Date(item.created_at).getTime();
-
-        if (item.status === "completed") {
-          return now - itemDate > SEVEN_DAYS_MS;
-        }
-        if (item.status === "failed") {
-          return now - itemDate > THIRTY_DAYS_MS;
-        }
-        return false; // Preserve pending and processing
-      })
-      .map((item) => item.id!);
-
-    if (idsToDelete.length > 0) {
-      await db.sync_queue.bulkDelete(idsToDelete);
-      console.log(`[SyncQueue] Cleaned up ${idsToDelete.length} old items.`);
-    }
-  },
-
-  async getSummary(): Promise<{
-    pending: number;
-    processing: number;
-    completed: number;
-    failed: number;
-  }> {
-    const allItems = await db.sync_queue.toArray();
-    return allItems.reduce(
-      (acc, item) => {
-        if (item.status === "pending") acc.pending++;
-        else if (item.status === "processing") acc.processing++;
-        else if (item.status === "completed") acc.completed++;
-        else if (item.status === "failed") acc.failed++;
-        return acc;
-      },
-      { pending: 0, processing: 0, completed: 0, failed: 0 },
-    );
-  },
-
-  async processSyncQueue(): Promise<void> {
+const newProcessSyncQueue = `  async processSyncQueue(): Promise<void> {
     const pendingItems = await this.getPending();
     if (pendingItems.length === 0) return;
 
@@ -190,7 +84,7 @@ export const SyncQueueRepository = {
             // MVP Fallback - saved romaneios are local-first only via export flow
             success = true;
           } else {
-            errorObj = new Error(`Auto-retry not implemented for ${item.entity} / ${item.operation}`);
+            errorObj = new Error(\`Auto-retry not implemented for \${item.entity} / \${item.operation}\`);
           }
 
           if (success) {
@@ -207,5 +101,10 @@ export const SyncQueueRepository = {
     } catch (err) {
       console.warn("Failed to load dependencies for sync queue processing:", err);
     }
-  },
-};
+  },`;
+
+const startIndex = code.indexOf('  async processSyncQueue(): Promise<void> {');
+const endIndex = code.lastIndexOf('},');
+code = code.substring(0, startIndex) + newProcessSyncQueue + '\n' + code.substring(endIndex);
+
+fs.writeFileSync('src/infrastructure/localdb/repositories/syncQueueRepository.ts', code);

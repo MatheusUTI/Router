@@ -17,20 +17,12 @@ export const AuditLogRepository = {
     };
     await db.audit_logs.put(newLog);
 
-    // CR-MVP-SUPABASE-06: Sincronização
-    setTimeout(async () => {
-      try {
-        const { auditLogSupabaseRepository } = await import('../../supabase/repositories/auditLogSupabaseRepository');
-        const res = await auditLogSupabaseRepository.insertLog(newLog);
-        if (!res.success) {
-          // Mantém pendente localmente para tentar depois
-          await addToSyncQueue('audit_log', 'CREATE', newLog);
-        }
-      } catch (err) {
-        console.warn('Erro na sync do audit log', err);
-        await addToSyncQueue('audit_log', 'CREATE', newLog);
-      }
-    }, 0);
+    // LOCAL-DATA-002: Strict Write-First - just enqueue and let the sync processor handle it.
+    await addToSyncQueue('audit_log', 'CREATE', newLog);
+    // Dispara a fila de forma assíncrona, sem bloquear
+    import('./syncQueueRepository').then(({ SyncQueueRepository }) => {
+      SyncQueueRepository.processSyncQueue().catch(() => {});
+    });
 
     return id;
   },

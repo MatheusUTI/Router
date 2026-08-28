@@ -1,9 +1,9 @@
 import Dexie, { type Table } from 'dexie';
-import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem, RouteGateMap, PreRomaneio, OperationalCalendarEvent, OperationalUnitBI, CidadeAtendidaSSW, VehicleRegistry, VehicleGrRule, AuditLog } from '../../types';
+import { Ctrc, Vehicle, DriverScore, DeliveryOccurrence, CidadeRota, Helper, CurvaAClientLocal, UserPreference, SyncMetadata, RoutePlanningItem, CtrcOccurrenceHistoryItem, RouteGateMap, PreRomaneio, OperationalCalendarEvent, OperationalUnitBI, CidadeAtendidaSSW, VehicleRegistry, VehicleGrRule, AuditLog, LocalAuthRecord } from '../../types';
 
 export interface SyncQueueItem {
   id?: number;
-  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota' | 'audit_log';
+  entity: 'ctrc' | 'vehicle' | 'driver' | 'romaneio' | 'occurrence' | 'cidade_rota' | 'audit_log' | 'route_planning_item' | 'pre_romaneio';
   operation: 'CREATE' | 'UPDATE' | 'DELETE';
   payload: any;
   created_at: string;
@@ -47,6 +47,7 @@ export class RotaLocalDatabase extends Dexie {
   vehicle_registries!: Table<VehicleRegistry, string>;
   vehicle_gr_rules!: Table<VehicleGrRule, string>;
   audit_logs!: Table<AuditLog, string>;
+  local_auth!: Table<LocalAuthRecord, string>;
  
   constructor() {
     super('RotaLocalDatabase');
@@ -94,6 +95,9 @@ export class RotaLocalDatabase extends Dexie {
     });
     this.version(12).stores({
       audit_logs: 'id, timestamp, entityType, action'
+    });
+    this.version(13).stores({
+      local_auth: 'username, expiresAt'
     });
   }
 }

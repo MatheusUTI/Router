@@ -1,6 +1,8 @@
 import { db } from '../db';
 import { PreRomaneio, PreRomaneioStatus } from '../../../types';
-import { preRomaneioSupabaseRepository } from '../../supabase/repositories/preRomaneioSupabaseRepository';
+
+import { addToSyncQueue, SyncQueueRepository } from './syncQueueRepository';
+
 
 export const PreRomaneioRepository = {
   async getAll(): Promise<PreRomaneio[]> {
@@ -23,9 +25,10 @@ export const PreRomaneioRepository = {
     await db.pre_romaneios.put(item);
     try {
       const companyCode = localStorage.getItem('user_unit') || 'SPO';
-      await preRomaneioSupabaseRepository.upsertPreRomaneio(item, companyCode);
+      await addToSyncQueue('pre_romaneio', 'UPDATE', { item, companyCode });
+      SyncQueueRepository.processSyncQueue().catch(() => {});
     } catch (err) {
-      console.warn('[PreRomaneioRepository] Erro ao sincronizar pré-romaneio no Supabase:', err);
+      console.warn('[PreRomaneioRepository] Erro ao agendar sync de pré-romaneio:', err);
     }
     return item.id;
   },
@@ -34,9 +37,10 @@ export const PreRomaneioRepository = {
     await db.pre_romaneios.bulkPut(items);
     try {
       const companyCode = localStorage.getItem('user_unit') || 'SPO';
-      await preRomaneioSupabaseRepository.upsertPreRomaneios(items, companyCode);
+      await addToSyncQueue('pre_romaneio', 'CREATE', { action: 'upsertMany', items, companyCode });
+      SyncQueueRepository.processSyncQueue().catch(() => {});
     } catch (err) {
-      console.warn('[PreRomaneioRepository] Erro ao sincronizar pré-romaneios no Supabase:', err);
+      console.warn('[PreRomaneioRepository] Erro ao agendar sync de pré-romaneios:', err);
     }
   },
 
@@ -54,9 +58,15 @@ export const PreRomaneioRepository = {
       };
       await db.pre_romaneios.put(cancelled);
       try {
-        await preRomaneioSupabaseRepository.cancelPreRomaneio(id, cancelled.cancelledBy, cancelled.cancelReason);
+        await addToSyncQueue('pre_romaneio', 'DELETE', { 
+          action: 'cancel', 
+          id, 
+          cancelledBy: cancelled.cancelledBy, 
+          cancelReason: cancelled.cancelReason 
+        });
+        SyncQueueRepository.processSyncQueue().catch(() => {});
       } catch (err) {
-        console.warn('[PreRomaneioRepository] Erro ao marcar como cancelado no Supabase durante remoção:', err);
+        console.warn('[PreRomaneioRepository] Erro ao agendar cancelamento:', err);
       }
     }
   },
@@ -86,9 +96,9 @@ export const PreRomaneioRepository = {
     try {
       const companyCode = localStorage.getItem('user_unit') || 'SPO';
       if (status === 'CANCELADO') {
-        await preRomaneioSupabaseRepository.cancelPreRomaneio(id, updated.cancelledBy, updated.cancelReason);
+        await addToSyncQueue('pre_romaneio', 'DELETE', { action: 'cancel', id, cancelledBy: updated.cancelledBy, cancelReason: updated.cancelReason });
       } else {
-        await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+        await addToSyncQueue('pre_romaneio', 'UPDATE', { item: updated, companyCode });
       }
     } catch (err) {
       console.warn('[PreRomaneioRepository] Erro ao sincronizar status no Supabase:', err);
@@ -109,7 +119,7 @@ export const PreRomaneioRepository = {
 
     try {
       const companyCode = localStorage.getItem('user_unit') || 'SPO';
-      await preRomaneioSupabaseRepository.upsertPreRomaneio(updated, companyCode);
+      await addToSyncQueue('pre_romaneio', 'UPDATE', { item: updated, companyCode });
     } catch (err) {
       console.warn('[PreRomaneioRepository] Erro ao sincronizar atribuição no Supabase:', err);
     }
