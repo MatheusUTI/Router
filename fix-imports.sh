@@ -1,2 +1,0 @@
-find src/components -type f \( -name "*.tsx" -o -name "*.ts" \) -exec sed -i -E "s/import \{ ([^}]+) \} from '([^']+)infrastructure\/localdb\/repositories\/[^']+';/import \{ \1 \} from '\2infrastructure\/repositories';/g" {} +
-find src/components -type f \( -name "*.tsx" -o -name "*.ts" \) -exec sed -i -E "s/import \{ ([^}]+) \} from \"([^\"]+)infrastructure\/localdb\/repositories\/[^\"]+\";/import \{ \1 \} from \"\2infrastructure\/repositories\";/g" {} +

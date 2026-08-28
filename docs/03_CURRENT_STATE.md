@@ -14,3 +14,4 @@
 - Contract test suite covers Vercel serverless bootstrap and confirms stable behavior.
 - `DEPLOY-ARCH-001` replaced Vercel Serverless Functions with a persistent Node.js architecture hosted on Render, leaving Vercel purely for frontend hosting. The frontend now communicates securely via `VITE_API_BASE_URL` with explicitly configured CORS headers on the Express server.
 - `LOCAL-ARCH-001` estabeleceu o direcionamento para Local-First. Atual dependência de Dexie para armazenamento offline e de Supabase para login e dados em nuvem identificada. O roadmap de migração (LOCAL-DB-001 até LOCAL-FIRST-001) foi mapeado, nenhuma funcionalidade foi quebrada.
+- `LOCAL-DB-001` estabeleceu fronteiras limpas (ports/adapters) abstraindo a persistência local da lógica da UI, completando o alicerce para bancos de dados duráveis (Dexie atualmente).

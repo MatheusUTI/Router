@@ -123,3 +123,8 @@ Este arquivo utiliza a filosofia do Conventional Commits para registrar o histó
 
 ### Added
 - **LOCAL-ARCH-001**: Estabelecido baseline arquitetural de Local-First, diagnosticando dependências e elaborando plano de migração progressiva (Zero Big-Bang) focado em isolamento, autenticação offline e independência do Supabase como fonte de verdade primária.
+
+## [1.27.1] - 2026-08-26
+### Refactored
+- **LOCAL-DB-001**: Estabelecimento de fronteiras e portas de persistência (Repository Ports & Adapters) para o banco de dados. Migração arquitetural preparando o terreno para persistência 100% Local-First.
+- **REPO-HYGIENE-001**: Limpeza de artefatos temporários de script de refatoração, garantindo a higiene e integridade do repositório antes de introduzir novas mudanças de dados (LOCAL-DATA-001).

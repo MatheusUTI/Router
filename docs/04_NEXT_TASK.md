@@ -1,9 +1,9 @@
-# Próxima Tarefa: LOCAL-DB-001
+# Próxima Tarefa: LOCAL-DATA-001
 
 ## Objetivo
-Criar a fundação de banco de dados durável local (avaliação/implementação de base SQLite ou consolidação Dexie) garantindo a durabilidade do Local-First, sem depender da nuvem para o armazenamento mestre.
+Estabelecer o motor de escrita local (Write-First) usando Dexie/IndexedDB (e preparando para SQLite no futuro) como a única fonte da verdade em tempo de execução para a Mesa Operacional. Desconectar temporariamente a orquestração síncrona obrigatória da nuvem (Supabase) do critical path de UI.
 
 ## Passo a Passo Sugerido
-1. Adicionar adaptadores (ports/adapters) abstraindo a persistência.
-2. Garantir que as Views não importem bibliotecas de infraestrutura de banco de dados diretamente.
-3. Parametrizar a infra de Local DB (ex. Dexie wrapper unificado e testes) sem destruir a camada web, preparando terreno para uso offline/desktop.
+1. Modificar os casos de uso críticos (ex: assinar pré-romaneio) para salvar os dados com sucesso no Local DB (Write-First) sem bloquear na resposta do Supabase.
+2. Adicionar o registro na "Fila de Sincronismo" interna sempre que houver modificações locais offline.
+3. Testar a experiência desconectada da rede para garantir que os dados não sejam perdidos.
