@@ -12,7 +12,7 @@ interface LoginViewProps {
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   // Login Form States
   const [username, setUsername] = useState('anderson');
-  const [password, setPassword] = useState('123');
+  const [password, setPassword] = useState('');
   const [loginUnid, setLoginUnid] = useState(() => {
     return localStorage.getItem('master_last_unid') || DEFAULT_OPERATIONAL_UNIT;
   });
